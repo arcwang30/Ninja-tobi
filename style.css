@@ -139,7 +139,7 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 
 /* ===== 面板 ===== */
 .panel {
-  width: 86%; max-height: 92%; display: flex; flex-direction: column; align-items: stretch;
+  width: 86%; max-width: calc(var(--u) * 400); max-height: 92%; display: flex; flex-direction: column; align-items: stretch;
   background: linear-gradient(var(--steel), var(--steel-d)); color: var(--text);
   border: calc(var(--u)*4) solid var(--ink); border-radius: calc(var(--u)*16);
   padding: 1em; box-shadow: inset 0 calc(var(--u)*3) 0 rgba(255,255,255,.12), 0 calc(var(--u)*6) 0 #000;
@@ -220,3 +220,7 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 /* 開場遮罩：和標題背景同色，量好尺寸後淡出 */
 #boot { position: fixed; left: 0; top: 0; right: 0; bottom: -200px; background: #0d2a2a; z-index: 99; transition: opacity .25s, visibility .25s; }
 #boot.off { opacity: 0; visibility: hidden; pointer-events: none; }
+
+/* 加寬的世界（iPad、橫向）：標題的 LOGO、按鈕、選單維持手機的比例，置中排在中間一欄，背景照樣滿版 */
+#title .logo, #title .menu { max-width: calc(var(--u) * 420); margin-left: auto; margin-right: auto; }
+#title .dock { max-width: calc(var(--u) * 520); margin-left: auto; margin-right: auto; }

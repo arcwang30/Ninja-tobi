@@ -2,15 +2,18 @@
 /* NINJA 鳶 TOBI — 忍者跳躍 Roguelike「忍者修行」（主線四幕＋無盡之塔）。文字在 lang.js */
 
 // ===== 常數 =====
-const W = 360;
-let H = 640;                    // 依螢幕比例在 640~800 之間調整（長螢幕手機不留黑邊）
+// 遊戲世界的邏輯寬度：手機固定 360；iPad 這類較寬的螢幕會把世界加寬（最多 960），左右才會滿版。
+// 一局進行中不會改變（W_LOCK），轉向時先以原寬度縮放，回到標題或開新局再套用新寬度。
+let W = 360, W_LOCK = false;
+let H = 640;                    // 依螢幕比例在 640~900 之間調整（長螢幕手機不留黑邊）
+const WK = () => W / 360;       // 世界比手機寬幾倍，生成地板和敵人時用來補密度
 const GRAV = 1500, JUMP = 740, SPRING = 1060, FLY_V = 820;
 const STAGE_PX = 12000;         // 每一幕的高度（px），10px = 1m。約 2～3 分鐘一幕，主線約 10 分鐘
 const SENS = 1.25;              // 手指滑動靈敏度
 const DASH_V = 950, DASH_T = .2, DIVE_V = 1150;   // 衝刺斬／急降斬
 const FLICK_PX = 42, FLICK_MS = 130;             // 快速滑動判定：130ms 內垂直移動 42px
 const WALL = 14;                                 // 左右牆壁厚度
-const PL_MIN = WALL + 11, PL_MAX = W - WALL - 11; // 玩家 x 可移動範圍
+const PL_MIN = WALL + 11; let PL_MAX = W - WALL - 11; // 玩家 x 可移動範圍（PL_MAX 隨 W 更新）
 // 彈射瞄準：按住不動 AIM_HOLD 秒進入瞄準，拉超過 AIM_MIN 才會發射
 const AIM_HOLD = .15, AIM_MIN = 22, AIM_MOVE = 10, AIM_SLOW = .3, AIM_SLOW_MAX = 2.5, DASH_T_AIM = .3;
 const FONT = '"Noto Sans TC","Noto Sans JP","Microsoft JhengHei","PingFang TC","Hiragino Sans","Yu Gothic","Meiryo",sans-serif';
@@ -229,7 +232,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v15';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v16';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -244,6 +247,8 @@ function resize() {
     const vp = $('vhProbe'), full = Math.max(vh, vp ? vp.offsetHeight : 0, IS_IOS ? Math.max(screen.height, screen.width) : 0);
     if (full > vh) { gap = full - vh; vh = full; }
   }
+  // 比 9:16 還寬的螢幕（iPad、橫向）：高度固定 640，把世界加寬到剛好填滿左右
+  if (!W_LOCK) { W = vh / vw >= 640 / 360 ? 360 : clamp(640 * vw / vh, 360, 960); PL_MAX = W - WALL - 11; }
   // 依螢幕比例調整邏輯高度（640～900），長螢幕手機也能上下滿版
   H = clamp(Math.round(W * vh / vw), 640, 900);
   const w = Math.min(vw, vh * W / H), h = w * H / W;
@@ -381,6 +386,7 @@ const sk = id => (g && g.skills[id]) || 0;   // 自動技能等級（0 = 沒有�
 
 function startRun() {
   hideAll();
+  W_LOCK = false; resize(); W_LOCK = true;   // 開局時套用目前螢幕的寬度，整局固定
   g = {
     t: 0, camY: -H * .68, top: 0, bonus: 0, coins: 0,
     p: { x: W / 2, y: 40, vx: 0, vy: -JUMP, face: 1, inv: 0, slow: 0, freeze: 0, sq: 0, dash: 0, dvx: 0, dvy: 0, dive: false, wallUsed: false, banks: 0 },
@@ -443,9 +449,16 @@ function genRow() {
     const x2 = rnd(xMin, xMax);
     if (Math.abs(x2 - x) > w + 10) g.plats.push({ x: x2, y: y + rnd(-20, 20), w, type: Math.random() < .3 ? 'crumble' : 'normal', bx: x2, ph: 0, sp: 0, amp: 0 });
   }
+  // 加寬的世界（iPad）：依多出來的寬度補幾塊地板，畫面兩側才不會空蕩蕩
+  for (let k = WK() - 1; k > 0; k--) {
+    if (Math.random() > Math.min(1, k) * (.45 + .2 * (1 - d))) continue;
+    const x2 = rnd(xMin, xMax);
+    if (g.plats.some(q => Math.abs(q.y - y) < 30 && Math.abs(q.x - x2) < w + 10)) continue;
+    g.plats.push({ x: x2, y: y + rnd(-25, 25), w, type: Math.random() < .25 ? 'crumble' : 'normal', bx: x2, ph: 0, sp: 0, amp: 0 });
+  }
   // 道具
   const lucky = 1 + pk('lucky') * .8;
-  const coinP = (m === 'rich' ? .55 : .28);
+  const coinP = Math.min(.9, (m === 'rich' ? .55 : .28) * (1 + (WK() - 1) * .5));
   if (Math.random() < coinP) {
     const n = Math.random() < .3 ? 3 : 1;
     for (let i = 0; i < n; i++) g.items.push({ t: 'coin', x: clamp(x + (i - (n - 1) / 2) * 22, WALL + 10, W - WALL - 10), y: y - 30 - (n > 1 && i === 1 ? 10 : 0), ph: rnd(0, 6) });
@@ -455,7 +468,8 @@ function genRow() {
   // 敵忍者
   const pE = g.top < 250 ? 0 : (.08 + .14 * d) * (m === 'horde' ? 2.6 : 1) * (1 + .12 * g.stage + .3 * loopN());   // 越後面的幕敵人越多
   // 倖存者節奏：敵人密度比之前高（技能需要靶子，魂也從這裡來）
-  if (Math.random() < pE * 1.4) g.enemies.push(mkEnemy(enemyType(d), rnd(30, W - 30), (y + prevY) / 2, rnd(10, 50)));
+  // 世界加寬時敵人也按比例增加（例如 1.5 倍寬 → 平均 1.5 倍敵人）
+  for (let k = WK(); k > 0; k--) if (Math.random() < pE * 1.4 * Math.min(1, k)) g.enemies.push(mkEnemy(enemyType(d), rnd(30, W - 30), (y + prevY) / 2, rnd(10, 50)));
   // 敵人階梯：間距小於彈跳高度，可以一路空中連斬上去
   g.ladderCD--;
   if (g.top > 400 && g.ladderCD <= 0 && Math.random() < (.08 + .07 * d) * (m === 'horde' ? 2 : 1)) {
@@ -566,7 +580,7 @@ function spawnWave() {
   if (st >= 1 || g.top > 2500) kinds.push('onibi');
   if (st >= 1) kinds.push('archer');
   if (st >= 2) kinds.push('spider');
-  const k = pick(kinds), n = Math.round(rnd(4, 6) + st * .8 + loopN() * 2);
+  const k = pick(kinds), n = Math.round((rnd(4, 6) + st * .8 + loopN() * 2) * Math.sqrt(WK()));   // 寬螢幕稍微多幾隻
   if (k === 'crow') { // 從左或右排成一列飛過
     const side = Math.random() < .5 ? -1 : 1, y = top + rnd(40, H * .4);
     for (let i = 0; i < n + 2; i++) { const e = mkEnemy(7, side < 0 ? -30 - i * 34 : W + 30 + i * 34, y, 0); e.by = y + (i % 2) * 18; e.vx = -side * rnd(120, 150); g.enemies.push(e); }
@@ -1455,7 +1469,7 @@ function drawBG(camY, stage, t) {
     ctx.lineTo(W, H); ctx.fill();
     ctx.fillStyle = '#ffd9a0'; ctx.beginPath(); ctx.arc(W * .75, 150, 34, 0, 7); ctx.fill();
   } else if (k === '火') { // 火星
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0, n = Math.ceil(18 * WK()); i < n; i++) {
       const x = (i * 53) % W, y = H - (((t * 60 + i * 97) - camY * .2) % (H + 40));
       ctx.fillStyle = i % 2 ? '#ff8a3a' : '#ffcf5a'; ctx.fillRect(x + Math.sin(t + i) * 10, y, 3, 3);
     }
@@ -1464,7 +1478,7 @@ function drawBG(camY, stage, t) {
   const layers = [[.18, 0.45, 10, th.far], [.4, 1, 18, th.stalk]];
   for (const [f, a, sw, col] of layers) {
     ctx.globalAlpha = a;
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0, n = Math.ceil(7 * WK()); i < n; i++) {   // 竹子數量跟著世界寬度
       const x = (i * 61 + (f > .3 ? 20 : 45)) % W;
       ctx.fillStyle = col; ctx.fillRect(x, 0, sw, H);
       ctx.fillStyle = th.node;
@@ -1877,7 +1891,7 @@ function drawZone(camY, stage, t) {
   if (type === 'fire') {
     const gr = ctx.createLinearGradient(0, zy, 0, H); gr.addColorStop(0, '#ff6a1a'); gr.addColorStop(1, '#9a0a00');
     ctx.fillStyle = gr; ctx.fillRect(0, zy, W, H - zy);
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < Math.ceil(W / 32) + 1; i++) {   // 火焰數量跟著世界寬度
       const x = i * 32 + 8, h = 26 + Math.sin(t * 9 + i * 1.7) * 12;
       ctx.fillStyle = i % 2 ? '#ffb23a' : '#ff6a1a';
       ctx.beginPath(); ctx.moveTo(x - 16, zy + 4); ctx.quadraticCurveTo(x - 4, zy - h * .5, x + Math.sin(t * 7 + i) * 4, zy - h); ctx.quadraticCurveTo(x + 6, zy - h * .4, x + 16, zy + 4); ctx.fill();
@@ -2259,6 +2273,7 @@ function hide(id) { $(id).classList.remove('on'); }
 function hideAll() { SCRS.forEach(hide); }
 function goTitle() {
   state = 'menu'; g = null; paused = false;
+  if (W_LOCK) { W_LOCK = false; resize(); }
   $('tCoins').textContent = save.coins;
   show('title');
   musicFor();
