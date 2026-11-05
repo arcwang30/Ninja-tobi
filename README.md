@@ -10,6 +10,13 @@ powershell -ExecutionPolicy Bypass -File serve.ps1
 
 開啟 http://localhost:8080 。要用手機／平板測試：以系統管理員執行 `serve.ps1 -Lan`，再用同網路裝置連 `http://<電腦IP>:8080`（搖晃偵測與 PWA 安裝在 iOS 需 HTTPS，正式上線請放到 HTTPS 主機，例如 GitHub Pages）。
 
+## 正式網址（GitHub Pages，可加入主畫面全螢幕）
+
+https://arcwang30.github.io/Ninja-tobi/
+
+- iPhone：用 Safari 開啟 → 分享 →「加入主畫面」，從主畫面圖示開啟即為全螢幕（延伸到瀏海下，HUD 自動讓開）。
+- 更新方式：修改後 `git commit`、`git push`，約 1～2 分鐘後生效。更新 `sw.js` 裡的 `CACHE` 版本號，已安裝的玩家才會拿到新檔案。
+
 ## 線上版（claude.ai Artifact）
 
 https://claude.ai/artifact/4TZJNx84hHao81jBjE3F2A （私人頁面，需登入擁有者帳號，或由頁面的 Share 選單分享）
