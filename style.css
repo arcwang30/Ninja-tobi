@@ -24,8 +24,8 @@ html, body {
 :root { padding: 0 !important; }
 #safeProbe { position: absolute; top: 0; left: 0; width: 0; padding-top: env(safe-area-inset-top, 0px); pointer-events: none; visibility: hidden; }
 #app {
-  --u: 1px;
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  --u: 1px; --sat: env(safe-area-inset-top, 0px);
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
   overflow: hidden; box-shadow: 0 0 40px #000;
   font-size: calc(var(--u) * 15);
 }
@@ -58,7 +58,7 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 
 /* ===== 標題畫面：月夜竹林＋主角 ===== */
 #title {
-  justify-content: space-between; padding: env(safe-area-inset-top, 0px) 0 0;
+  justify-content: space-between; padding: var(--sat) 0 0;
   background:
     linear-gradient(90deg, transparent 0 6%, #0f3a2c 6% 11%, transparent 11% 30%, #134a38 30% 34%, transparent 34% 72%, #0f3a2c 72% 78%, transparent 78% 90%, #134a38 90% 93%, transparent 93%),
     radial-gradient(circle at 74% 20%, var(--moon) 0 15%, rgba(255,241,194,.18) 15.2% 23%, transparent 23.2%),
@@ -207,9 +207,9 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .clear-body b { color: var(--gold-l); }
 
 #toast {
-  position: absolute; left: 50%; top: calc(9% + env(safe-area-inset-top, 0px)); transform: translate(-50%, -260%); transition: transform .3s;
+  position: absolute; left: 50%; top: calc(9% + var(--sat)); transform: translate(-50%, -260%); transition: transform .3s, opacity .3s, visibility .3s; opacity: 0; visibility: hidden;
   background: linear-gradient(var(--steel-l), var(--steel-d)); border: calc(var(--u)*3) solid var(--ink); color: var(--gold-l);
   padding: .4em 1em; border-radius: 1em; box-shadow: 0 calc(var(--u)*4) 0 #000, 0 0 0 calc(var(--u)*2) var(--gold) inset;
   pointer-events: none; white-space: nowrap; font-size: .9em; z-index: 5;
 }
-#toast.on { transform: translate(-50%, 0); }
+#toast.on { transform: translate(-50%, 0); opacity: 1; visibility: visible; }

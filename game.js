@@ -231,20 +231,32 @@ function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrat
 // ===== 畫面尺寸 =====
 function resize() {
   const app = $('app');
+  let vw = innerWidth, vh = innerHeight, gap = 0;
+  // iOS「加入主畫面」＋透明狀態列：回報的高度少了一段狀態列，畫面卻整個上移，底部會空一條黑邊。
+  // 這時改用螢幕實際高度排版，少掉的那段就是狀態列（瀏海）高度。
+  if (navigator.standalone && screen.height > vh && vw < vh) { gap = screen.height - vh; vh = screen.height; }
   // 依螢幕比例調整邏輯高度（640～900），長螢幕手機也能上下滿版
-  H = clamp(Math.round(W * innerHeight / innerWidth), 640, 900);
-  const w =Math.min(innerWidth, innerHeight * W / H), h = w * H / W;
+  H = clamp(Math.round(W * vh / vw), 640, 900);
+  const w = Math.min(vw, vh * W / H), h = w * H / W;
   app.style.width = w + 'px'; app.style.height = h + 'px';
+  // 主畫面模式從畫面頂端開始排，其餘置中
+  app.style.top = gap ? '0px' : '50%';
+  app.style.transform = gap ? 'translateX(-50%)' : 'translate(-50%, -50%)';
   app.style.setProperty('--u', (w / W) + 'px');
   const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
-  // 瀏海／狀態列的高度（換算成遊戲座標），HUD 會往下讓開這段
+  // 瀏海／狀態列高度：取系統回報值與上面算出的落差中較大的，HUD 和標題都會往下讓開這段
   const sa = $('safeProbe');
-  SAFE_T = sa ? (parseFloat(getComputedStyle(sa).paddingTop) || 0) * W / w : 0;
+  const top = Math.max(sa ? parseFloat(getComputedStyle(sa).paddingTop) || 0 : 0, gap);
+  SAFE_T = top * W / w;
+  app.style.setProperty('--sat', top + 'px');
 }
 let SAFE_T = 0;
 addEventListener('resize', resize);
+addEventListener('orientationchange', () => setTimeout(resize, 300));
 resize();
+// iOS 從主畫面開啟時，瀏海高度會晚一點才給，開啟後再量幾次
+for (const ms of [100, 400, 1000, 2500]) setTimeout(resize, ms);
 
 // ===== 狀態 =====
 let state = 'menu';   // menu | play | slash | cast | qte | kill | dying | perk | clearq | over
