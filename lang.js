@@ -150,10 +150,10 @@ const STR = {
 <p><b>敵人</b>：一般忍者和<b>烏鴉、小天狗</b>這類雜兵碰到就斬。攻擊型敵人的攻擊才會傷人：<b>投</b> 射手裡劍、<b>弓</b> 拋物線射箭、<b>土</b> 藏在地板裡，靠近時冒出來往上射苦無、<b>蛛</b> 吐絲讓你減速、<b>火</b>（鬼火）會飄向你，<b>直接碰到會受傷</b>，要用彈射斬、急降斬或技能打掉。<b>盾</b> 從下方撞到會被打落並中斷連斬，<b>爆</b> 斬殺後連鎖爆炸，<b>強</b>（菁英）要斬兩刀以上，帶有「迅捷／分裂／鐵壁」詞綴並掉寶箱。每隔一段時間會有一群敵人湧入（波次）。</p>
 <p><b>中 BOSS 與進化</b>：每一幕中段會出現<b>大天狗</b>，碰到牠就扣牠的血，限時內擊倒會開寶箱。技能練到 <b>Lv5</b>，再持有卡片上寫的對應被動，打開魔王或大天狗的寶箱時就會出現<b>進化</b>選項。</p>
 <p><b>角色</b>：每個角色的起始技能不同（鳶＝手裡劍、蒼＝苦無環、桜＝風刃、影＝雷遁），在整備商店購買與切換。</p>
-<p><b>忍法卷軸</b>：點擊左上卷軸圖示（電腦：空白鍵；手機版也可搖晃）發動「豪天翔」，無敵並急速上升。</p>
+<p><b>忍法卷軸</b>：點擊左上卷軸圖示（電腦：空白鍵）發動「豪天翔」，無敵並急速上升。</p>
 <p><b>死亡區域</b>：畫面下方的火海／海嘯／怪獸不斷上升，掉進去會失去 HP。</p>
 <p><b>機關</b>：<span class="t-spring">跳台</span>雙倍彈跳、<span class="t-crumble">半毀地板</span>只能踩一次、<span class="t-move">移動地板</span>、<span class="t-spike">釘刺</span>踩到受傷。</p>
-<p><b>BOSS</b>：每一幕最後出現魔王，限時內碰到牠進入 QTE：<b>連打</b>、<b>劃擊</b>（快速滑動）、<b>晃動</b>（左右快速來回滑動）。擊破後打開寶箱，再選 1 項強化。</p>
+<p><b>BOSS</b>：每一幕最後出現魔王，限時內碰到牠進入 QTE：<b>連打</b>（連續點擊）或<b>劃擊</b>（快速滑動）。擊破後打開寶箱，再選 1 項強化。</p>
 <p><b>主線與無盡</b>：通過 風・林・火・山 四幕即修行完成，可選擇繼續挑戰<b>無盡之塔</b>，每一輪難度和分數都會提高。</p>`,
 `<p><b>ジャンプ</b>：忍者は自動で跳ねる。画面を押したまま<b>左右にスライド</b>して移動、指を離すとその場に留まる。両側は壁。空中で壁に向かうと自動で<b>壁蹴り</b>（着地までに一回）。PC は ← → / A D。</p>
 <p><b>弾き斬り</b>：指を<b>少し押したまま止める</b>と照準モードになり、時間が遅くなる。<b>反対方向に引く</b>と壁の反射も含めた軌道が表示され、軌道上の敵が光る。敵の近くを狙うと自動で吸い付く。<b>離して発射</b>。中心に戻して離すとキャンセル。上に引く（下を狙う）と<b>急降斬</b>：敵を貫き、着地の衝撃波で周りの敵を斬り、まきびしを砕いて高く跳ねる。一回につき<b>「気」</b>を1つ消費、敵を斬ると回復。慣れたら<b>素早く上下にフリック</b>でも出せる（PC：↑ / ↓）。</p>
@@ -162,10 +162,10 @@ const STR = {
 <p><b>敵</b>：普通の忍者や<b>カラス・小天狗</b>などの雑兵は触れれば斬れる。攻撃型の敵の攻撃だけがダメージ：<b>投</b> は手裏剣、<b>弓</b> は放物線の矢、<b>土</b> は床に潜み近づくと飛び出して苦無を撃つ、<b>蛛</b> は糸で足止め、<b>火</b>（鬼火）は寄ってきて<b>触れるとダメージ</b>、弾き斬り・急降斬・技で倒そう。<b>盾</b> は下からぶつかると叩き落とされ連斬が途切れる、<b>爆</b> は誘爆、<b>強</b>（精鋭）は二太刀以上必要で「迅速／分裂／鉄壁」の特性を持ち宝箱を落とす。一定時間ごとに敵の群れが押し寄せる。</p>
 <p><b>中ボスと進化</b>：各幕の中盤に<b>大天狗</b>が現れる。触れるとダメージを与え、時間内に倒すと宝箱。技を<b>Lv5</b>にしてカードに書かれたパッシブを持っていると、魔王か大天狗の宝箱で<b>進化</b>を選べる。</p>
 <p><b>キャラ</b>：キャラごとに初期技が違う（鳶＝手裏剣、蒼＝苦無の輪、桜＝風刃、影＝雷遁）。ショップで購入・切り替え。</p>
-<p><b>忍法巻物</b>：左上の巻物アイコンをタップ（PC：スペース、スマホは振っても可）で「豪天翔」、無敵で急上昇。</p>
+<p><b>忍法巻物</b>：左上の巻物アイコンをタップ（PC：スペース）で「豪天翔」、無敵で急上昇。</p>
 <p><b>死の領域</b>：画面下の火の海・津波・怪獣がせり上がってくる。落ちると HP を失う。</p>
 <p><b>仕掛け</b>：<span class="t-spring">跳び台</span>は二倍ジャンプ、<span class="t-crumble">朽ちた床</span>は一度きり、<span class="t-move">動く床</span>、<span class="t-spike">まきびし</span>は踏むとダメージ。</p>
-<p><b>BOSS</b>：各幕の最後に魔王が現れる。時間内に触れると QTE：<b>連打</b>、<b>斬り払い</b>（素早くスワイプ）、<b>シェイク</b>（左右に素早く往復スワイプ）。撃破すると宝箱から強化を1つ選べる。</p>
+<p><b>BOSS</b>：各幕の最後に魔王が現れる。時間内に触れると QTE：<b>連打</b>（連続タップ）か<b>斬り払い</b>（素早くスワイプ）。撃破すると宝箱から強化を1つ選べる。</p>
 <p><b>本編と無限</b>：風・林・火・山 の四幕を越えると修行完了。続けて<b>無限の塔</b>に挑むと、周回ごとに難しく、スコアも高くなる。</p>`,
 `<p><b>Jumping</b>: your ninja bounces automatically. Hold the screen and <b>slide left or right</b> to move; let go to stay put. There are walls on both sides: push into a wall in mid-air to <b>wall-kick</b> (once per landing). PC: ← → / A D.</p>
 <p><b>Slingshot Slash</b>: <b>hold your finger still</b> for a moment to aim, and time slows down. <b>Pull back</b> in the opposite direction: a trajectory appears, including wall bounces, and enemies on the path light up. Aim near an enemy and it snaps on. <b>Release to launch</b>; drag back to the center to cancel. Pull up (aim down) for a <b>Dive Slash</b>: cut through enemies, and the landing shockwave slashes nearby foes, smashes spikes and bounces you high. Each costs 1 <b>Ki</b>; slashing enemies restores it. Once you get the hang of it, you can also <b>flick up / down</b> quickly (PC: ↑ / ↓).</p>
@@ -174,10 +174,10 @@ const STR = {
 <p><b>Enemies</b>: regular ninjas and fodder like <b>crows</b> and <b>tengu</b> are slashed on touch. Only attackers can hurt you: <b>投</b> throws shuriken, <b>弓</b> lobs arrows, <b>土</b> hides in floors and bursts out firing kunai upward, <b>蛛</b> spits webs that slow you, and <b>火</b> (will-o-wisps) float toward you and <b>hurt on contact</b>: take them out with a slingshot, dive or skills. Hitting a <b>盾</b> shield from below knocks you down and breaks your chain, <b>爆</b> explodes in chains, and <b>強</b> elites take 2+ hits, carry an affix (Swift / Split / Tough) and drop chests. Every so often a wave of enemies pours in.</p>
 <p><b>Mid-boss and Evolution</b>: halfway through each act the <b>Great Tengu</b> appears. Touch it to deal damage; defeat it in time for a chest. Get a skill to <b>Lv5</b> and own the passive shown on its card, and a boss or Great Tengu chest offers an <b>Evolution</b>.</p>
 <p><b>Ninjas</b>: each one starts with a different skill (Tobi: Shuriken, Ao: Kunai Ring, Sakura: Wind Blades, Kage: Lightning). Buy and switch in the shop.</p>
-<p><b>Ninjutsu Scroll</b>: tap the scroll icon at top left (PC: Space; you can also shake your phone) for SKY SOAR: invincible, rocketing upward.</p>
+<p><b>Ninjutsu Scroll</b>: tap the scroll icon at top left (PC: Space) for SKY SOAR: invincible, rocketing upward.</p>
 <p><b>Death Zone</b>: the fire, tsunami or monster at the bottom keeps rising. Fall in and you lose HP.</p>
 <p><b>Traps</b>: <span class="t-spring">springs</span> double your jump, <span class="t-crumble">cracked floors</span> break after one step, <span class="t-move">moving floors</span>, and <span class="t-spike">spikes</span> hurt.</p>
-<p><b>BOSS</b>: each act ends with a boss. Touch it in time to start a QTE: <b>MASH</b>, <b>SWIPE</b> (swipe fast) or <b>SHAKE</b> (swipe left-right rapidly). Defeat it to open a treasure chest and choose an upgrade.</p>
+<p><b>BOSS</b>: each act ends with a boss. Touch it in time to start a QTE: <b>MASH</b> (tap rapidly) or <b>SWIPE</b> (swipe fast). Defeat it to open a treasure chest and choose an upgrade.</p>
 <p><b>Story and Endless</b>: clear all four acts (Wind, Forest, Fire, Mountain) to complete your training, then keep climbing the <b>Endless Tower</b>, where every loop gets harder and scores higher.</p>`,
   ],
 };

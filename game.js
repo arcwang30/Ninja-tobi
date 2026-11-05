@@ -60,7 +60,6 @@ const BOSS_KINDS = [
 const QTE_TYPES = [
   { id: 'mash', n: ['連打!', '連打!', 'MASH!'], hint: ['連續點擊畫面', '画面を連続タップ', 'Tap rapidly'] },
   { id: 'swipe', n: ['劃擊!', '斬り払い!', 'SWIPE!'], hint: ['快速滑動畫面', '画面を素早くスワイプ', 'Swipe fast'] },
-  { id: 'shake', n: ['晃動!', 'シェイク!', 'SHAKE!'], hint: ['搖晃手機／左右快速來回滑動', '振る／左右に素早く往復スワイプ', 'Shake, or swipe left-right rapidly'] },
 ];
 const PERKS = [
   { id: 'bounce', n: ['強腳', '強脚', 'Strong Legs'], d: ['跳躍高度 +8%', 'ジャンプ力 +8%', 'Jump height +8%'], max: 3, ic: '🦶' },
@@ -265,17 +264,17 @@ let g = null;         // 當前遊戲局
 let demo = { x: W / 2, y: 470, vy: -JUMP, t: 0, face: 1 };
 
 // ===== 輸入 =====
-const inp = { down: false, id: null, lx: 0, ly: 0, dx: 0, keys: {}, sw: 0, wdir: 0, wtrav: 0 };
+const inp = { down: false, id: null, lx: 0, ly: 0, dx: 0, keys: {}, sw: 0 };
 function toL(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
 cv.addEventListener('pointerdown', e => {
-  A(); askMotion();
+  A();
   const p = toL(e);
   if (state === 'play' && !paused) {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
     if (p.x > W - 50 && hy < 50) { pauseGame(); return; }
     if (p.x < 120 && hy > 26 && hy < 62) { castScroll(); return; }
   }
-  inp.down = true; inp.id = e.pointerId; inp.lx = p.x; inp.ly = p.y; inp.sw = 0; inp.wtrav = 0;
+  inp.down = true; inp.id = e.pointerId; inp.lx = p.x; inp.ly = p.y; inp.sw = 0;
   inp.hist = [{ x: p.x, y: p.y, t: performance.now() }]; inp.flicked = false;
   // 先進入「待定」：手指不動一下就變瞄準，一開始就滑動則是一般移動
   inp.mode = state === 'play' && !paused ? 'pending' : null;
@@ -305,11 +304,6 @@ cv.addEventListener('pointermove', e => {
   if (state === 'qte') {
     const q = g.qte;
     if (q.type === 'swipe') { inp.sw += Math.hypot(dx, dy); if (inp.sw > 55) { inp.sw = 0; qteHit(1); } }
-    if (q.type === 'shake' && Math.abs(dx) > .5) {
-      const d = Math.sign(dx);
-      if (d !== inp.wdir) { if (inp.wtrav > 28) qteHit(1); inp.wdir = d; inp.wtrav = 0; }
-      inp.wtrav += Math.abs(dx);
-    }
   }
 });
 const endPtr = e => {
@@ -346,25 +340,6 @@ document.addEventListener('visibilitychange', () => {
   else if (ac && save.opt.snd && state === 'menu') BGM.play(ac);
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden && g && state !== 'over' && state !== 'menu' && state !== 'perk') pauseGame(); });
-
-// 晃動偵測
-let motionAsked = false, lastShake = 0, lastMag = 0;
-function askMotion() {
-  if (motionAsked) return; motionAsked = true;
-  if (window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function') {
-    DeviceMotionEvent.requestPermission().catch(() => { });
-  }
-}
-addEventListener('devicemotion', e => {
-  const a = e.accelerationIncludingGravity; if (!a || a.x == null) return;
-  const mag = Math.hypot(a.x, a.y, a.z), now = performance.now();
-  if (Math.abs(mag - lastMag) > 16 && now - lastShake > 280) {
-    lastShake = now;
-    if (state === 'play' && !paused) castScroll();
-    else if (state === 'qte' && g.qte.type === 'shake') qteHit(2);
-  }
-  lastMag = mag;
-});
 
 // ===== 遊戲局 =====
 const pk = id => (g && g.perks[id]) || 0;
@@ -1196,7 +1171,7 @@ function spawnBoss() {
   const hp = 16 + 6 * n;
   g.boss = {
     n, kind, hp, max: hp, x: W / 2, y: g.camY - 60, t: 0, life: 22, cool: 0, skillT: 2.5,
-    shield: false, shT: 1.5, r: 30, warn: 0, qtype: QTE_TYPES[(n + (Math.random() * 3 | 0)) % 3].id,
+    shield: false, shT: 1.5, r: 30, warn: 0, qtype: QTE_TYPES[(n + (Math.random() * QTE_TYPES.length | 0)) % QTE_TYPES.length].id,
   };
   g.banner = { t: 2.2, a: t('boss_in'), b: t('boss_appear', L(BOSS_KINDS[kind].n)), c: t('boss_desc', L(BOSS_KINDS[kind].skill)) };
   SFX.boss(); vib(200);
@@ -1231,7 +1206,7 @@ function updateBoss(dt) {
       state = 'qte';
       const qt = QTE_TYPES.find(q => q.id === b.qtype);
       g.qte = { type: b.qtype, q: qt, t: 0, tl: 4.5, hits: [], dmg0: b.hp };
-      inp.sw = 0; inp.wtrav = 0; p.dash = 0; p.dive = false;
+      inp.sw = 0; p.dash = 0; p.dive = false;
       SFX.boss(); vib(80);
     }
   }
@@ -2285,7 +2260,7 @@ function openSub(id) {
 
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
-  A(); askMotion(); SFX.click();
+  A(); SFX.click();
   const a = b.dataset.act, arg = b.dataset.arg;
   switch (a) {
     case 'start': case 'retry': startRun(); break;
