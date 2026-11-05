@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NINJA 鳶 UI 風格提案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Shippori+Mincho+B1:wght@700;800&family=Dela+Gothic+One&family=Kaisei+Decol:wght@700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #2b2622; color: #f3ead8; font-family: "Noto Serif TC", serif; padding: 24px 16px 48px; }
+header { max-width: 1100px; margin: 0 auto 24px; }
+header h1 { font-size: 22px; margin-bottom: 6px; }
+header p { color: #cbbfa8; font-size: 14px; line-height: 1.6; }
+.grid { display: grid; justify-items: center; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 28px; max-width: 1100px; margin: 0 auto; }
+.opt h2 { font-size: 18px; margin-bottom: 4px; }
+.opt .sub { color: #cbbfa8; font-size: 13px; margin-bottom: 12px; line-height: 1.5; }
+.pair { display: flex; gap: 10px; }
+.phone { width: 208px; height: 390px; border-radius: 18px; overflow: hidden; position: relative; border: 3px solid #111; flex: none; }
+.phone .in { width: 320px; height: 600px; transform: scale(.65); transform-origin: 0 0; position: absolute; inset: 0; display: flex; flex-direction: column; }
+.cap { font-size: 12px; color: #a99c84; text-align: center; margin-top: 4px; }
+
+/* ===== A 墨繪・和紙 ===== */
+.A { --paper: #f2ead8; --ink: #1b1714; --red: #b5221c; font-family: "Yuji Syuku", "Noto Serif TC", serif; color: var(--ink);
+  background: radial-gradient(circle at 20% 30%, rgba(120,90,50,.08) 0 2px, transparent 3px) 0 0/23px 19px,
+              radial-gradient(circle at 70% 60%, rgba(120,90,50,.06) 0 1px, transparent 2px) 0 0/17px 13px, var(--paper); }
+.A .title { flex: 1; display: flex; flex-direction: column; align-items: center; padding-top: 70px; position: relative; }
+.A .brush { position: absolute; top: 120px; left: 30px; width: 260px; height: 150px; border-radius: 48% 52% 40% 60% / 60% 40% 60% 40%;
+  background: radial-gradient(ellipse at 40% 50%, rgba(27,23,20,.12), transparent 70%); }
+.A .t1 { font-size: 34px; letter-spacing: 10px; }
+.A .t2 { font-size: 150px; line-height: 1; margin-top: 4px; text-shadow: 3px 3px 0 rgba(27,23,20,.15); }
+.A .seal { position: absolute; top: 210px; right: 54px; width: 48px; height: 48px; background: var(--red); color: var(--paper); font-size: 20px; display: grid; place-items: center; border-radius: 6px; transform: rotate(-8deg); font-family: "Noto Serif TC"; font-weight: 900; }
+.A .tag { font-size: 18px; margin-top: 16px; writing-mode: vertical-rl; position: absolute; left: 34px; top: 80px; letter-spacing: 4px; }
+.A .start { margin: auto 40px 18px; height: 64px; background: var(--ink); color: var(--paper); font-size: 26px; display: grid; place-items: center;
+  clip-path: polygon(2% 18%, 12% 4%, 60% 10%, 97% 2%, 100% 40%, 96% 88%, 70% 96%, 20% 92%, 3% 98%, 0 60%); letter-spacing: 6px; }
+.A .dock { display: flex; border-top: 2px solid var(--ink); }
+.A .dock div { flex: 1; text-align: center; padding: 10px 0 12px; font-size: 13px; }
+.A .dock b { display: block; width: 40px; height: 40px; margin: 0 auto 4px; border: 3px solid var(--ink); border-radius: 50%; border-right-color: transparent; transform: rotate(-30deg); font-size: 20px; line-height: 34px; font-weight: 400; }
+.A .dock b span { display: inline-block; transform: rotate(30deg); }
+.A .lv { flex: 1; padding: 50px 18px; display: flex; flex-direction: column; gap: 14px; background: rgba(27,23,20,.05); }
+.A .lv h3 { text-align: center; font-size: 30px; font-weight: 400; margin-bottom: 10px; }
+.A .card { background: #faf5ea; border: 2px solid var(--ink); padding: 14px 14px 14px 64px; position: relative; box-shadow: 4px 4px 0 rgba(27,23,20,.2); }
+.A .card i { position: absolute; left: 12px; top: 14px; width: 40px; height: 40px; background: var(--red); color: var(--paper); font-style: normal; display: grid; place-items: center; font-size: 20px; border-radius: 4px; }
+.A .card b { font-size: 22px; font-weight: 400; } .A .card small { display: block; font-size: 15px; margin-top: 4px; color: #4a3f35; font-family: "Noto Serif TC"; }
+
+/* ===== B 漆黑・金蒔繪 ===== */
+.B { --lac: #140b0a; --red: #6e0f12; --gold: #d9b45a; --gold2: #f5dc95; font-family: "Shippori Mincho B1", "Noto Serif TC", serif; color: var(--gold2);
+  background: radial-gradient(circle at 50% 100%, transparent 18px, rgba(217,180,90,.13) 19px 21px, transparent 22px) 0 0/40px 20px,
+              radial-gradient(ellipse at 50% 30%, #3a0d0d, var(--lac) 70%); }
+.B .title { flex: 1; display: flex; flex-direction: column; align-items: center; padding-top: 80px; }
+.B .crest { width: 120px; height: 120px; border: 3px solid var(--gold); border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 0 6px var(--lac), 0 0 0 8px var(--gold); }
+.B .crest span { font-size: 72px; font-weight: 800; color: var(--gold2); text-shadow: 0 2px 0 #7a5a1a; }
+.B .t1 { margin-top: 26px; font-size: 40px; font-weight: 800; letter-spacing: 14px; background: linear-gradient(#fff1c2, #c9962e); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.B .tag { margin-top: 10px; font-size: 16px; color: var(--gold); letter-spacing: 3px; }
+.B .start { margin: auto 36px 20px; height: 66px; position: relative; display: grid; place-items: center; font-size: 26px; font-weight: 800; letter-spacing: 8px; color: var(--gold2);
+  background: linear-gradient(#9a1a1e, var(--red)); border: 2px solid var(--gold); outline: 2px solid var(--gold); outline-offset: 4px; }
+.B .start::before, .B .start::after { content: "◆"; position: absolute; top: 50%; transform: translateY(-50%); color: var(--gold); font-size: 14px; }
+.B .start::before { left: 14px; } .B .start::after { right: 14px; }
+.B .dock { display: flex; padding: 12px 10px 16px; gap: 8px; border-top: 1px solid var(--gold); background: rgba(0,0,0,.4); }
+.B .dock div { flex: 1; text-align: center; font-size: 13px; color: var(--gold); }
+.B .dock b { display: grid; place-items: center; width: 44px; height: 44px; margin: 0 auto 4px; border: 2px solid var(--gold); transform: rotate(45deg); }
+.B .dock b span { transform: rotate(-45deg); font-size: 20px; color: var(--gold2); }
+.B .lv { flex: 1; padding: 50px 16px; display: flex; flex-direction: column; gap: 14px; }
+.B .lv h3 { text-align: center; font-size: 28px; font-weight: 800; letter-spacing: 6px; margin-bottom: 8px; color: var(--gold2); }
+.B .card { background: linear-gradient(#1f1210, #0d0707); border: 1px solid var(--gold); outline: 1px solid rgba(217,180,90,.4); outline-offset: 3px; padding: 14px 14px 14px 66px; position: relative; }
+.B .card i { position: absolute; left: 12px; top: 13px; width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--gold); color: var(--gold2); font-style: normal; display: grid; place-items: center; font-size: 20px; font-weight: 800; }
+.B .card b { font-size: 22px; } .B .card small { display: block; font-size: 15px; margin-top: 4px; color: #cdb98a; font-family: "Noto Serif TC"; font-weight: 700; }
+
+/* ===== C 浮世繪・木札 ===== */
+.C { --indigo: #1f3a66; --sky: #f0d9a6; --ver: #d2442c; --wood: #b98a52; --wood2: #8a5f30; font-family: "Kaisei Decol", "Noto Serif TC", serif; color: #2a1a0a;
+  background: linear-gradient(#f4dfae 0 55%, #e9c98a 55% 100%); }
+.C .title { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; padding-top: 60px; overflow: hidden; }
+.C .sun { position: absolute; top: 120px; width: 200px; height: 200px; border-radius: 50%; background: var(--ver); }
+.C .wave { position: absolute; bottom: -40px; left: -40px; right: -40px; height: 220px; background:
+   radial-gradient(circle at 50% 0, transparent 38px, #f6f0e0 39px 44px, var(--indigo) 45px) 0 0/90px 70px repeat-x,
+   var(--indigo); border-radius: 50% 50% 0 0 / 30% 30% 0 0; }
+.C .t1 { position: relative; font-family: "Dela Gothic One", "Noto Serif TC", sans-serif; font-size: 44px; color: var(--indigo); letter-spacing: 6px; text-shadow: 3px 3px 0 #f6f0e0; }
+.C .t2 { position: relative; font-family: "Dela Gothic One", "Noto Serif TC", sans-serif; font-size: 130px; color: #fff8ea; line-height: 1.05; -webkit-text-stroke: 6px var(--indigo); paint-order: stroke fill; margin-top: 10px; }
+.C .tag { position: relative; margin-top: 6px; background: var(--indigo); color: #f6f0e0; padding: 4px 14px; font-size: 15px; }
+.C .start { position: relative; margin: auto auto 14px; width: 230px; height: 78px; display: grid; place-items: center; font-size: 26px; font-family: "Noto Serif TC", serif; font-weight: 900; color: #fff8ea; letter-spacing: 4px;
+  background: repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 3px, transparent 3px 11px), linear-gradient(var(--ver), #a92e1c);
+  clip-path: polygon(50% 0, 100% 22%, 100% 100%, 0 100%, 0 22%); padding-top: 12px; z-index: 1; }
+.C .rope { position: absolute; left: 50%; bottom: 92px; width: 2px; height: 30px; background: #f6f0e0; z-index: 1; }
+.C .dock { display: flex; gap: 6px; padding: 10px 8px 14px; background: var(--indigo); }
+.C .dock div { flex: 1; text-align: center; padding: 8px 0 6px; font-size: 12px; color: #2a1a0a;
+  background: repeating-linear-gradient(90deg, rgba(0,0,0,.08) 0 2px, transparent 2px 9px), linear-gradient(#d9a868, var(--wood)); border-radius: 4px; box-shadow: 0 3px 0 var(--wood2); }
+.C .dock b { display: block; font-size: 22px; font-family: "Noto Serif TC", serif; color: var(--ver); font-weight: 900; }
+.C .lv { flex: 1; padding: 44px 14px; display: flex; flex-direction: column; gap: 14px; background: var(--indigo); }
+.C .lv h3 { text-align: center; font-family: "Dela Gothic One", "Noto Serif TC", sans-serif; font-weight: 400; font-size: 28px; color: #f6f0e0; margin-bottom: 8px; }
+.C .card { position: relative; background: #f6ecd2; padding: 14px 26px 14px 74px; border-top: 3px solid var(--ver); border-bottom: 3px solid var(--ver); }
+.C .card::before, .C .card::after { content: ""; position: absolute; top: -8px; bottom: -8px; width: 12px; background: linear-gradient(90deg, var(--wood2), var(--wood), var(--wood2)); border-radius: 6px; }
+.C .card::before { left: -6px; } .C .card::after { right: -6px; }
+.C .card i { position: absolute; left: 16px; top: 12px; width: 46px; height: 46px; background: var(--ver); color: #fff8ea; font-style: normal; display: grid; place-items: center; font-size: 22px; font-family: "Noto Serif TC", serif; font-weight: 900; border-radius: 50%; }
+.C .card b { font-size: 22px; } .C .card small { display: block; font-size: 15px; margin-top: 4px; color: #4a3520; font-family: "Noto Serif TC"; font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <h1>NINJA 鳶 介面風格提案</h1>
+  <p>三種方向，同樣是「標題畫面」和「升級選擇」兩個畫面。選定後我會套用到所有選單、彈窗、HUD 和按鈕。</p>
+</header>
+<div class="grid">
+
+  <section class="opt">
+    <h2>A　墨繪・和紙</h2>
+    <p class="sub">米色和紙、毛筆字、紅色落款印章。安靜、文人氣息，像一卷忍術秘傳書。</p>
+    <div class="pair">
+      <div><div class="phone A"><div class="in">
+        <div class="title"><div class="brush"></div><div class="t1">NINJA</div><div class="t2">鳶</div><div class="seal">修行</div><div class="tag">我が名は鳶、いざ参る</div></div>
+        <div class="start">開始修行</div>
+        <div class="dock"><div><b><span>商</span></b>整備商店</div><div><b><span>録</span></b>排行・成就</div><div><b><span>巻</span></b>玩法說明</div><div><b><span>設</span></b>設定</div></div>
+      </div></div><div class="cap">標題</div></div>
+      <div><div class="phone A"><div class="in">
+        <div class="lv"><h3>升級・選擇一項</h3>
+          <div class="card"><i>攻</i><b>手裡劍 Lv3</b><small>每 1.6 秒投擲 2 枚</small></div>
+          <div class="card"><i>防</i><b>結界</b><small>抵擋 1 次傷害</small></div>
+          <div class="card"><i>被</i><b>強腳</b><small>跳躍高度 +8%</small></div>
+        </div>
+      </div></div><div class="cap">升級</div></div>
+    </div>
+  </section>
+
+  <section class="opt">
+    <h2>B　漆黑・金蒔繪</h2>
+    <p class="sub">黑紅漆器加金箔描邊、青海波暗紋、家紋圓徽。華麗、高級感，像大名的寶物箱。</p>
+    <div class="pair">
+      <div><div class="phone B"><div class="in">
+        <div class="title"><div class="crest"><span>鳶</span></div><div class="t1">NINJA</div><div class="tag">我が名は鳶、いざ参る</div></div>
+        <div class="start">開始修行</div>
+        <div class="dock"><div><b><span>商</span></b>整備商店</div><div><b><span>録</span></b>排行・成就</div><div><b><span>巻</span></b>玩法說明</div><div><b><span>設</span></b>設定</div></div>
+      </div></div><div class="cap">標題</div></div>
+      <div><div class="phone B"><div class="in">
+        <div class="lv"><h3>升級・選擇一項</h3>
+          <div class="card"><i>攻</i><b>手裡劍 Lv3</b><small>每 1.6 秒投擲 2 枚</small></div>
+          <div class="card"><i>防</i><b>結界</b><small>抵擋 1 次傷害</small></div>
+          <div class="card"><i>被</i><b>強腳</b><small>跳躍高度 +8%</small></div>
+        </div>
+      </div></div><div class="cap">升級</div></div>
+    </div>
+  </section>
+
+  <section class="opt">
+    <h2>C　浮世繪・木札</h2>
+    <p class="sub">藍色大浪、朱紅太陽、繪馬造型按鈕、卷軸卡片。熱鬧、色彩鮮明，最有「遊戲感」。</p>
+    <div class="pair">
+      <div><div class="phone C"><div class="in">
+        <div class="title"><div class="sun"></div><div class="wave"></div><div class="t1">NINJA</div><div class="t2">鳶</div><div class="tag">我が名は鳶、いざ参る！</div><div class="rope"></div></div>
+        <div style="background:var(--indigo);padding-top:6px"><div class="start">開始修行</div></div>
+        <div class="dock"><div><b>商</b>整備商店</div><div><b>録</b>排行・成就</div><div><b>巻</b>玩法說明</div><div><b>設</b>設定</div></div>
+      </div></div><div class="cap">標題</div></div>
+      <div><div class="phone C"><div class="in">
+        <div class="lv"><h3>LEVEL UP！</h3>
+          <div class="card"><i>攻</i><b>手裡劍 Lv3</b><small>每 1.6 秒投擲 2 枚</small></div>
+          <div class="card"><i>防</i><b>結界</b><small>抵擋 1 次傷害</small></div>
+          <div class="card"><i>被</i><b>強腳</b><small>跳躍高度 +8%</small></div>
+        </div>
+      </div></div><div class="cap">升級</div></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

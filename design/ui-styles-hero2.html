@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NINJA 鳶 主角畫風提案 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Mochiy+Pop+One&family=Noto+Sans+TC:wght@700;900&display=swap">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #2b2622; color: #f3ead8; font-family: "Noto Sans TC", sans-serif; padding: 24px 16px 48px; }
+header { max-width: 1100px; margin: 0 auto 24px; }
+header h1 { font-size: 22px; margin-bottom: 6px; }
+header p { color: #cbbfa8; font-size: 14px; line-height: 1.6; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 28px; max-width: 1100px; margin: 0 auto; justify-items: center; }
+.opt h2 { font-size: 18px; margin-bottom: 4px; }
+.opt .sub { color: #cbbfa8; font-size: 13px; margin-bottom: 12px; line-height: 1.5; max-width: 430px; }
+.pair { display: flex; gap: 10px; }
+.phone { width: 208px; height: 390px; border-radius: 18px; overflow: hidden; position: relative; border: 3px solid #111; flex: none; }
+.phone .in { width: 320px; height: 600px; transform: scale(.65); transform-origin: 0 0; position: absolute; inset: 0; display: flex; flex-direction: column;
+  font-family: "Noto Sans TC", sans-serif; font-weight: 900; }
+.cap { font-size: 12px; color: #a99c84; text-align: center; margin-top: 4px; }
+.hero { position: absolute; width: 220px; left: 50px; top: 180px; filter: drop-shadow(0 8px 0 rgba(0,0,0,.25)); }
+.title { flex: 1; position: relative; overflow: hidden; }
+.logo { position: absolute; left: 0; right: 0; top: 40px; text-align: center; z-index: 1; }
+/* 共通：粗黑描邊＋上緣高光 */
+.btn { position: relative; display: grid; place-items: center; border: 4px solid #1a1214; overflow: hidden; }
+.btn::before { content: ""; position: absolute; left: 8%; right: 8%; top: 5px; height: 34%; border-radius: 999px; background: rgba(255,255,255,.35); }
+.btn span { position: relative; }
+.en { font-family: "Dela Gothic One", sans-serif; font-weight: 400; }
+.pop { font-family: "Mochiy Pop One", sans-serif; font-weight: 400; }
+.lv { flex: 1; padding: 44px 16px; display: flex; flex-direction: column; gap: 16px; position: relative; }
+.card { position: relative; padding: 12px 14px 12px 72px; border: 4px solid #1a1214; }
+.card i { position: absolute; left: 12px; top: 10px; width: 48px; height: 48px; border: 3px solid #1a1214; border-radius: 50%; font-style: normal; display: grid; place-items: center; font-size: 20px; color: #fff; }
+.card b { font-size: 20px; } .card small { display: block; font-size: 14px; margin-top: 3px; font-weight: 700; }
+.dock { display: flex; gap: 8px; padding: 10px 12px 16px; }
+.dock div { flex: 1; text-align: center; font-size: 11px; }
+.dock b { display: grid; place-items: center; width: 52px; height: 52px; margin: 0 auto 4px; font-size: 22px; border: 4px solid #1a1214; }
+.red { background: radial-gradient(circle at 35% 30%, #ff7a6a, #e5342a 60%); }
+.blue { background: radial-gradient(circle at 35% 30%, #7ac8ff, #2a7ae2 60%); }
+.gold { background: radial-gradient(circle at 35% 30%, #ffe27a, #d0a020 60%); color: #1a1214 !important; }
+
+/* ===== J 祭典夜市 ===== */
+.J { color: #fff; background: radial-gradient(ellipse at 50% 100%, #ff8a3a 0, transparent 60%), linear-gradient(#1a1030, #3a1a3a 55%, #6a2a2a); }
+.J .string { position: absolute; left: -20px; right: -20px; height: 60px; border-bottom: 2px solid #1a1214; border-radius: 0 0 50% 50%; }
+.J .lamp { position: absolute; width: 30px; height: 38px; border-radius: 45%; border: 3px solid #1a1214; background: repeating-linear-gradient(transparent 0 6px, rgba(0,0,0,.2) 6px 8px), radial-gradient(circle at 40% 35%, #ffd2a0, #ff4a2a 70%); box-shadow: 0 0 16px rgba(255,120,60,.9); }
+.J .lamp::before { content: ""; position: absolute; left: 6px; right: 6px; top: -7px; height: 6px; background: #1a1214; border-radius: 2px; }
+.J .stall { position: absolute; bottom: 0; height: 120px; width: 150px; background: #3a1a10; border: 4px solid #1a1214; border-bottom: 0; }
+.J .stall::before { content: ""; position: absolute; left: -10px; right: -10px; top: -26px; height: 30px; border: 4px solid #1a1214; background: repeating-linear-gradient(90deg, #e5342a 0 18px, #fff 18px 36px); }
+.J .t1 { font-size: 50px; color: #fff; -webkit-text-stroke: 7px #1a1214; paint-order: stroke fill; text-shadow: 0 0 20px rgba(255,140,60,.9); }
+.J .t2 { display: inline-block; margin-top: 4px; font-size: 20px; color: #1a1214; padding: 2px 18px; border: 4px solid #1a1214; background: repeating-linear-gradient(90deg, #fff 0 14px, #ffd2d2 14px 28px); border-radius: 6px; }
+.J .start { margin: 0 38px 8px; height: 72px; border-radius: 10px; font-size: 26px; color: #fff; background: repeating-linear-gradient(90deg, rgba(255,255,255,.12) 0 22px, transparent 22px 44px), linear-gradient(#ff5a4a, #c4201a); box-shadow: 0 6px 0 #1a1214, 0 0 24px rgba(255,90,60,.6); text-shadow: 0 2px 0 rgba(0,0,0,.45); }
+.J .coin { text-align: center; font-size: 15px; margin-bottom: 12px; color: #ffd27a; }
+.J .dock { background: #2a1010; border-top: 4px solid #1a1214; }
+.J .dock div { color: #ffe0c0; }
+.J .dock b { border-radius: 45%; color: #1a1214; background: repeating-linear-gradient(transparent 0 8px, rgba(0,0,0,.15) 8px 10px), radial-gradient(circle at 40% 35%, #ffe2b0, #ff8a3a 70%); box-shadow: 0 0 12px rgba(255,138,58,.7); }
+.J .lv { background: linear-gradient(#1a1030, #3a1a3a); }
+.J .lv h3 { text-align: center; font-size: 34px; color: #fff; -webkit-text-stroke: 6px #1a1214; paint-order: stroke fill; text-shadow: 0 0 18px rgba(255,140,60,.9); margin-bottom: 8px; }
+.J .card { background: #fff8ec; color: #1a1214; border-radius: 12px; box-shadow: 0 5px 0 #1a1214; padding-top: 22px; }
+.J .card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 9px; border-radius: 8px 8px 0 0; background: repeating-linear-gradient(90deg, #e5342a 0 12px, #fff 12px 24px); border-bottom: 2px solid #1a1214; }
+.J .card i { top: 18px; } .J .card small { color: #6a4a3a; }
+
+/* ===== K 雪山修行 ===== */
+.K { color: #1a1214; background: radial-gradient(circle, rgba(255,255,255,.9) 1.5px, transparent 2.5px) 0 0/29px 31px, radial-gradient(circle, rgba(255,255,255,.7) 1px, transparent 2px) 11px 7px/19px 23px, linear-gradient(#7ac4f0, #cfeaff 60%, #f4fbff); }
+.K .fuji { position: absolute; left: -20px; right: -20px; bottom: 60px; height: 230px; background: #3a5a9a; clip-path: polygon(0 100%, 38% 12%, 62% 12%, 100% 100%); }
+.K .cap2 { position: absolute; left: calc(38% - 8px); right: calc(38% - 8px); bottom: calc(60px + 150px); height: 80px; background: #fff; clip-path: polygon(0 100%, 26% 0, 74% 0, 100% 100%, 82% 70%, 64% 100%, 46% 72%, 28% 100%); }
+.K .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 70px; background: #fff; border-top: 4px solid #1a1214; border-radius: 40% 60% 0 0 / 20px 30px 0 0; }
+.K .t1 { font-size: 50px; color: #fff; -webkit-text-stroke: 7px #1a1214; paint-order: stroke fill; text-shadow: 0 6px 0 #2a7ae2; }
+.K .t2 { display: inline-block; margin-top: 4px; font-size: 20px; color: #fff; padding: 2px 16px; border: 4px solid #1a1214; background: #e5342a; border-radius: 20px; }
+.K .start { margin: 0 38px 8px; height: 72px; border-radius: 36px; font-size: 26px; color: #fff; background: linear-gradient(#ff6a5a, #d42a22); box-shadow: 0 6px 0 #1a1214; text-shadow: 0 2px 0 rgba(0,0,0,.4); }
+.K .coin { text-align: center; font-size: 15px; margin-bottom: 12px; color: #2a4a7a; }
+.K .dock { background: #fff; border-top: 4px solid #1a1214; }
+.K .dock b { border-radius: 16px; color: #fff; background: linear-gradient(#5aaaf0, #2a6ac0); box-shadow: inset 0 3px 0 rgba(255,255,255,.4), 0 4px 0 #1a1214; }
+.K .dock div:first-child b { background: linear-gradient(#ff6a5a, #d42a22); }
+.K .lv h3 { text-align: center; font-size: 34px; color: #fff; -webkit-text-stroke: 6px #1a1214; paint-order: stroke fill; text-shadow: 0 5px 0 #2a7ae2; margin-bottom: 8px; }
+.K .card { background: rgba(255,255,255,.92); border-radius: 18px; box-shadow: 0 5px 0 #1a1214; }
+.K .card::after { content: ""; position: absolute; right: -4px; top: -4px; width: 26px; height: 14px; background: #fff; border: 4px solid #1a1214; border-radius: 10px 10px 4px 4px; }
+.K .card small { color: #4a5a7a; }
+
+/* ===== L 忍者屋敷 ===== */
+.L { color: #1a1214; background:
+   linear-gradient(90deg, #6a3a1a 0 14px, transparent 14px calc(100% - 14px), #6a3a1a calc(100% - 14px)),
+   linear-gradient(rgba(106,58,26,.9) 0 0) 0 0/100% 4px repeat-y,
+   repeating-linear-gradient(90deg, transparent 0 62px, #8a5a30 62px 66px), repeating-linear-gradient(transparent 0 72px, #8a5a30 72px 76px),
+   #f6efdc; }
+.L .beam { position: absolute; left: 0; right: 0; top: 0; height: 34px; background: linear-gradient(#8a4a22, #5a2a10); border-bottom: 4px solid #1a1214; }
+.L .tatami { position: absolute; left: 0; right: 0; bottom: 0; height: 110px; background: repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 3px, transparent 3px 7px), linear-gradient(#b8c47a, #98a85a); border-top: 6px solid #3a2a10; }
+.L .jiku { position: absolute; right: 26px; top: 70px; width: 54px; height: 150px; background: #fff8ea; border: 3px solid #1a1214; display: flex; align-items: center; justify-content: center; writing-mode: vertical-rl; font-size: 20px; color: #1a1214; }
+.L .jiku::before, .L .jiku::after { content: ""; position: absolute; left: -8px; right: -8px; height: 10px; background: #5a2a10; border: 3px solid #1a1214; border-radius: 6px; }
+.L .jiku::before { top: -10px; } .L .jiku::after { bottom: -10px; }
+.L .logo { left: 0; right: 70px; }
+.L .t1 { font-size: 48px; color: #fff; -webkit-text-stroke: 7px #1a1214; paint-order: stroke fill; text-shadow: 0 6px 0 #8a4a22; }
+.L .t2 { display: inline-block; margin-top: 4px; font-size: 20px; color: #ffd27a; padding: 2px 16px; border: 4px solid #1a1214; background: linear-gradient(#6a3a1a, #3a1a08); }
+.L .hero { left: 30px; }
+.L .start { margin: 0 38px 8px; height: 72px; border-radius: 8px; font-size: 26px; color: #ffd27a; background: repeating-linear-gradient(90deg, rgba(0,0,0,.08) 0 3px, transparent 3px 12px), linear-gradient(#8a4a22, #4a2208); box-shadow: 0 6px 0 #1a1214; text-shadow: 0 2px 0 #1a1214; }
+.L .start::after { content: ""; position: absolute; right: 18px; bottom: -4px; width: 10px; height: 26px; background: #e5342a; border: 2px solid #1a1214; border-radius: 0 0 5px 5px; }
+.L .coin { text-align: center; font-size: 15px; margin-bottom: 12px; color: #5a3a1a; }
+.L .dock { background: linear-gradient(#5a2a10, #3a1a08); border-top: 4px solid #1a1214; }
+.L .dock div { color: #ffe0b0; }
+.L .dock b { border-radius: 8px; color: #1a1214; background: repeating-linear-gradient(90deg, transparent 0 12px, rgba(138,90,48,.6) 12px 14px), repeating-linear-gradient(transparent 0 12px, rgba(138,90,48,.6) 12px 14px), #fff6e0; box-shadow: 0 4px 0 #000; }
+.L .lv { background: rgba(246,239,220,.6); }
+.L .lv h3 { text-align: center; font-size: 34px; color: #fff; -webkit-text-stroke: 6px #1a1214; paint-order: stroke fill; text-shadow: 0 5px 0 #8a4a22; margin-bottom: 8px; }
+.L .card { background: #fffaee; box-shadow: 0 5px 0 #1a1214; border-radius: 6px; outline: 3px solid #8a5a30; outline-offset: -10px; }
+.L .card small { color: #6a4a2a; }
+</style>
+</head>
+<body>
+<header>
+  <h1>NINJA 鳶 主角畫風提案 2</h1>
+  <p>延續上一組的做法（粗黑描邊、高光、亮面圓徽、中文用粗黑體），換成三個不同的場景與氣氛。</p>
+</header>
+<div class="grid">
+
+  <section class="opt">
+    <h2>J　祭典夜市</h2>
+    <p class="sub">夜祭的燈籠串、紅白條紋攤位、燈籠形狀的選單圖示，卡片頂端有紅白條紋。熱鬧、溫暖、有節慶感，紅色主角和燈籠的暖光很搭。</p>
+    <div class="pair">
+      <div><div class="phone J"><div class="in">
+        <div class="title">
+          <div class="string" style="top:20px"></div>
+          <span class="lamp" style="left:20px;top:70px"></span><span class="lamp" style="left:100px;top:84px"></span><span class="lamp" style="left:190px;top:84px"></span><span class="lamp" style="left:268px;top:70px"></span>
+          <div class="stall" style="left:-20px"></div><div class="stall" style="right:-30px"></div>
+          <div class="logo" style="top:100px"><div class="t1 en">NINJA</div><br><div class="t2">鳶 TOBI</div></div>
+          <img class="hero" src="assets/hero.png" alt="" style="top:222px;width:165px;left:78px">
+        </div>
+        <div class="btn start"><span>開始修行</span></div>
+        <div class="coin">小判 1,250</div>
+        <div class="dock"><div><b>商</b>整備商店</div><div><b>録</b>排行・成就</div><div><b>巻</b>玩法說明</div><div><b>設</b>設定</div></div>
+      </div></div><div class="cap">標題</div></div>
+      <div><div class="phone J"><div class="in">
+        <div class="lv"><h3 class="en">LEVEL UP!</h3>
+          <div class="card"><i class="red">攻</i><b>手裡劍 Lv3</b><small>每 1.6 秒投擲 2 枚</small></div>
+          <div class="card"><i class="blue">防</i><b>結界</b><small>抵擋 1 次傷害</small></div>
+          <div class="card"><i class="gold">被</i><b>強腳</b><small>跳躍高度 +8%</small></div>
+        </div>
+      </div></div><div class="cap">升級</div></div>
+    </div>
+  </section>
+
+  <section class="opt">
+    <h2>K　雪山修行</h2>
+    <p class="sub">藍天、富士山、飄雪、白色雪地，按鈕是紅色和冰藍色的亮面膠囊，卡片上積了一點雪。明亮清爽，紅色主角在藍白底上非常醒目。</p>
+    <div class="pair">
+      <div><div class="phone K"><div class="in">
+        <div class="title">
+          <div class="fuji"></div><div class="cap2"></div><div class="ground"></div>
+          <div class="logo"><div class="t1 en">NINJA</div><br><div class="t2">鳶 TOBI</div></div>
+          <img class="hero" src="assets/hero.png" alt="">
+        </div>
+        <div style="background:#fff"><div class="btn start"><span>開始修行</span></div>
+        <div class="coin">小判 1,250</div></div>
+        <div class="dock"><div><b>商</b>整備商店</div><div><b>録</b>排行・成就</div><div><b>巻</b>玩法說明</div><div><b>設</b>設定</div></div>
+      </div></div><div class="cap">標題</div></div>
+      <div><div class="phone K"><div class="in">
+        <div class="lv"><h3 class="en">LEVEL UP!</h3>
+          <div class="card"><i class="red">攻</i><b>手裡劍 Lv3</b><small>每 1.6 秒投擲 2 枚</small></div>
+          <div class="card"><i class="blue">防</i><b>結界</b><small>抵擋 1 次傷害</small></div>
+          <div class="card"><i class="gold">被</i><b>強腳</b><small>跳躍高度 +8%</small></div>
+        </div>
+      </div></div><div class="cap">升級</div></div>
+    </div>
+  </section>
+
+  <section class="opt">
+    <h2>L　忍者屋敷</h2>
+    <p class="sub">紙門格子牆、木樑、榻榻米、掛軸，按鈕是掛著紅色流蘇的木牌，選單圖示是小紙門。像回到忍者的秘密基地，溫馨有家的感覺。</p>
+    <div class="pair">
+      <div><div class="phone L"><div class="in">
+        <div class="title">
+          <div class="beam"></div><div class="tatami"></div>
+          <div class="jiku">疾風迅雷</div>
+          <div class="logo"><div class="t1 en">NINJA</div><br><div class="t2">鳶 TOBI</div></div>
+          <img class="hero" src="assets/hero.png" alt="">
+        </div>
+        <div style="background:#98a85a"><div class="btn start"><span>開始修行</span></div>
+        <div class="coin">小判 1,250</div></div>
+        <div class="dock"><div><b>商</b>整備商店</div><div><b>録</b>排行・成就</div><div><b>巻</b>玩法說明</div><div><b>設</b>設定</div></div>
+      </div></div><div class="cap">標題</div></div>
+      <div><div class="phone L"><div class="in">
+        <div class="lv"><h3 class="en">LEVEL UP!</h3>
+          <div class="card"><i class="red">攻</i><b>手裡劍 Lv3</b><small>每 1.6 秒投擲 2 枚</small></div>
+          <div class="card"><i class="blue">防</i><b>結界</b><small>抵擋 1 次傷害</small></div>
+          <div class="card"><i class="gold">被</i><b>強腳</b><small>跳躍高度 +8%</small></div>
+        </div>
+      </div></div><div class="cap">升級</div></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

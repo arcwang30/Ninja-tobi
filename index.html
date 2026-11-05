@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0d2a2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>NINJA 鳶 TOBI</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<meta name="apple-mobile-web-app-title" content="忍者鳶">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="cv"></canvas>
+  <!-- 用來量瀏海高度（env(safe-area-inset-top)）的隱形元素 -->
+  <div id="safeProbe" aria-hidden="true"></div>
+
+  <!-- 標題 -->
+  <div class="scr" id="title">
+    <!-- 出場動畫：① LOGO 出現、忍者從左邊在 LOGO 上連跳三下往右出畫面 → ② LOGO 上移 → ③ 忍術陣中忍者現身放大 -->
+    <div class="logo" id="intro">
+      <div class="logo-box">
+        <img class="logo-img" src="assets/logo.webp" alt="忍者鳶 TOBI NINJA TOBI">
+      </div>
+      <div class="hop-x"><div class="hop-y"><img class="hero-tint" src="assets/hero.png" alt=""></div></div>
+      <div class="jutsu">
+        <div class="jutsu-lines"></div>
+        <div class="jutsu-ring"><b>忍</b></div>
+        <div class="jutsu-flash"></div>
+        <span class="puff" style="--dx:-38%;--dy:-20%"></span><span class="puff" style="--dx:36%;--dy:-26%"></span>
+        <span class="puff" style="--dx:-30%;--dy:28%"></span><span class="puff" style="--dx:34%;--dy:24%"></span>
+        <span class="puff" style="--dx:0%;--dy:-40%"></span><span class="puff" style="--dx:2%;--dy:38%"></span>
+      </div>
+      <img class="hero-art hero-tint" id="heroArt" src="assets/hero.png" alt="">
+    </div>
+    <div class="menu">
+      <button data-act="start" class="big red" data-i18n="start"></button>
+      <div class="coinbar"><span data-i18n="koban"></span> <b id="tCoins">0</b></div>
+    </div>
+    <!-- 底部選單：鐵灰方塊＋金色字，橫向一列 -->
+    <nav class="dock">
+      <button data-act="shop"><i><b>商</b></i><span data-i18n="shop"></span></button>
+      <button data-act="rank"><i><b>録</b></i><span data-i18n="rank"></span></button>
+      <button data-act="help"><i><b>巻</b></i><span data-i18n="help"></span></button>
+      <button data-act="opt"><i><b>設</b></i><span data-i18n="opt"></span></button>
+    </nav>
+  </div>
+
+  <!-- 暫停 -->
+  <div class="scr dim" id="pause">
+    <div class="panel">
+      <h2 data-i18n="paused"></h2>
+      <button data-act="resume" class="big" data-i18n="resume"></button>
+      <button data-act="help" data-i18n="help"></button>
+      <button data-act="quit" data-i18n="giveup"></button>
+    </div>
+  </div>
+
+  <!-- 秘傳選擇 -->
+  <div class="scr dim" id="perk">
+    <div class="panel wide">
+      <h2 id="perkTitle"></h2>
+      <div id="perkCards"></div>
+    </div>
+  </div>
+
+  <!-- 主線通關：挑戰無盡或結算 -->
+  <div class="scr dim" id="clear">
+    <div class="panel">
+      <h2 data-i18n="clear_title"></h2>
+      <p class="clear-body" data-i18n="clear_body"></p>
+      <button data-act="endless" class="big red" data-i18n="clear_go"></button>
+      <button data-act="finish" data-i18n="clear_end"></button>
+    </div>
+  </div>
+
+  <!-- 結算 -->
+  <div class="scr dim" id="over">
+    <div class="panel">
+      <h2 id="overTitle"></h2>
+      <div id="overBody"></div>
+      <button data-act="retry" class="big" data-i18n="retry"></button>
+      <div class="row">
+        <button data-act="shop" data-i18n="shop"></button>
+        <button data-act="title" data-i18n="to_title"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 商店 -->
+  <div class="scr dim" id="shop">
+    <div class="panel wide">
+      <h2><span data-i18n="shop"></span> <span class="coin"><span data-i18n="koban"></span> <b id="sCoins">0</b></span></h2>
+      <div class="tabs" id="shopTabs"></div>
+      <div id="shopBody" class="list"></div>
+      <button data-act="back" data-i18n="back"></button>
+    </div>
+  </div>
+
+  <!-- 排行 -->
+  <div class="scr dim" id="rank">
+    <div class="panel wide">
+      <h2 data-i18n="rank"></h2>
+      <div class="tabs" id="rankTabs"></div>
+      <div id="rankBody" class="list"></div>
+      <button data-act="back" data-i18n="back"></button>
+    </div>
+  </div>
+
+  <!-- 設定 -->
+  <div class="scr dim" id="opt">
+    <div class="panel">
+      <h2 data-i18n="opt"></h2>
+      <button data-act="lang" id="bLang"></button>
+      <button data-act="snd" id="bSnd"></button>
+      <button data-act="vib" id="bVib"></button>
+      <button data-act="reset" class="red" id="bReset"></button>
+      <button data-act="back" data-i18n="back"></button>
+    </div>
+  </div>
+
+  <!-- 說明 -->
+  <div class="scr dim" id="help">
+    <div class="panel wide">
+      <h2 data-i18n="help"></h2>
+      <div class="list help" data-i18n="help_body"></div>
+      <button data-act="back" id="helpBtn" class="big"></button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+<script src="lang.js"></script>
+<script src="music.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

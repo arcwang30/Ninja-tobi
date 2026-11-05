@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NINJA 鳶 可愛風提案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&family=Mochiy+Pop+One&family=Kiwi+Maru:wght@500&family=Noto+Sans+TC:wght@700;900&display=swap">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #2b2622; color: #f3ead8; font-family: "Noto Sans TC", sans-serif; padding: 24px 16px 48px; }
+header { max-width: 1100px; margin: 0 auto 24px; }
+header h1 { font-size: 22px; margin-bottom: 6px; }
+header p { color: #cbbfa8; font-size: 14px; line-height: 1.6; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 28px; max-width: 1100px; margin: 0 auto; justify-items: center; }
+.opt h2 { font-size: 18px; margin-bottom: 4px; }
+.opt .sub { color: #cbbfa8; font-size: 13px; margin-bottom: 12px; line-height: 1.5; max-width: 430px; }
+.pair { display: flex; gap: 10px; }
+.phone { width: 208px; height: 390px; border-radius: 18px; overflow: hidden; position: relative; border: 3px solid #111; flex: none; }
+.phone .in { width: 320px; height: 600px; transform: scale(.65); transform-origin: 0 0; position: absolute; inset: 0; display: flex; flex-direction: column; }
+.cap { font-size: 12px; color: #a99c84; text-align: center; margin-top: 4px; }
+
+/* Q 版忍者吉祥物（顏色由各風格的變數決定） */
+.chibi { position: relative; width: 120px; height: 130px; margin: 0 auto; }
+.chibi .head { position: absolute; left: 10px; top: 0; width: 100px; height: 92px; border-radius: 50% 50% 46% 46%; background: var(--suit); border: var(--ol, 0) solid var(--line, transparent); }
+.chibi .face { position: absolute; left: 16px; right: 16px; top: 34px; height: 30px; border-radius: 15px; background: #ffe2c4; display: flex; justify-content: center; gap: 18px; align-items: center; }
+.chibi .face i { width: 9px; height: 12px; border-radius: 50%; background: #2a1a12; position: relative; }
+.chibi .face i::after { content: ""; position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff; top: 2px; left: 2px; }
+.chibi .band { position: absolute; left: 0; right: 0; top: 20px; height: 10px; background: var(--band); }
+.chibi .knot { position: absolute; right: -14px; top: 14px; width: 26px; height: 12px; background: var(--band); border-radius: 0 10px 10px 0; transform: rotate(-20deg); }
+.chibi .cheek { position: absolute; top: 56px; width: 12px; height: 7px; border-radius: 50%; background: #ff9db0; }
+.chibi .cheek.l { left: 22px; } .chibi .cheek.r { right: 22px; }
+.chibi .body { position: absolute; left: 34px; top: 84px; width: 52px; height: 42px; border-radius: 18px 18px 14px 14px; background: var(--suit); border: var(--ol, 0) solid var(--line, transparent); }
+.chibi .body::before { content: ""; position: absolute; left: 0; right: 0; top: 16px; height: 6px; background: var(--band); }
+
+/* ===== D 和菓子・櫻花粉彩 ===== */
+.D { --suit: #e86f8c; --band: #fff; --pink: #ffd3dc; --matcha: #a8c97f; --cream: #fff6e8; --brown: #6b4a3a;
+  font-family: "Zen Maru Gothic", "Noto Sans TC", sans-serif; color: var(--brown);
+  background: radial-gradient(circle at 12% 18%, #ffe3ea 0 26px, transparent 27px), radial-gradient(circle at 88% 30%, #e7f2d8 0 34px, transparent 35px), linear-gradient(#fff3f5, #fde6d8); }
+.D .petal { position: absolute; width: 14px; height: 10px; background: #ffb3c4; border-radius: 80% 0 80% 0; opacity: .85; }
+.D .title { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; padding-top: 54px; }
+.D .t1 { font-size: 40px; font-weight: 900; letter-spacing: 4px; color: var(--suit); text-shadow: 3px 3px 0 #fff; }
+.D .t2 { font-size: 22px; font-weight: 900; color: var(--brown); margin: 2px 0 16px; background: #fff; padding: 2px 16px; border-radius: 20px; }
+.D .tag { margin-top: 12px; font-size: 15px; }
+.D .dango { display: flex; gap: 4px; margin-top: 14px; align-items: center; }
+.D .dango i { width: 18px; height: 18px; border-radius: 50%; display: block; } .D .dango i:nth-child(1) { background: #ffb3c4; } .D .dango i:nth-child(2) { background: #fff; border: 1px solid #eee; } .D .dango i:nth-child(3) { background: var(--matcha); }
+.D .dango b { width: 30px; height: 3px; background: #c9a37a; display: block; }
+.D .start { margin: auto 46px 8px; height: 66px; border-radius: 34px; background: linear-gradient(#ff97ae, var(--suit)); color: #fff; font-size: 26px; font-weight: 900; display: grid; place-items: center; box-shadow: 0 6px 0 #c4506c, 0 10px 18px rgba(232,111,140,.35); letter-spacing: 4px; }
+.D .coin { text-align: center; font-size: 15px; margin-bottom: 14px; }
+.D .dock { display: flex; gap: 8px; padding: 10px 12px 16px; }
+.D .dock div { flex: 1; text-align: center; font-size: 12px; font-weight: 700; }
+.D .dock b { display: grid; place-items: center; width: 52px; height: 52px; margin: 0 auto 4px; border-radius: 50%; background: var(--cream); box-shadow: 0 4px 0 #e8cdb5; font-size: 22px; color: var(--suit); }
+.D .dock div:nth-child(2) b { color: #6a9a3a; } .D .dock div:nth-child(3) b { color: #c98a3a; } .D .dock div:nth-child(4) b { color: #8a7ab8; }
+.D .lv { flex: 1; padding: 46px 18px; display: flex; flex-direction: column; gap: 14px; background: rgba(255,255,255,.5); }
+.D .lv h3 { text-align: center; font-size: 28px; font-weight: 900; color: var(--suit); margin-bottom: 6px; }
+.D .card { background: #fff; border-radius: 24px; padding: 14px 16px 14px 70px; position: relative; box-shadow: 0 5px 0 #f2c9d2; }
+.D .card i { position: absolute; left: 14px; top: 13px; width: 44px; height: 44px; border-radius: 50%; font-style: normal; display: grid; place-items: center; font-size: 20px; font-weight: 900; color: #fff; }
+.D .c0 i { background: #ff8fa6; } .D .c1 i { background: #8ab8e0; } .D .c3 i { background: var(--matcha); }
+.D .card b { font-size: 21px; } .D .card small { display: block; font-size: 15px; margin-top: 3px; color: #9a7a6a; }
+
+/* ===== E 貼紙・普普 ===== */
+.E { --suit: #ff5a4e; --band: #ffd23c; --line: #222; --ol: 4px; --teal: #36c2b4; --yellow: #ffd23c;
+  font-family: "Mochiy Pop One", "Noto Sans TC", sans-serif; color: #222;
+  background: radial-gradient(circle, rgba(255,255,255,.35) 2px, transparent 3px) 0 0/22px 22px, linear-gradient(#5ed0f0, #36c2b4); }
+.E .title { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; padding-top: 48px; }
+.E .burst { position: absolute; top: 150px; width: 230px; height: 230px; background: var(--yellow); clip-path: polygon(50% 0, 61% 20%, 84% 8%, 80% 32%, 100% 40%, 82% 55%, 96% 76%, 72% 76%, 68% 100%, 50% 84%, 32% 100%, 28% 76%, 4% 76%, 18% 55%, 0 40%, 20% 32%, 16% 8%, 39% 20%); opacity: .9; }
+.E .t1 { position: relative; font-size: 46px; color: #fff; -webkit-text-stroke: 5px #222; paint-order: stroke fill; letter-spacing: 2px; transform: rotate(-4deg); }
+.E .t2 { position: relative; font-size: 20px; background: #fff; border: 3px solid #222; padding: 2px 14px; border-radius: 12px; margin: 4px 0 18px; transform: rotate(3deg); }
+.E .chibi { transform: scale(1.1); }
+.E .bubble { position: absolute; right: 26px; top: 170px; background: #fff; border: 3px solid #222; border-radius: 16px; padding: 6px 10px; font-size: 14px; }
+.E .bubble::after { content: ""; position: absolute; left: -12px; bottom: 8px; border: 7px solid transparent; border-right-color: #222; }
+.E .star { position: absolute; color: #fff; font-size: 22px; -webkit-text-stroke: 2px #222; }
+.E .start { position: relative; margin: auto 40px 8px; height: 70px; border-radius: 20px; background: var(--suit); color: #fff; font-size: 26px; display: grid; place-items: center; border: 4px solid #222; box-shadow: 6px 6px 0 #222; -webkit-text-stroke: 1px #222; }
+.E .coin { text-align: center; font-size: 15px; margin-bottom: 12px; color: #222; font-family: "Noto Sans TC"; font-weight: 900; }
+.E .dock { display: flex; gap: 8px; padding: 10px 12px 16px; background: #fff; border-top: 4px solid #222; }
+.E .dock div { flex: 1; text-align: center; font-size: 11px; }
+.E .dock b { display: grid; place-items: center; width: 50px; height: 50px; margin: 0 auto 4px; border-radius: 14px; border: 3px solid #222; box-shadow: 3px 3px 0 #222; font-size: 22px; font-weight: 400; }
+.E .dock div:nth-child(1) b { background: var(--yellow); } .E .dock div:nth-child(2) b { background: #ff9ad0; } .E .dock div:nth-child(3) b { background: #9ae0ff; } .E .dock div:nth-child(4) b { background: #b8f07a; }
+.E .lv { flex: 1; padding: 44px 18px; display: flex; flex-direction: column; gap: 16px; }
+.E .lv h3 { text-align: center; font-size: 32px; font-weight: 400; color: var(--yellow); -webkit-text-stroke: 5px #222; paint-order: stroke fill; margin-bottom: 6px; transform: rotate(-3deg); }
+.E .card { background: #fff; border: 4px solid #222; border-radius: 18px; padding: 12px 14px 12px 70px; position: relative; box-shadow: 5px 5px 0 #222; }
+.E .card:nth-child(3) { transform: rotate(1.5deg); } .E .card:nth-child(2) { transform: rotate(-1deg); }
+.E .card i { position: absolute; left: 12px; top: 11px; width: 46px; height: 46px; border-radius: 12px; border: 3px solid #222; font-style: normal; display: grid; place-items: center; font-size: 20px; }
+.E .c0 i { background: var(--suit); color: #fff; } .E .c1 i { background: #9ae0ff; } .E .c3 i { background: var(--yellow); }
+.E .card b { font-size: 20px; font-weight: 400; } .E .card small { display: block; font-size: 14px; margin-top: 3px; color: #555; font-family: "Noto Sans TC"; font-weight: 700; }
+
+/* ===== F 月夜・貓忍燈籠 ===== */
+.F { --suit: #4a4f8a; --band: #ff9ec7; --lav: #c9b8ff; --mint: #9af0d8; --lamp: #ff8a5a;
+  font-family: "Kiwi Maru", "Noto Sans TC", serif; color: #fff6ea;
+  background: radial-gradient(circle at 88% 6%, #fff3c4 0 22px, rgba(255,243,196,.25) 23px 32px, transparent 33px),
+              radial-gradient(circle, rgba(255,255,255,.7) 1px, transparent 2px) 0 0/37px 41px,
+              linear-gradient(#1d2148, #3b3a74 60%, #5a4a86); }
+.F .title { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; padding-top: 70px; }
+.F .t1 { font-size: 42px; letter-spacing: 6px; color: var(--lav); text-shadow: 0 0 14px rgba(201,184,255,.8); }
+.F .t2 { font-size: 20px; color: var(--mint); margin: 2px 0 16px; }
+.F .ears { position: absolute; top: -12px; left: 22px; right: 22px; height: 30px; }
+.F .ears::before, .F .ears::after { content: ""; position: absolute; top: 0; width: 26px; height: 30px; background: var(--suit); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.F .ears::before { left: 0; } .F .ears::after { right: 0; }
+.F .chibi .face { background: #ffe8d6; }
+.F .chibi .face i { width: 12px; height: 6px; border-radius: 0 0 8px 8px; background: transparent; border: 2px solid #2a1a12; border-top: 0; }
+.F .chibi .face i::after { display: none; }
+.F .lantern { position: absolute; width: 34px; height: 44px; border-radius: 45%; background: repeating-linear-gradient(transparent 0 7px, rgba(0,0,0,.15) 7px 9px), var(--lamp); box-shadow: 0 0 18px rgba(255,138,90,.7); }
+.F .lantern::before { content: ""; position: absolute; left: 50%; top: -26px; width: 2px; height: 26px; background: #ccc; }
+.F .tag { margin-top: 12px; font-size: 15px; color: #e6dcff; }
+.F .start { margin: auto 44px 8px; height: 66px; border-radius: 34px; background: linear-gradient(90deg, #ff9ec7, #c9b8ff); color: #2a2050; font-size: 26px; display: grid; place-items: center; box-shadow: 0 0 0 3px rgba(255,255,255,.5), 0 0 24px rgba(255,158,199,.7); letter-spacing: 4px; }
+.F .coin { text-align: center; font-size: 15px; margin-bottom: 14px; color: #ffe9a0; }
+.F .dock { display: flex; gap: 6px; padding: 10px 12px 18px; }
+.F .dock div { flex: 1; text-align: center; font-size: 12px; color: #e6dcff; }
+.F .dock b { display: grid; place-items: center; width: 50px; height: 50px; margin: 0 auto 4px; border-radius: 50%; background: rgba(255,255,255,.12); border: 2px solid rgba(201,184,255,.7); font-size: 22px; font-weight: 400; color: var(--mint); box-shadow: 0 0 12px rgba(154,240,216,.35); }
+.F .lv { flex: 1; padding: 46px 16px; display: flex; flex-direction: column; gap: 14px; background: rgba(20,20,50,.4); }
+.F .lv h3 { text-align: center; font-size: 28px; font-weight: 500; color: #ffe9a0; text-shadow: 0 0 12px rgba(255,233,160,.7); margin-bottom: 6px; }
+.F .card { background: rgba(255,255,255,.1); border: 2px solid rgba(201,184,255,.6); border-radius: 22px; padding: 14px 16px 14px 70px; position: relative; }
+.F .card i { position: absolute; left: 12px; top: 10px; width: 44px; height: 52px; border-radius: 45%; font-style: normal; display: grid; place-items: center; font-size: 19px; color: #2a1a12; background: repeating-linear-gradient(transparent 0 8px, rgba(0,0,0,.15) 8px 10px), var(--lamp); box-shadow: 0 0 12px rgba(255,138,90,.6); }
+.F .c1 i { background: repeating-linear-gradient(transparent 0 8px, rgba(0,0,0,.15) 8px 10px), var(--mint); box-shadow: 0 0 12px rgba(154,240,216,.6); }
+.F .c3 i { background: repeating-linear-gradient(transparent 0 8px, rgba(0,0,0,.15) 8px 10px), var(--lav); box-shadow: 0 0 12px rgba(201,184,255,.6); }
+.F .card b { font-size: 21px; font-weight: 500; } .F .card small { display: block; font-size: 15px; margin-top: 3px; color: #d8ccf5; font-family: "Noto Sans TC"; }
+</style>
+</head>
+<body>
+<header>
+  <h1>NINJA 鳶 可愛忍者風提案</h1>
+  <p>三種可愛方向，同樣是「標題畫面」和「升級選擇」兩個畫面。標題上的 Q 版忍者只是示意，遊戲內的角色也可以一起改成這種比例。</p>
+</header>
+<div class="grid">
+
+  <section class="opt">
+    <h2>D　和菓子・櫻花粉彩</h2>
+    <p class="sub">櫻花粉、抹茶綠、奶油色，按鈕像麻糬一樣圓滾滾、軟彈。溫柔療癒，男女老少都容易接受。</p>
+    <div class="pair">
+      <div><div class="phone D"><div class="in">
+        <div class="title">
+          <span class="petal" style="left:40px;top:120px;transform:rotate(20deg)"></span><span class="petal" style="left:260px;top:90px;transform:rotate(-30deg)"></span><span class="petal" style="left:230px;top:330px"></span><span class="petal" style="left:60px;top:300px;transform:rotate(60deg)"></span>
+          <div class="t1">NINJA</div><div class="t2">鳶 TOBI</div>
+          <div class="chibi"><div class="head"><div class="band"></div><div class="knot"></div><div class="face"><i></i><i></i></div><span class="cheek l"></span><span class="cheek r"></span></div><div class="body"></div></div>
+          <div class="dango"><i></i><i></i><i></i><b></b></div>
+          <div class="tag">我が名は鳶、いざ参る！</div>
+        </div>
+        <div class="start">開始修行</div>
+        <div class="coin">小判 1,250</div>
+        <div class="dock"><div><b>商</b>整備商店</div><div><b>録</b>排行・成就</div><div><b>巻</b>玩法說明</div><div><b>設</b>設定</div></div>
+      </div></div><div class="cap">標題</div></div>
+      <div><div class="phone D"><div class="in">
+        <div class="lv"><h3>升級！選一個吧</h3>
+          <div class="card c0"><i>攻</i><b>手裡劍 Lv3</b><small>每 1.6 秒投擲 2 枚</small></div>
+          <div class="card c1"><i>防</i><b>結界</b><small>抵擋 1 次傷害</small></div>
+          <div class="card c3"><i>被</i><b>強腳</b><small>跳躍高度 +8%</small></div>
+        </div>
+      </div></div><div class="cap">升級</div></div>
+    </div>
+  </section>
+
+  <section class="opt">
+    <h2>E　貼紙・普普</h2>
+    <p class="sub">粗黑描邊、亮色、歪歪的貼紙卡片、漫畫對話框。活潑有朝氣，最像手機休閒遊戲，在遊戲畫面上也最醒目。</p>
+    <div class="pair">
+      <div><div class="phone E"><div class="in">
+        <div class="title">
+          <div class="burst"></div>
+          <span class="star" style="left:30px;top:120px">★</span><span class="star" style="left:270px;top:110px">✦</span><span class="star" style="left:50px;top:360px">✦</span>
+          <div class="t1">NINJA</div><div class="t2">鳶 TOBI</div>
+          <div class="chibi"><div class="head"><div class="band"></div><div class="knot"></div><div class="face"><i></i><i></i></div><span class="cheek l"></span><span class="cheek r"></span></div><div class="body"></div></div>
+          <div class="bubble">いざ参る！</div>
+        </div>
+        <div class="start">開始修行</div>
+        <div class="coin">小判 1,250</div>
+        <div class="dock"><div><b>商</b>整備商店</div><div><b>録</b>排行・成就</div><div><b>巻</b>玩法說明</div><div><b>設</b>設定</div></div>
+      </div></div><div class="cap">標題</div></div>
+      <div><div class="phone E"><div class="in">
+        <div class="lv"><h3>LEVEL UP!</h3>
+          <div class="card c0"><i>攻</i><b>手裡劍 Lv3</b><small>每 1.6 秒投擲 2 枚</small></div>
+          <div class="card c1"><i>防</i><b>結界</b><small>抵擋 1 次傷害</small></div>
+          <div class="card c3"><i>被</i><b>強腳</b><small>跳躍高度 +8%</small></div>
+        </div>
+      </div></div><div class="cap">升級</div></div>
+    </div>
+  </section>
+
+  <section class="opt">
+    <h2>F　月夜・貓忍燈籠</h2>
+    <p class="sub">深藍夜空、大月亮、發光的燈籠圖示、貓耳忍者。可愛但不吵，深色底和遊戲畫面最好融合。</p>
+    <div class="pair">
+      <div><div class="phone F"><div class="in">
+        <div class="title">
+          <span class="lantern" style="left:30px;top:200px"></span><span class="lantern" style="right:30px;top:240px;transform:scale(.8)"></span>
+          <div class="t1">NINJA</div><div class="t2">鳶 TOBI</div>
+          <div class="chibi"><div class="head"><div class="ears"></div><div class="band"></div><div class="knot"></div><div class="face"><i></i><i></i></div><span class="cheek l"></span><span class="cheek r"></span></div><div class="body"></div></div>
+          <div class="tag">我が名は鳶、いざ参る！</div>
+        </div>
+        <div class="start">開始修行</div>
+        <div class="coin">小判 1,250</div>
+        <div class="dock"><div><b>商</b>整備商店</div><div><b>録</b>排行・成就</div><div><b>巻</b>玩法說明</div><div><b>設</b>設定</div></div>
+      </div></div><div class="cap">標題</div></div>
+      <div><div class="phone F"><div class="in">
+        <div class="lv"><h3>升級・選一個吧</h3>
+          <div class="card c0"><i>攻</i><b>手裡劍 Lv3</b><small>每 1.6 秒投擲 2 枚</small></div>
+          <div class="card c1"><i>防</i><b>結界</b><small>抵擋 1 次傷害</small></div>
+          <div class="card c3"><i>被</i><b>強腳</b><small>跳躍高度 +8%</small></div>
+        </div>
+      </div></div><div class="cap">升級</div></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

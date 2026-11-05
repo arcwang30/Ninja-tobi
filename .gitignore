@@ -1,0 +1,6 @@
+# claude.ai Artifact 版的產物（由 build-artifact.ps1 產生）
+dist/
+# 本機預覽設定
+.claude/
+# 暫存
+design/tmp/

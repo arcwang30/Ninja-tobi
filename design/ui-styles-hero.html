@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NINJA 鳶 主角畫風提案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Mochiy+Pop+One&family=Rampart+One&family=Noto+Sans+TC:wght@700;900&display=swap">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #2b2622; color: #f3ead8; font-family: "Noto Sans TC", sans-serif; padding: 24px 16px 48px; }
+header { max-width: 1100px; margin: 0 auto 24px; }
+header h1 { font-size: 22px; margin-bottom: 6px; }
+header p { color: #cbbfa8; font-size: 14px; line-height: 1.6; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 28px; max-width: 1100px; margin: 0 auto; justify-items: center; }
+.opt h2 { font-size: 18px; margin-bottom: 4px; }
+.opt .sub { color: #cbbfa8; font-size: 13px; margin-bottom: 12px; line-height: 1.5; max-width: 430px; }
+.pair { display: flex; gap: 10px; }
+.phone { width: 208px; height: 390px; border-radius: 18px; overflow: hidden; position: relative; border: 3px solid #111; flex: none; }
+.phone .in { width: 320px; height: 600px; transform: scale(.65); transform-origin: 0 0; position: absolute; inset: 0; display: flex; flex-direction: column; }
+.cap { font-size: 12px; color: #a99c84; text-align: center; margin-top: 4px; }
+.hero { position: absolute; width: 220px; filter: drop-shadow(0 8px 0 rgba(0,0,0,.25)); }
+/* 共通：粗黑描邊＋上緣高光，跟主角的賽璐璐畫風一致 */
+.btn { position: relative; display: grid; place-items: center; border: 4px solid #1a1214; overflow: hidden; }
+.btn::before { content: ""; position: absolute; left: 8%; right: 8%; top: 5px; height: 34%; border-radius: 999px; background: rgba(255,255,255,.35); }
+.btn span { position: relative; }
+
+/* ===== G 熱血漫畫 ===== */
+.G { --red: #e32a2a; --ink: #1a1214; --paper: #fff8ea;
+  font-family: "Dela Gothic One", "Noto Sans TC", sans-serif; color: var(--ink);
+  background: radial-gradient(circle, rgba(26,18,20,.16) 2px, transparent 2.6px) 0 0/10px 10px, var(--paper); }
+.G .lines { position: absolute; inset: 0; background: repeating-conic-gradient(from 0deg at 50% 48%, rgba(227,42,42,.16) 0 4deg, transparent 4deg 12deg); }
+.G .title { flex: 1; position: relative; overflow: hidden; }
+.G .logo { position: absolute; left: 0; right: 0; top: 40px; text-align: center; }
+.G .t1 { font-size: 52px; color: #fff; -webkit-text-stroke: 7px var(--ink); paint-order: stroke fill; letter-spacing: 2px; transform: rotate(-5deg); display: inline-block; text-shadow: 6px 6px 0 var(--red); }
+.G .t2 { display: inline-block; margin-top: 2px; font-size: 22px; background: var(--red); color: #fff; padding: 2px 14px; border: 4px solid var(--ink); transform: rotate(3deg); }
+.G .hero { left: 54px; top: 160px; transform: rotate(-6deg); }
+.G .sfx { position: absolute; right: 20px; top: 190px; font-size: 34px; color: var(--red); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; transform: rotate(12deg); }
+.G .start { margin: 0 34px 8px; height: 72px; background: linear-gradient(#ff5a4a, var(--red)); color: #fff; font-size: 28px; box-shadow: 7px 7px 0 var(--ink); transform: skew(-6deg); -webkit-text-stroke: 1.5px var(--ink); }
+.G .coin { text-align: center; font-size: 16px; margin-bottom: 12px; position: relative; }
+.G .dock { display: flex; border-top: 4px solid var(--ink); background: var(--ink); gap: 4px; padding-top: 4px; }
+.G .dock div { flex: 1; text-align: center; font-size: 12px; background: var(--paper); padding: 8px 0 12px; font-family: "Noto Sans TC"; font-weight: 900; }
+.G .dock b { display: grid; place-items: center; width: 46px; height: 46px; margin: 0 auto 4px; background: var(--red); color: #fff; border: 3px solid var(--ink); font-size: 22px; font-weight: 400; transform: rotate(-4deg); box-shadow: 3px 3px 0 var(--ink); font-family: "Dela Gothic One", "Noto Sans TC"; }
+.G .lv { flex: 1; padding: 42px 16px; display: flex; flex-direction: column; gap: 16px; position: relative; }
+.G .lv h3 { position: relative; text-align: center; font-size: 34px; font-weight: 400; color: #fff; -webkit-text-stroke: 7px var(--ink); paint-order: stroke fill; text-shadow: 5px 5px 0 var(--red); margin-bottom: 8px; transform: rotate(-3deg); }
+.G .card { position: relative; background: #fff; border: 4px solid var(--ink); padding: 12px 14px 12px 72px; box-shadow: 6px 6px 0 var(--ink); }
+.G .card i { position: absolute; left: 12px; top: 10px; width: 48px; height: 48px; border: 3px solid var(--ink); font-style: normal; display: grid; place-items: center; font-size: 22px; color: #fff; background: var(--red); clip-path: polygon(50% 0, 62% 30%, 100% 20%, 74% 52%, 100% 82%, 62% 72%, 50% 100%, 38% 72%, 0 82%, 26% 52%, 0 20%, 38% 30%); }
+.G .c1 i { background: #2a7ae2; } .G .c3 i { background: #f0b400; color: var(--ink); }
+.G .card b { font-size: 21px; font-weight: 400; } .G .card small { display: block; font-size: 14px; margin-top: 3px; color: #4a3a3a; font-family: "Noto Sans TC"; font-weight: 700; }
+
+/* ===== H 夕陽城下町 ===== */
+.H { --red: #e5342a; --ink: #2a1418; --sun1: #ffb347; --sun2: #ff6a5a; --dusk: #5a2a6e;
+  font-family: "Mochiy Pop One", "Noto Sans TC", sans-serif; color: #fff;
+  background: linear-gradient(#3b1f5e, #8a3a7a 40%, #ff7a5a 72%, #ffc06a); }
+.H .title { flex: 1; position: relative; overflow: hidden; }
+.H .sun { position: absolute; left: 70px; top: 230px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(#fff3b0, #ffb347); box-shadow: 0 0 60px rgba(255,200,120,.8); }
+.H .castle { position: absolute; left: 0; right: 0; bottom: 0; height: 150px; background:
+   linear-gradient(transparent 60%, #2a1418 60%) 0 0/100% 100%,
+   conic-gradient(from 135deg at 50% 0, #2a1418 90deg, transparent 0) 30px 40px/120px 60px no-repeat,
+   conic-gradient(from 135deg at 50% 0, #2a1418 90deg, transparent 0) 190px 20px/110px 80px no-repeat; }
+.H .roof { position: absolute; left: 150px; bottom: 60px; width: 50px; height: 90px; background: #2a1418; }
+.H .roof::before { content: ""; position: absolute; left: -20px; right: -20px; top: -18px; height: 22px; background: #2a1418; clip-path: polygon(0 100%, 20% 0, 80% 0, 100% 100%); }
+.H .logo { position: absolute; left: 0; right: 0; top: 40px; text-align: center; }
+.H .t1 { font-size: 50px; color: #ffe27a; -webkit-text-stroke: 7px var(--ink); paint-order: stroke fill; letter-spacing: 3px; text-shadow: 0 6px 0 var(--ink); }
+.H .t2 { display: inline-block; font-size: 20px; color: var(--ink); background: #ffe27a; border: 4px solid var(--ink); border-radius: 14px; padding: 0 14px; margin-top: 4px; }
+.H .hero { left: 50px; top: 150px; }
+.H .start { margin: 14px 40px 8px; height: 72px; border-radius: 22px; background: linear-gradient(#ffd25a, #ff9a2a); color: var(--ink); font-size: 26px; box-shadow: 0 6px 0 var(--ink); }
+.H .coin { text-align: center; font-size: 15px; margin-bottom: 12px; color: #ffe27a; -webkit-text-stroke: 1px var(--ink); }
+.H .bottom { background: #2a1418; }
+.H .dock { display: flex; gap: 8px; padding: 10px 12px 16px; }
+.H .dock div { flex: 1; text-align: center; font-size: 11px; color: #ffe2c0; font-family: "Noto Sans TC"; font-weight: 900; }
+.H .dock b { display: grid; place-items: center; width: 52px; height: 52px; margin: 0 auto 4px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ff7a6a, var(--red) 60%); border: 4px solid #120a0a; font-size: 22px; font-weight: 400; color: #fff; -webkit-text-stroke: 1px #120a0a; box-shadow: 0 4px 0 #000; font-family: "Mochiy Pop One", "Noto Sans TC"; }
+.H .lv { flex: 1; padding: 44px 16px; display: flex; flex-direction: column; gap: 16px; background: linear-gradient(#3b1f5e, #8a3a7a); }
+.H .lv h3 { text-align: center; font-size: 32px; font-weight: 400; color: #ffe27a; -webkit-text-stroke: 6px var(--ink); paint-order: stroke fill; margin-bottom: 8px; }
+.H .card { position: relative; border-radius: 20px; padding: 12px 14px 12px 72px; color: var(--ink); background: linear-gradient(#fff6e0, #ffe0b0); border: 4px solid var(--ink); box-shadow: 0 6px 0 var(--ink); }
+.H .card i { position: absolute; left: 12px; top: 10px; width: 48px; height: 48px; border-radius: 50%; border: 4px solid var(--ink); font-style: normal; display: grid; place-items: center; font-size: 20px; color: #fff; background: radial-gradient(circle at 35% 30%, #ff7a6a, var(--red) 60%); }
+.H .c1 i { background: radial-gradient(circle at 35% 30%, #7ac8ff, #2a7ae2 60%); } .H .c3 i { background: radial-gradient(circle at 35% 30%, #ffe27a, #e0a020 60%); color: var(--ink); }
+.H .card b { font-size: 20px; font-weight: 400; } .H .card small { display: block; font-size: 14px; margin-top: 3px; color: #6a4a3a; font-family: "Noto Sans TC"; font-weight: 700; }
+
+/* ===== I 竹林夜襲 ===== */
+.I { --red: #e5342a; --ink: #0e1414; --jade: #2e7a5a; --moon: #fff1c2; --steel: #3a4448; --gold: #e8b84a;
+  font-family: "Dela Gothic One", "Noto Sans TC", sans-serif; color: #fff;
+  background:
+    linear-gradient(90deg, transparent 0 18px, #0f3a2c 18px 34px, transparent 34px 96px, #134a38 96px 108px, transparent 108px 230px, #0f3a2c 230px 250px, transparent 250px 290px, #134a38 290px 300px, transparent 300px),
+    radial-gradient(circle at 72% 22%, var(--moon) 0 52px, rgba(255,241,194,.18) 53px 80px, transparent 81px),
+    linear-gradient(#0d2a2a, #13443a); }
+.I .title { flex: 1; position: relative; overflow: hidden; }
+.I .leaf { position: absolute; width: 40px; height: 10px; background: #1d6a4c; border-radius: 0 100% 0 100%; }
+.I .logo { position: absolute; left: 0; right: 0; top: 40px; text-align: center; }
+.I .t1 { font-size: 52px; color: #fff; -webkit-text-stroke: 7px var(--ink); paint-order: stroke fill; letter-spacing: 3px; text-shadow: 0 0 18px rgba(229,52,42,.8); }
+.I .ribbon { display: inline-block; position: relative; margin-top: 4px; background: var(--red); color: #fff; font-size: 20px; padding: 2px 26px; border: 4px solid var(--ink); }
+.I .ribbon::before, .I .ribbon::after { content: ""; position: absolute; top: 6px; width: 18px; height: 26px; background: #a01e1a; border: 4px solid var(--ink); z-index: -1; }
+.I .ribbon::before { left: -16px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 40% 50%); } .I .ribbon::after { right: -16px; clip-path: polygon(0 0, 100% 0, 60% 50%, 100% 100%, 0 100%); }
+.I .hero { left: 46px; top: 160px; }
+.I .shu { position: absolute; width: 26px; height: 26px; background: #c8d0d4; border: 2px solid var(--ink); clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
+.I .start { margin: 0 38px 8px; height: 72px; border-radius: 14px; background: linear-gradient(#ff5a4a, #c4201a); color: #fff; font-size: 26px; box-shadow: 0 6px 0 var(--ink), 0 0 22px rgba(229,52,42,.5); -webkit-text-stroke: 1.5px var(--ink); }
+.I .coin { text-align: center; font-size: 15px; margin-bottom: 12px; color: var(--gold); -webkit-text-stroke: 1px var(--ink); }
+.I .dock { display: flex; gap: 8px; padding: 10px 12px 16px; background: linear-gradient(#2a3236, #161c1e); border-top: 4px solid var(--ink); }
+.I .dock div { flex: 1; text-align: center; font-size: 11px; color: #c8d0d4; font-family: "Noto Sans TC"; font-weight: 900; }
+.I .dock b { position: relative; display: grid; place-items: center; width: 52px; height: 52px; margin: 0 auto 4px; border-radius: 12px; background: linear-gradient(#4a565a, var(--steel)); border: 4px solid var(--ink); font-size: 22px; font-weight: 400; color: var(--gold); box-shadow: inset 0 3px 0 rgba(255,255,255,.18), 0 4px 0 #000; font-family: "Dela Gothic One", "Noto Sans TC"; }
+.I .dock b::after { content: ""; position: absolute; right: 4px; top: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+.I .lv { flex: 1; padding: 44px 16px; display: flex; flex-direction: column; gap: 16px; background: rgba(5,15,15,.55); }
+.I .lv h3 { text-align: center; font-size: 32px; font-weight: 400; color: #fff; -webkit-text-stroke: 6px var(--ink); paint-order: stroke fill; text-shadow: 0 0 14px rgba(229,52,42,.8); margin-bottom: 8px; }
+.I .card { position: relative; border-radius: 14px; padding: 12px 14px 12px 72px; background: linear-gradient(#3a4448, #232a2d); border: 4px solid var(--ink); box-shadow: inset 0 3px 0 rgba(255,255,255,.12), 0 5px 0 #000; }
+.I .card::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 8px; background: var(--red); border-radius: 10px 0 0 10px; }
+.I .c1::after { background: #2a9ae2; } .I .c3::after { background: var(--gold); }
+.I .card i { position: absolute; left: 16px; top: 10px; width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--ink); font-style: normal; display: grid; place-items: center; font-size: 20px; color: #fff; background: radial-gradient(circle at 35% 30%, #ff7a6a, var(--red) 60%); }
+.I .c1 i { background: radial-gradient(circle at 35% 30%, #7ac8ff, #2a7ae2 60%); } .I .c3 i { background: radial-gradient(circle at 35% 30%, #ffe27a, #c8961e 60%); color: var(--ink); }
+.I .card b { font-size: 20px; font-weight: 400; } .I .card small { display: block; font-size: 14px; margin-top: 3px; color: #b8c4c8; font-family: "Noto Sans TC"; font-weight: 700; }
+/* 修正：展示字型只用在英文標題與擬聲字，中文一律用粗體黑體，避免小字糊掉與缺字 */
+.G, .H, .I { font-family: "Noto Sans TC", sans-serif; font-weight: 900; }
+.G .t1, .G .lv h3, .G .sfx, .I .t1, .I .lv h3 { font-family: "Dela Gothic One", sans-serif; font-weight: 400; }
+.H .t1, .H .lv h3 { font-family: "Mochiy Pop One", sans-serif; font-weight: 400; }
+.G .dock b, .H .dock b, .I .dock b, .G .card i, .H .card i, .I .card i, .G .start, .H .start, .I .start, .G .t2, .H .t2, .I .ribbon, .G .card b, .H .card b, .I .card b, .G .coin, .H .coin, .I .coin { font-family: "Noto Sans TC", sans-serif; font-weight: 900; -webkit-text-stroke: 0; }
+.G .start span, .I .start span { text-shadow: 0 2px 0 rgba(0,0,0,.45); }
+.H .hero { top: 182px; } .I .hero { top: 186px; } .G .hero { top: 172px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>NINJA 鳶 主角畫風提案</h1>
+  <p>配合主角的畫風：Q 版比例、粗黑描邊、賽璐璐上色加高光、飽和的紅。三組都用同樣的描邊和高光處理，讓按鈕、卡片和角色看起來是同一套美術。</p>
+</header>
+<div class="grid">
+
+  <section class="opt">
+    <h2>G　熱血漫畫</h2>
+    <p class="sub">網點紙、紅色集中線、歪斜的漫畫字和擬聲字、手裏劍形狀的圖示。最有動作感，紅色主角在米白底上最搶眼。</p>
+    <div class="pair">
+      <div><div class="phone G"><div class="in">
+        <div class="title"><div class="lines"></div>
+          <div class="logo"><div class="t1">NINJA</div><br><div class="t2">鳶 TOBI</div></div>
+          <img class="hero" src="assets/hero.png" alt="">
+          <div class="sfx">シュッ!</div>
+        </div>
+        <div class="btn start"><span>開始修行</span></div>
+        <div class="coin">小判 1,250</div>
+        <div class="dock"><div><b>商</b>整備商店</div><div><b>録</b>排行・成就</div><div><b>巻</b>玩法說明</div><div><b>設</b>設定</div></div>
+      </div></div><div class="cap">標題</div></div>
+      <div><div class="phone G"><div class="in">
+        <div class="lv"><div class="lines"></div><h3>LEVEL UP!</h3>
+          <div class="card c0"><i>攻</i><b>手裡劍 Lv3</b><small>每 1.6 秒投擲 2 枚</small></div>
+          <div class="card c1"><i>防</i><b>結界</b><small>抵擋 1 次傷害</small></div>
+          <div class="card c3"><i>被</i><b>強腳</b><small>跳躍高度 +8%</small></div>
+        </div>
+      </div></div><div class="cap">升級</div></div>
+    </div>
+  </section>
+
+  <section class="opt">
+    <h2>H　夕陽城下町</h2>
+    <p class="sub">紫橘色夕陽、天守閣剪影、圓潤膠囊按鈕和亮面圓徽，像手機上的熱門動作遊戲。溫暖、明亮、有冒險感。</p>
+    <div class="pair">
+      <div><div class="phone H"><div class="in">
+        <div class="title"><div class="sun"></div><div class="castle"></div><div class="roof"></div>
+          <div class="logo"><div class="t1">NINJA</div><br><div class="t2">鳶 TOBI</div></div>
+          <img class="hero" src="assets/hero.png" alt="">
+        </div>
+        <div class="bottom">
+          <div class="btn start"><span>開始修行</span></div>
+          <div class="coin">小判 1,250</div>
+          <div class="dock"><div><b>商</b>整備商店</div><div><b>録</b>排行・成就</div><div><b>巻</b>玩法說明</div><div><b>設</b>設定</div></div>
+        </div>
+      </div></div><div class="cap">標題</div></div>
+      <div><div class="phone H"><div class="in">
+        <div class="lv"><h3>LEVEL UP!</h3>
+          <div class="card c0"><i>攻</i><b>手裡劍 Lv3</b><small>每 1.6 秒投擲 2 枚</small></div>
+          <div class="card c1"><i>防</i><b>結界</b><small>抵擋 1 次傷害</small></div>
+          <div class="card c3"><i>被</i><b>強腳</b><small>跳躍高度 +8%</small></div>
+        </div>
+      </div></div><div class="cap">升級</div></div>
+    </div>
+  </section>
+
+  <section class="opt">
+    <h2>I　竹林夜襲</h2>
+    <p class="sub">月夜竹林、鐵灰色金屬面板配金色鉚釘、紅色緞帶標題、手裡劍點綴。紅色主角在綠色竹林前最跳色，也和遊戲裡的竹林關卡同一個世界。</p>
+    <div class="pair">
+      <div><div class="phone I"><div class="in">
+        <div class="title">
+          <span class="leaf" style="left:20px;top:300px;transform:rotate(-20deg)"></span><span class="leaf" style="right:16px;top:150px;transform:rotate(30deg)"></span><span class="leaf" style="right:40px;top:420px;transform:rotate(-40deg)"></span>
+          <span class="shu" style="right:40px;top:200px;transform:rotate(15deg)"></span><span class="shu" style="left:24px;top:200px"></span>
+          <div class="logo"><div class="t1">NINJA</div><br><div class="ribbon">鳶 TOBI</div></div>
+          <img class="hero" src="assets/hero.png" alt="">
+        </div>
+        <div class="btn start"><span>開始修行</span></div>
+        <div class="coin">小判 1,250</div>
+        <div class="dock"><div><b>商</b>整備商店</div><div><b>録</b>排行・成就</div><div><b>巻</b>玩法說明</div><div><b>設</b>設定</div></div>
+      </div></div><div class="cap">標題</div></div>
+      <div><div class="phone I"><div class="in">
+        <div class="lv"><h3>LEVEL UP!</h3>
+          <div class="card c0"><i>攻</i><b>手裡劍 Lv3</b><small>每 1.6 秒投擲 2 枚</small></div>
+          <div class="card c1"><i>防</i><b>結界</b><small>抵擋 1 次傷害</small></div>
+          <div class="card c3"><i>被</i><b>強腳</b><small>跳躍高度 +8%</small></div>
+        </div>
+      </div></div><div class="cap">升級</div></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
