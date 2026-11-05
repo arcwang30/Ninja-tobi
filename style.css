@@ -216,3 +216,7 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 /* 量 100vh 用的隱形元素；設定頁底部的診斷資訊 */
 #vhProbe { position: fixed; top: 0; left: 0; width: 0; height: 100vh; pointer-events: none; visibility: hidden; }
 .diag { display: block; margin-top: .6em; text-align: center; font-size: .62em; font-weight: 700; color: var(--muted); opacity: .75; word-break: break-all; }
+
+/* 開場遮罩：和標題背景同色，量好尺寸後淡出 */
+#boot { position: fixed; left: 0; top: 0; right: 0; bottom: -200px; background: #0d2a2a; z-index: 99; transition: opacity .25s, visibility .25s; }
+#boot.off { opacity: 0; visibility: hidden; pointer-events: none; }

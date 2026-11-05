@@ -229,7 +229,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v14';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v15';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -257,7 +257,9 @@ function resize() {
   app.style.transform = gap ? 'translateX(-50%)' : 'translate(-50%, -50%)';
   app.style.setProperty('--u', (w / W) + 'px');
   const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  // 尺寸沒變就不重設 canvas（重設會清空畫面、造成閃一下）
+  const cw = Math.round(w * dpr), ch = Math.round(h * dpr);
+  if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
   // 瀏海／狀態列高度：取系統回報值與上面算出的落差中較大的，HUD 和標題都會往下讓開這段
   const sa = $('safeProbe'), env = sa ? parseFloat(getComputedStyle(sa).paddingTop) || 0 : 0;
   let top = Math.max(env, gap);
@@ -276,6 +278,21 @@ addEventListener('orientationchange', () => setTimeout(resize, 300));
 resize();
 // iOS 從主畫面開啟時，瀏海高度會晚一點才給，開啟後再量幾次
 for (const ms of [100, 400, 1000, 2500]) setTimeout(resize, ms);
+// 開場遮罩：每 100ms 量一次，至少等 0.4 秒且連續兩次結果一樣（最多 1.2 秒）才拿掉遮罩，並從這時才開始 LOGO 出場動畫
+let booting = true;
+(() => {
+  const t0 = performance.now(); let last = DIAG, same = 0;
+  const tick = () => {
+    resize();
+    same = DIAG === last ? same + 1 : 0; last = DIAG;
+    const el = performance.now() - t0;
+    if ((same < 2 || el < 400) && el < 1200) return setTimeout(tick, 100);
+    booting = false;
+    const b = $('boot'); if (b) b.classList.add('off');
+    if (state === 'menu') playIntro();
+  };
+  setTimeout(tick, 100);
+})();
 
 // ===== 狀態 =====
 let state = 'menu';   // menu | play | slash | cast | qte | kill | dying | perk | clearq | over
@@ -2031,10 +2048,10 @@ function drawBanner() {
   const b = g.banner; if (!b) return;
   const a = Math.min(1, b.t * 2, (2.6 - b.t) * 4);
   ctx.globalAlpha = clamp(a, 0, 1);
-  // 鐵灰帶＋紅色緞帶（竹林夜襲風格）
-  const y0 = H * .3;
-  ctx.fillStyle = INK; ctx.fillRect(0, y0 - 4, W, 128);
-  const bg = ctx.createLinearGradient(0, y0, 0, y0 + 120); bg.addColorStop(0, '#4f5a5f'); bg.addColorStop(1, '#232a2d');
+  // 半透明的深色帶＋紅色緞帶。放在 HUD 正下方、主角上面（相機把主角固定在畫面 42% 高），才不會把主角蓋住
+  const y0 = Math.max(H * .14, SAFE_T + HUD_Y1 + 14);
+  const bg = ctx.createLinearGradient(0, y0, 0, y0 + 120); bg.addColorStop(0, 'rgba(10,13,20,0)'); bg.addColorStop(.18, 'rgba(10,13,20,.62)');
+  bg.addColorStop(.82, 'rgba(10,13,20,.62)'); bg.addColorStop(1, 'rgba(10,13,20,0)');
   ctx.fillStyle = bg; ctx.fillRect(0, y0, W, 120);
   ctx.fillStyle = INK; rr(W / 2 - 112, y0 + 38, 224, 50, 4); ctx.fill();
   ctx.fillStyle = '#e5342a'; rr(W / 2 - 108, y0 + 42, 216, 42, 2); ctx.fill();
@@ -2245,9 +2262,10 @@ function goTitle() {
   $('tCoins').textContent = save.coins;
   show('title');
   musicFor();
-  // 重播標題出場動畫
-  const it = $('intro'); it.classList.remove('play'); void it.offsetWidth; it.classList.add('play');
+  // 重播標題出場動畫（開場遮罩還在時先不播，等拿掉遮罩再播）
+  if (booting) $('intro').classList.remove('play'); else playIntro();
 }
+function playIntro() { const it = $('intro'); it.classList.remove('play'); void it.offsetWidth; it.classList.add('play'); }
 function pauseGame() { if (!g || paused || state === 'over' || state === 'perk' || state === 'menu' || state === 'clearq') return; paused = true; show('pause', true); }
 function resumeGame() { paused = false; hide('pause'); hide('help'); inp.dx = 0; lastT = performance.now(); }
 
