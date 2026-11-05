@@ -172,7 +172,7 @@ function A() {
   if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } }
   if (ac && ac.state === 'suspended') ac.resume();
   // 瀏覽器要等使用者第一次操作後才能出聲，所以標題曲在這裡（第一次點擊時）開始
-  if (ac && save.opt.snd && state === 'menu' && !document.hidden) BGM.play(ac);
+  musicFor();
   return ac;
 }
 function tone(f, d = .1, type = 'square', vol = .05, slide = 0, delay = 0) {
@@ -216,19 +216,20 @@ const SFX = {
   thunder: () => { noise(.3, .12); tone(80, .3, 'sawtooth', .06, -30); },
   wind: () => tone(500, .12, 'triangle', .025, 500),
 };
-const MUS = [293.66, 329.63, 392, 440, 493.88, 587.33, 659.25];
-let mStep = 0;
-setInterval(() => {
-  if (!ac || !save.opt.snd || paused || state !== 'play') return;   // 標題畫面改由 BGM 播放標題曲
-  const bass = [0, 0, 3, 2, 0, 0, 4, 3][(mStep >> 3) & 7];
-  if (mStep % 4 === 0) tone(MUS[bass] / 2, .32, 'triangle', .04);
-  if (mStep % 2 === 0 && Math.random() < .7) tone(MUS[(Math.random() * 7) | 0], .14, 'sine', .022);
-  mStep++;
-}, 210);
+// 依遊戲狀態決定要放哪首曲子（每一幀呼叫；同一首不會重播）
+// 標題＝鳶ノ影；關卡＝疾風ノ道（每一幕換調、無盡之塔每輪加快）；魔王登場＝鬼哭；暫停／死亡／結算＝停止
+const ACT_KEY = [0, 2, 5, 3];   // 林／風／火／山 的移調（半音）
+function musicFor() {
+  if (!ac || !save.opt.snd || document.hidden) return BGM.stop();
+  if (state === 'menu') return BGM.play(ac, 'title');
+  if (!g || paused || state === 'over' || state === 'dying') return BGM.stop();
+  BGM.hot = g.fever > 0;
+  BGM.play(ac, g.boss ? 'boss' : 'stage', { tr: ACT_KEY[g.stage % 4], sp: 1 + Math.min(.2, .04 * loopN()) });
+}
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v13';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v14';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -353,11 +354,8 @@ addEventListener('keydown', e => {
 addEventListener('keyup', e => { inp.keys[e.code] = false; });
 // 在畫面任何地方第一次點擊／按鍵就解鎖音訊（標題曲隨之開始）
 addEventListener('pointerdown', () => A(), true);
-// 切到背景時停止標題曲，回來時再播
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) BGM.stop();
-  else if (ac && save.opt.snd && state === 'menu') BGM.play(ac);
-});
+// 切到背景時停止音樂，回來時由 musicFor() 接著播
+document.addEventListener('visibilitychange', () => { if (document.hidden) BGM.stop(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && g && state !== 'over' && state !== 'menu' && state !== 'perk') pauseGame(); });
 
 // ===== 遊戲局 =====
@@ -365,7 +363,7 @@ const pk = id => (g && g.perks[id]) || 0;
 const sk = id => (g && g.skills[id]) || 0;   // 自動技能等級（0 = 沒有）
 
 function startRun() {
-  hideAll(); BGM.stop();
+  hideAll();
   g = {
     t: 0, camY: -H * .68, top: 0, bonus: 0, coins: 0,
     p: { x: W / 2, y: 40, vx: 0, vy: -JUMP, face: 1, inv: 0, slow: 0, freeze: 0, sq: 0, dash: 0, dvx: 0, dvy: 0, dive: false, wallUsed: false, banks: 0 },
@@ -599,6 +597,7 @@ function stageBanner() {
 
 // ===== 主更新 =====
 function update(dt) {
+  musicFor();
   if (state === 'menu') { updateDemo(dt); return; }
   if (!g || paused) return;
   if (state !== 'play' && inp.mode === 'aim') inp.mode = null;   // 進入演出時取消瞄準
@@ -2245,7 +2244,7 @@ function goTitle() {
   state = 'menu'; g = null; paused = false;
   $('tCoins').textContent = save.coins;
   show('title');
-  if (ac && save.opt.snd) BGM.play(ac);
+  musicFor();
   // 重播標題出場動畫
   const it = $('intro'); it.classList.remove('play'); void it.offsetWidth; it.classList.add('play');
 }
@@ -2361,7 +2360,7 @@ document.addEventListener('click', e => {
     case 'skin': save.skin = +arg; persist(); renderShop(); updateHeroArt(); break;
     case 'buyskin': { const s = SKINS[+arg]; if (save.coins >= s.cost) { save.coins -= s.cost; save.skins.push(+arg); save.skin = +arg; persist(); SFX.item(); } renderShop(); updateHeroArt(); break; }
     case 'buymeta': { const m = META.find(x => x.id === arg), c = m.cost(save.meta[arg]); if (save.coins >= c && save.meta[arg] < m.max) { save.coins -= c; save.meta[arg]++; persist(); SFX.item(); } renderShop(); break; }
-    case 'snd': save.opt.snd ^= 1; persist(); renderOpt(); if (!save.opt.snd) BGM.stop(); else if (state === 'menu') BGM.play(A()); break;
+    case 'snd': save.opt.snd ^= 1; persist(); renderOpt(); A(); musicFor(); break;
     case 'vib': save.opt.vib ^= 1; persist(); renderOpt(); break;
     case 'lang': LI = (LI + 1) % LANGS.length; save.opt.lang = LANGS[LI].id; persist(); applyLang(); renderOpt(); break;
     case 'reset': // 按兩次才重置（不用 confirm()，部分嵌入環境不會顯示對話框）

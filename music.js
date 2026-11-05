@@ -1,24 +1,26 @@
 'use strict';
-/* 標題曲「鳶ノ影」— 模擬 NES + MMC5 擴充音源（4 方波＋三角波＋雜訊）
-   都節音階（E F A B C）＋小調和弦，150 BPM。BGM.play(ac) 開始、BGM.stop() 停止 */
+/* 遊戲音樂 — 模擬 NES + MMC5 擴充音源（4 方波＋三角波＋雜訊），WebAudio 即時合成
+   曲目：title「鳶ノ影」（標題）、stage「疾風ノ道」（關卡）、boss「鬼哭」（魔王戰）
+   BGM.play(ac, 曲名, { tr: 移調半音, sp: 速度倍率 }) 開始或切換；BGM.stop() 停止；BGM.hot = true 時加強節奏（狂熱） */
 const BGM = (() => {
-  const BPM = 150, STEP = 60 / BPM / 4;   // 十六分音符長度（秒）
-  const MASTER = .5;                       // 總音量（峰值約 0.9，不會破音）
+  const MASTER = .5;   // 總音量（峰值約 0.9，不會破音）
   let ac = null, out = null, timer = null, nextT = 0, step = 0, waves = null, noiseBuf = null;
+  let song = null, key = '', tr = 1, STEP = .1;
 
   // ---- 音名 → 頻率 ----
   const SEMI = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
   const hz = n => { const m = /^([A-G]#?)(\d)$/.exec(n); return 440 * Math.pow(2, (SEMI[m[1]] + (+m[2] + 1) * 12 - 69) / 12); };
 
-  // ---- 曲譜 ----
-  // 和弦（每小節一個），用於分解和弦與低音
+  // 和弦（分解和弦、和聲用）與低音根音
   const CH = {
     Em: ['E4', 'G4', 'B4'], F: ['F4', 'A4', 'C5'], Am: ['A3', 'C4', 'E4'], C: ['C4', 'E4', 'G4'],
     D: ['D4', 'F#4', 'A4'], B5: ['B3', 'F#4', 'B4'],
   };
   const BASS = { Em: 'E2', F: 'F2', Am: 'A2', C: 'C2', D: 'D2', B5: 'B1' };
-  // 主旋律：[音名, 長度（十六分音符數）]，'.' 為休止
-  const MEL_A = [
+
+  // ===== 曲譜：主旋律為 [音名, 長度（十六分音符數）]，'.' 為休止；每小節 16 步 =====
+  // 標題「鳶ノ影」：都節音階（E F A B C）＋小調和弦
+  const TITLE_A = [
     ['E5', 4], ['B4', 2], ['E5', 2], ['F5', 2], ['E5', 2], ['B4', 4],
     ['C5', 4], ['A4', 2], ['C5', 2], ['F5', 4], ['E5', 2], ['C5', 2],
     ['B4', 2], ['E5', 2], ['G5', 4], ['F5', 2], ['E5', 2], ['B4', 4],
@@ -28,7 +30,7 @@ const BGM = (() => {
     ['F5', 2], ['E5', 2], ['C5', 2], ['A4', 2], ['C5', 4], ['F5', 4],
     ['E5', 2], ['F5', 2], ['F#5', 4], ['B5', 8],
   ];
-  const MEL_B = [
+  const TITLE_B = [
     ['E6', 8], ['C6', 4], ['B5', 4],
     ['A5', 8], ['.', 4], ['E5', 4],
     ['F5', 4], ['A5', 4], ['C6', 4], ['B5', 2], ['A5', 2],
@@ -38,27 +40,80 @@ const BGM = (() => {
     ['E5', 2], ['G5', 2], ['B5', 2], ['E6', 2], ['D6', 2], ['B5', 2], ['G5', 2], ['B5', 2],
     ['B5', 4], ['F#5', 4], ['B5', 8],
   ];
-  const CHORD_A = ['Em', 'F', 'Em', 'F', 'Am', 'C', 'F', 'B5'];
-  const CHORD_B = ['Am', 'Am', 'F', 'F', 'C', 'D', 'Em', 'B5'];
-  // 前奏 2 小節（只有鼓、低音和分解和弦），之後 A→B 無限循環
-  const SECTIONS = [
-    { chords: ['Em', 'F'], mel: null, intro: true },
-    { chords: CHORD_A, mel: MEL_A },
-    { chords: CHORD_B, mel: MEL_B, pad: true },
+  // 關卡「疾風ノ道」：前段緊湊的切分旋律（E 小調＋F 的和風色彩），後段拉長音、加和聲長音
+  const STAGE_A = [
+    ['E5', 2], ['B4', 1], ['E5', 1], ['G5', 2], ['F#5', 2], ['E5', 2], ['D5', 2], ['E5', 4],
+    ['B5', 3], ['A5', 1], ['G5', 2], ['E5', 2], ['F5', 4], ['E5', 4],
+    ['C6', 2], ['B5', 2], ['G5', 2], ['E5', 2], ['G5', 2], ['A5', 2], ['B5', 4],
+    ['A5', 2], ['F#5', 2], ['D5', 2], ['F#5', 2], ['A5', 4], ['.', 4],
+    ['E6', 2], ['D6', 2], ['B5', 2], ['G5', 2], ['E5', 2], ['G5', 2], ['B5', 4],
+    ['A5', 2], ['G5', 2], ['F5', 2], ['E5', 2], ['F5', 2], ['G5', 2], ['A5', 4],
+    ['C6', 4], ['A5', 2], ['F5', 2], ['A5', 4], ['C6', 4],
+    ['B5', 2], ['A5', 2], ['F#5', 2], ['D#5', 2], ['B4', 8],
+  ];
+  const STAGE_B = [
+    ['E6', 6], ['D6', 2], ['C6', 4], ['B5', 4],
+    ['A5', 8], ['E5', 4], ['A5', 4],
+    ['F5', 4], ['A5', 4], ['C6', 6], ['B5', 2],
+    ['A5', 12], ['.', 4],
+    ['G5', 4], ['C6', 4], ['E6', 4], ['D6', 4],
+    ['C6', 8], ['B5', 4], ['G5', 4],
+    ['F#5', 4], ['B5', 4], ['D#6', 4], ['F#6', 4],
+    ['B5', 2], ['.', 2], ['B5', 2], ['.', 2], ['B5', 8],
+  ];
+  // 魔王「鬼哭」：E 與 F 半音反覆的壓迫感、斷奏的刺擊、半音階下降
+  const BOSS_A = [
+    ['E5', 1], ['.', 1], ['E5', 1], ['.', 1], ['F5', 2], ['E5', 2], ['B4', 2], ['.', 2], ['E5', 4],
+    ['F5', 1], ['.', 1], ['F5', 1], ['.', 1], ['G5', 2], ['F5', 2], ['C5', 2], ['.', 2], ['F5', 4],
+    ['B5', 2], ['A#5', 2], ['B5', 2], ['E6', 2], ['D6', 2], ['B5', 2], ['A#5', 2], ['B5', 2],
+    ['C6', 2], ['B5', 2], ['C6', 2], ['F6', 2], ['E6', 2], ['C6', 2], ['B5', 2], ['C6', 2],
+    ['E6', 4], ['D#6', 4], ['D6', 4], ['C#6', 4],
+    ['C6', 4], ['B5', 4], ['A#5', 4], ['A5', 4],
+    ['G5', 2], ['A#5', 2], ['B5', 4], ['G5', 2], ['A#5', 2], ['B5', 4],
+    ['B5', 2], ['C6', 2], ['B5', 2], ['A#5', 2], ['B5', 8],
   ];
 
-  // 把曲譜展開成每個十六分音符的事件表
-  function build() {
-    const bars = [];   // 每小節：{ chord, mel: [16 個 null 或 {n, len}], pad, fill, intro }
-    for (const sec of SECTIONS) {
+  // 曲目設定：段落、各聲道的用法
+  // bass：oct8＝八分音符八度跳動、drive＝八度跳動加十六分音符的推進、run16＝十六分音符持續反覆
+  const SONGS = {
+    title: {
+      bpm: 150, loopFrom: 2,
+      sections: [
+        { chords: ['Em', 'F'], intro: true },
+        { chords: ['Em', 'F', 'Em', 'F', 'Am', 'C', 'F', 'B5'], mel: TITLE_A },
+        { chords: ['Am', 'Am', 'F', 'F', 'C', 'D', 'Em', 'B5'], mel: TITLE_B, pad: true },
+      ],
+      bass: 'oct8', kick: [0, 6, 8], snare: [4, 12], hat: 'odd', arp: .022,
+    },
+    stage: {
+      bpm: 168, loopFrom: 1,
+      sections: [
+        { chords: ['Em'], intro: true },
+        { chords: ['Em', 'Em', 'C', 'D', 'Em', 'Em', 'F', 'B5'], mel: STAGE_A },
+        { chords: ['Am', 'Am', 'F', 'F', 'C', 'C', 'B5', 'B5'], mel: STAGE_B, pad: true },
+      ],
+      bass: 'drive', kick: [0, 8, 10], snare: [4, 12], hat: 'all', arp: .02,
+    },
+    boss: {
+      bpm: 180, loopFrom: 0,
+      sections: [
+        { chords: ['Em', 'F', 'Em', 'F', 'Em', 'F', 'Em', 'B5'], mel: BOSS_A, pad: true },
+      ],
+      bass: 'run16', kick: [0, 4, 8, 12], snare: [4, 12], hat: 'all', arp: .018,
+    },
+  };
+
+  // 把曲譜展開成每小節的事件表
+  function build(sections) {
+    const bars = [];
+    for (const sec of sections) {
       const mel = [];
       if (sec.mel) for (const [n, len] of sec.mel) { mel.push(n === '.' ? null : { n, len }); for (let i = 1; i < len; i++) mel.push(undefined); }
       sec.chords.forEach((c, i) => bars.push({ chord: c, mel: sec.mel ? mel.slice(i * 16, i * 16 + 16) : [], pad: sec.pad, intro: sec.intro, fill: i === sec.chords.length - 1 }));
     }
     return bars;
   }
-  const BARS = build();
-  const LOOP_FROM = 2;   // 循環時跳過前奏
+  for (const s of Object.values(SONGS)) s.bars = build(s.sections);
 
   // ---- 波形 ----
   // 方波：依佔空比用傅立葉級數做 PeriodicWave（NES 方波有 12.5%／25%／50% 三種）
@@ -118,66 +173,83 @@ const BGM = (() => {
     o.connect(gn).connect(out); o.start(t); o.stop(t + .18);
   }
 
-  // 排程一個十六分音符的所有聲道
-  function schedule(i, t) {
-    const bar = BARS[Math.floor(i / 16)], s = i % 16, ch = CH[bar.chord];
+  // 排程一首曲子的第 i 個十六分音符（所有聲道）
+  function schedule(S, i, t, hot) {
+    const bar = S.bars[Math.floor(i / 16)], s = i % 16, ch = CH[bar.chord];
     // 方波 1：主旋律（25%）；方波 2：回音（12.5%，晚 3 步、較小聲）
     const m = bar.mel[s];
     if (m) {
-      const f = hz(m.n), d = m.len * STEP;
+      const f = hz(m.n) * tr, d = m.len * STEP;
       note(waves.p25, f, t, d, .075, true);
       note(waves.p12, f, t + 3 * STEP, d, .03, false);
     }
     // 方波 3（MMC5）：分解和弦，高八度、每十六分音符一個音
-    const arp = [0, 1, 2, 1][s % 4], af = hz(ch[arp]) * 2;
-    note(waves.p12, af, t, STEP, bar.intro ? .035 : .022, false);
-    // 方波 4（MMC5）：B 段和聲長音（和弦三音，每半小節一個）
-    if (bar.pad && s % 8 === 0) note(waves.p50, hz(ch[1]), t, 8 * STEP, .03, true);
-    // 三角波：八度跳動的低音（八分音符）。波形修正後基音變扎實，音量從 .16 降到 .1 維持平衡
-    if (s % 2 === 0) { const b = hz(BASS[bar.chord]) * (s % 4 === 2 ? 2 : 1); note(waves.tri, b, t, 2 * STEP, .1, false); }
-    // 雜訊與大鼓：太鼓節奏，段落最後一小節加小鼓連打
-    if (s === 0 || s === 6 || s === 8 || (bar.intro && s === 14)) kick(t, .22);
-    if (s === 4 || s === 12 || (bar.fill && s >= 12)) hit(t, .35, .12, .07);
-    if (s % 2 === 1) hit(t, 1, .03, .025);
+    const arp = [0, 1, 2, 1][s % 4];
+    note(waves.p12, hz(ch[arp]) * 2 * tr, t, STEP, bar.intro ? S.arp * 1.6 : S.arp * (hot ? 1.4 : 1), false);
+    // 方波 4（MMC5）：和聲長音（和弦三音，每半小節一個）
+    if (bar.pad && s % 8 === 0) note(waves.p50, hz(ch[1]) * tr, t, 8 * STEP, .03, true);
+    // 三角波：低音（波形修正後基音扎實，音量 .1）
+    const root = hz(BASS[bar.chord]) * tr;
+    if (S.bass === 'oct8' && s % 2 === 0) note(waves.tri, root * (s % 4 === 2 ? 2 : 1), t, 2 * STEP, .1, false);
+    if (S.bass === 'drive') {
+      if (s % 2 === 0) note(waves.tri, root * (s % 4 === 2 ? 2 : 1), t, 2 * STEP, .1, false);
+      else if (s === 15 || s === 7) note(waves.tri, root * 2, t, STEP, .08, false);   // 十六分音符的推進
+    }
+    if (S.bass === 'run16') note(waves.tri, root * ([1, 1, 2, 1][s % 4]), t, STEP, .1, false);
+    // 雜訊與大鼓；段落最後一小節加小鼓連打；狂熱時大鼓每拍、鈸每個十六分音符
+    if (S.kick.includes(s) || (bar.intro && s === 14) || (hot && s % 4 === 0)) kick(t, .22);
+    if (S.snare.includes(s) || (bar.fill && s >= 12)) hit(t, .35, .12, .07);
+    if (S.hat === 'all' || s % 2 === 1 || hot) hit(t, 1, .03, s % 2 ? .025 : (hot ? .03 : .015));
   }
   function tick() {
+    const S = song, total = S.bars.length * 16;
     while (nextT < ac.currentTime + .15) {
-      schedule(step, nextT);
+      schedule(S, step, nextT, api.hot);
       nextT += STEP; step++;
-      if (step >= BARS.length * 16) step = LOOP_FROM * 16;
+      if (step >= total) step = S.loopFrom * 16;
     }
   }
+  function stopNow() {
+    if (!timer) return;
+    clearInterval(timer); timer = null; key = '';
+    const o = out; o.gain.setTargetAtTime(0, ac.currentTime, .05);   // 淡出，已排程的音不會突然斷掉
+    setTimeout(() => o.disconnect(), 400);
+  }
 
-  return {
+  const api = {
+    hot: false,
     get playing() { return !!timer; },
-    // 測試用：離線算出前 sec 秒的音訊，回傳每秒的音量（RMS）
-    async test(sec = 8) {
-      const prev = [ac, out, waves, noiseBuf];
-      ac = new OfflineAudioContext(1, 44100 * sec, 44100);
-      makeVoices();
-      out = ac.createGain(); out.gain.value = MASTER; out.connect(ac.destination);
-      for (let i = 0, t = .05; t < sec - .3; i++, t += STEP) schedule(i % (BARS.length * 16), t);
-      const buf = await ac.startRendering(), d = buf.getChannelData(0), rms = [];
-      for (let s = 0; s < sec; s++) { let a = 0; for (let k = s * 44100; k < (s + 1) * 44100; k++) a += d[k] * d[k]; rms.push(+Math.sqrt(a / 44100).toFixed(3)); }
-      let peak = 0; for (const v of d) peak = Math.max(peak, Math.abs(v));
-      // 高頻量：相鄰取樣差的 RMS（高頻聲音越多越大）
-      let hf = 0; for (let k = 1; k < d.length; k++) hf += (d[k] - d[k - 1]) ** 2;
-      hf = +Math.sqrt(hf / d.length).toFixed(4);
-      [ac, out, waves, noiseBuf] = prev;
-      return { bars: BARS.length, secPerLoop: +(BARS.length * 16 * STEP).toFixed(1), rms, peak: +peak.toFixed(2), hf };
-    },
-    play(ctx) {
-      if (timer || !ctx) return;
+    get current() { return timer ? key : ''; },
+    // 開始播放或切換曲子；同一首、同樣的移調與速度就不重播
+    play(ctx, id = 'title', opt = {}) {
+      if (!ctx || !SONGS[id]) return;
+      const k = `${id}|${opt.tr || 0}|${opt.sp || 1}`;
+      if (timer && k === key) return;
+      stopNow();
       if (ac !== ctx) { ac = ctx; makeVoices(); }
+      song = SONGS[id]; key = k;
+      tr = Math.pow(2, (opt.tr || 0) / 12);
+      STEP = 60 / (song.bpm * (opt.sp || 1)) / 4;
       out = ac.createGain(); out.gain.value = MASTER; out.connect(ac.destination);
       step = 0; nextT = ac.currentTime + .08;
       timer = setInterval(tick, 25); tick();
     },
-    stop() {
-      if (!timer) return;
-      clearInterval(timer); timer = null;
-      const o = out; o.gain.setTargetAtTime(0, ac.currentTime, .05);   // 淡出，已排程的音不會突然斷掉
-      setTimeout(() => o.disconnect(), 400);
+    stop: stopNow,
+    // 測試用：離線算出某首曲子前 sec 秒的音訊，回傳每秒音量（RMS）、峰值、一輪長度
+    async test(id = 'title', sec = 8, opt = {}) {
+      const prev = [ac, out, waves, noiseBuf, song, tr, STEP];
+      ac = new OfflineAudioContext(1, 44100 * sec, 44100); makeVoices();
+      song = SONGS[id]; tr = Math.pow(2, (opt.tr || 0) / 12); STEP = 60 / (song.bpm * (opt.sp || 1)) / 4;
+      out = ac.createGain(); out.gain.value = MASTER; out.connect(ac.destination);
+      const total = song.bars.length * 16;
+      for (let i = 0, t = .05; t < sec - .3; i++, t += STEP) schedule(song, i < total ? i : song.loopFrom * 16 + (i - total) % (total - song.loopFrom * 16), t, !!opt.hot);
+      const d = (await ac.startRendering()).getChannelData(0), rms = [];
+      for (let s = 0; s < sec; s++) { let a = 0; for (let k = s * 44100; k < (s + 1) * 44100; k++) a += d[k] * d[k]; rms.push(+Math.sqrt(a / 44100).toFixed(3)); }
+      let peak = 0; for (const v of d) peak = Math.max(peak, Math.abs(v));
+      const loopSec = +(total * STEP).toFixed(1);
+      [ac, out, waves, noiseBuf, song, tr, STEP] = prev;
+      return { bars: SONGS[id].bars.length, loopSec, rms, peak: +peak.toFixed(2) };
     },
   };
+  return api;
 })();

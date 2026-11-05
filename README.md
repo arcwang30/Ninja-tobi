@@ -31,7 +31,7 @@ Artifact 環境的限制：不能偵測搖晃手機（改點左上卷軸圖示�
 |---|---|
 | `index.html` / `style.css` | 選單、商店、排行、結算等 UI |
 | `lang.js` | 多語系文字（繁中／日文／英文），每個字串是 `[繁中, 日文, 英文]` |
-| `music.js` | 標題曲「鳶ノ影」：模擬 NES＋MMC5 音源（4 方波＋三角波＋雜訊），WebAudio 即時合成 |
+| `music.js` | 遊戲音樂（模擬 NES＋MMC5：4 方波＋三角波＋雜訊，WebAudio 即時合成）：標題「鳶ノ影」150 BPM、關卡「疾風ノ道」168 BPM（每一幕換調、無盡之塔每輪加快 4%、狂熱時加強節奏）、魔王「鬼哭」180 BPM |
 | `game.js` | 遊戲本體（物理、關卡生成、敵人、BOSS、QTE、Roguelike、存檔、音效） |
 | `sw.js` / `manifest.webmanifest` / `icon.svg` | PWA |
 | `serve.ps1` / `build-artifact.ps1` | 本機伺服器／產生 Artifact 版頁面 |
