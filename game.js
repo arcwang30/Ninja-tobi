@@ -228,12 +228,21 @@ setInterval(() => {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
+const APP_VER = 'v10';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
+const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
+let DIAG = '';
 function resize() {
   const app = $('app');
   let vw = innerWidth, vh = innerHeight, gap = 0;
+  const appMode = isAppMode();
   // iOS「加入主畫面」＋透明狀態列：回報的高度少了一段狀態列，畫面卻整個上移，底部會空一條黑邊。
-  // 這時改用螢幕實際高度排版，少掉的那段就是狀態列（瀏海）高度。
-  if (navigator.standalone && screen.height > vh && vw < vh) { gap = screen.height - vh; vh = screen.height; }
+  // 這時改用「100vh、螢幕實際高度」中最高的來排版，少掉的那段就是狀態列（瀏海）高度。
+  if (appMode && vw < vh) {
+    const vp = $('vhProbe'), full = Math.max(vh, vp ? vp.offsetHeight : 0, IS_IOS ? Math.max(screen.height, screen.width) : 0);
+    if (full > vh) { gap = full - vh; vh = full; }
+  }
   // 依螢幕比例調整邏輯高度（640～900），長螢幕手機也能上下滿版
   H = clamp(Math.round(W * vh / vw), 640, 900);
   const w = Math.min(vw, vh * W / H), h = w * H / W;
@@ -245,10 +254,14 @@ function resize() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   // 瀏海／狀態列高度：取系統回報值與上面算出的落差中較大的，HUD 和標題都會往下讓開這段
-  const sa = $('safeProbe');
-  const top = Math.max(sa ? parseFloat(getComputedStyle(sa).paddingTop) || 0 : 0, gap);
+  const sa = $('safeProbe'), env = sa ? parseFloat(getComputedStyle(sa).paddingTop) || 0 : 0;
+  let top = Math.max(env, gap);
+  // 新版 iOS 會在狀態列下方再疊一段模糊漸層（約狀態列的一倍高），HUD 要再往下讓開才不會糊掉
+  if (IS_IOS && appMode && top > 0) top += Math.max(20, top * .6);
   SAFE_T = top * W / w;
   app.style.setProperty('--sat', top + 'px');
+  DIAG = `${APP_VER} · ${innerWidth}×${innerHeight} · screen ${screen.width}×${screen.height} · ${appMode ? 'App' : 'Web'} · env ${Math.round(env)} · gap ${Math.round(gap)} · top ${Math.round(top)}`;
+  const dg = $('diag'); if (dg) dg.textContent = DIAG;
 }
 let SAFE_T = 0;
 addEventListener('resize', resize);
@@ -2254,7 +2267,7 @@ function openSub(id) {
   menuFrom = $('over').classList.contains('on') ? 'over' : 'title';
   if (id === 'shop') renderShop();
   if (id === 'rank') renderRank();
-  if (id === 'opt') renderOpt();
+  if (id === 'opt') { renderOpt(); resize(); }
   show(id);
 }
 
