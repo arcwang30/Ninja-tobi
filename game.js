@@ -228,7 +228,7 @@ setInterval(() => {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v12';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v13';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -261,11 +261,15 @@ function resize() {
   const sa = $('safeProbe'), env = sa ? parseFloat(getComputedStyle(sa).paddingTop) || 0 : 0;
   let top = Math.max(env, gap);
   SAFE_T = top * W / w;
+  // iOS App 模式下瀏海下方約 30pt 會被系統模糊，HUD 這段只放紋樣
+  BLUR_T = IS_IOS && appMode && top > 0 ? 30 * W / w : 0;
   app.style.setProperty('--sat', top + 'px');
-  DIAG = `${APP_VER} · ${innerWidth}×${innerHeight} · screen ${screen.width}×${screen.height} · ${appMode ? 'App' : 'Web'} · env ${Math.round(env)} · gap ${Math.round(gap)} · top ${Math.round(top)}`;
+  DIAG = `${APP_VER} · ${innerWidth}×${innerHeight} · screen ${screen.width}×${screen.height} · ${appMode ? 'App' : 'Web'} · env ${Math.round(env)} · gap ${Math.round(gap)} · top ${Math.round(top)} · blur ${Math.round(BLUR_T)}`;
   const dg = $('diag'); if (dg) dg.textContent = DIAG;
 }
-let SAFE_T = 0;
+let SAFE_T = 0, BLUR_T = 0;
+const HUD_ROW = 40;            // HUD 單列的高度（遊戲座標）
+let HUD_Y0 = 0, HUD_Y1 = 64;   // HUD 那一列的上下緣（扣掉瀏海後），點擊判定用
 addEventListener('resize', resize);
 addEventListener('orientationchange', () => setTimeout(resize, 300));
 resize();
@@ -286,8 +290,8 @@ cv.addEventListener('pointerdown', e => {
   const p = toL(e);
   if (state === 'play' && !paused) {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
-    if (p.x > W - 50 && hy < 50) { pauseGame(); return; }
-    if (p.x < 120 && hy > 26 && hy < 62) { castScroll(); return; }
+    if (hy < HUD_Y1 + 6 && p.x > W - 40) { pauseGame(); return; }
+    if (hy > HUD_Y0 - 4 && hy < HUD_Y1 + 6 && p.x > 116 && p.x < 172) { castScroll(); return; }
   }
   inp.down = true; inp.id = e.pointerId; inp.lx = p.x; inp.ly = p.y; inp.sw = 0;
   inp.hist = [{ x: p.x, y: p.y, t: performance.now() }]; inp.flicked = false;
@@ -1884,47 +1888,49 @@ function drawZone(camY, stage, t) {
 
 function drawHUD() {
   ctx.save();
-  // 整條 HUD 往下移到瀏海（含 iOS 模糊帶）下面；背景從畫面最頂端一路畫下來，不留接縫
+  // 整條 HUD 往下移到瀏海下面；背景從畫面最頂端一路畫下來，不留接縫
   if (SAFE_T > 0) ctx.translate(0, SAFE_T);
-  // 上方資訊列（忍術風）：夜行衣的深藍黑底＋淡金青海波紋，底部金線＋黑邊收尾
-  const HB = 64, y0 = -SAFE_T;
+  // 上方資訊列（忍術風）：夜行衣的深藍黑底＋淡金青海波紋。
+  // iOS 會在瀏海下方疊一段模糊帶（BLUR_T），那段只放紋樣，所有文字和按鈕排成一列放在它下面
+  const BY = BLUR_T, HB = BY + HUD_ROW, cy = BY + HUD_ROW / 2, y0 = -SAFE_T;
+  HUD_Y0 = BY; HUD_Y1 = HB;
   const hg = ctx.createLinearGradient(0, y0, 0, HB); hg.addColorStop(0, '#0a0d14'); hg.addColorStop(1, '#1a2236');
   ctx.fillStyle = hg; ctx.fillRect(0, y0, W, HB - y0);
   ctx.globalAlpha = .5; ctx.fillStyle = hudPattern(); ctx.fillRect(0, y0, W, HB - y0); ctx.globalAlpha = 1;
   // 底部不畫線，用柔和的陰影漸層接到遊戲畫面
   const fade = ctx.createLinearGradient(0, HB, 0, HB + 12); fade.addColorStop(0, 'rgba(10,13,20,.55)'); fade.addColorStop(1, 'rgba(10,13,20,0)');
   ctx.fillStyle = fade; ctx.fillRect(0, HB, W, 12);
-  // 分數：手裡劍圖示＋數字
-  drawShuriken(15, 15, 10, g.t * 2);
-  txt('SCORES ' + String(score()).padStart(7, '0'), 28, 15, 14, '#fff', 'left', INK, 4);
+  // 分數：手裡劍＋數字
+  drawShuriken(14, cy, 9, g.t * 2);
+  txt(String(score()), 27, cy, 15, '#fff', 'left', INK, 4);
   // 小判
-  ctx.fillStyle = '#e8b020'; ctx.beginPath(); ctx.ellipse(196, 15, 6, 8, 0, 0, 7); ctx.fill();
-  txt(String(Math.floor(g.coins)), 206, 15, 14, '#ffd27a', 'left', '#000', 3);
-  // 卷軸（可點擊）
-  ctx.fillStyle = g.scrolls ? '#fff3d0' : '#777'; ctx.fillRect(12, 36, 22, 10); ctx.fillStyle = '#c0262d'; ctx.fillRect(20, 35, 5, 12);
-  txt('x' + g.scrolls, 40, 42, 14, g.scrolls ? '#fff' : '#999', 'left', '#000', 3);
-  if (g.scrolls && g.fly <= 0) txt(t('tap_use'), 64, 42, 9, '#ffd27a', 'left', null);
-  // HP
-  // HP 血條（低於 30% 會閃爍）
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(93, cy, 7, 9, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#e8b020'; ctx.beginPath(); ctx.ellipse(93, cy, 5.5, 7.5, 0, 0, 7); ctx.fill();
+  txt(String(Math.floor(g.coins)), 102, cy, 13, '#ffd27a', 'left', INK, 3);
+  // 卷軸（可點擊發動忍法）
+  ctx.fillStyle = INK; rr(124, cy - 7, 24, 14, 3); ctx.fill();
+  ctx.fillStyle = g.scrolls ? '#fff3d0' : '#777'; ctx.fillRect(126, cy - 5, 20, 10);
+  ctx.fillStyle = '#c0262d'; ctx.fillRect(133, cy - 6, 6, 12);
+  txt('×' + g.scrolls, 151, cy, 12, g.scrolls ? '#fff' : '#999', 'left', INK, 3);
+  // HP：「命」字印章＋血條（低於 30% 會閃爍）
   const hr = g.hp / g.maxHp, low = hr < .3 && Math.sin(g.t * 10) > 0;
-  // 血條左邊的紅色「命」字印章
-  seal(110, 42, 17, '命');
-  bar(122, 34, 104, 16, hr, low ? '#ff9a9a' : hr < .3 ? '#ff3a3a' : '#e5342a');
-  txt(`${Math.ceil(g.hp)}/${g.maxHp}`, 174, 42, 10, '#fff', 'center', INK, 3);
-  // 高度、幕名（紅色落款方印）
-  txt(Math.floor(g.top / 10) + 'm', W - 52, 15, 13, '#fff', 'right', INK, 3);
-  seal(W - 63, 42, 20, THEMES[g.stage % 4].k);
-  // 暫停：金框圓形家紋
-  const px = W - 25, py = 29;
-  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px, py, 17, 0, 7); ctx.fill();
-  ctx.fillStyle = '#141a28'; ctx.beginPath(); ctx.arc(px, py, 14.5, 0, 7); ctx.fill();
-  ctx.strokeStyle = '#e8b84a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, 14.5, 0, 7); ctx.stroke();
-  ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(px, py, 11, 0, 7); ctx.stroke();
-  ctx.fillStyle = '#e8b84a'; ctx.fillRect(px - 6, py - 7, 4, 14); ctx.fillRect(px + 2, py - 7, 4, 14);
-  // 本幕進度：底部金線亮起來的部分
+  seal(181, cy, 16, '命');
+  bar(192, cy - 8, 76, 16, hr, low ? '#ff9a9a' : hr < .3 ? '#ff3a3a' : '#e5342a');
+  txt(`${Math.ceil(g.hp)}/${g.maxHp}`, 230, cy, 9, '#fff', 'center', INK, 3);
+  // 幕名（紅色落款方印）、高度＋本幕進度小條
+  seal(283, cy, 18, THEMES[g.stage % 4].k);
+  txt(Math.floor(g.top / 10) + 'm', 323, cy - 4, 11, '#fff', 'right', INK, 3);
   const pr = clamp((g.top - g.bossN * STAGE_PX) / STAGE_PX, 0, 1);
-  ctx.fillStyle = 'rgba(0,0,0,.5)'; rr(W - 92, 23, 40, 3, 1.5); ctx.fill();   // 本幕進度：高度下方的小條
-  ctx.fillStyle = '#ffe28a'; rr(W - 92, 23, 40 * pr, 3, 1.5); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(296, cy + 6, 27, 3, 1.5); ctx.fill();
+  ctx.fillStyle = '#ffe28a'; rr(296, cy + 6, 27 * pr, 3, 1.5); ctx.fill();
+  // 暫停：金框圓形家紋
+  const px = W - 18, py = cy;
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px, py, 14, 0, 7); ctx.fill();
+  ctx.fillStyle = '#141a28'; ctx.beginPath(); ctx.arc(px, py, 12, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#e8b84a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, 12, 0, 7); ctx.stroke();
+  ctx.fillStyle = '#e8b84a'; ctx.fillRect(px - 5, py - 6, 3.5, 12); ctx.fillRect(px + 1.5, py - 6, 3.5, 12);
+  // 以下（氣、技能、連斬、魔王血量…）原本以 HUD 高 64 排版，依新的 HUD 高度整體平移
+  ctx.translate(0, HB - 64);
   // 氣（衝刺斬／急降斬的次數）
   const km = kiMax();
   txt(t('ki'), 14, 80, 11, '#9ad8ff', 'center', '#000', 3);
