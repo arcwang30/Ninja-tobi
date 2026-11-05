@@ -15,7 +15,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body {
-  width: 100%; height: 100%; overflow: hidden; background: #081414;
+  width: 100%; height: 100%; overflow: hidden; background: #161c1e;
   background-image: linear-gradient(90deg, transparent 0 40px, #0f2a24 40px 60px, transparent 60px 140px, #0c231e 140px 152px, transparent 152px);
   touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none;
   font-family: var(--cjk); font-weight: 900; color: var(--text);

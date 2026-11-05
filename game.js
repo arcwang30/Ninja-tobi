@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 /* NINJA 鳶 TOBI — 忍者跳躍 Roguelike「忍者修行」（主線四幕＋無盡之塔）。文字在 lang.js */
 
 // ===== 常數 =====
@@ -228,7 +228,7 @@ setInterval(() => {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v10';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v11';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -248,6 +248,10 @@ function resize() {
   const w = Math.min(vw, vh * W / H), h = w * H / W;
   app.style.width = w + 'px'; app.style.height = h + 'px';
   // 主畫面模式從畫面頂端開始排，其餘置中
+  // iOS 這個模式下，最下面那段不屬於「可視範圍」，固定定位的元素畫不到。
+  // 所以讓網頁本身長到全高，遊戲改用一般定位從頂端排下來，才會一路畫到螢幕底。
+  document.documentElement.style.height = document.body.style.height = gap ? vh + 'px' : '';
+  app.style.position = gap ? 'absolute' : 'fixed';
   app.style.top = gap ? '0px' : '50%';
   app.style.transform = gap ? 'translateX(-50%)' : 'translate(-50%, -50%)';
   app.style.setProperty('--u', (w / W) + 'px');
@@ -1882,15 +1886,18 @@ function drawZone(camY, stage, t) {
 
 function drawHUD() {
   ctx.save();
-  // 瀏海區塊用資訊列的顏色補滿，整條 HUD 往下移到瀏海下面
-  if (SAFE_T > 0) { ctx.fillStyle = 'rgba(79,90,95,.92)'; ctx.fillRect(0, 0, W, SAFE_T); ctx.translate(0, SAFE_T); }
-  // 上方資訊列：鐵灰面板＋粗黑底線＋金色鉚釘（竹林夜襲風格）
-  const hg = ctx.createLinearGradient(0, 0, 0, 64); hg.addColorStop(0, 'rgba(79,90,95,.92)'); hg.addColorStop(1, 'rgba(35,42,45,.92)');
-  ctx.fillStyle = hg; ctx.fillRect(0, 0, W, 64);
-  ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(0, 0, W, 3);
-  ctx.fillStyle = INK; ctx.fillRect(0, 61, W, 4);
-  for (const rx of [6, W - 6]) { ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(rx, 8, 3.4, 0, 7); ctx.fill(); ctx.fillStyle = '#e8b84a'; ctx.beginPath(); ctx.arc(rx, 8, 2.2, 0, 7); ctx.fill(); }
-  txt('SCORES ' + String(score()).padStart(7, '0'), 12, 15, 15, '#fff', 'left', INK, 4);
+  // 整條 HUD 往下移到瀏海（含 iOS 模糊帶）下面；背景從畫面最頂端一路畫下來，不留接縫
+  if (SAFE_T > 0) ctx.translate(0, SAFE_T);
+  // 上方資訊列（忍術風）：夜行衣的深藍黑底＋淡金青海波紋，底部金線＋黑邊收尾
+  const HB = 64, y0 = -SAFE_T;
+  const hg = ctx.createLinearGradient(0, y0, 0, HB); hg.addColorStop(0, '#0a0d14'); hg.addColorStop(1, '#1a2236');
+  ctx.fillStyle = hg; ctx.fillRect(0, y0, W, HB - y0);
+  ctx.globalAlpha = .5; ctx.fillStyle = hudPattern(); ctx.fillRect(0, y0, W, HB - y0); ctx.globalAlpha = 1;
+  ctx.fillStyle = 'rgba(232,184,74,.35)'; ctx.fillRect(0, HB - 5, W, 2);
+  ctx.fillStyle = INK; ctx.fillRect(0, HB - 3, W, 4);
+  // 分數：手裡劍圖示＋數字
+  drawShuriken(15, 15, 10, g.t * 2);
+  txt('SCORES ' + String(score()).padStart(7, '0'), 28, 15, 14, '#fff', 'left', INK, 4);
   // 小判
   ctx.fillStyle = '#e8b020'; ctx.beginPath(); ctx.ellipse(196, 15, 6, 8, 0, 0, 7); ctx.fill();
   txt(String(Math.floor(g.coins)), 206, 15, 14, '#ffd27a', 'left', '#000', 3);
@@ -1901,18 +1908,23 @@ function drawHUD() {
   // HP
   // HP 血條（低於 30% 會閃爍）
   const hr = g.hp / g.maxHp, low = hr < .3 && Math.sin(g.t * 10) > 0;
-  bar(112, 34, 112, 16, hr, low ? '#ff9a9a' : hr < .3 ? '#ff3a3a' : '#e5342a');
-  txt(`${Math.ceil(g.hp)}/${g.maxHp}`, 168, 42, 10, '#fff', 'center', INK, 3);
-  // 高度
-  txt(Math.floor(g.top / 10) + 'm', W - 56, 15, 13, '#fff', 'right', '#000', 3);
-  txt(THEMES[g.stage % 4].k, W - 56, 42, 15, '#ffd27a', 'right', '#000', 3);
-  // 暫停
-  ctx.fillStyle = INK; rr(W - 42, 12, 32, 34, 8); ctx.fill();
-  ctx.fillStyle = '#4f5a5f'; rr(W - 39, 15, 26, 28, 6); ctx.fill();
-  ctx.fillStyle = '#e8b84a'; ctx.fillRect(W - 32, 21, 4, 16); ctx.fillRect(W - 24, 21, 4, 16);
-  // 本幕進度
+  // 血條左邊的紅色「命」字印章
+  seal(110, 42, 17, '命');
+  bar(122, 34, 104, 16, hr, low ? '#ff9a9a' : hr < .3 ? '#ff3a3a' : '#e5342a');
+  txt(`${Math.ceil(g.hp)}/${g.maxHp}`, 174, 42, 10, '#fff', 'center', INK, 3);
+  // 高度、幕名（紅色落款方印）
+  txt(Math.floor(g.top / 10) + 'm', W - 52, 15, 13, '#fff', 'right', INK, 3);
+  seal(W - 63, 42, 20, THEMES[g.stage % 4].k);
+  // 暫停：金框圓形家紋
+  const px = W - 25, py = 29;
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px, py, 17, 0, 7); ctx.fill();
+  ctx.fillStyle = '#141a28'; ctx.beginPath(); ctx.arc(px, py, 14.5, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#e8b84a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, 14.5, 0, 7); ctx.stroke();
+  ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(px, py, 11, 0, 7); ctx.stroke();
+  ctx.fillStyle = '#e8b84a'; ctx.fillRect(px - 6, py - 7, 4, 14); ctx.fillRect(px + 2, py - 7, 4, 14);
+  // 本幕進度：底部金線亮起來的部分
   const pr = clamp((g.top - g.bossN * STAGE_PX) / STAGE_PX, 0, 1);
-  ctx.fillStyle = '#e8b84a'; ctx.fillRect(0, 62, W * pr, 3);
+  ctx.fillStyle = '#ffe28a'; ctx.fillRect(0, HB - 5, W * pr, 2);
   // 氣（衝刺斬／急降斬的次數）
   const km = kiMax();
   txt(t('ki'), 14, 80, 11, '#9ad8ff', 'center', '#000', 3);
@@ -1961,6 +1973,42 @@ function drawHUD() {
   // 異變
   if (g.mod && g.mod.id === 'wind' && g.wind) txt(g.wind > 0 ? '風 ≫≫' : '≪≪ 風', W / 2, 150, 14, '#cfefff', 'center', '#000', 3);
   ctx.restore();
+}
+
+// HUD 背景的青海波紋（只做一次，之後重複貼）
+let HUD_PAT = null;
+function hudPattern() {
+  if (HUD_PAT) return HUD_PAT;
+  const c = document.createElement('canvas'); c.width = 48; c.height = 24;
+  const x = c.getContext('2d');
+  // 由上往下一排排畫半圓（每排錯開半格），後畫的會蓋住前面，做出波浪層疊感
+  for (let j = -2; j <= 4; j++) {
+    const y = j * 6, off = (j & 1) ? 12 : 0;
+    for (let k = -1; k <= 2; k++) {
+      const cx = off + k * 24;
+      x.fillStyle = '#121a2a'; x.beginPath(); x.arc(cx, y, 12, 0, 7); x.fill();
+      x.strokeStyle = 'rgba(232,184,74,.5)'; x.lineWidth = 1;
+      for (const r of [12, 8, 4]) { x.beginPath(); x.arc(cx, y, r, Math.PI, 0); x.stroke(); }
+    }
+  }
+  HUD_PAT = ctx.createPattern(c, 'repeat');
+  return HUD_PAT;
+}
+// 手裡劍圖示（銀色、粗黑框、中間有孔）
+function drawShuriken(x, y, r, rot) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, rr2 = i % 2 ? r * .32 : r; ctx.lineTo(Math.cos(a) * rr2, Math.sin(a) * rr2); }
+  ctx.closePath(); ctx.fillStyle = '#eef2f4'; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(0, 0, r * .22, 0, 7); ctx.fill();
+  ctx.restore();
+}
+// 紅色落款印章（方形、粗黑框、白字）
+function seal(x, y, s, ch) {
+  ctx.fillStyle = INK; rr(x - s / 2 - 2, y - s / 2 - 2, s + 4, s + 4, 4); ctx.fill();
+  ctx.fillStyle = '#c0262d'; rr(x - s / 2, y - s / 2, s, s, 3); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,240,220,.6)'; ctx.lineWidth = 1; rr(x - s / 2 + 2, y - s / 2 + 2, s - 4, s - 4, 2); ctx.stroke();
+  txt(ch, x, y + 1, s * .62, '#fff3e0', 'center', null);
 }
 
 // 粗黑框＋高光的量條（HP、魔王血量、時間）
@@ -2069,7 +2117,19 @@ function drawKill() {
   }
 }
 
+// 最外層背景色跟著畫面最底部走（標題＝底部選單、遊戲中＝死亡區域），
+// iOS 主畫面模式下若還留一點畫不到的縫，也會和畫面融為一體
+const ZONE_BG = { fire: '#9a0a00', sea: '#0d3a78', monster: '#2a0e2e' };
+let rootBg = '';
+function syncRootBg() {
+  const c = state === 'menu' || !g ? '#161c1e' : ZONE_BG[THEMES[g.stage % 4].zone];
+  if (c === rootBg) return;
+  rootBg = c;
+  document.documentElement.style.background = document.body.style.background = c;
+}
+
 function render() {
+  syncRootBg();
   const sc = cv.width / W;
   ctx.setTransform(sc, 0, 0, cv.height / H, 0, 0);
   const t = performance.now() / 1000;
