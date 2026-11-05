@@ -228,7 +228,7 @@ setInterval(() => {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v11';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v12';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -260,8 +260,6 @@ function resize() {
   // 瀏海／狀態列高度：取系統回報值與上面算出的落差中較大的，HUD 和標題都會往下讓開這段
   const sa = $('safeProbe'), env = sa ? parseFloat(getComputedStyle(sa).paddingTop) || 0 : 0;
   let top = Math.max(env, gap);
-  // 新版 iOS 會在狀態列下方再疊一段模糊漸層（約狀態列的一倍高），HUD 要再往下讓開才不會糊掉
-  if (IS_IOS && appMode && top > 0) top += Math.max(20, top * .6);
   SAFE_T = top * W / w;
   app.style.setProperty('--sat', top + 'px');
   DIAG = `${APP_VER} · ${innerWidth}×${innerHeight} · screen ${screen.width}×${screen.height} · ${appMode ? 'App' : 'Web'} · env ${Math.round(env)} · gap ${Math.round(gap)} · top ${Math.round(top)}`;
@@ -1893,8 +1891,9 @@ function drawHUD() {
   const hg = ctx.createLinearGradient(0, y0, 0, HB); hg.addColorStop(0, '#0a0d14'); hg.addColorStop(1, '#1a2236');
   ctx.fillStyle = hg; ctx.fillRect(0, y0, W, HB - y0);
   ctx.globalAlpha = .5; ctx.fillStyle = hudPattern(); ctx.fillRect(0, y0, W, HB - y0); ctx.globalAlpha = 1;
-  ctx.fillStyle = 'rgba(232,184,74,.35)'; ctx.fillRect(0, HB - 5, W, 2);
-  ctx.fillStyle = INK; ctx.fillRect(0, HB - 3, W, 4);
+  // 底部不畫線，用柔和的陰影漸層接到遊戲畫面
+  const fade = ctx.createLinearGradient(0, HB, 0, HB + 12); fade.addColorStop(0, 'rgba(10,13,20,.55)'); fade.addColorStop(1, 'rgba(10,13,20,0)');
+  ctx.fillStyle = fade; ctx.fillRect(0, HB, W, 12);
   // 分數：手裡劍圖示＋數字
   drawShuriken(15, 15, 10, g.t * 2);
   txt('SCORES ' + String(score()).padStart(7, '0'), 28, 15, 14, '#fff', 'left', INK, 4);
@@ -1924,7 +1923,8 @@ function drawHUD() {
   ctx.fillStyle = '#e8b84a'; ctx.fillRect(px - 6, py - 7, 4, 14); ctx.fillRect(px + 2, py - 7, 4, 14);
   // 本幕進度：底部金線亮起來的部分
   const pr = clamp((g.top - g.bossN * STAGE_PX) / STAGE_PX, 0, 1);
-  ctx.fillStyle = '#ffe28a'; ctx.fillRect(0, HB - 5, W * pr, 2);
+  ctx.fillStyle = 'rgba(0,0,0,.5)'; rr(W - 92, 23, 40, 3, 1.5); ctx.fill();   // 本幕進度：高度下方的小條
+  ctx.fillStyle = '#ffe28a'; rr(W - 92, 23, 40 * pr, 3, 1.5); ctx.fill();
   // 氣（衝刺斬／急降斬的次數）
   const km = kiMax();
   txt(t('ki'), 14, 80, 11, '#9ad8ff', 'center', '#000', 3);
@@ -1935,9 +1935,10 @@ function drawHUD() {
     ctx.beginPath(); ctx.moveTo(x, 80); ctx.arc(x, 80, 5, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); ctx.fill();
   }
   // 經驗條（魂）、等級、已持有的技能
-  ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(0, 67, W, 4);
-  ctx.fillStyle = '#5ad1ff'; ctx.fillRect(0, 67, W * clamp(g.xp / xpNeed(g.lv), 0, 1), 4);
-  txt(`Lv ${g.lv}`, W - 12, 80, 12, '#9ad8ff', 'right', '#000', 3);
+  txt(`Lv ${g.lv}`, W - 12, 78, 12, '#9ad8ff', 'right', '#000', 3);
+  // 經驗條：Lv 下方的小條
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(W - 56, 87, 44, 4, 2); ctx.fill();
+  ctx.fillStyle = '#5ad1ff'; rr(W - 56, 87, 44 * clamp(g.xp / xpNeed(g.lv), 0, 1), 4, 2); ctx.fill();
   let ix = 40 + km * 16;
   ctx.font = `12px ${FONT}`;
   for (const s of SKILLS) {
@@ -2117,12 +2118,11 @@ function drawKill() {
   }
 }
 
-// 最外層背景色跟著畫面最底部走（標題＝底部選單、遊戲中＝死亡區域），
-// iOS 主畫面模式下若還留一點畫不到的縫，也會和畫面融為一體
-const ZONE_BG = { fire: '#9a0a00', sea: '#0d3a78', monster: '#2a0e2e' };
+// 最外層背景色：iOS 狀態列下方的模糊帶會沾到這個顏色，所以用畫面頂端的顏色
+// （標題＝夜空深綠、遊戲中＝HUD 深藍），避免頂端出現紅色霧罩
 let rootBg = '';
 function syncRootBg() {
-  const c = state === 'menu' || !g ? '#161c1e' : ZONE_BG[THEMES[g.stage % 4].zone];
+  const c = state === 'menu' || !g ? '#0d2a2a' : '#0a0d14';
   if (c === rootBg) return;
   rootBg = c;
   document.documentElement.style.background = document.body.style.background = c;
