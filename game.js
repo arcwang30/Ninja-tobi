@@ -232,7 +232,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v16';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v17';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -663,7 +663,7 @@ function updatePlay(dt) {
   g.ki = Math.min(kiMax(), g.ki + dt * .12 * (sk('swift') ? SKV.swift(sk('swift')).regen : 1));
   if (g.lvQueue > 0) { g.lvQueue--; openPerks('lv'); return; }   // 有待選的升級就先暫停選擇
   if (g.pendingChest) { g.pendingChest = false; openPerks('chest'); return; }   // 中 BOSS 的寶箱
-  p.inv =Math.max(0, p.inv - dt); p.slow = Math.max(0, p.slow - dt); p.freeze = Math.max(0, p.freeze - dt); p.sq = Math.max(0, p.sq - dt * 4);
+  p.inv =Math.max(0, p.inv - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt); p.slow = Math.max(0, p.slow - dt); p.freeze = Math.max(0, p.freeze - dt); p.sq = Math.max(0, p.sq - dt * 4);
   if (g.banner) { g.banner.t -= dt; if (g.banner.t <= 0) g.banner = null; }
 
   // 移動
@@ -989,7 +989,7 @@ function hurt(src) {
   g.hp = Math.max(0, g.hp - dmg); g.shake = 12; SFX.hit(); vib(120);
   floatText(p.x, p.y - 50, '-' + dmg, '#ff4040', 20);
   if (g.hp <= 0) { die(); return true; }
-  p.inv = 1.6;
+  p.inv = 1.6; p.hurt = .45;   // hurt：顯示受傷動作圖的時間
   return false;
 }
 
@@ -1449,8 +1449,28 @@ function txt(s, x, y, size, color = '#fff', align = 'center', stroke = '#000', l
 }
 function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
 
+// 第一幕「林」的新背景：天空底圖固定（等比填滿畫面），遠景與中景竹林依相機捲動、重複拼接
+function drawHayashiBG(camY) {
+  const sky = ART.bg_hayashi_sky, far = ART.bg_hayashi_far, mid = ART.bg_hayashi_mid;
+  const k0 = Math.max(W / sky.w, H / sky.h), sw = sky.w * k0, sh = sky.h * k0;
+  ctx.drawImage(sky.c, (W - sw) / 2, (H - sh) / 2, sw, sh);
+  if (far) { // 遠景：本身就是無縫圖，直接重複
+    const tw = 300, th = tw * far.h / far.w, oy = ((-camY * .12) % th + th) % th;
+    ctx.globalAlpha = .45;
+    for (let y = oy - th; y < H; y += th) for (let x = 0; x < W; x += tw) ctx.drawImage(far.c, x, y, tw, th);
+    ctx.globalAlpha = 1;
+  }
+  if (mid) { // 中景竹林：這張不是無縫圖，所以和天空一樣固定在畫面上（等比填滿），只隨相機微微上下飄
+    const k1 = Math.max(W / mid.w, (H + 40) / mid.h), mw = mid.w * k1, mh = mid.h * k1;
+    ctx.globalAlpha = .6;   // 不要太搶眼，敵人和地板才看得清楚
+    ctx.drawImage(mid.c, (W - mw) / 2, H - mh + Math.sin(camY * .002) * 20 - 20, mw, mh);
+    ctx.globalAlpha = 1;
+  }
+}
+
 function drawBG(camY, stage, t) {
   const th = THEMES[stage % 4];
+  if (th.k === '林' && ART.bg_hayashi_sky) return drawHayashiBG(camY);
   const gr = ctx.createLinearGradient(0, 0, 0, H);
   gr.addColorStop(0, th.sky[0]); gr.addColorStop(1, th.sky[1]);
   ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
@@ -1554,9 +1574,9 @@ HERO_IMG.onload = () => {
   updateHeroArt();
 };
 HERO_IMG.src = 'assets/hero.png';
-function tintHero(tt) {
-  const c = document.createElement('canvas'); c.width = HERO_IMG.width; c.height = HERO_IMG.height;
-  const x = c.getContext('2d'); x.drawImage(HERO_IMG, 0, 0);
+function tintHero(tt, src = HERO_IMG) {
+  const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+  const x = c.getContext('2d'); x.drawImage(src, 0, 0);
   if (tt.h == null) return c;
   try {
     const d = x.getImageData(0, 0, c.width, c.height), a = d.data;
@@ -1592,6 +1612,55 @@ function updateHeroArt() {
   let url = 'assets/hero.png';
   try { if (save.skin) url = s.toDataURL(); } catch (e) { }
   for (const el of document.querySelectorAll('.hero-tint')) el.src = url;
+}
+
+// ===== 新美術圖（assets/art，Gemini 製作）：載入後裁掉透明邊、產生被打中時的白色剪影 =====
+// 圖還沒載入或載入失敗時，各處會退回原本用程式畫的版本
+const ART = {};
+const ART_FILES = ['hero_base', 'hero_up', 'hero_fall', 'hero_dash', 'hero_dive', 'hero_fly', 'hero_hurt', 'hero_win', 'hero_lose',
+  'enemy_00', 'enemy_01', 'enemy_02', 'enemy_03', 'enemy_04', 'enemy_05', 'enemy_06', 'enemy_07_a', 'enemy_07_b',
+  'bg_hayashi_sky', 'bg_hayashi_far', 'bg_hayashi_mid', 'wall_hayashi'];
+const ART_NO_TRIM = new Set(['bg_hayashi_sky', 'bg_hayashi_far', 'bg_hayashi_mid']);
+for (const n of ART_FILES) {
+  const im = new Image();
+  im.onload = () => { ART[n] = ART_NO_TRIM.has(n) ? { c: im, w: im.width, h: im.height, sw: im.width } : trimSprite(im); };
+  im.src = `assets/art/${n}.webp`;
+}
+// 裁掉四周透明的部分（sw 記住原圖寬度，用來換算統一的縮放比例）
+function trimSprite(im) {
+  const W0 = im.width, H0 = im.height, c = document.createElement('canvas'); c.width = W0; c.height = H0;
+  const x = c.getContext('2d'); x.drawImage(im, 0, 0);
+  let x0 = W0, y0 = H0, x1 = -1, y1 = -1;
+  try {
+    const d = x.getImageData(0, 0, W0, H0).data;
+    for (let y = 0; y < H0; y++) for (let i = 0; i < W0; i++) if (d[(y * W0 + i) * 4 + 3] > 24) { if (i < x0) x0 = i; if (i > x1) x1 = i; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  } catch (e) { return { c: im, w: W0, h: H0, sw: W0 }; }   // file:// 開啟時讀不到像素，就整張用
+  if (x1 < 0) return { c: im, w: W0, h: H0, sw: W0 };
+  const t = document.createElement('canvas'); t.width = x1 - x0 + 1; t.height = y1 - y0 + 1;
+  t.getContext('2d').drawImage(c, -x0, -y0);
+  return { c: t, w: t.width, h: t.height, sw: W0 };
+}
+// 白色剪影（敵人被斬中時閃白）
+function whiteOf(s) {
+  if (!s.white) {
+    const c = document.createElement('canvas'); c.width = s.w; c.height = s.h;
+    const x = c.getContext('2d'); x.drawImage(s.c, 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#fff'; x.fillRect(0, 0, s.w, s.h);
+    s.white = c;
+  }
+  return s.white;
+}
+// 主角動作圖：依角色換色後快取
+const heroPoseCache = {};
+function heroPose(skin, name) {
+  const a = ART[name]; if (!a) return null;
+  const k = skin + name;
+  if (!heroPoseCache[k]) heroPoseCache[k] = skin ? { ...a, c: tintHero(SKIN_TINT[skin], a.c), white: null } : a;
+  return heroPoseCache[k];
+}
+function heroPoseURL(skin, name) {
+  const s = heroPose(skin, name); if (!s) return '';
+  if (!s.url) { try { s.url = (s.c.toDataURL ? s.c : null)?.toDataURL() || `assets/art/${name}.webp`; } catch (e) { s.url = `assets/art/${name}.webp`; } }
+  return s.url;
 }
 
 function drawNinja(x, y, o) {
@@ -1634,6 +1703,25 @@ function drawNinja(x, y, o) {
 // 用主角圖畫玩家：依動作旋轉、壓扁伸展（圖本身朝右）
 function drawHeroSprite(x, y, o, spr) {
   const S = 68, cy = y - 30;
+  // 新美術的動作圖：依狀態挑一張
+  const pn = o.fly ? 'hero_fly' : o.dash ? 'hero_dash' : o.dive ? 'hero_dive' : o.hurt > 0 ? 'hero_hurt'
+    : o.vy < -300 ? 'hero_up' : o.vy > 150 ? 'hero_fall' : 'hero_base';
+  const pose = heroPose(o.skin || 0, pn) || heroPose(o.skin || 0, 'hero_base');
+  if (pose) {
+    ctx.save(); ctx.translate(x, cy);
+    if (o.inv > 0 && !o.fly && !(o.hurt > 0) && ((o.t * 16) | 0) % 2) ctx.globalAlpha *= .4;
+    // 圖本身已經是動作姿勢，只保留少量傾斜與壓扁伸展
+    const rot = o.dash ? Math.atan2(o.dvy, Math.abs(o.dvx)) * .35 : o.dive || o.fly ? 0 : clamp(o.vy / 5000, -.1, .12);
+    const sq = o.sq || 0, st = o.dash || o.fly ? .06 : clamp(-o.vy / 3200, -.05, .07);
+    ctx.scale(o.face, 1); ctx.rotate(rot);
+    ctx.scale(1 + sq * .2 - st, 1 - sq * .2 + st);
+    const k = 92 / pose.sw, w = pose.w * k, h = pose.h * k;   // 512 的原圖 → 約 92 邏輯 px，角色本身約 64
+    ctx.drawImage(pose.c, -w / 2, -h / 2, w, h);
+    if (o.freeze > 0) { ctx.globalAlpha = .5; ctx.fillStyle = '#9ae0ff'; rr(-S / 2, -S / 2, S, S, 10); ctx.fill(); }
+    ctx.restore();
+    if (o.slow > 0) { ctx.strokeStyle = '#c58aff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, cy, 30, o.t * 6, o.t * 6 + 4); ctx.stroke(); }
+    return;
+  }
   ctx.save(); ctx.translate(x, cy);
   if (o.inv > 0 && !o.fly && ((o.t * 16) | 0) % 2) ctx.globalAlpha *= .4;
   let rot;
@@ -1650,9 +1738,31 @@ function drawHeroSprite(x, y, o, spr) {
   if (o.slow > 0) { ctx.strokeStyle = '#c58aff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, cy, 30, o.t * 6, o.t * 6 + 4); ctx.stroke(); }
 }
 
+// 用新美術圖畫敵人：高度依判定框統一縮放，晃動、閃白、警告與菁英標記由程式加上
+function drawEnemyArt(x, y, type, s, t, e, spr) {
+  const ed = ENEMY[type], fl = e && e.flash > 0, bob = Math.sin(t * 6) * 2;
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+  if (type === 6) { ctx.fillStyle = `rgba(190,120,255,${.22 + .1 * Math.sin(t * 8)})`; ctx.beginPath(); ctx.arc(0, 0, ed.w * .8, 0, 7); ctx.fill(); }
+  const h = ed.h * 1.5, w = h * spr.w / spr.h;
+  ctx.drawImage(fl ? whiteOf(spr) : spr.c, -w / 2, -h / 2 + bob, w, h);
+  if (e && e.warn) txt('!', 0, -h / 2 - 10, 20, '#ff3a3a', 'center', '#fff', 3);
+  if (e && e.affix) txt({ fast: '迅', split: '分', tough: '鐵' }[e.affix], w * .42, -h * .32, 11, '#ffd27a', 'center', '#000', 3);
+  if (e && type === 6) for (let i = 0; i < e.hp; i++) txt('◆', -5 + i * 10, -h / 2 - 4, 9, '#e0b0ff', 'center', '#000', 2);
+  ctx.restore();
+}
+
 // 第 7 種以後的敵人（妖怪類）
 function drawCreature(x, y, type, s, t, e) {
   const ed = ENEMY[type], fl = e && e.flash > 0;
+  if (type === 7 && ART.enemy_07_a && ART.enemy_07_b) { // 烏鴉：兩張翅膀圖輪流切換，朝飛行方向
+    const spr = Math.sin(t * 16) > 0 ? ART.enemy_07_a : ART.enemy_07_b, dir = e && e.vx < 0 ? -1 : 1;
+    const w = ed.w * 1.9, h = w * spr.h / spr.w;
+    ctx.save(); ctx.translate(x, y); ctx.scale(s * dir, s);
+    ctx.drawImage(fl ? whiteOf(spr) : spr.c, -w / 2, -h / 2, w, h);
+    ctx.restore();
+    if (e && e.warn) txt('!', x, y - h / 2 - 10, 18, '#ff3a3a', 'center', '#fff', 3);
+    return;
+  }
   ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
   if (type === 7) { // 烏鴉
     const w = Math.sin(t * 16) * 8, dir = e && e.vx < 0 ? -1 : 1;
@@ -1690,6 +1800,7 @@ function drawCreature(x, y, type, s, t, e) {
 
 function drawEnemy(x, y, type, s = 1, t = 0, e = null) {
   if (type === 13 && s === 1) s = 2.4;   // 大天狗畫大一點
+  if (type <= 6 && ART['enemy_0' + type]) return drawEnemyArt(x, y, type, s, t, e, ART['enemy_0' + type]);
   if (type >= 7 && type !== 9 && type !== 11) return drawCreature(x, y, type, s, t, e);
   const ed = ENEMY[type];
   if (e && e.hidden) { // 土遁忍者藏在地板裡：只露出土堆和眼睛
@@ -1820,6 +1931,15 @@ function drawSkillFx() {
 // 左右牆壁：粗竹柱，隨相機捲動
 function drawWalls(camY, stage) {
   const th = THEMES[stage % 4], seg = 70, o = ((-camY) % seg + seg) % seg;
+  const wa = th.k === '林' && ART.wall_hayashi;
+  if (wa) { // 新美術的竹柱：比牆壁稍寬一點，往上重複拼接
+    const w = WALL + 8, h = w * wa.h / wa.w, oy = ((-camY) % h + h) % h;
+    for (const [x0, f] of [[-4, 1], [W - WALL - 4, -1]]) for (let y = oy - h; y < H; y += h) {
+      ctx.save(); ctx.translate(x0 + w / 2, y); ctx.scale(f, 1); ctx.drawImage(wa.c, -w / 2, 0, w, h + .5); ctx.restore();
+    }
+    ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(WALL + 4, 0, 2, H); ctx.fillRect(W - WALL - 6, 0, 2, H);
+    return;
+  }
   for (const x0 of [0, W - WALL]) {
     ctx.fillStyle = th.node; ctx.fillRect(x0, 0, WALL, H);
     ctx.fillStyle = th.stalk; ctx.fillRect(x0 + 2, 0, WALL - 4, H);
@@ -2197,7 +2317,7 @@ function render() {
     for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(p.x + i * 9, p.y - 60); ctx.lineTo(p.x + i * 9, p.y - 110); ctx.stroke(); }
   }
   if (state === 'dying') { ctx.save(); ctx.translate(p.x, p.y - 20); ctx.rotate(g.t * 10 + (1.1 - g.dieT) * 12); drawNinja(0, 20, { face: p.face, t: g.t, vy: 0, skin: save.skin }); ctx.restore(); }
-  else drawNinja(p.x, p.y, { face: p.face, t: g.t, vy: p.vy, sq: p.sq, inv: p.inv, fly: g.fly > 0, slow: p.slow, freeze: p.freeze, skin: save.skin, dash: p.dash > 0, dvx: p.dvx, dvy: p.dvy, dive: p.dive });
+  else drawNinja(p.x, p.y, { face: p.face, t: g.t, vy: p.vy, sq: p.sq, inv: p.inv, fly: g.fly > 0, slow: p.slow, freeze: p.freeze, skin: save.skin, dash: p.dash > 0, dvx: p.dvx, dvy: p.dvy, dive: p.dive, hurt: p.hurt });
   for (const s of g.shots) { ctx.save(); ctx.translate(s.cx, s.cy); ctx.rotate(s.t * 20); if (s.pierce) ctx.scale(2.2, 2.2); ctx.fillStyle = s.pierce ? '#ffe9a0' : '#ddd'; ctx.fillRect(-6, -1.5, 12, 3); ctx.fillRect(-1.5, -6, 3, 12); ctx.restore(); }
   drawSkillFx();
   // 敵方攻擊
@@ -2297,7 +2417,8 @@ function showOver() {
   if (save.stats.coins >= 500) unlock('coin500');
   persist();
   $('overTitle').textContent = g.cleared ? t('over_clear') : t('over_fail');
-  $('overBody').innerHTML =
+  const art = heroPoseURL(save.skin || 0, g.cleared ? 'hero_win' : 'hero_lose');
+  $('overBody').innerHTML = (art ? `<img class="over-art" src="${art}" alt="">` : '') +
     `<div class="sc">${sc.toLocaleString()}</div>${nr ? `<span class="nr">${t('new_record')}</span><br>` : ''}` +
     t('over_stats', h, g.kills, g.maxCombo) + '<br>' +
     t('over_reach', L(STR.act)[g.stage % 4] + (loopN() ? t('loop', loopN()) : ''), THEMES[g.stage % 4].k, g.bossN) + '<br>' +
