@@ -232,7 +232,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v17';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v18';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -1457,38 +1457,12 @@ function txt(s, x, y, size, color = '#fff', align = 'center', stroke = '#000', l
 }
 function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
 
-// ===== 主角圖：載入後為每個角色產生換色版本（紅色系的像素換成該角色的顏色） =====
-const HERO_IMG = new Image();
+// ===== 主角：全部用程式畫（art.js 的 drawHeroNinja）。標題大圖與商店頭像也用同一套畫法產生 =====
 const heroSprites = [];
-// 每個角色：色相（null＝維持原本的紅）、飽和度倍率、亮度倍率
-const SKIN_TINT = [{ h: null }, { h: 214, s: 1, l: 1 }, { h: 328, s: .75, l: 1.18 }, { h: 0, s: .08, l: .5 }];
-HERO_IMG.onload = () => {
-  for (let i = 0; i < SKINS.length; i++) heroSprites[i] = tintHero(SKIN_TINT[i]);
+function buildHeroArt() {
+  for (let i = 0; i < SKINS.length; i++) heroSprites[i] = heroPortrait(i, 400);
+  heroThumbs.length = 0;
   updateHeroArt();
-};
-HERO_IMG.src = 'assets/hero.png';
-function tintHero(tt) {
-  const c = document.createElement('canvas'); c.width = HERO_IMG.width; c.height = HERO_IMG.height;
-  const x = c.getContext('2d'); x.drawImage(HERO_IMG, 0, 0);
-  if (tt.h == null) return c;
-  try {
-    const d = x.getImageData(0, 0, c.width, c.height), a = d.data;
-    for (let i = 0; i < a.length; i += 4) {
-      if (a[i + 3] < 10) continue;
-      const r = a[i] / 255, gg = a[i + 1] / 255, b = a[i + 2] / 255;
-      const mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), l = (mx + mn) / 2, dd = mx - mn;
-      if (dd < .2 || mx !== r || gg > r * .75) continue;   // 只換鮮豔的紅色（衣服），膚色、黑線、刀不動
-      const s = dd / (1 - Math.abs(2 * l - 1));
-      const [nr, ng, nb] = hsl2rgb(tt.h / 360, clamp(s * tt.s, 0, 1), clamp(l * tt.l, 0, 1));
-      a[i] = nr; a[i + 1] = ng; a[i + 2] = nb;
-    }
-    x.putImageData(d, 0, 0);
-  } catch (e) { }   // 以 file:// 開啟時無法讀像素，就用原色
-  return c;
-}
-function hsl2rgb(h, s, l) {
-  const f = n => { const k = (n + h * 12) % 12, a = s * Math.min(l, 1 - l); return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))); };
-  return [f(0), f(8), f(4)];
 }
 // 商店用的小頭像（快取成 dataURL）
 const heroThumbs = [];
@@ -1498,87 +1472,15 @@ function heroThumb(i) {
   try { heroThumbs[i] = c.toDataURL(); } catch (e) { }
   return heroThumbs[i];
 }
-// 標題畫面的大圖跟著目前選的角色換色
+// 標題畫面的大圖跟著目前選的角色
 function updateHeroArt() {
   const s = heroSprites[save.skin || 0];
   if (!s) return;
-  let url = 'assets/hero.png';
-  try { if (save.skin) url = s.toDataURL(); } catch (e) { }
+  let url = '';
+  try { url = s.toDataURL(); } catch (e) { return; }
   for (const el of document.querySelectorAll('.hero-tint')) el.src = url;
 }
-
-function drawNinja(x, y, o) {
-  const spr = heroSprites[o.skin || 0];
-  if (spr) return drawHeroSprite(x, y, o, spr);
-  const sk = SKINS[o.skin || 0];
-  ctx.save(); ctx.translate(x, y);
-  if (o.inv > 0 && !o.fly && ((o.t * 16) | 0) % 2) ctx.globalAlpha = .4;
-  const sq = o.sq || 0, st = clamp(-o.vy / 2500, -.1, .12);
-  ctx.scale(o.face * (1 + sq * .25 - st), 1 - sq * .2 + st);
-  // 圍巾
-  ctx.strokeStyle = sk.band; ctx.lineWidth = 4; ctx.lineCap = 'round';
-  const w = Math.sin(o.t * 15) * 4;
-  ctx.beginPath(); ctx.moveTo(-6, -40); ctx.quadraticCurveTo(-18, -40 + w, -30, -42 + o.vy * .012 + w); ctx.stroke();
-  // 刀
-  ctx.strokeStyle = '#333'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-9, -14); ctx.lineTo(-16, -44); ctx.stroke();
-  ctx.fillStyle = '#d9a441'; ctx.fillRect(-15, -26, 7, 3);
-  // 腳
-  ctx.fillStyle = o.dark || sk.dark;
-  const up = o.vy < 0;
-  ctx.fillStyle = sk.dark;
-  if (up) { rr(-8, -12, 7, 10, 3); ctx.fill(); rr(2, -10, 7, 8, 3); ctx.fill(); }
-  else { rr(-8, -12, 6, 12, 3); ctx.fill(); rr(3, -12, 6, 12, 3); ctx.fill(); }
-  // 身體
-  ctx.fillStyle = sk.suit; rr(-10, -30, 20, 20, 6); ctx.fill();
-  ctx.fillStyle = sk.dark; ctx.fillRect(-10, -17, 20, 3);
-  // 手
-  ctx.strokeStyle = sk.suit; ctx.lineWidth = 5;
-  ctx.beginPath(); ctx.moveTo(6, -26); ctx.lineTo(up ? 14 : 15, up ? -36 : -18); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(-6, -26); ctx.lineTo(up ? -13 : -14, up ? -34 : -18); ctx.stroke();
-  // 頭
-  ctx.fillStyle = sk.suit; ctx.beginPath(); ctx.arc(0, -40, 12, 0, 7); ctx.fill();
-  ctx.fillStyle = '#f7d2a6'; ctx.beginPath(); ctx.ellipse(4, -40, 8, 5, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = '#111'; ctx.fillRect(3, -42, 2.5, 4); ctx.fillRect(8, -42, 2.5, 4);
-  if (o.freeze > 0) { ctx.globalAlpha = .55; ctx.fillStyle = '#9ae0ff'; rr(-16, -56, 32, 58, 6); ctx.fill(); ctx.globalAlpha = 1; }
-  ctx.restore();
-  if (o.slow > 0) { ctx.strokeStyle = '#c58aff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y - 25, 24, o.t * 6, o.t * 6 + 4); ctx.stroke(); }
-}
-
-// 受傷閃紅用：主角圖疊上紅色的版本（每個角色快取一張）
-const heroRedCache = new Map();
-function heroRed(spr) {
-  if (!heroRedCache.has(spr)) {
-    const c = document.createElement('canvas'); c.width = spr.width; c.height = spr.height;
-    const x = c.getContext('2d'); x.drawImage(spr, 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(255,60,50,.6)'; x.fillRect(0, 0, c.width, c.height);
-    heroRedCache.set(spr, c);
-  }
-  return heroRedCache.get(spr);
-}
-// 用主角圖畫玩家：依動作旋轉、壓扁伸展（圖本身朝右）
-function drawHeroSprite(x, y, o, spr) {
-  const S = 68, cy = y - 30;
-  // 往上衝很快時，身後拉出速度線
-  if (o.vy < -700 && !o.dash && !o.dive) {
-    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.5;
-    for (let i = 0; i < 3; i++) { const lx = x + (i - 1) * 12 + Math.sin(o.t * 30 + i) * 2, l = 14 + ((o.t * 90 + i * 17) % 18); ctx.beginPath(); ctx.moveTo(lx, cy + 30); ctx.lineTo(lx, cy + 30 + l); ctx.stroke(); }
-  }
-  ctx.save(); ctx.translate(x, cy);
-  if (o.inv > 0 && !o.fly && !(o.hurt > 0) && ((o.t * 16) | 0) % 2) ctx.globalAlpha *= .4;
-  let rot;
-  if (o.dash) rot = Math.atan2(o.dvy, Math.abs(o.dvx)) * .55;   // 衝刺：朝衝刺方向傾斜
-  else if (o.dive) rot = .9;                                     // 急降斬：往下俯衝
-  else if (o.fly) rot = -.35 + Math.sin(o.t * 9) * .06;          // 飛行：身體微微擺動
-  else if (o.hurt > 0) rot = -.5 * (o.hurt / .4);                // 受傷：往後仰
-  else rot = clamp(o.vy / 2600, -.22, .3);                      // 上升前傾、下落後仰
-  if (o.spin > 0) rot += (1 - o.spin / .45) * Math.PI * 2;      // 空翻（蹬牆、彈簧、連斬）
-  const sq = o.sq || 0, st = o.dash || o.fly ? .1 : clamp(-o.vy / 2600, -.08, .1);
-  ctx.scale(o.face, 1); ctx.rotate(rot);
-  ctx.scale(1 + sq * .22 - st, 1 - sq * .22 + st);
-  ctx.drawImage(o.hurt > 0 && ((o.t * 20) | 0) % 2 ? heroRed(spr) : spr, -S / 2, -S / 2, S, S);
-  if (o.freeze > 0) { ctx.globalAlpha = .5; ctx.fillStyle = '#9ae0ff'; rr(-S / 2, -S / 2, S, S, 10); ctx.fill(); }
-  ctx.restore();
-  if (o.slow > 0) { ctx.strokeStyle = '#c58aff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, cy, 30, o.t * 6, o.t * 6 + 4); ctx.stroke(); }
-}
+function drawNinja(x, y, o) { drawHeroNinja(x, y, o); }
 
 // 彈射瞄準的軌跡預覽（世界座標）
 function drawAim() {
@@ -2095,6 +1997,7 @@ document.addEventListener('click', e => {
 });
 
 applyLang();
+buildHeroArt();   // 產生標題大圖與商店頭像（程式畫的主角）
 goTitle();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
 window.__tobi = { get g() { return g; }, get state() { return state; }, startRun, spawnBoss: () => spawnBoss(), save: () => save, inp,
