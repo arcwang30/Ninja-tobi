@@ -869,17 +869,18 @@ function drawParts() {
   c.globalAlpha = 1;
 }
 
-// ===== 主角（程式繪圖）=====
+// ===== 主角（程式繪圖）：「豆丁浮空」風格 =====
+// 頭身比約 1:1 的超 Q 版；手套與鞋子浮在身體旁邊，沒有手臂和腿，所以不會出現關節接縫。
+// 畫法：所有形狀先畫一圈黑色外輪廓、再整批填色（silhouette），內部不會有交疊的描邊線。
 // 原點在腳底、面向右（+x）；依速度與狀態切換姿勢：上升、頂點、下落、衝刺斬、急降斬、飛行、受傷
-// 每個姿勢定義：前手／後手的手部位置、前腳／後腳（膝→腳）、眼神
 const HERO_POSE = {
-  up:   { fa: [19, -41], ba: [-11, -14], fl: [8, -8, 3, -3], bl: [-2, -4, -6, 1], eye: 'open' },
-  apex: { fa: [13, -28], ba: [-12, -25], fl: [6, -6, 6, 0], bl: [-3, -5, -7, -1], eye: 'open' },
-  fall: { fa: [18, -37], ba: [-14, -37], fl: [4, -5, 5, 2], bl: [-4, -5, -4, 2], eye: 'open' },
-  dash: { fa: [17, -25], ba: [-13, -21], fl: [7, -9, 2, -6], bl: [-6, -6, -14, -4], eye: 'focus' },
-  dive: { fa: [13, -20], ba: [11, -18], fl: [-6, -12, -12, -13], bl: [-8, -8, -15, -7], eye: 'focus' },
-  fly:  { fa: [18, -34], ba: [-18, -34], fl: [3, -5, 2, 1], bl: [-2, -5, -3, 1], eye: 'happy' },
-  hurt: { fa: [18, -42], ba: [-14, -39], fl: [7, -4, 9, 1], bl: [-6, -4, -9, 1], eye: 'hurt' },
+  up:   { fa: [16, -44], ba: [-12, -16], ff: [7, -6], bf: [-5, 1], eye: 'open', vy: -1 },
+  apex: { fa: [15, -28], ba: [-14, -26], ff: [6, 0], bf: [-6, -1], eye: 'open', vy: 0 },
+  fall: { fa: [17, -40], ba: [-16, -38], ff: [5, 3], bf: [-5, 3], eye: 'open', vy: 1 },
+  dash: { fa: [19, -25], ba: [-14, -20], ff: [3, -6], bf: [-14, -4], eye: 'focus', vy: 0, dash: 1 },
+  dive: { fa: [15, -20], ba: [13, -18], ff: [-11, -12], bf: [-15, -6], eye: 'focus', vy: 0, dive: 1 },
+  fly:  { fa: [21, -34], ba: [-21, -34], ff: [3, 1], bf: [-3, 1], eye: 'happy', vy: -1, fly: 1 },
+  hurt: { fa: [19, -42], ba: [-16, -40], ff: [9, 1], bf: [-9, 1], eye: 'hurt', vy: 0 },
 };
 function heroPoseOf(o) {
   if (o.hurt > 0) return 'hurt';
@@ -890,12 +891,58 @@ function heroPoseOf(o) {
   if (o.vy > 150) return 'fall';
   return 'apex';
 }
+// 把顏色調亮（頭部漸層的亮面用）
+function heroLighten(hex, k) {
+  const n = parseInt(hex.slice(1), 16), r = n >> 16, g2 = (n >> 8) & 255, b = n & 255, f = v => Math.round(v + (255 - v) * k);
+  return `rgb(${f(r)},${f(g2)},${f(b)})`;
+}
+// 兩段式：先畫所有形狀的黑色外輪廓，再全部填色
+function heroSilhouette(c, parts, ol) {
+  c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
+  for (const p of parts) { p.path(c); c.fillStyle = INK; c.fill(); c.strokeStyle = INK; c.lineWidth = ol * 2; c.stroke(); }
+  for (const p of parts) { p.path(c); c.fillStyle = p.fill; c.fill(); if (p.after) p.after(c); }
+  c.restore();
+}
+// 圍巾：沿速度反方向飄、帶波浪，尾端剪成燕尾
+function heroScarf(c, ax, ay, dir, len, wd, t, ph) {
+  const dl = Math.hypot(dir[0], dir[1]), dx = dir[0] / dl, dy = dir[1] / dl, px = -dy, py = dx, L = [], R = [], N = 10;
+  for (let i = 0; i <= N; i++) {
+    const s = i / N, wv = Math.sin(t * 9 - s * 5 + ph) * 5 * s, bx = ax + dx * len * s + px * wv, by = ay + dy * len * s + py * wv, w2 = wd * (1 - s * .5) / 2;
+    L.push([bx + px * w2, by + py * w2]); R.push([bx - px * w2, by - py * w2]);
+  }
+  c.beginPath(); L.forEach(([a, b], i) => i ? c.lineTo(a, b) : c.moveTo(a, b));
+  c.lineTo(L[N][0] + dx * 4, L[N][1] + dy * 4);
+  for (let i = R.length - 1; i >= 0; i--) c.lineTo(R[i][0], R[i][1]); c.closePath();
+}
+// 大眼睛：漸層瞳孔＋兩個亮點；開心 ^^、受傷 ><、專注時瞇眼、眨眼
+function heroEye(c, x, y, rx, ry, mood) {
+  c.strokeStyle = INK; c.lineCap = 'round'; c.lineWidth = 1.7;
+  if (mood === 'blink') { c.beginPath(); c.moveTo(x - rx, y + ry * .2); c.quadraticCurveTo(x, y + ry * .5, x + rx, y + ry * .2); c.stroke(); return; }
+  if (mood === 'happy') { c.beginPath(); c.arc(x, y + ry * .4, rx, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); return; }
+  if (mood === 'hurt') { c.beginPath(); c.moveTo(x - rx, y - ry * .6); c.lineTo(x + rx * .7, y); c.lineTo(x - rx, y + ry * .6); c.stroke(); return; }
+  const sy = mood === 'focus' ? .6 : 1;
+  aEll(c, x, y, rx, ry * sy); c.fillStyle = '#fff'; c.fill(); c.lineWidth = 1.2; c.stroke();
+  c.save(); aEll(c, x, y, rx, ry * sy); c.clip();
+  aEll(c, x + rx * .25, y + ry * .1, rx * .78, ry * .82);
+  const gr = c.createLinearGradient(0, y - ry, 0, y + ry); gr.addColorStop(0, '#1a0f0a'); gr.addColorStop(1, '#a0441c'); c.fillStyle = gr; c.fill();
+  aCirc(c, x + rx * .3, y + ry * .1, rx * .35); c.fillStyle = '#0a0606'; c.fill();
+  aCirc(c, x - rx * .1, y - ry * .35, rx * .32); c.fillStyle = '#fff'; c.fill();
+  aCirc(c, x + rx * .45, y + ry * .45, rx * .14); c.fill();
+  c.restore();
+}
+function heroKatana(c, x, y, a) {
+  c.save(); c.translate(x, y); c.rotate(a);
+  c.beginPath(); c.moveTo(1, -1.7); c.quadraticCurveTo(17, -3.4, 32, -.6); c.lineTo(30, 1.5); c.quadraticCurveTo(16, .5, 1, 1.7); c.closePath();
+  const bg = c.createLinearGradient(0, -2, 0, 2); bg.addColorStop(0, '#ffffff'); bg.addColorStop(1, '#a8b2c0'); c.fillStyle = bg; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.1; c.stroke();
+  c.fillStyle = '#d9a441'; c.fillRect(-1.5, -3.2, 2.6, 6.4); c.fillStyle = '#3a2a40'; c.fillRect(-9, -1.7, 8, 3.4);
+  c.restore();
+}
 function drawHeroNinja(x, y, o, c = ctx) {
   const sk = SKINS[o.skin || 0], t = o.t || 0, vy = o.vy || 0;
   const flash = o.hurt > 0 && ((t * 20) | 0) % 2;
-  const P = flash ? { suit: '#ff6a5a', dk: '#c03a30', band: '#ffd0c8', skin: '#ffc4b4' } : { suit: sk.suit, dk: sk.dark, band: sk.band, skin: '#f8d6b0' };
-  const pn = heroPoseOf(o), Q = HERO_POSE[pn];
-  const cy = y - 30;
+  const C = flash ? { suit: '#ff6a5a', dk: '#c03a30', lt: '#ffb0a0', band: '#ffd0c8', skin: '#ffc4b4' }
+    : { suit: sk.suit, dk: sk.dark, lt: heroLighten(sk.suit, .35), band: sk.band, skin: '#f9d8b4' };
+  const pn = heroPoseOf(o), Q = HERO_POSE[pn], cy = y - 30;
   // 往上衝很快時，身後拉出速度線
   if (vy < -700 && !o.dash && !o.dive) {
     c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1.5;
@@ -915,90 +962,48 @@ function drawHeroNinja(x, y, o, c = ctx) {
   c.translate(0, 30);   // 之後以腳底為原點
   if (o.fly) { // 豪天翔：金色旋風
     c.lineCap = 'round';
-    for (let i = 0; i < 3; i++) { const a = t * 6 + i * 2.1; c.strokeStyle = `rgba(255,214,90,${.55 - i * .12})`; c.lineWidth = 3 - i * .6; c.beginPath(); c.ellipse(0, -28, 26 + i * 5, 14 + i * 3, -.3, a, a + 2.2); c.stroke(); }
+    for (let i = 0; i < 3; i++) { const a = t * 6 + i * 2.1; c.strokeStyle = `rgba(255,214,90,${.6 - i * .14})`; c.lineWidth = 3 - i * .6; c.beginPath(); c.ellipse(0, -28, 28 + i * 5, 15 + i * 3, -.3, a, a + 2.4); c.stroke(); }
   }
-  // 圍巾：從脖子後方往「速度的反方向」飄，帶波浪
-  const vyL = o.dash ? .15 : o.fly ? .9 : vy < -200 ? .95 : vy > 150 ? -.75 : .2;
-  const dl = Math.hypot(1, vyL), dx = -1 / dl, dy = vyL / dl, px = -dy, py = dx;
-  for (const [len, ph, wd] of [[30, 0, 5], [22, 1.7, 4]]) {
-    const L = [], R = [], N = 8;
-    for (let i = 0; i <= N; i++) {
-      const s = i / N, wv = Math.sin(t * 13 - s * 5 + ph) * 5 * s, bx = -4 + dx * len * s + px * wv, by = -28 + dy * len * s + py * wv, w2 = wd * (1 - s * .55) / 2;
-      L.push([bx + px * w2, by + py * w2]); R.push([bx - px * w2, by - py * w2]);
-    }
-    c.beginPath(); L.forEach(([a, b], i) => i ? c.lineTo(a, b) : c.moveTo(a, b)); for (let i = R.length - 1; i >= 0; i--) c.lineTo(R[i][0], R[i][1]); c.closePath();
-    aFI(c, P.band, 1.6);
-  }
-  // 背上的刀鞘（衝刺／急降斬時刀在手上）
-  const drawn = pn === 'dash' || pn === 'dive';
-  c.save(); c.translate(-6, -22); c.rotate(-2.2);
-  c.beginPath(); c.rect(-2.4, 0, 4.8, 24); aFI(c, '#2a1c18', 1.6);
-  if (!drawn) {
-    c.beginPath(); c.rect(-2.8, -2, 5.6, 2.4); aFI(c, '#d9a441', 1.2);
-    c.beginPath(); c.rect(-1.8, -11, 3.6, 9); aFI(c, '#3a2a40', 1.2);
-    c.strokeStyle = '#e8e0f0'; c.lineWidth = .8; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(-1.8, -9 + i * 3); c.lineTo(1.8, -7.5 + i * 3); c.stroke(); }
-  }
-  c.restore();
-  const sw = Math.sin(t * 6) * 1.2;
-  // 後腳、後手
-  aLimb(c, [-3, -11, Q.bl[0], Q.bl[1], Q.bl[2], Q.bl[3]], 5.4, P.dk);
-  aEll(c, Q.bl[2] - 1, Q.bl[3], 3.2, 2.3); aFI(c, '#2a2a33', 1.3);
-  aLimb(c, [-5, -24, (-5 + Q.ba[0]) / 2 - 2, (-24 + Q.ba[1]) / 2, Q.ba[0], Q.ba[1] + sw], 4.8, P.suit);
-  aCirc(c, Q.ba[0], Q.ba[1] + sw, 2.8); aFI(c, P.dk, 1.3);
-  // 身體
-  c.beginPath(); c.moveTo(-8, -26); c.quadraticCurveTo(0, -30, 8, -26); c.lineTo(8.5, -14); c.quadraticCurveTo(0, -9, -8.5, -14); c.closePath();
-  aFI(c, P.suit, 2);
-  c.save(); c.clip(); c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(-9, -30, 6, 20); c.restore();   // 背側陰影
-  c.beginPath(); c.moveTo(-5, -26); c.lineTo(2, -18); c.moveTo(5, -26); c.lineTo(0, -21); c.strokeStyle = P.dk; c.lineWidth = 1.4; c.stroke();   // 衣襟
-  c.fillStyle = P.dk; c.fillRect(-8.5, -16.5, 17, 3);                                                                                        // 腰帶
-  c.beginPath(); c.moveTo(-8, -15); c.lineTo(-13, -12 + sw); c.lineTo(-11, -16); c.closePath(); aFI(c, P.dk, 1.1);                          // 腰帶的結
-  // 前腳
-  aLimb(c, [3, -11, Q.fl[0], Q.fl[1], Q.fl[2], Q.fl[3]], 5.4, P.dk);
-  aEll(c, Q.fl[2] + 1, Q.fl[3], 3.2, 2.3); aFI(c, '#2a2a33', 1.3);
-  // 頭（兜帽，帽尖朝後）
-  c.beginPath(); c.arc(0, -40, 14, 0, TAU); c.moveTo(-11, -49); c.quadraticCurveTo(-19, -58, -9, -56);
-  aFI(c, P.suit, 2.2);
-  aEll(c, 4, -49, 5, 3, -.3); c.fillStyle = 'rgba(255,255,255,.2)'; c.fill();
-  // 頭巾＋護額（金屬片）＋後方的結
-  c.save(); aCirc(c, 0, -40, 14); c.clip(); c.fillStyle = P.band; c.fillRect(-15, -50, 30, 4.4); c.restore();
-  c.beginPath(); c.moveTo(-13, -50); c.lineTo(13, -50); c.moveTo(-13.5, -45.6); c.lineTo(13.5, -45.6); c.strokeStyle = INK; c.lineWidth = .9; c.stroke();
-  c.beginPath(); if (c.roundRect) c.roundRect(1, -50.5, 9, 5, 1.5); else c.rect(1, -50.5, 9, 5); aFI(c, '#c8ced8', 1.1);
-  c.beginPath(); c.moveTo(3.5, -48); c.lineTo(5.5, -47); c.lineTo(7.5, -49); c.strokeStyle = '#5a626e'; c.lineWidth = .9; c.stroke();
-  const fw = Math.sin(t * 11) * 2;
-  c.beginPath(); c.moveTo(-13, -49); c.quadraticCurveTo(-19, -52 + fw, -23, -48 + fw); c.lineTo(-20, -46 + fw); c.quadraticCurveTo(-17, -48, -13, -47); c.closePath(); aFI(c, P.band, 1.2);
-  // 臉（面罩開口）與大眼睛
-  aEll(c, 4, -38, 10, 5.6); aFI(c, P.skin, 1.5);
-  const blink = pn === 'apex' && ((t * .9) % 3.4) < .12;
-  for (const [ex, es] of [[0, 2.5], [8.5, 2.9]]) {   // 靠前的眼睛大一點（3/4 側臉）
-    const ey = -38;
-    c.strokeStyle = INK; c.lineWidth = 1.5; c.lineCap = 'round';
-    if (blink) { c.beginPath(); c.moveTo(ex - es, ey); c.lineTo(ex + es, ey); c.stroke(); continue; }
-    if (Q.eye === 'happy') { c.beginPath(); c.arc(ex, ey + 1, es * .9, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); continue; }
-    if (Q.eye === 'hurt') { c.beginPath(); c.moveTo(ex - es, ey - 2); c.lineTo(ex + es * .6, ey); c.lineTo(ex - es, ey + 2); c.stroke(); continue; }
-    const sy = Q.eye === 'focus' ? .65 : 1;
-    aEll(c, ex, ey, es * .95, es * 1.25 * sy); c.fillStyle = '#ffffff'; c.fill();
-    aEll(c, ex + .5, ey + .3, es * .72, es * 1.02 * sy); c.fillStyle = '#3a2418'; c.fill();
-    aCirc(c, ex + .9, ey + .4, es * .35); c.fillStyle = INK; c.fill();
-    aCirc(c, ex - .2, ey - es * .45 * sy, es * .3); c.fillStyle = '#ffffff'; c.fill();
-    c.beginPath(); c.moveTo(ex - es, ey - es * 1.7 + (Q.eye === 'focus' ? 1 : 0)); c.lineTo(ex + es, ey - es * 1.55 + (Q.eye === 'focus' ? 1.6 : 0)); c.strokeStyle = INK; c.lineWidth = 1.3; c.stroke();   // 眉毛：專注時壓低
-  }
-  // 前手（衝刺／急降斬時拿刀）
-  aLimb(c, [5, -24, (5 + Q.fa[0]) / 2 + 2, (-24 + Q.fa[1]) / 2 + 2, Q.fa[0], Q.fa[1] - sw], 4.8, P.suit);
-  if (drawn) {
-    c.save(); c.translate(Q.fa[0], Q.fa[1] - sw); c.rotate(pn === 'dash' ? -.08 : .35);
-    c.beginPath(); c.moveTo(1, -1.6); c.quadraticCurveTo(16, -3.2, 30, -.6); c.lineTo(28, 1.4); c.quadraticCurveTo(15, .4, 1, 1.6); c.closePath();
-    const bg = c.createLinearGradient(0, -2, 0, 2); bg.addColorStop(0, '#ffffff'); bg.addColorStop(1, '#a8b2c0');
-    c.fillStyle = bg; c.fill(); aInk(c, 1.2);
-    c.beginPath(); c.rect(-1.5, -3, 2.5, 6); aFI(c, '#d9a441', 1); c.beginPath(); c.rect(-9, -1.6, 8, 3.2); aFI(c, '#3a2a40', 1);
-    c.restore();
-  }
-  aCirc(c, Q.fa[0], Q.fa[1] - sw, 2.9); aFI(c, P.dk, 1.3);
+  // 浮在身體旁的手腳：以身體附近的點為基準，依姿勢偏移，並隨呼吸上下浮動
+  const bob = Math.sin(t * 6) * 1.5;
+  const hand = (p, k) => [p[0] * .82, -22 + (p[1] + 22) * .7 + k * bob];
+  const foot = p => [p[0] * .8, Math.min(2, p[1] * .9 + 1)];
+  const fa = hand(Q.fa, -1), ba = hand(Q.ba, 1), ff = foot(Q.ff), bf = foot(Q.bf);
+  const sdir = Q.dash ? [-1, .15] : Q.fly ? [-1, .9] : Q.vy < 0 ? [-1, 1] : Q.vy > 0 ? [-1, -.8] : [-1, .25];
+  const drawn = Q.dash || Q.dive;
+  const parts = [];
+  parts.push({ path: c => heroScarf(c, -6, -24, sdir, 24, 8, t, 0), fill: C.band });
+  parts.push({ path: c => aCirc(c, ba[0], ba[1], 4.6), fill: C.dk });          // 後手套
+  parts.push({ path: c => aEll(c, bf[0], bf[1], 5.2, 3.6), fill: C.dk });      // 後鞋
+  // 豆子形的小身體＋腰帶
+  parts.push({ path: c => { c.beginPath(); c.moveTo(-8, -24); c.quadraticCurveTo(0, -28, 8, -24); c.quadraticCurveTo(11, -12, 6, -6); c.quadraticCurveTo(0, -3, -6, -6); c.quadraticCurveTo(-11, -12, -8, -24); c.closePath(); }, fill: C.suit,
+    after: c => { c.save(); c.clip(); c.fillStyle = '#1e1e26'; c.fillRect(-12, -14, 24, 3.4); c.fillStyle = C.band; c.fillRect(-2, -14.5, 4, 4.4); c.restore(); } });
+  parts.push({ path: c => aEll(c, ff[0], ff[1], 5.2, 3.6), fill: C.dk });      // 前鞋
+  // 大頭（兜帽尖＋腦後頭巾結，和頭一起描邊）
+  const knot = Math.sin(t * 9) * 2;
+  parts.push({ path: c => { c.beginPath(); c.arc(0, -40, 19, 0, TAU); c.moveTo(-14, -52); c.quadraticCurveTo(-26, -64, -10, -61); c.closePath(); c.moveTo(-17, -46); c.quadraticCurveTo(-26, -44 + knot, -28, -38); c.quadraticCurveTo(-22, -42, -17, -40); c.closePath(); }, fill: C.suit,
+    after: c => { c.save(); c.beginPath(); c.arc(0, -40, 19, 0, TAU); c.clip();
+      const gr = c.createRadialGradient(-6, -52, 3, 0, -40, 22); gr.addColorStop(0, C.lt); gr.addColorStop(.6, C.suit); gr.addColorStop(1, C.dk); c.fillStyle = gr; c.fillRect(-20, -60, 40, 40);
+      c.fillStyle = C.band; c.fillRect(-20, -55, 40, 5.5); c.restore(); } });
+  parts.push({ path: c => aCirc(c, fa[0], fa[1], 4.8), fill: C.dk });          // 前手套
+  heroSilhouette(c, parts, 1.8);
+  // 臉：面罩開口、超大眼睛、腮紅、護額
+  aEll(c, 4, -37, 14, 8.5); c.fillStyle = C.skin; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.4; c.stroke();
+  const mood = pn === 'apex' && ((t * .9) % 3.4) < .12 ? 'blink' : Q.eye;
+  heroEye(c, -2, -37.5, 4, 5.6, mood); heroEye(c, 10, -37.5, 4.3, 5.9, mood);
+  c.fillStyle = 'rgba(255,120,120,.45)'; aEll(c, -6, -32.5, 2.6, 1.4); c.fill(); aEll(c, 15, -32.5, 2.6, 1.4); c.fill();
+  c.beginPath(); if (c.roundRect) c.roundRect(-4, -57, 12, 6, 2); else c.rect(-4, -57, 12, 6);
+  c.fillStyle = '#dfe4ec'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+  c.fillStyle = C.suit; c.font = '900 5px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('鳶', 2, -53.8);
+  // 刀：衝刺斬／急降斬時握在手上，其餘背在背後
+  if (drawn) heroKatana(c, fa[0], fa[1], Q.dash ? -.08 : .35);
+  else { c.save(); c.translate(-9, -16); c.rotate(-2.3); c.fillStyle = '#2a1c18'; c.fillRect(-2, -6, 4, 18); c.strokeStyle = INK; c.lineWidth = 1.2; c.strokeRect(-2, -6, 4, 18); c.fillStyle = '#d9a441'; c.fillRect(-2.6, -7.5, 5.2, 2); c.restore(); }
   c.restore();
   if (o.freeze > 0) { // 冰凍：半透明冰塊
-    c.save(); c.globalAlpha = .5; c.fillStyle = '#bdeaff'; c.beginPath(); if (c.roundRect) c.roundRect(x - 20, y - 66, 40, 68, 8); else c.rect(x - 20, y - 66, 40, 68); c.fill();
+    c.save(); c.globalAlpha = .5; c.fillStyle = '#bdeaff'; c.beginPath(); if (c.roundRect) c.roundRect(x - 24, y - 70, 48, 72, 8); else c.rect(x - 24, y - 70, 48, 72); c.fill();
     c.globalAlpha = .9; c.strokeStyle = '#ffffff'; c.lineWidth = 2; c.stroke(); c.restore();
   }
-  if (o.slow > 0) { c.strokeStyle = '#c58aff'; c.lineWidth = 2; c.beginPath(); c.arc(x, cy, 30, t * 6, t * 6 + 4); c.stroke(); }
+  if (o.slow > 0) { c.strokeStyle = '#c58aff'; c.lineWidth = 2; c.beginPath(); c.arc(x, cy, 32, t * 6, t * 6 + 4); c.stroke(); }
 }
 // 標題大圖與商店頭像：在獨立畫布上畫一張大的主角
 function heroPortrait(skin, size) {
