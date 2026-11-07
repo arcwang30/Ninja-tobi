@@ -1,0 +1,67 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>魔王新造型</title>
+<style>html, body { margin: 0; background: #0f2a26; } canvas { display: block; }</style>
+<canvas id="cv"></canvas>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const INK = '#0e1414', g = null;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+function txt(s, x, y, size, col, align = 'left', stroke, sw = 0) {
+  ctx.font = `900 ${size}px sans-serif`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = sw; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); }
+  ctx.fillStyle = col; ctx.fillText(s, x, y);
+}
+</script>
+<script src="../art.js"></script>
+<script>
+'use strict';
+/* ?v=1 四隻新造型大圖／?v=2 技能動作＋新舊對照＋遊戲中實際大小 */
+const V = new URLSearchParams(location.search).get('v') || '1';
+const CW = 960, CH = 640, DPR = 2;
+cv.width = CW * DPR; cv.height = CH * DPR; cv.style.width = CW + 'px'; cv.style.height = CH + 'px';
+ctx.scale(DPR, DPR);
+const bg = ctx.createLinearGradient(0, 0, 0, CH); bg.addColorStop(0, '#2a1830'); bg.addColorStop(1, '#0c1420'); ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
+const NAMES = ['真妖鬼', '怠惰鬼', '雪女鬼', '鐵甲鬼'];
+const DESC = [['赤鬼大將：火焰鬃毛、粗壯的角', '利爪拳頭與尖刺金腕環、扛狼牙棒'], ['躺在雲上的醉鬼：亂髮、一長一斷的角', '半纏、菸管與酒杯、翹腳掛木屐'], ['雪姬：白色公主切長髮、冰晶角', '層疊衣襟與青海波紋的振袖、冰扇'], ['鎧武者：金色鍬形角、兇狠的發光眼', '握武士刀；開盾時舉刀、刀身發藍光']];
+const boss = (k, x, y, s, o = {}) => drawBoss(Object.assign({ kind: k, t: .6 + k * .9, skillT: 9, warn: 0, shield: false }, o), x, y, s);
+const panel = (x, y, w, h) => { ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 16); ctx.fill(); };
+if (V === '1') {
+  BOSS_STYLE = 'new';
+  txt('魔王新造型', 30, 36, 28, '#ffe28a', 'left', '#000', 4);
+  txt('和主角、敵人同樣的大頭小身體＋浮空拳腳；四隻的輪廓各不相同：圓壯／橫躺／細長／方正', 30, 72, 15, '#e6dcef', 'left');
+  for (let k = 0; k < 4; k++) {
+    const x = 120 + k * 240;
+    panel(x - 112, 100, 224, 520);
+    boss(k, x, 300, 2.05);
+    txt(NAMES[k], x, 500, 22, '#ffe28a', 'center', '#000', 4);
+    txt(DESC[k][0], x, 540, 12.5, '#e6dcef', 'center'); txt(DESC[k][1], x, 562, 12.5, '#e6dcef', 'center');
+  }
+} else {
+  txt('技能動作／新舊對照／遊戲中實際大小', 30, 36, 24, '#ffe28a', 'left', '#000', 4);
+  BOSS_STYLE = 'new';
+  panel(20, 64, 920, 260);
+  const ST = [['砸狼牙棒', { skillT: .12 }], ['催眠（減速）', { warn: .5 }], ['冰凍', { warn: .5 }], ['開盾舉刀', { shield: true }]];
+  for (let k = 0; k < 4; k++) { const x = 130 + k * 232; boss(k, x, 190, 1.45, ST[k][1]); txt(NAMES[k] + '・' + ST[k][0], x, 300, 14, '#ffe28a', 'center', '#000', 3); }
+  panel(20, 336, 440, 288); txt('目前', 40, 356, 14, 'rgba(255,255,255,.6)');
+  panel(480, 336, 460, 288); txt('新造型（遊戲中實際大小，旁邊是主角）', 500, 356, 14, '#ffe28a');
+  BOSS_STYLE = 'old';
+  for (let k = 0; k < 4; k++) boss(k, 80 + (k % 2) * 190 + 40, 430 + Math.floor(k / 2) * 110, 1);
+  BOSS_STYLE = 'new';
+  for (let k = 0; k < 4; k++) boss(k, 560 + (k % 2) * 250, 428 + Math.floor(k / 2) * 122, 1);
+  drawHeroNinja(686, 610, { face: 1, t: .4, vy: 0, skin: 0 });
+}
+if (V === '3') {
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
+  BOSS_STYLE = 'new';
+  txt('真妖鬼揮棒分解動作／手的方向修正', 30, 36, 24, '#ffe28a', 'left', '#000', 4);
+  panel(20, 60, 920, 250);
+  [[9, '① 平常扛在肩上'], [.3, '② 往後舉過頭頂'], [.2, '③ 從頭頂往前揮'], [.1, '④ 往下砸'], [0, '⑤ 砸到底']].forEach(([s, n], i) => { const x = 110 + i * 185; drawBoss({ kind: 0, t: .6, skillT: s, warn: 0 }, x, 170, 1.35); txt(n, x, 292, 14, '#ffe28a', 'center', '#000', 3); });
+  panel(20, 322, 450, 300); panel(490, 322, 450, 300);
+  drawBoss({ kind: 1, t: .6, skillT: 9, warn: 0 }, 250, 470, 2.2);
+  txt('怠惰鬼：吸嘴叼在嘴角，手從下方握菸管', 245, 600, 14, '#ffe28a', 'center', '#000', 3);
+  drawBoss({ kind: 3, t: .6, skillT: 9, warn: 0 }, 715, 480, 2);
+  txt('鐵甲鬼：左手和握刀的右手對稱，手腕朝向身體', 715, 600, 14, '#ffe28a', 'center', '#000', 3);
+}
+</script>

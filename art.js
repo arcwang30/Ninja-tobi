@@ -441,6 +441,7 @@ const BOSS_ART = [
   { body: '#6a6e7a', dk: '#3a3d46', horn: '#c8ccd4', eye: '#ff6a3a' },   // 鐵甲鬼
 ];
 function drawBoss(b, x, y, s) {
+  if (BOSS_STYLE === 'new') return drawBoss2(b, x, y, s);
   const c = ctx, k = b.kind, P = BOSS_ART[k], t = b.t || performance.now() / 1000, br = 1 + Math.sin(t * 3) * .03;
   const warn = b.warn > 0, slam = k === 0 && b.skillT < .45;
   c.save(); c.translate(x, y); c.scale(s, s);
@@ -1149,4 +1150,423 @@ function heroPortrait(skin, size) {
   c.scale(k, k);
   drawHeroNinja(42, 74, { face: 1, t: .35, vy: 0, skin }, c);   // 頂點姿勢：雙手張開、臉清楚
   return cnv;
+}
+
+// ===== 魔王（新版造型：和主角同樣的大頭小身體＋浮空拳腳，四隻輪廓各不相同） =====
+// 真妖鬼：圓壯的赤鬼大將／怠惰鬼：躺在雲上喝酒抽菸管的醉鬼／雪女鬼：細長的雪姬／鐵甲鬼：方正的鎧武者
+let BOSS_STYLE = 'new';   // 遊戲使用新造型；'old' 是舊的圓球版（比較頁用）
+function aRR(c, x, y, w, h, r) { c.beginPath(); if (c.roundRect) c.roundRect(x, y, w, h, r); else c.rect(x, y, w, h); }
+function bossBall(c, x, y, r, lt, mid, dk) { const gr = c.createRadialGradient(x - r * .35, y - r * .42, r * .08, x, y, r * 1.12); gr.addColorStop(0, lt); gr.addColorStop(.55, mid); gr.addColorStop(1, dk); return gr; }
+// 魔王的大眼睛：漸層虹膜、亮點；slit 細長瞳孔、lid 上眼皮蓋住比例、glow 發光
+function bossEye(c, x, y, rx, ry, iris, iris2, o = {}) {
+  c.save();
+  aEll(c, x, y, rx, ry); c.fillStyle = o.sclera || '#fff'; c.fill();
+  c.save(); aEll(c, x, y, rx, ry); c.clip();
+  aEll(c, x + rx * .1, y + ry * .1, rx * .76, ry * .82);
+  const gr = c.createLinearGradient(0, y - ry, 0, y + ry); gr.addColorStop(0, iris2); gr.addColorStop(1, iris); c.fillStyle = gr; c.fill();
+  if (o.slit) aEll(c, x + rx * .1, y + ry * .1, rx * .14, ry * .64); else aCirc(c, x + rx * .1, y + ry * .1, rx * .34);
+  c.fillStyle = '#0a0606'; c.fill();
+  aCirc(c, x - rx * .2, y - ry * .3, rx * .26); c.fillStyle = '#fff'; c.fill();
+  aCirc(c, x + rx * .42, y + ry * .42, rx * .11); c.fill();
+  if (o.lid) { c.fillStyle = o.lidCol; c.fillRect(x - rx - 1, y - ry - 1, rx * 2 + 2, ry * 2 * o.lid + 1); }
+  c.restore();
+  aEll(c, x, y, rx, ry); c.strokeStyle = INK; c.lineWidth = 1.6; c.stroke();
+  if (o.lid) { const ly = y - ry + ry * 2 * o.lid; c.beginPath(); c.moveTo(x - rx * 1.08, ly); c.quadraticCurveTo(x, ly + 1.6, x + rx * 1.08, ly); c.lineWidth = 2.4; c.lineCap = 'round'; c.stroke(); }
+  if (o.glow) bossGlow(c, x, y, rx * 2.4, o.glow);
+  c.restore();
+}
+function bossGlow(c, x, y, r, col) { c.save(); c.globalCompositeOperation = 'lighter'; const gg = c.createRadialGradient(x, y, 1, x, y, r); gg.addColorStop(0, col); gg.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = gg; aCirc(c, x, y, r); c.fill(); c.restore(); }
+
+// ---- 手與腳 ----
+// 拳頭：四個指節＋指縫＋橫過前面的拇指；o.claw 指節上的爪、o.cuff 腕環（o.spike 腕環上的尖刺）、o.plate 鐵手甲
+function bossFist(c, x, y, r, col, dk, o = {}) {
+  c.save(); c.translate(x, y); if (o.rot) c.rotate(o.rot); if (o.flip) c.scale(-1, 1);   // flip：拇指換到另一邊（左右手對稱）
+  const parts = [];
+  if (o.cuff) parts.push({ path: c => aRR(c, -r * .82, r * .6, r * 1.64, r * .72, r * .22), fill: o.cuff,
+    after: c => { if (o.cuffLine) { c.save(); c.clip(); c.strokeStyle = o.cuffLine; c.lineWidth = 1.1; for (let i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(i * r * .32, r * .6); c.lineTo(i * r * .32, r * 1.32); c.stroke(); } c.restore(); } } });
+  parts.push({ path: c => { c.beginPath(); c.moveTo(-r * 1.02, -r * .2); for (let i = 0; i < 4; i++) c.arc(-r * .75 + r * .5 * i, -r * .4, r * .29, Math.PI * 1.05, -.05); c.lineTo(r * 1.02, r * .25); c.quadraticCurveTo(r * 1.02, r * 1.02, 0, r * 1.02); c.quadraticCurveTo(-r * 1.02, r * 1.02, -r * 1.02, r * .25); c.closePath(); }, fill: col });
+  heroSilhouette(c, parts, 1.6);
+  if (o.spike) for (let i = -1; i <= 1; i++) { c.beginPath(); c.moveTo(i * r * .5 - r * .14, r * 1.32); c.lineTo(i * r * .5, r * 1.75); c.lineTo(i * r * .5 + r * .14, r * 1.32); c.closePath(); aFI(c, o.spike, 1); }
+  c.strokeStyle = dk; c.lineWidth = 1.3; c.lineCap = 'round';
+  for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(-r + r * .5 * i, -r * .32); c.quadraticCurveTo(-r + r * .5 * i + r * .06, -r * .05, -r + r * .5 * i, r * .12); c.stroke(); }
+  c.beginPath(); c.moveTo(-r * .85, r * .12); c.quadraticCurveTo(0, r * .26, r * .85, r * .12); c.stroke();
+  if (o.plate) for (let i = 0; i < 4; i++) { aRR(c, -r * .95 + r * .5 * i, -r * .66, r * .4, r * .36, 1.5); aFI(c, o.plate, 1); c.fillStyle = '#e8ecf2'; aCirc(c, -r * .75 + r * .5 * i, -r * .48, r * .06); c.fill(); }
+  if (o.claw) for (let i = 0; i < 4; i++) { const kx = -r * .75 + r * .5 * i; c.beginPath(); c.moveTo(kx - r * .13, -r * .62); c.quadraticCurveTo(kx, -r * .88, kx + r * .08, -r * .92); c.quadraticCurveTo(kx + r * .05, -r * .74, kx + r * .13, -r * .62); c.closePath(); aFI(c, '#fff6e0', 1); }
+  c.save(); c.translate(-r * .38, r * .45); c.rotate(-.35); aEll(c, 0, 0, r * .46, r * .25); aFI(c, col, 1.5); aEll(c, r * .26, -r * .02, r * .12, r * .1); c.fillStyle = "rgba(255,255,255,.35)"; c.fill(); c.restore();   // 拇指（從一側彎過來）
+  aEll(c, -r * .45, -r * .1, r * .22, r * .12, -.4); c.fillStyle = 'rgba(255,255,255,.28)'; c.fill();
+  c.restore();
+}
+// 鬼的赤腳：腳掌＋三根腳趾與白爪，sd 腳尖朝向；o.ring 腳踝金環
+function bossOniFoot(c, x, y, w, col, dk, sd, o = {}) {
+  c.save(); c.translate(x, y); c.scale(sd, 1);
+  const parts = [{ path: c => aEll(c, -w * .1, 0, w, w * .55), fill: col }];
+  for (let i = 0; i < 3; i++) { const tx = w * .7, ty = -w * .3 + i * w * .3; parts.push({ path: c => aCirc(c, tx, ty, w * .26), fill: col }); }
+  if (o.ring) parts.push({ path: c => aRR(c, -w * .75, -w * .95, w * .9, w * .4, w * .15), fill: o.ring });
+  heroSilhouette(c, parts, 1.6);
+  for (let i = 0; i < 3; i++) { const tx = w * .7 + w * .22, ty = -w * .3 + i * w * .3; c.beginPath(); c.moveTo(tx - w * .04, ty - w * .12); c.lineTo(tx + w * .24, ty); c.lineTo(tx - w * .04, ty + w * .12); c.closePath(); aFI(c, '#fff6e0', 1); }
+  c.strokeStyle = dk; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-w * .5, w * .2); c.quadraticCurveTo(0, w * .35, w * .4, w * .15); c.stroke();
+  c.restore();
+}
+// 足袋＋草鞋／木屐：o.geta 木屐（否則草鞋）
+function bossTabi(c, x, y, w, sd, o = {}) {
+  c.save(); c.translate(x, y); c.scale(sd, 1); if (o.rot) c.rotate(o.rot);
+  if (o.geta) { aRR(c, -w * .9, w * .48, w * 2, w * .32, 2); aFI(c, '#b07a40', 1.4); for (const gx of [-w * .5, w * .6]) { c.beginPath(); c.rect(gx - w * .12, w * .8, w * .24, w * .42); aFI(c, '#8a5a2a', 1.2); } }
+  else { aRR(c, -w * .95, w * .42, w * 2.05, w * .26, 3); aFI(c, '#d8b46a', 1.4); }
+  heroSilhouette(c, [{ path: c => { c.beginPath(); c.moveTo(-w * .8, -w * .6); c.lineTo(-w * .8, w * .5); c.lineTo(w * .9, w * .5); c.quadraticCurveTo(w * 1.1, w * .1, w * .75, -w * .05); c.lineTo(w * .2, -w * .1); c.lineTo(w * .2, -w * .6); c.closePath(); }, fill: '#f6f6fa' }], 1.4);
+  c.strokeStyle = '#b8bcc8'; c.lineWidth = 1; c.beginPath(); c.moveTo(w * .6, 0); c.lineTo(w * .55, w * .45); c.stroke();
+  c.strokeStyle = '#d8323c'; c.lineWidth = 2; c.beginPath(); c.moveTo(w * .55, w * .45); c.lineTo(w * .3, w * .1); c.moveTo(w * .55, w * .45); c.lineTo(w * .1, w * .3); c.stroke();   // 鼻緒
+  c.restore();
+}
+// 鎧的腳：脛當＋甲掛（腳背的鐵片）＋紅色繫繩
+function bossArmorFoot(c, x, y, w, I, ID, sd) {
+  c.save(); c.translate(x, y); c.scale(sd, 1);
+  heroSilhouette(c, [
+    { path: c => aRR(c, -w * .55, -w * 1.1, w * 1.1, w * 1.05, 2.5), fill: I },
+    { path: c => { c.beginPath(); c.moveTo(-w * .7, -w * .1); c.lineTo(w * .6, -w * .1); c.quadraticCurveTo(w * 1.2, 0, w * 1.15, w * .45); c.lineTo(-w * .7, w * .45); c.closePath(); }, fill: ID },
+  ], 1.6);
+  c.strokeStyle = '#1a1b20'; c.lineWidth = 1.2; for (let i = 1; i < 3; i++) { c.beginPath(); c.moveTo(-w * .45 + i * w * .3, -w * 1.05); c.lineTo(-w * .45 + i * w * .3, -w * .1); c.stroke(); }
+  c.fillStyle = '#e8b84a'; c.fillRect(-w * .55, -w * 1.1, w * 1.1, w * .18);
+  c.strokeStyle = '#c0262d'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(-w * .6, -w * .55); c.lineTo(w * .6, -w * .7); c.moveTo(-w * .6, -w * .7); c.lineTo(w * .6, -w * .55); c.stroke();
+  c.fillStyle = '#9aa0ae'; for (let i = 0; i < 3; i++) { aCirc(c, -w * .3 + i * w * .45, w * .18, w * .08); c.fill(); }
+  c.restore();
+}
+// 纖細的手：手掌＋四根手指（雪女鬼）
+function bossHand(c, x, y, r, col, rot) {
+  c.save(); c.translate(x, y); c.rotate(rot);
+  heroSilhouette(c, [
+    { path: c => aEll(c, 0, 0, r, r * .8), fill: col },
+    ...[0, 1, 2, 3].map(i => ({ path: c => aEll(c, -r * .66 + i * r * .44, r * .95, r * .2, r * .52), fill: col })),
+    { path: c => aEll(c, r * .95, r * .1, r * .2, r * .48, -.7), fill: col },
+  ], 1.2);
+  c.restore();
+}
+
+// --- 真妖鬼：赤鬼大將（火焰鬃毛、粗角、狼牙棒、虎皮腰布、金腕環） ---
+function bossOni(c, b, t) {
+  const R = '#e23b2c', RD = '#8e1c16', RL = '#ff9070', fb = Math.sin(t * 3.2) * 2;
+  // 揮棒姿勢：以右肩為支點。平常扛在肩上；技能時先把棒子往後舉過頭頂（蓄力），再從頭頂往前下方砸
+  const slam = b.skillT < .45, sk = slam ? 1 - Math.max(0, b.skillT) / .45 : 0;
+  const SX = 22, SY = 6 - fb, lerp = (a2, b2, q) => a2 + (b2 - a2) * q;
+  const pose = p => {   // p：0 平常 → .35 舉到最高 → 1 砸到底
+    if (p <= 0) return [.28, .3 + Math.sin(t * 2) * .06];
+    if (p < .35) { const q = Math.sin(p / .35 * Math.PI / 2); return [lerp(.28, -1.35, q), lerp(.3, -.65, q)]; }
+    const q = 1 - Math.pow(1 - (p - .35) / .65, 3); return [lerp(-1.35, 1.25, q), lerp(-.65, 2.9, q)];
+  };
+  const [phi, ang] = pose(sk), striking = sk >= .35;
+  const fx = SX + Math.cos(phi) * 20, fy = SY + Math.sin(phi) * 20;                 // 拳頭位置
+  const hx = fx + Math.sin(ang) * 13, hy = fy - Math.cos(ang) * 13;                  // 狼牙棒的基準點（握柄穿過拳頭）
+  const frot = Math.atan2(-(SX - fx), SY - fy);                                       // 手腕永遠朝向肩膀
+  for (let i = 0; i < 13; i++) {   // 火焰氣場
+    const a = Math.PI * (.92 + i / 12 * 1.16), f = 1 + Math.sin(t * 9 + i * 1.7) * .16, r1 = 26, r2 = (46 + (i % 2) * 9) * f;
+    c.fillStyle = i % 2 ? 'rgba(255,110,30,.5)' : 'rgba(255,205,70,.42)';
+    c.beginPath(); c.moveTo(Math.cos(a - .2) * r1, -8 + Math.sin(a - .2) * r1);
+    c.quadraticCurveTo(Math.cos(a - .1) * r2 * .8, -8 + Math.sin(a - .1) * r2 * .8, Math.cos(a + .04) * r2, -8 + Math.sin(a + .04) * r2);
+    c.lineTo(Math.cos(a + .2) * r1, -8 + Math.sin(a + .2) * r1); c.fill();
+  }
+  // 狼牙棒：揮動時在棒頭軌跡留下白色殘影
+  const club = withFist => {
+    if (striking) {
+      c.lineCap = 'round';
+      for (let k = 3; k >= 1; k--) { const [p2, a2] = pose(Math.max(.35, sk - k * .07)), f2x = SX + Math.cos(p2) * 20, f2y = SY + Math.sin(p2) * 20; c.strokeStyle = `rgba(255,255,255,${.16 * (4 - k)})`; c.lineWidth = 12 - k * 2; c.beginPath(); c.moveTo(f2x + Math.sin(a2) * 30, f2y - Math.cos(a2) * 30); c.lineTo(f2x + Math.sin(a2) * 58, f2y - Math.cos(a2) * 58); c.stroke(); }
+    }
+  c.save(); c.translate(hx, hy); c.rotate(ang);
+  c.beginPath(); c.moveTo(-3, 7); c.lineTo(-4.5, -8); c.lineTo(-8.5, -48); c.quadraticCurveTo(0, -55, 8.5, -48); c.lineTo(4.5, -8); c.lineTo(3, 7); c.closePath();
+  const ig = c.createLinearGradient(-9, 0, 9, 0); ig.addColorStop(0, '#26222c'); ig.addColorStop(.38, '#7a7482'); ig.addColorStop(1, '#26222c');
+  c.fillStyle = ig; c.fill(); aInk(c, 2.2);
+  // 握柄：纏著布條往下延伸，穿過拳頭從另一側露出，尾端有金環
+  c.beginPath(); c.rect(-2.8, 4, 5.6, 20); aFI(c, '#6a3a1e', 1.6);
+  c.strokeStyle = '#3a1e0e'; c.lineWidth = 1.1; for (let i = 0; i < 5; i++) { c.beginPath(); c.moveTo(-2.8, 6 + i * 4); c.lineTo(2.8, 8 + i * 4); c.stroke(); }
+  aCirc(c, 0, 26.5, 3.4); aFI(c, '#e8b84a', 1.5); aCirc(c, 0, 26.5, 1.3); c.fillStyle = INK; c.fill();
+  c.fillStyle = '#d9a441'; c.fillRect(-5.5, -10, 11, 3.4); c.strokeStyle = INK; c.lineWidth = 1.2; c.strokeRect(-5.5, -10, 11, 3.4);
+  for (let r = 0; r < 5; r++) for (const sx of [-1, 0, 1]) {
+    if (r % 2 && sx === 0) continue;
+    const yy = -17 - r * 6.6, px = sx * (3.4 + r * .7);
+    c.beginPath(); c.moveTo(px - 2, yy + 1.6); c.lineTo(px + sx * 2.6, yy - 2.6); c.lineTo(px + 2, yy + 1.6); c.closePath(); c.fillStyle = '#eef2f6'; c.fill(); c.strokeStyle = INK; c.lineWidth = .9; c.stroke();
+  }
+  c.restore();
+    if (withFist) bossFist(c, fx, fy, 10, R, RD, { claw: 1, cuff: '#e8b84a', cuffLine: '#9a6a1a', spike: '#fff6e0', rot: frot });
+  };
+  if (!striking) club(false);
+  bossOniFoot(c, -14, 42, 8.5, RD, '#5a0e0a', -1, { ring: '#e8b84a' }); bossOniFoot(c, 14, 42, 8.5, RD, '#5a0e0a', 1, { ring: '#e8b84a' });
+  const horn = sd => ({ path: c => { c.beginPath(); c.moveTo(sd * 5, -27); c.quadraticCurveTo(sd * 10, -47, sd * 27, -57); c.quadraticCurveTo(sd * 25, -40, sd * 20, -26); c.closePath(); }, fill: '#f7e9c0',
+    after: c => { c.save(); c.clip(); c.strokeStyle = '#c99a5a'; c.lineWidth = 2.2; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(sd * (4 + i * 4), -34 - i * 6.5); c.lineTo(sd * (22 + i * 2), -31 - i * 7); c.stroke(); } c.restore(); } });
+  heroSilhouette(c, [
+    horn(-1), horn(1),
+    { path: c => { c.beginPath(); for (let i = 0; i <= 14; i++) { const a = Math.PI * (.9 + i / 14 * 1.2), r = i % 2 ? 26 : 37 + Math.sin(t * 6 + i) * 1.6; c.lineTo(Math.cos(a) * r, -8 + Math.sin(a) * r); } c.closePath(); }, fill: '#2a0f0c' },
+    { path: c => { c.beginPath(); c.moveTo(-20, 14); c.quadraticCurveTo(0, 8, 20, 14); c.quadraticCurveTo(25, 28, 16, 39); c.quadraticCurveTo(0, 43, -16, 39); c.quadraticCurveTo(-25, 28, -20, 14); c.closePath(); }, fill: R,
+      after: c => { c.save(); c.clip(); c.fillStyle = '#f5c44e'; c.fillRect(-27, 30, 54, 14); c.fillStyle = INK; for (let i = -4; i <= 4; i++) { c.beginPath(); c.moveTo(i * 6.4 - 1.6, 30); c.lineTo(i * 6.4 + 2.6, 36.5); c.lineTo(i * 6.4 + 1, 30); c.fill(); }
+        c.fillStyle = '#6a3a1e'; c.fillRect(-27, 29, 54, 2.4);
+        c.strokeStyle = RD; c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, 19); c.lineTo(0, 28); c.moveTo(-8, 22); c.quadraticCurveTo(-4, 24.5, -1, 22); c.moveTo(8, 22); c.quadraticCurveTo(4, 24.5, 1, 22); c.stroke(); c.restore(); } },
+    { path: c => { c.beginPath(); c.arc(0, -8, 25, 0, TAU); c.moveTo(-23, -11); c.lineTo(-34, -18); c.lineTo(-24, -1); c.closePath(); c.moveTo(23, -11); c.lineTo(34, -18); c.lineTo(24, -1); c.closePath(); }, fill: bossBall(c, 0, -8, 25, RL, R, RD) },
+  ], 2.2);
+  // 念珠項鍊（頭下方露出兩側）
+  for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) { aCirc(c, sd * (14 + i * 4.2), 15.5 + i * 1.6, 2.8); aFI(c, '#7a4a26', 1.1); }
+  c.fillStyle = 'rgba(255,255,255,.28)'; aEll(c, -9, -25, 7, 3.2, -.3); c.fill();
+  // 臉：金色細瞳大眼、粗眉、獠牙嘴（獠牙小一點）
+  bossEye(c, -10, -7, 7.2, 7.8, '#ff8a10', '#ffe85a', { slit: 1 }); bossEye(c, 10, -7, 7.2, 7.8, '#ff8a10', '#ffe85a', { slit: 1 });
+  c.fillStyle = INK;
+  for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 2.5, -12); c.lineTo(sd * 19, -21); c.lineTo(sd * 21, -15.5); c.lineTo(sd * 4, -8.5); c.closePath(); c.fill(); }
+  aEll(c, 0, 2, 4.4, 2.8); c.fillStyle = RD; c.fill(); c.fillStyle = INK; aCirc(c, -1.8, 2.6, .9); c.fill(); aCirc(c, 1.8, 2.6, .9); c.fill();
+  c.beginPath(); c.moveTo(-11, 7); c.quadraticCurveTo(0, 10, 11, 7); c.quadraticCurveTo(9, 15, 0, 15.5); c.quadraticCurveTo(-9, 15, -11, 7); c.closePath(); aFI(c, '#4a0a10', 1.7);
+  c.save(); c.clip(); c.fillStyle = '#fff'; c.fillRect(-12, 6, 24, 2.6); c.fillStyle = '#e8566a'; aEll(c, 0, 15.5, 5, 3); c.fill(); c.restore();
+  for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 7.4, 13.6); c.lineTo(sd * 6.4, 9.6); c.lineTo(sd * 5, 13.8); c.closePath(); aFI(c, '#fff', 1); }
+  if (slam) { c.fillStyle = 'rgba(255,255,255,.7)'; for (const sd of [-1, 1]) { aCirc(c, sd * 7, 3 + sk * 4, 2 + sk * 2); c.fill(); } }   // 鼻孔噴氣
+  // 拳頭：白爪＋帶尖刺的金腕環
+  bossFist(c, -37, 13 + fb, 10, R, RD, { claw: 1, cuff: '#e8b84a', cuffLine: '#9a6a1a', spike: '#fff6e0', rot: -Math.PI / 2 + .2, flip: 1 });
+  if (striking) club(true);   // 砸下時棒子在身體前面
+  else bossFist(c, fx, fy, 10, R, RD, { claw: 1, cuff: '#e8b84a', cuffLine: '#9a6a1a', spike: '#fff6e0', rot: frot });
+}
+
+// --- 怠惰鬼：躺在雲上的醉鬼（亂髮與一長一斷的角、大酒鼻、敞開的半纏、菸管與酒杯、木屐） ---
+function bossSleepy(c, b, t, warn) {
+  const P = '#8e5ad6', PD = '#4a2480', PL = '#cfb0ff', fb = Math.sin(t * 1.6) * 1.5;
+  // 菸管的煙（平常飄成一圈圈；施法時變成大煙圈）
+  for (let i = 0; i < 4; i++) { const st = (t * .35 + i / 4) % 1; c.globalAlpha = (1 - st) * .7; c.strokeStyle = '#d8c4ff'; c.lineWidth = 2.2 - st; c.beginPath(); c.arc(-52 - st * 6 + Math.sin(t * 2 + i) * 3, -10 - st * 30, 3 + st * 7, 0, TAU); c.stroke(); c.globalAlpha = 1; }
+  // 箱枕（木頭枕座＋小枕頭）
+  c.save(); c.translate(-36, 6); c.rotate(-.12);
+  heroSilhouette(c, [
+    { path: c => { c.beginPath(); c.moveTo(-12, 0); c.lineTo(12, 0); c.lineTo(9, 14); c.lineTo(-9, 14); c.closePath(); }, fill: '#a0522d', after: c => { c.fillStyle = '#7a3a1e'; c.fillRect(-11, 5, 22, 2); } },
+    { path: c => aEll(c, 0, -3, 14, 6), fill: '#f2e6ff', after: c => { c.save(); c.clip(); c.fillStyle = '#b48ae8'; c.fillRect(-15, -4.5, 30, 3); c.restore(); } },
+  ], 1.8);
+  c.restore();
+  // 身體：大肚子、敞開的深藍半纏（白色龜甲紋）、虎皮腰布
+  const coat = c.createLinearGradient(0, 4, 0, 38); coat.addColorStop(0, '#3a3f8a'); coat.addColorStop(1, '#1e2258');
+  heroSilhouette(c, [
+    { path: c => aEll(c, 0, 21, 25, 16), fill: coat,
+      after: c => { c.save(); c.clip(); c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1;
+        for (let gx = -30; gx <= 30; gx += 9) for (let gy = 6; gy <= 40; gy += 8) { c.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; c.lineTo(gx + (gy / 8 % 2) * 4.5 + Math.cos(a) * 4, gy + Math.sin(a) * 4); } c.closePath(); c.stroke(); }
+        c.restore(); } },
+    { path: c => aEll(c, 1, 21, 15, 13), fill: bossBall(c, 1, 21, 15, PL, P, PD),
+      after: c => { c.save(); c.clip(); c.fillStyle = '#f5c44e'; c.fillRect(-16, 27, 34, 8); c.fillStyle = INK; for (let i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(i * 6.5 - 1.4, 27); c.lineTo(i * 6.5 + 2.4, 32); c.lineTo(i * 6.5 + 1, 27); c.fill(); } c.restore();
+        c.strokeStyle = PD; c.lineWidth = 1.3; c.beginPath(); c.arc(1, 20, 1.8, 0, TAU); c.stroke(); } },
+  ], 2.2);
+  c.strokeStyle = '#f5c44e'; c.lineWidth = 2.4; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 14, 9); c.quadraticCurveTo(sd * 17, 22, sd * 14, 33); c.stroke(); }   // 半纏的金色衣襟
+  // 頭（往枕頭歪一邊）
+  c.save(); c.translate(0, 12); c.rotate(-.14 + Math.sin(t * 1.2) * .03); c.translate(0, -12);
+  heroSilhouette(c, [
+    { path: c => { c.beginPath(); c.moveTo(-15, -27); c.quadraticCurveTo(-24, -46, -14, -58); c.quadraticCurveTo(-8, -44, -5, -29); c.closePath(); }, fill: '#f3e4c0',
+      after: c => { c.save(); c.clip(); c.strokeStyle = '#c4a068'; c.lineWidth = 2; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(-22, -36 - i * 6); c.lineTo(-6, -33 - i * 7); c.stroke(); } c.restore(); } },
+    { path: c => { c.beginPath(); c.moveTo(8, -29); c.quadraticCurveTo(10, -38, 17, -41); c.lineTo(19, -35); c.lineTo(16, -32); c.quadraticCurveTo(17, -30, 17, -26); c.closePath(); }, fill: '#f3e4c0' },   // 斷掉的短角
+    { path: c => { c.beginPath(); for (let i = 0; i <= 16; i++) { const a = Math.PI * (.75 + i / 16 * 1.5), r = i % 2 ? 26 : 33 + Math.sin(t * 2 + i) * 1.2; c.lineTo(Math.cos(a) * r + (i % 2 ? 0 : 2), -8 + Math.sin(a) * r + (i % 2 ? 0 : 3)); } c.closePath(); }, fill: '#2a1840' },
+    { path: c => { c.beginPath(); c.arc(0, -8, 25, 0, TAU); c.moveTo(-23, -10); c.lineTo(-32, -15); c.lineTo(-24, -2); c.closePath(); c.moveTo(23, -10); c.lineTo(32, -15); c.lineTo(24, -2); c.closePath(); }, fill: bossBall(c, 0, -8, 25, PL, P, PD) },
+  ], 2.2);
+  c.fillStyle = 'rgba(255,255,255,.22)'; aEll(c, -8, -26, 7, 3, -.3); c.fill();
+  // 亂瀏海
+  c.beginPath(); c.moveTo(-20, -22); for (let i = 0; i <= 8; i++) { const x2 = -20 + i * 5, y2 = i % 2 ? -14 - (i % 4 === 1 ? 2 : 0) : -24; c.lineTo(x2, y2); } c.quadraticCurveTo(0, -36, -20, -22); c.closePath(); aFI(c, '#2a1840', 1.6);
+  // 臉：醉醺醺的紅臉頰、大酒鼻、下垂的粗眉
+  c.fillStyle = 'rgba(255,80,120,.45)'; aEll(c, -15, 3, 6, 3.4); c.fill(); aEll(c, 15, 3, 6, 3.4); c.fill();
+  if (warn) {
+    for (const sd of [-1, 1]) bossEye(c, sd * 10, -6, 7.4, 7.8, '#c01aff', '#ffd2ff', { slit: 1, glow: 'rgba(200,120,255,.7)' });
+    c.fillStyle = INK; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 3, -14); c.lineTo(sd * 18, -20); c.lineTo(sd * 19, -16); c.lineTo(sd * 4, -11); c.closePath(); c.fill(); }
+  } else {
+    for (const sd of [-1, 1]) bossEye(c, sd * 10, -6, 7, 7.2, '#d89a10', '#ffe85a', { slit: 1, lid: .56, lidCol: P });
+    c.fillStyle = INK; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 4, -15); c.quadraticCurveTo(sd * 12, -19, sd * 19, -13); c.lineTo(sd * 18, -10.5); c.quadraticCurveTo(sd * 12, -15, sd * 5, -12); c.closePath(); c.fill(); }
+    c.strokeStyle = PD; c.lineWidth = 1.3; for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * 10, -4, 7.5, .4, Math.PI - .4); c.stroke(); }
+  }
+  aCirc(c, 0, 2.5, 5.2); c.fillStyle = bossBall(c, 0, 2.5, 5.2, '#ffb0d0', '#e0508a', '#a02a5a'); c.fill(); aInk(c, 1.5);   // 大酒鼻
+  if (warn) { aEll(c, 1, 13, 8, 5.5 + Math.sin(t * 10) * 1.2); aFI(c, '#3a0a20', 1.6); }
+  else { c.beginPath(); c.moveTo(-8, 11); c.quadraticCurveTo(0, 15, 9, 10); c.strokeStyle = INK; c.lineWidth = 1.8; c.stroke(); }
+  c.beginPath(); c.moveTo(6.5, warn ? 9.6 : 12); c.lineTo(8, warn ? 4.6 : 7.2); c.lineTo(9.6, warn ? 9.8 : 11.4); c.closePath(); aFI(c, '#fff', 1.1);   // 一顆露出來的獠牙
+  c.restore();
+  // 雲床
+  const pf = [[-42, 35, 10], [-28, 31, 13], [-10, 34, 13], [9, 34, 13], [27, 31, 13], [42, 35, 10]];
+  heroSilhouette(c, [{ path: c => { c.beginPath(); for (const [x, y2, r] of pf) { const yy = y2 + Math.sin(t * 2 + x) * .8; c.moveTo(x + r, yy); c.arc(x, yy, r, 0, TAU); } }, fill: '#dccbf7' }], 2);
+  c.fillStyle = '#c3aeea'; c.fillRect(-48, 38, 96, 5);
+  c.strokeStyle = '#b49ae0'; c.lineWidth = 1.4; for (const [x, y2, r] of pf) { c.beginPath(); c.arc(x, y2 + 2, r * .55, Math.PI * 1.1, Math.PI * 1.7); c.stroke(); }
+  // 翹起來的腳：足袋＋木屐（掛在腳趾上晃）
+  bossTabi(c, 40, 18 + Math.sin(t * 2.5) * 1.5, 7, 1, { geta: 1, rot: -.5 + Math.sin(t * 2.5) * .1 });
+  // 左手拿菸管、右手拿紅漆酒杯
+  // 菸管：吸嘴叼在嘴角，手從下方握住菸管中段（手腕朝下連到手肘），菸斗從拳頭外側穿出
+  const pa = -2.87, px0 = -25, py0 = 6 - fb * .5;
+  c.save(); c.translate(px0, py0); c.rotate(pa);
+  c.beginPath(); c.moveTo(-17, 0); c.lineTo(26, 0); c.strokeStyle = INK; c.lineWidth = 3.8; c.stroke(); c.strokeStyle = '#6a3a1e'; c.lineWidth = 2.2; c.stroke();
+  c.beginPath(); c.moveTo(22, 1.6); c.lineTo(26, 1.6); c.lineTo(27, 5.5); c.lineTo(32, 5.5); c.lineTo(31, -1.8); c.lineTo(22, -1.8); c.closePath(); aFI(c, '#e8b84a', 1.2);   // 雁首（菸斗）
+  c.beginPath(); c.rect(-21, -1.6, 7, 3.2); aFI(c, '#e8b84a', 1);   // 吸嘴
+  c.restore();
+  bossFist(c, px0, py0, 8, P, PD, { cuff: '#7a4a26', cuffLine: '#4a2a12', rot: pa + Math.PI });
+  // 酒碟：平放在攤開的手掌上，拇指壓著碟緣
+  c.save(); c.translate(16, 15 + fb); c.rotate(-.12);
+  heroSilhouette(c, [
+    { path: c => aRR(c, -14, 3, 7, 7, 2), fill: '#7a4a26' },   // 木珠腕環
+    { path: c => aEll(c, 0, 4, 9.5, 4.4), fill: P },
+    ...[0, 1, 2, 3].map(i => ({ path: c => aEll(c, 8.2, 3 - i * 1.6 + 1.6, 2.4, 1.6, -.4), fill: P })),
+  ], 1.5);
+  c.strokeStyle = PD; c.lineWidth = 1; c.beginPath(); c.moveTo(-4, 6.5); c.quadraticCurveTo(1, 8, 6, 6); c.stroke();
+  c.beginPath(); c.moveTo(-9, -1); c.quadraticCurveTo(0, 5.5, 9, -1); c.closePath(); aFI(c, '#d8323c', 1.5);   // 紅漆酒碟
+  c.fillStyle = '#e8b84a'; c.fillRect(-6.5, .6, 13, 1.3);
+  aEll(c, 0, -1, 9, 1.8); aFI(c, '#ffe9c8', 1.1);   // 碟裡的酒
+  aEll(c, -7.5, -1.2, 2.2, 3.4, .5); aFI(c, P, 1.4);   // 拇指壓著碟緣
+  c.restore();
+  // 酒葫蘆（綁著紅繩靠在雲邊）
+  c.save(); c.translate(-46, 26); c.rotate(.25);
+  heroSilhouette(c, [{ path: c => { c.beginPath(); c.arc(0, -6, 5, 0, TAU); c.moveTo(8, 6); c.arc(0, 6, 8, 0, TAU); }, fill: '#e8a84a' }], 1.6);
+  c.fillStyle = '#d8323c'; c.fillRect(-4.5, -1.4, 9, 2.4); c.fillStyle = '#7a4a26'; c.fillRect(-1.6, -13, 3.2, 3);
+  c.fillStyle = 'rgba(255,255,255,.35)'; aEll(c, -3, 4, 2.4, 1.6); c.fill();
+  c.restore();
+  if (warn) { c.strokeStyle = 'rgba(197,138,255,.8)'; c.lineWidth = 3; for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(0, 0, 50 + i * 7 + (t * 30) % 7, t * 3 + i, t * 3 + i + 2.5); c.stroke(); } }
+}
+
+// --- 雪女鬼：雪姬（白色長髮公主切、冰晶角、層疊衣襟的振袖和服、冰扇、冰木屐） ---
+function bossYuki(c, b, t, warn) {
+  const SK = '#f4f9ff', OB = '#22407e', sw = Math.sin(t * 1.8), fb = Math.sin(t * 2.4) * 1.8;
+  const hairG = c.createLinearGradient(0, -34, 0, 44); hairG.addColorStop(0, '#ffffff'); hairG.addColorStop(1, '#a9d4f7');
+  const kimG = c.createLinearGradient(0, 8, 0, 52); kimG.addColorStop(0, '#f2fbff'); kimG.addColorStop(.45, '#8fd0f2'); kimG.addColorStop(1, '#2c66b0');   // 由白漸層到深藍（暈染）
+  for (let i = 0; i < 7; i++) { const a = t * .9 + i / 7 * TAU, r = 50 + Math.sin(t * 2 + i) * 4; drawFlake(c, Math.cos(a) * r, Math.sin(a) * r * .75, 3.8); }
+  // 和服花紋：青海波＋雪輪
+  const waves = (x0, x1, y0, y1) => { c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = .9; for (let y = y0, row = 0; y <= y1; y += 4, row++) for (let x = x0 + (row % 2) * 4; x <= x1; x += 8) for (const r of [4, 2.6]) { c.beginPath(); c.arc(x, y, r, Math.PI, 0); c.stroke(); } };
+  const crest = (x, y, r) => { c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; c.moveTo(x + Math.cos(a) * r * 1.05, y + Math.sin(a) * r * 1.05); c.arc(x + Math.cos(a) * r * .75, y + Math.sin(a) * r * .75, r * .32, 0, TAU); } c.fill(); drawFlake(c, x, y, r * .55); };
+  const horn = sd => ({ path: c => { c.beginPath(); c.moveTo(sd * 5, -25); c.lineTo(sd * 8, -44); c.lineTo(sd * 12, -53); c.lineTo(sd * 16, -43); c.lineTo(sd * 17, -24); c.closePath(); }, fill: 'rgba(222,246,255,1)',
+    after: c => { c.strokeStyle = 'rgba(120,200,255,.8)'; c.lineWidth = 1; c.beginPath(); c.moveTo(sd * 12, -51); c.lineTo(sd * 11, -27); c.moveTo(sd * 8, -42); c.lineTo(sd * 12, -36); c.stroke(); } });
+  const sleeve = sd => ({ path: c => { c.save(); c.translate(sd * 31, 13 + fb); c.rotate(sd * -.1); aRR(c, -9.5, 0, 19, 28, [3, 3, 9, 9]); c.restore(); }, fill: kimG,
+    after: c => { c.save(); c.clip(); c.translate(sd * 31, 13 + fb); c.rotate(sd * -.1); waves(-10, 10, 18, 30); crest(0, 8, 3.6);
+      c.fillStyle = '#ffffff'; c.fillRect(-10, 25.5, 20, 2.5); c.fillStyle = '#e88ab0'; c.fillRect(-10, 23.5, 20, 2);   // 袖口的襯裡（白＋淡紅）
+      c.strokeStyle = 'rgba(30,70,130,.35)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(sd * -4, 2); c.quadraticCurveTo(sd * -6, 14, sd * -3, 24); c.stroke(); c.restore(); } });
+  heroSilhouette(c, [
+    { path: c => { c.beginPath(); c.moveTo(-22, -24); c.quadraticCurveTo(-37, 6, -32 + sw * 3, 41); c.quadraticCurveTo(-25, 47, -18 + sw * 2, 39); c.lineTo(18 + sw * 2, 39); c.quadraticCurveTo(25, 47, 32 + sw * 3, 41); c.quadraticCurveTo(37, 6, 22, -24); c.closePath(); }, fill: hairG,
+      after: c => { c.save(); c.clip(); c.strokeStyle = 'rgba(130,180,230,.5)'; c.lineWidth = 1; for (let i = -3; i <= 3; i++) { c.beginPath(); c.moveTo(i * 9, -10); c.quadraticCurveTo(i * 11 + sw * 2, 20, i * 10 + sw * 3, 44); c.stroke(); } c.restore(); } },
+    sleeve(-1), sleeve(1),
+    { path: c => { c.beginPath(); c.moveTo(-14, 12); c.quadraticCurveTo(0, 8, 14, 12); c.quadraticCurveTo(20, 28, 22, 40); c.quadraticCurveTo(13 + sw * 2, 52, 5, 44); c.quadraticCurveTo(-3 - sw * 2, 55, -10, 44); c.quadraticCurveTo(-17, 50, -22, 40); c.quadraticCurveTo(-20, 28, -14, 12); c.closePath(); }, fill: kimG,
+      after: c => { c.save(); c.clip();
+        waves(-24, 24, 36, 54); crest(-11, 39, 3.4); crest(12, 42, 3);
+        c.strokeStyle = 'rgba(30,70,130,.3)'; c.lineWidth = 1.3; for (const fx of [-12, -3, 10]) { c.beginPath(); c.moveTo(fx, 33); c.quadraticCurveTo(fx + 2, 42, fx - 1, 52); c.stroke(); }   // 布料皺褶
+        // 層疊的衣襟：白襦袢、銀色、深藍（左前右後交疊）
+        for (const [col, off] of [['#2c66b0', 4.5], ['#c8d4e0', 2.5], ['#ffffff', .8]]) { c.fillStyle = col; c.beginPath(); c.moveTo(-8 - off, 10); c.lineTo(2, 25); c.lineTo(8 + off, 10); c.lineTo(8 + off - 2, 10); c.lineTo(2, 22 - off * .2); c.lineTo(-8 - off + 2, 10); c.closePath(); c.fill(); }
+        c.fillStyle = '#ffffff'; c.beginPath(); c.moveTo(-6, 10); c.lineTo(2, 22); c.lineTo(6, 10); c.closePath(); c.fill();
+        c.strokeStyle = 'rgba(20,40,80,.5)'; c.lineWidth = 1; c.beginPath(); c.moveTo(-12.5, 10); c.lineTo(2, 25.5); c.lineTo(10, 16); c.stroke();
+        // 帶：帶揚（淡紅）＋深藍帶＋金色帶締＋冰晶帶留
+        c.fillStyle = '#f0a8c4'; c.fillRect(-24, 23.5, 48, 2.2);
+        c.fillStyle = OB; c.fillRect(-24, 25.5, 48, 8);
+        c.strokeStyle = 'rgba(255,255,255,.25)'; c.lineWidth = 1; for (let x = -22; x <= 22; x += 5) { c.beginPath(); c.moveTo(x, 26); c.lineTo(x + 2.5, 33); c.stroke(); }
+        c.fillStyle = '#f2c14e'; c.fillRect(-24, 29, 48, 1.6);
+        c.restore();
+        c.beginPath(); c.moveTo(2, 27); c.lineTo(5, 29.8); c.lineTo(2, 32.6); c.lineTo(-1, 29.8); c.closePath(); aFI(c, '#9ae6ff', 1); } },
+    horn(-1), horn(1),
+    { path: c => aCirc(c, 0, -8, 23.5), fill: bossBall(c, 0, -8, 23.5, '#ffffff', SK, '#c8e2f6') },
+  ], 2);
+  // 冰木屐（雪霧下露出一點）
+  for (const sd of [-1, 1]) { c.save(); c.translate(sd * 7, 53); aRR(c, -6, 0, 12, 3.2, 1.5); aFI(c, 'rgba(190,235,255,.95)', 1.3); aEll(c, 0, -1.5, 4.6, 2.6); aFI(c, '#ffffff', 1.2); c.strokeStyle = '#5aa8e8'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(-3, -1); c.lineTo(0, -3.4); c.lineTo(3, -1); c.stroke(); c.restore(); }
+  // 前髮（公主切）與兩側髮束
+  c.beginPath(); c.moveTo(-25.5, 13); c.lineTo(-25.5, -8); c.arc(0, -8, 25.5, Math.PI, 0); c.lineTo(25.5, 13); c.lineTo(22, 11); c.lineTo(19, 14); c.lineTo(17, -11); c.lineTo(-17, -11); c.lineTo(-19, 14); c.lineTo(-22, 11); c.closePath();
+  c.fillStyle = hairG; c.fill(); aInk(c, 2);
+  c.strokeStyle = 'rgba(150,205,250,.9)'; c.lineWidth = 2.4; c.beginPath(); c.arc(0, -8, 20, Math.PI * 1.15, Math.PI * 1.55); c.stroke();
+  c.strokeStyle = 'rgba(130,180,230,.6)'; c.lineWidth = 1; for (const sx of [-21, 21]) { c.beginPath(); c.moveTo(sx, -6); c.lineTo(sx + (sx > 0 ? 1 : -1), 12); c.stroke(); }
+  c.beginPath(); c.moveTo(0, -30); c.lineTo(3.5, -25); c.lineTo(0, -19); c.lineTo(-3.5, -25); c.closePath(); aFI(c, '#7fd6ff', 1.3);   // 冰晶額飾
+  for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 6, -26); c.lineTo(sd * 8, -23); c.lineTo(sd * 6, -20.5); c.lineTo(sd * 4, -23); c.closePath(); aFI(c, '#bfefff', 1); }
+  // 臉：長睫毛的冰藍眼睛、小獠牙微笑
+  for (const sd of [-1, 1]) {
+    bossEye(c, sd * 9, -1, 6.2, 6.8, '#1d5aa8', '#8ae0ff', warn ? { glow: 'rgba(140,220,255,.75)' } : { lid: .22, lidCol: SK });
+    c.strokeStyle = INK; c.lineWidth = 2.6; c.lineCap = 'round';
+    const ly = warn ? -7.6 : -5;
+    c.beginPath(); c.moveTo(sd * 3, ly + .5); c.quadraticCurveTo(sd * 9, ly - 2.2, sd * 15.5, ly + 1); c.lineTo(sd * 18, ly - 2.5); c.stroke();
+  }
+  c.fillStyle = 'rgba(255,150,195,.4)'; aEll(c, -14, 6.5, 3.6, 2); c.fill(); aEll(c, 14, 6.5, 3.6, 2); c.fill();
+  c.beginPath(); c.moveTo(-3.5, 9); c.quadraticCurveTo(0, 11.5, 3.5, 9); c.strokeStyle = '#5a6ad0'; c.lineWidth = 1.7; c.stroke();
+  c.beginPath(); c.moveTo(1.4, 9.8); c.lineTo(2.4, 12); c.lineTo(3, 9.4); c.closePath(); c.fillStyle = '#fff'; c.fill();
+  // 左手（從袖口伸出）
+  bossHand(c, -31, 43 + fb, 4.4, SK, .25);
+  // 冰扇（右手）：扇骨在拳頭裡收成扇柄，扇釘從拳頭內側露出、垂著流蘇；蓄力時舉高發光
+  const fa2 = warn ? -1.05 + Math.sin(t * 16) * .08 : .25, fx0 = 31, fy0 = 41 + fb, fdx = Math.cos(fa2), fdy = Math.sin(fa2);
+  const pvx = fx0 - fdx * 7, pvy = fy0 - fdy * 7, fr = warn ? 25 : 20;
+  c.save(); c.translate(pvx, pvy); c.rotate(fa2 + Math.PI / 2);
+  for (let i = 0; i <= 6; i++) {
+    const a = -Math.PI / 2 - .85 + i * .283;
+    c.beginPath(); c.moveTo(Math.cos(a) * 2, Math.sin(a) * 2); c.lineTo(Math.cos(a) * 12, Math.sin(a) * 12); c.strokeStyle = INK; c.lineWidth = 2.4; c.stroke(); c.strokeStyle = '#d8f2ff'; c.lineWidth = 1; c.stroke();   // 扇骨
+    c.beginPath(); c.moveTo(Math.cos(a - .1) * 10, Math.sin(a - .1) * 10); c.lineTo(Math.cos(a - .13) * fr * .86, Math.sin(a - .13) * fr * .86); c.lineTo(Math.cos(a) * fr, Math.sin(a) * fr); c.lineTo(Math.cos(a + .13) * fr * .86, Math.sin(a + .13) * fr * .86); c.lineTo(Math.cos(a + .1) * 10, Math.sin(a + .1) * 10); c.closePath();
+    aFI(c, i % 2 ? 'rgba(200,240,255,.95)' : 'rgba(150,215,250,.95)', 1.1);
+  }
+  if (warn) bossGlow(c, 0, -fr * .7, fr, 'rgba(160,230,255,.5)');
+  c.restore();
+  bossFist(c, fx0, fy0, 4.8, SK, '#b8cfe4', { rot: fa2 + Math.PI });
+  aCirc(c, pvx, pvy, 1.9); aFI(c, '#bfefff', 1);   // 扇釘
+  c.beginPath(); c.moveTo(pvx, pvy + 1.5); c.quadraticCurveTo(pvx - 1.5 + Math.sin(t * 3) * 1.5, pvy + 6, pvx + Math.sin(t * 3) * 2, pvy + 10); c.strokeStyle = '#5ab0f0'; c.lineWidth = 1.2; c.stroke();
+  aEll(c, pvx + Math.sin(t * 3) * 2, pvy + 12, 1.4, 2.6); aFI(c, '#8ad0ff', .9);   // 流蘇
+  if (warn) { c.strokeStyle = `rgba(200,240,255,${.6 + .3 * Math.sin(t * 20)})`; c.lineWidth = 3; aCirc(c, 0, 0, 52); c.stroke(); }
+  c.fillStyle = 'rgba(235,248,255,.55)'; for (let i = 0; i < 4; i++) { const mt = (t * .7 + i / 4) % 1; aCirc(c, -14 + i * 9 + Math.sin(t + i) * 3, 46 + mt * 10, 3 + mt * 3); c.globalAlpha = 1 - mt; c.fill(); c.globalAlpha = 1; }   // 下襬的雪霧
+}
+
+// --- 鐵甲鬼：鎧武者（金色鍬形角、頭盔與護頸、紅漆面甲、大袖、背旗、鐵手甲、脛當） ---
+function bossArmor(c, b, t, warn) {
+  const I = '#6c717e', ID = '#30333b', IL = '#c0c6d2', RD = '#c0262d', fb = Math.sin(t * 2.4) * 1.5, sh = b.shield;
+  const gold = c.createLinearGradient(0, -64, 0, -20); gold.addColorStop(0, '#fff0a0'); gold.addColorStop(.5, '#e8b84a'); gold.addColorStop(1, '#a8701a');
+  // 背旗
+  c.save(); c.translate(-30, 0); c.rotate(-.14);
+  c.beginPath(); c.moveTo(0, 22); c.lineTo(0, -78); c.strokeStyle = INK; c.lineWidth = 4.4; c.stroke(); c.strokeStyle = '#6a4424'; c.lineWidth = 2.2; c.stroke();
+  const wv = Math.sin(t * 4) * 2.5;
+  c.beginPath(); c.moveTo(0, -76); c.lineTo(-19, -76 + wv * .3); c.quadraticCurveTo(-18 + wv, -56, -19, -34 + wv * .5); c.lineTo(0, -34); c.closePath(); aFI(c, RD, 2);
+  c.fillStyle = '#fff'; c.font = '900 14px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('鬼', -9.5, -55);
+  c.restore();
+  const lace = (x0, x1, y) => { c.fillStyle = RD; for (let x = x0; x <= x1; x += 5) c.fillRect(x - .9, y - 1.6, 1.8, 3.2); };
+  const sode = sd => ({ path: c => { c.save(); c.translate(sd * 37, 4 + fb); c.rotate(sd * .14); aRR(c, -10, 0, 20, 27, 3); c.restore(); }, fill: I,
+    after: c => { c.save(); c.clip(); c.translate(sd * 37, 4 + fb); c.rotate(sd * .14); c.strokeStyle = ID; c.lineWidth = 1.4; for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(-11, i * 6.8); c.lineTo(11, i * 6.8); c.stroke(); lace(-7, 8, i * 6.8 - 3.4); } c.fillStyle = '#e8b84a'; c.fillRect(-11, 0, 22, 2.4); c.restore(); } });
+  const kuwa = sd => ({ path: c => { c.beginPath(); c.moveTo(sd * 4, -29); c.quadraticCurveTo(sd * 30, -34, sd * 35, -64); c.quadraticCurveTo(sd * 23, -45, sd * 6, -23); c.closePath(); }, fill: gold });
+  bossArmorFoot(c, -13, 42, 8.5, I, ID, -1); bossArmorFoot(c, 13, 42, 8.5, I, ID, 1);
+  heroSilhouette(c, [
+    { path: c => { c.beginPath(); c.moveTo(-25, -12); c.lineTo(25, -12); c.lineTo(44, 13); c.quadraticCurveTo(0, 22, -44, 13); c.closePath(); }, fill: I,
+      after: c => { c.save(); c.clip(); c.strokeStyle = ID; c.lineWidth = 1.5; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(-46, -2 + i * 7); c.quadraticCurveTo(0, 6 + i * 7, 46, -2 + i * 7); c.stroke(); } for (let i = 0; i < 3; i++) { lace(-40, -26, 1 + i * 7); lace(26, 40, 1 + i * 7); } c.restore(); } },
+    sode(-1), sode(1),
+    { path: c => aRR(c, -21, 12, 42, 26, 8), fill: I,
+      after: c => { c.save(); c.clip(); c.fillStyle = ID; c.fillRect(-22, 12, 44, 5); c.strokeStyle = ID; c.lineWidth = 1.4; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(-22, 22 + i * 6); c.lineTo(22, 22 + i * 6); c.stroke(); lace(-17, 17, 19 + i * 6); }
+        c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(-16, 13, 6, 22); c.restore(); } },
+    { path: c => { c.beginPath(); c.rect(-20, 35, 12, 9); c.rect(-6, 36, 12, 9); c.rect(8, 35, 12, 9); }, fill: ID },
+    { path: c => aCirc(c, 0, -6, 24.5), fill: bossBall(c, 0, -6, 24.5, IL, I, ID),
+      after: c => { c.save(); aCirc(c, 0, -6, 24.5); c.clip(); c.strokeStyle = 'rgba(30,32,38,.55)'; c.lineWidth = 1.3; for (let i = -3; i <= 3; i++) { c.beginPath(); c.moveTo(i * 3, -31); c.quadraticCurveTo(i * 9, -22, i * 9.5, -12); c.stroke(); }
+        aEll(c, 0, 3, 19, 14); c.fillStyle = '#121318'; c.fill(); c.restore(); } },
+    kuwa(-1), kuwa(1),
+  ], 2.2);
+  // 兇狠的眼睛：往內下斜的細長發光眼＋直立瞳孔（盾開啟或蓄力時更亮）
+  const hot = sh || warn;
+  for (const sd of [-1, 1]) {
+    c.beginPath(); c.moveTo(sd * 2.5, -.5); c.quadraticCurveTo(sd * 9, -6.5, sd * 15, -5.5); c.quadraticCurveTo(sd * 13, 2.5, sd * 4, 2); c.closePath();
+    const eg = c.createLinearGradient(0, -6, 0, 3); eg.addColorStop(0, '#fff2a0'); eg.addColorStop(1, hot ? '#ff3a10' : '#ff7a1a'); c.fillStyle = eg; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.3; c.stroke();
+    aEll(c, sd * 9.5, -1.6, 1.1, 3); c.fillStyle = INK; c.fill();
+    bossGlow(c, sd * 9, -1.5, hot ? 15 : 10, hot ? 'rgba(255,110,30,.95)' : 'rgba(255,110,30,.5)');
+  }
+  // 眉庇（帽簷）壓在眼睛上方，正中間往下壓 → 皺眉
+  c.beginPath(); c.moveTo(-26, -12); c.quadraticCurveTo(-12, -17, 0, -10); c.quadraticCurveTo(12, -17, 26, -12); c.lineTo(23, -5); c.quadraticCurveTo(10, -10, 0, -4); c.quadraticCurveTo(-10, -10, -23, -5); c.closePath(); aFI(c, ID, 1.8);
+  c.strokeStyle = '#e8b84a'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(-23, -6.5); c.quadraticCurveTo(-10, -11.5, 0, -5.5); c.quadraticCurveTo(10, -11.5, 23, -6.5); c.stroke();
+  for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 22, -12); c.quadraticCurveTo(sd * 32, -14, sd * 31, -4); c.quadraticCurveTo(sd * 27, -8, sd * 22, -6); c.closePath(); aFI(c, I, 1.6); }   // 吹返
+  // 面甲：紅漆、皺起的鼻樑、白牙、金鬍鬚
+  c.beginPath(); c.moveTo(-17, 5); c.quadraticCurveTo(0, 1, 17, 5); c.lineTo(15, 14); c.quadraticCurveTo(0, 22, -15, 14); c.closePath(); aFI(c, '#9a2018', 1.8);
+  c.strokeStyle = '#5a0e0a'; c.lineWidth = 1.2; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 2, 4); c.quadraticCurveTo(sd * 6, 6, sd * 9, 4.5); c.stroke(); }
+  c.beginPath(); c.moveTo(-10, 9.5); c.quadraticCurveTo(0, 13, 10, 9.5); c.lineTo(9, 15); c.quadraticCurveTo(0, 18, -9, 15); c.closePath(); aFI(c, '#1a0a0a', 1.2);
+  c.save(); c.clip(); c.fillStyle = '#fff'; for (let i = -3; i <= 3; i++) { c.beginPath(); c.moveTo(i * 2.6 - 1.2, 10); c.lineTo(i * 2.6, 13.4); c.lineTo(i * 2.6 + 1.2, 10); c.fill(); c.beginPath(); c.moveTo(i * 2.6 - 1.2, 17); c.lineTo(i * 2.6, 13.8); c.lineTo(i * 2.6 + 1.2, 17); c.fill(); } c.restore();
+  c.strokeStyle = '#e8b84a'; c.lineWidth = 1.6; c.lineCap = 'round'; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 5, 8); c.quadraticCurveTo(sd * 12, 5.5, sd * 17, 9.5); c.stroke(); }
+  // 前立：金色圓徽＋紅寶石
+  aCirc(c, 0, -26, 5.5); c.fillStyle = gold; c.fill(); aInk(c, 1.6); aCirc(c, 0, -26, 2.4); c.fillStyle = RD; c.fill();
+  // 鐵手甲：指節鐵片＋鉚釘、鎖子甲腕套
+  bossFist(c, -38, 36 + fb, 8.5, ID, '#15161a', { plate: '#8a8e9a', cuff: '#4a4e58', cuffLine: '#c0262d', rot: -Math.PI / 2 - .32, flip: 1 });   // 和握刀的右手對稱：手腕朝向身體
+  // 右手握武士刀：刀柄穿過拳頭（柄頭從拳頭下方露出），平常斜舉；開啟護盾時刀舉直、刀身發出藍光
+  const ka = sh ? -.12 + Math.sin(t * 6) * .03 : .32 + Math.sin(t * 2) * .05, kfx = 38, kfy = 36 + fb;
+  const kpx = kfx + Math.sin(ka) * 6, kpy = kfy - Math.cos(ka) * 6;
+  c.save(); c.translate(kpx, kpy); c.rotate(ka);
+  if (sh) bossGlow(c, 1, -30, 30, 'rgba(150,200,255,.55)');
+  c.beginPath(); c.moveTo(-2.3, -4); c.quadraticCurveTo(-1.2, -32, 3.4, -58); c.lineTo(5.4, -52); c.quadraticCurveTo(3.4, -28, 2.3, -4); c.closePath();
+  const kg = c.createLinearGradient(-3, 0, 4, 0); kg.addColorStop(0, '#8a93a4'); kg.addColorStop(.5, '#ffffff'); kg.addColorStop(1, '#c4ccd8');
+  c.fillStyle = kg; c.fill(); aInk(c, 1.6);
+  c.beginPath(); for (let i = 0; i <= 10; i++) { const yy = -6 - i * 4.6; c.lineTo(1.2 + yy * -.045 + (i % 2 ? .7 : 0), yy); } c.strokeStyle = 'rgba(120,150,190,.7)'; c.lineWidth = .9; c.stroke();   // 刃紋
+  c.beginPath(); c.rect(-2.6, -5.5, 5.2, 2.4); aFI(c, '#e8b84a', 1);                   // 鎺
+  aEll(c, 0, -2.4, 7, 2.2); aFI(c, '#c9a14a', 1.4);                                     // 鍔
+  c.beginPath(); c.rect(-2.8, -1, 5.6, 17); aFI(c, '#1e1e26', 1.5);                     // 柄
+  c.fillStyle = '#f2f2f2'; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(0, 1 + i * 4); c.lineTo(2.2, 3 + i * 4); c.lineTo(0, 5 + i * 4); c.lineTo(-2.2, 3 + i * 4); c.closePath(); c.fill(); }   // 菱形柄卷
+  c.beginPath(); c.rect(-3.2, 16, 6.4, 3); aFI(c, '#e8b84a', 1.2);                     // 柄頭
+  c.beginPath(); c.moveTo(0, 19); c.quadraticCurveTo(3 + Math.sin(t * 3) * 2, 24, 1 + Math.sin(t * 3) * 3, 29); c.strokeStyle = RD; c.lineWidth = 1.6; c.stroke();   // 下緒
+  c.restore();
+  bossFist(c, kfx, kfy, 8.5, ID, '#15161a', { plate: '#8a8e9a', cuff: '#4a4e58', cuffLine: '#c0262d', rot: ka + Math.PI / 2 });
+}
+
+function drawBoss2(b, x, y, s) {
+  const c = ctx, k = b.kind, P = BOSS_ART[k], t = b.t || performance.now() / 1000, warn = b.warn > 0;
+  c.save(); c.translate(x, y); c.scale(s, s);
+  const au = c.createRadialGradient(0, 0, 18, 0, 0, 64); au.addColorStop(0, P.body + '60'); au.addColorStop(1, P.body + '00');
+  c.fillStyle = au; aCirc(c, 0, 0, 64); c.fill();
+  const br = Math.sin(t * 3) * .022; c.scale(1 + br, 1 - br);
+  if (k === 0) bossOni(c, b, t); else if (k === 1) bossSleepy(c, b, t, warn); else if (k === 2) bossYuki(c, b, t, warn); else bossArmor(c, b, t, warn);
+  if (b.shield) { // 護盾：六角形紋路的泡泡
+    c.strokeStyle = 'rgba(200,225,255,.95)'; c.lineWidth = 3; aCirc(c, 0, 0, 54); c.stroke();
+    c.fillStyle = 'rgba(200,225,255,.16)'; c.fill();
+    c.save(); aCirc(c, 0, 0, 54); c.clip(); c.strokeStyle = 'rgba(220,235,255,.35)'; c.lineWidth = 1;
+    for (let r2 = -4; r2 <= 4; r2++) for (let q = -4; q <= 4; q++) { const hx = q * 15 + (r2 % 2) * 7.5, hy = r2 * 13; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; c.lineTo(hx + Math.cos(a) * 8, hy + Math.sin(a) * 8); } c.closePath(); c.stroke(); }
+    c.restore();
+  }
+  c.restore();
 }
