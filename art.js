@@ -396,7 +396,7 @@ function drawEnemy(x, y, type, s = 1, t = 0, e = null) {
     drawFoeNinja(type, t, e, look, near);
   }
   else if (type === 7) drawCrow(t, e, fl);
-  else if (type === 8) drawTengu(t, e, fl, false);
+  else if (type === 8) drawLeafTengu(t, e, fl);   // 小天狗＝木葉天狗「葉丸子」
   else if (type === 13) drawTengu(t, e, fl, true);
   else if (type === 10) drawOnibi(t, e, fl);
   else if (type === 12) drawSpider(t, e, fl);
@@ -1616,53 +1616,59 @@ function drawBoss2(b, x, y, s, c = ctx) {
   c.restore();
 }
 
-// ===== 主畫面底部選單的圖示：攤開的卷軸＋圖畫（商店／排行・成就／玩法說明／設定） =====
-// 畫在 100×72 的方框裡；回傳畫布（game.js 轉成圖片放進按鈕）
-function dockIcon(kind, size = 200) {
-  const cnv = document.createElement('canvas'); cnv.width = size; cnv.height = Math.round(size * .72);
-  const c = cnv.getContext('2d'), k = size / 100; c.scale(k, k);
-  // 影子
-  c.fillStyle = 'rgba(0,0,0,.35)'; aEll(c, 50, 68, 40, 3.5); c.fill();
-  // 紙（米色、帶淡淡的紋理與紅色內框）
-  c.beginPath(); c.moveTo(16, 8); c.quadraticCurveTo(50, 5, 84, 8); c.lineTo(84, 62); c.quadraticCurveTo(50, 65, 16, 62); c.closePath();
-  const pg = c.createLinearGradient(0, 8, 0, 62); pg.addColorStop(0, '#fbf3df'); pg.addColorStop(1, '#ead8b0'); c.fillStyle = pg; c.fill(); aInk(c, 2.4);
-  c.strokeStyle = 'rgba(192,38,45,.55)'; c.lineWidth = 1.2; c.strokeRect(20.5, 12, 59, 46);
-  // 左右的卷軸軸心（木頭＋金色軸頭）
-  for (const x of [12, 88]) {
-    aRR(c, x - 5, 4, 10, 62, 4); const wg = c.createLinearGradient(x - 5, 0, x + 5, 0); wg.addColorStop(0, '#4a2a14'); wg.addColorStop(.45, '#9a5a2a'); wg.addColorStop(1, '#4a2a14'); c.fillStyle = wg; c.fill(); aInk(c, 2);
-    for (const y of [3, 67]) { aEll(c, x, y, 6.5, 3); aFI(c, '#e8b84a', 1.6); }
-  }
-  // 綁卷軸的紅繩（掛在左邊）
-  c.strokeStyle = '#c0262d'; c.lineWidth = 2; c.lineCap = 'round'; c.beginPath(); c.moveTo(12, 30); c.quadraticCurveTo(4, 40, 7, 52); c.stroke();
-  aCirc(c, 7, 53, 2.4); c.fillStyle = '#c0262d'; c.fill();
-  // 圖畫
-  c.save(); c.translate(50, 36);
-  if (kind === 'shop') {   // 錢袋（巾着）＋小判
-    c.beginPath(); c.moveTo(-14, -6); c.quadraticCurveTo(-20, 16, -2, 18); c.quadraticCurveTo(14, 18, 12, -6); c.quadraticCurveTo(0, -10, -14, -6); c.closePath(); aFI(c, '#7a3aa8', 2);
-    c.beginPath(); c.moveTo(-14, -6); c.lineTo(-17, -14); c.lineTo(-8, -10); c.lineTo(-1, -16); c.lineTo(5, -10); c.lineTo(14, -14); c.lineTo(12, -6); c.closePath(); aFI(c, '#9a5ac8', 1.8);
-    c.strokeStyle = '#f2c14e'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(-13, -6); c.quadraticCurveTo(-1, -2, 12, -6); c.stroke();
-    c.fillStyle = 'rgba(255,255,255,.25)'; aEll(c, -7, 4, 3, 5, -.3); c.fill();
-    drawKoban(c, 12, 8, 7, 9.5, 1, 0);
-  } else if (kind === 'rank') {   // 金色獎盃＋星星
-    const gg = c.createLinearGradient(-12, 0, 12, 0); gg.addColorStop(0, '#c8901e'); gg.addColorStop(.4, '#ffe9a0'); gg.addColorStop(1, '#c8901e');
-    for (const sd of [-1, 1]) { c.beginPath(); if (sd < 0) c.arc(-13, -6, 6, Math.PI * .5, Math.PI * 1.5); else c.arc(13, -6, 6, -Math.PI * .5, Math.PI * .5); c.strokeStyle = INK; c.lineWidth = 4.5; c.stroke(); c.strokeStyle = '#e8b84a'; c.lineWidth = 2.4; c.stroke(); }
-    c.beginPath(); c.moveTo(-13, -15); c.lineTo(13, -15); c.quadraticCurveTo(13, 6, 0, 8); c.quadraticCurveTo(-13, 6, -13, -15); c.closePath(); c.fillStyle = gg; c.fill(); aInk(c, 2);
-    c.beginPath(); c.rect(-3, 8, 6, 6); aFI(c, '#c8901e', 1.6); aRR(c, -10, 13, 20, 6, 2); aFI(c, '#7a3a1e', 1.8);
-    c.fillStyle = '#fff6c8'; c.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 2.4 : 5.6, a = -Math.PI / 2 + i * Math.PI / 5; c.lineTo(Math.cos(a) * r, -5 + Math.sin(a) * r); } c.closePath(); c.fill(); c.strokeStyle = '#a8701a'; c.lineWidth = 1; c.stroke();
-  } else if (kind === 'help') {   // 主角的小臉＋「？」對話框
-    c.save(); c.translate(-6, 0); c.scale(.62, .62); drawHeroNinja(0, 30, { face: 1, t: .4, vy: 0, skin: 0, pose: 'apex', eye: 'open' }, c); c.restore();
-    aRR(c, 6, -20, 15, 15, 5); aFI(c, '#ffffff', 1.8);
-    c.beginPath(); c.moveTo(9, -6); c.lineTo(7, -1); c.lineTo(13, -6); c.fillStyle = '#ffffff'; c.fill();
-    c.fillStyle = '#c0262d'; c.font = '900 13px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 13.5, -12);
-  } else if (kind === 'credit') {   // 製作名單：毛筆＋署名的紅印
-    c.save(); c.rotate(.65); aRR(c, -3.2, -20, 6.4, 24, 2.5); aFI(c, '#8a5a2a', 1.8); c.beginPath(); c.moveTo(-3.6, 4); c.quadraticCurveTo(0, 17, 3.6, 4); c.closePath(); aFI(c, '#1a1a1a', 1.6); c.fillStyle = '#e8b84a'; c.fillRect(-3.2, -2, 6.4, 3); c.restore();
-    c.strokeStyle = '#1a1a1a'; c.lineWidth = 2.6; c.lineCap = 'round'; c.beginPath(); c.moveTo(-17, 14); c.quadraticCurveTo(-9, 8, -2, 14); c.quadraticCurveTo(4, 18, 9, 12); c.stroke();
-    aRR(c, 9, -16, 10, 10, 2); aFI(c, '#c0262d', 1.4); c.fillStyle = '#fff'; c.font = '900 7px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('鳶', 14, -10.6);
-  } else {   // 設定：齒輪
-    c.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, r = i % 2 ? 13 : 17; const a2 = a + Math.PI / 16; c.lineTo(Math.cos(a - .12) * r, Math.sin(a - .12) * r); c.lineTo(Math.cos(a2 - .08) * r, Math.sin(a2 - .08) * r); } c.closePath();
-    const sg = c.createLinearGradient(0, -17, 0, 17); sg.addColorStop(0, '#e8ecf2'); sg.addColorStop(1, '#7c8696'); c.fillStyle = sg; c.fill(); aInk(c, 2);
-    aCirc(c, 0, 0, 7); aFI(c, '#c0262d', 2); aCirc(c, 0, 0, 2.6); c.fillStyle = '#fbf3df'; c.fill();
-  }
+// ===== 主畫面底部選單的圖示：「護額」風格（布帶綁著金屬板，板上刻著圖案和文字） =====
+const DOCK_LABEL = { shop: ['商店', 'ショップ', 'SHOP'], rank: ['戰績', '記録', 'RECORD'], help: ['說明', '遊び方', 'HELP'], opt: ['設定', '設定', 'SETTING'], credit: ['製作', '制作', 'CREDIT'] };
+// 單色線條圖案（中心 (0,0)，約 ±16）
+function dockGlyph(c, k, col, lw = 3.6) {
+  c.save(); c.strokeStyle = col; c.fillStyle = col; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round';
+  if (k === 'shop') { aEll(c, 0, 0, 10, 14); c.stroke(); for (const y of [-6, 0, 6]) { c.beginPath(); c.moveTo(-5, y); c.lineTo(5, y); c.stroke(); } }
+  else if (k === 'rank') { c.beginPath(); c.moveTo(-11, -12); c.lineTo(11, -12); c.quadraticCurveTo(11, 4, 0, 5); c.quadraticCurveTo(-11, 4, -11, -12); c.stroke(); c.beginPath(); c.moveTo(0, 5); c.lineTo(0, 11); c.moveTo(-7, 13); c.lineTo(7, 13); c.stroke(); c.beginPath(); c.arc(-12, -6, 4.5, Math.PI * .5, Math.PI * 1.5); c.stroke(); c.beginPath(); c.arc(12, -6, 4.5, -Math.PI * .5, Math.PI * .5); c.stroke(); }
+  else if (k === 'help') { aRR(c, -12, -12, 24, 24, 4); c.stroke(); c.font = '900 20px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 0, 1); }
+  else if (k === 'opt') { c.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; c.moveTo(Math.cos(a) * 8, Math.sin(a) * 8); c.lineTo(Math.cos(a) * 14, Math.sin(a) * 14); } c.stroke(); aCirc(c, 0, 0, 8.5); c.stroke(); aCirc(c, 0, 0, 3); c.fill(); }
+  else { c.save(); c.rotate(.7); aRR(c, -2.6, -14, 5.2, 18, 2); c.stroke(); c.beginPath(); c.moveTo(-3.4, 4); c.quadraticCurveTo(0, 16, 3.4, 4); c.closePath(); c.fill(); c.restore(); c.beginPath(); c.moveTo(-12, 12); c.quadraticCurveTo(-4, 8, 2, 13); c.stroke(); }
   c.restore();
+}
+function dockPlate(kind, size = 220) {
+  const cnv = document.createElement('canvas'); cnv.width = cnv.height = size;
+  const c = cnv.getContext('2d'); c.scale(size / 100, size / 100);
+  // 布帶（深藍，橫過金屬板後面）
+  c.fillStyle = '#2a3a6a'; c.beginPath(); c.moveTo(0, 38); c.quadraticCurveTo(50, 30, 100, 38); c.lineTo(100, 64); c.quadraticCurveTo(50, 56, 0, 64); c.closePath(); c.fill(); aInk(c, 2);
+  c.strokeStyle = 'rgba(255,255,255,.12)'; c.lineWidth = 1; for (let x = 6; x < 100; x += 8) { c.beginPath(); c.moveTo(x, 38); c.lineTo(x, 62); c.stroke(); }
+  // 金屬板＋四角鉚釘
+  aRR(c, 14, 12, 72, 76, 12); const mg = c.createLinearGradient(0, 12, 0, 88); mg.addColorStop(0, '#f4f6fa'); mg.addColorStop(.5, '#b8c0cc'); mg.addColorStop(1, '#8a94a4'); c.fillStyle = mg; c.fill(); aInk(c, 2.6);
+  c.fillStyle = 'rgba(255,255,255,.45)'; aRR(c, 19, 16, 62, 8, 4); c.fill();
+  for (const [x, y] of [[21, 19], [79, 19], [21, 81], [79, 81]]) { aCirc(c, x, y, 2.6); c.fillStyle = '#6a7484'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); }
+  // 刻在板上的圖案與文字
+  c.save(); c.translate(50, 41); dockGlyph(c, kind, '#2a3240'); c.restore();
+  const s = L(DOCK_LABEL[kind]); let fs = 15;
+  c.font = `900 ${fs}px ${FONT}`; while (c.measureText(s).width > 62 && fs > 8) { fs -= .5; c.font = `900 ${fs}px ${FONT}`; }
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#2a3240'; c.fillText(s, 50, 71);
   return cnv;
+}
+
+// ===== 小天狗：木葉天狗「葉丸子」（頭和身體合成一顆圓球、超大眼睛＋小鉤嘴、頭頂嫩芽、葉子翅膀） =====
+function drawLeafTengu(t, e, fl) {
+  const c = ctx, W2 = col => fl ? '#ffffff' : col, hurt = e && e.hurt;
+  const fly = Math.sin(t * 9 + (e ? e.bx || 0 : 0));
+  const look = e && g && g.p ? (Math.sign(g.p.x - e.x) || 1) : 1;
+  // 葉子翅膀（左右各三片，拍動）
+  for (const sd of [-1, 1]) {
+    c.save(); c.translate(sd * 8, 2); c.scale(sd, 1); c.rotate(-.4 - fly * .35);
+    for (let i = 0; i < 3; i++) { c.save(); c.rotate(i * .5); c.scale(.75, .75); c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(10, -8, 24, -2); c.quadraticCurveTo(10, 6, 0, 0); c.fillStyle = W2(['#8fd06a', '#5fae4a', '#3f8a36'][i]); c.fill(); aInk(c, 1.9); if (!fl) { c.strokeStyle = 'rgba(20,60,20,.55)'; c.lineWidth = 1; c.beginPath(); c.moveTo(2, 0); c.lineTo(21, -2); c.stroke(); } c.restore(); }
+    c.restore();
+  }
+  // 小爪子
+  for (const sd of [-1, 1]) { c.save(); c.translate(sd * 5, 17); c.scale(.8, .8); for (const a of [-.5, 0, .5]) { c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.sin(a) * 6, 5); c.strokeStyle = INK; c.lineWidth = 2.6; c.stroke(); c.strokeStyle = W2('#e8a84a'); c.lineWidth = 1.4; c.stroke(); } aCirc(c, 0, 0, 2.6); aFI(c, W2('#e8a84a'), 1.2); c.restore(); }
+  // 圓球身體
+  aCirc(c, 0, 0, 17); c.fillStyle = fl ? '#ffffff' : bossBall(c, 0, 0, 17, '#d8b088', '#9a6a3c', '#6a4422'); c.fill(); aInk(c, 2.6);
+  if (!fl) { c.fillStyle = '#f2e2c2'; aEll(c, 0, 8, 9, 7); c.fill(); }
+  // 臉（朝向玩家）
+  c.save(); c.scale(look, 1);
+  if (hurt) { c.strokeStyle = INK; c.lineWidth = 2; c.lineCap = 'round'; for (const [ex, sd] of [[-6, 1], [6, -1]]) { c.beginPath(); c.moveTo(ex - sd * 3, -6); c.lineTo(ex + sd * 2.5, -3); c.lineTo(ex - sd * 3, 0); c.stroke(); } }
+  else for (const sd of [-1, 1]) bossEye(c, sd * 6 + 1, -3, 5.2, 6, '#c86a10', '#ffd25a', { lid: aBlink(t, e ? e.bx || 0 : 0) ? .95 : 0, lidCol: '#9a6a3c' });
+  c.beginPath(); c.moveTo(-1.2, 2); c.quadraticCurveTo(1, 4, 3.2, 2); c.lineTo(1, 6); c.closePath(); aFI(c, W2('#f2a81e'), 1.2);
+  if (!fl) { c.fillStyle = 'rgba(255,120,150,.5)'; aEll(c, -10, 4, 2.6, 1.5); c.fill(); aEll(c, 12, 4, 2.6, 1.5); c.fill(); }
+  c.restore();
+  // 頭頂的嫩芽（跟著搖）
+  c.save(); c.translate(0, -17); c.rotate(Math.sin(t * 3) * .2); c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-1, -6, 2, -9); c.strokeStyle = W2('#3f8a36'); c.lineWidth = 1.8; c.stroke(); c.beginPath(); c.moveTo(2, -9); c.quadraticCurveTo(9, -14, 12, -8); c.quadraticCurveTo(6, -6, 2, -9); c.fillStyle = W2('#8fd06a'); c.fill(); aInk(c, 1.2); c.restore();
 }

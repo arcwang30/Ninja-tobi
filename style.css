@@ -136,12 +136,14 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .dock button i::after { content: ""; position: absolute; right: .28em; top: .28em; width: .4em; height: .4em; border-radius: 50%; background: var(--gold); }
 .dock button:active { transform: translateY(calc(var(--u)*3)); }
 /* 卷軸圖示：不要鐵灰方塊，直接放攤開的卷軸圖（標題出場時像卷軸一樣由中間往兩邊展開） */
-.dock button i.scroll-ic { width: 5.4em; height: 3.9em; border: 0; border-radius: 0; background: none; box-shadow: none; }
+/* 「護額」圖示：正方形、文字已經在圖示裡，所以下面的文字標籤隱藏；標題出場時依序彈出 */
+.dock button i.scroll-ic { width: 4.5em; height: 4.5em; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.dock button > span { display: none; }
 .dock button i.scroll-ic::after { display: none; }
 .dock button i.scroll-ic img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 calc(var(--u)*3) 0 rgba(0,0,0,.4)); }
-#title.on .dock .scroll-ic img { animation: scroll-open .55s 1.3s cubic-bezier(.3, .8, .4, 1) both; }
-#title.on .dock button:nth-child(2) .scroll-ic img { animation-delay: 1.4s; } #title.on .dock button:nth-child(3) .scroll-ic img { animation-delay: 1.5s; } #title.on .dock button:nth-child(4) .scroll-ic img { animation-delay: 1.6s; }
-@keyframes scroll-open { from { clip-path: inset(0 40% 0 40%); } to { clip-path: inset(0 0 0 0); } }
+#title.on .dock .scroll-ic img { animation: plate-pop .45s 1.3s cubic-bezier(.2, 1.5, .4, 1) both; }
+#title.on .dock button:nth-child(2) .scroll-ic img { animation-delay: 1.38s; } #title.on .dock button:nth-child(3) .scroll-ic img { animation-delay: 1.46s; } #title.on .dock button:nth-child(4) .scroll-ic img { animation-delay: 1.54s; } #title.on .dock button:nth-child(5) .scroll-ic img { animation-delay: 1.62s; }
+@keyframes plate-pop { from { opacity: 0; transform: scale(.5) rotate(-8deg); } to { opacity: 1; transform: none; } }
 .dock button:active i.scroll-ic img { transform: scale(.94); }
 
 /* ===== 面板 ===== */
@@ -268,4 +270,3 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .cr-copy img { width: 2.6em; height: 2.6em; object-fit: contain; }
 .cr-thx { color: var(--gold-l); font-weight: 900; margin: .4em 0 .6em; }
 /* 底部選單有五個按鈕：卷軸圖示縮小一點 */
-.dock button i.scroll-ic { width: 4.6em; height: 3.3em; }

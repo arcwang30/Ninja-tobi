@@ -233,7 +233,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v33';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v34';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -1478,12 +1478,19 @@ function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y
 
 // ===== 主角：全部用程式畫（art.js 的 drawHeroNinja）。標題大圖與商店頭像也用同一套畫法產生 =====
 const heroSprites = [];
+function buildDockIcons() {
+  for (const el of document.querySelectorAll('.scroll-ic')) {
+    let im = el.firstChild; if (!im) { im = new Image(); im.alt = ''; el.appendChild(im); }
+    try { im.src = dockPlate(el.dataset.ic, 220).toDataURL(); } catch (e) { }
+    el.parentNode.setAttribute('aria-label', L(DOCK_LABEL[el.dataset.ic]));
+  }
+}
 function buildHeroArt() {
   for (let i = 0; i < SKINS.length; i++) heroSprites[i] = heroPortrait(i, 400);
   heroThumbs.length = 0;
   updateHeroArt();
-  // 底部選單：攤開的卷軸圖示（art.js dockIcon）
-  for (const el of document.querySelectorAll('.scroll-ic')) if (!el.firstChild) { const im = new Image(); im.alt = ''; try { im.src = dockIcon(el.dataset.ic, 240).toDataURL(); } catch (e) { } el.appendChild(im); }
+  // 底部選單：「護額」圖示（art.js dockPlate；文字在圖示裡，換語言時重畫）
+  buildDockIcons();
 }
 // 商店用的小頭像（快取成 dataURL）
 const heroThumbs = [];
@@ -2036,7 +2043,7 @@ document.addEventListener('click', e => {
     case 'buymeta': { const m = META.find(x => x.id === arg), c = m.cost(save.meta[arg]); if (save.coins >= c && save.meta[arg] < m.max) { save.coins -= c; save.meta[arg]++; persist(); SFX.item(); } renderShop(); break; }
     case 'snd': save.opt.snd ^= 1; persist(); renderOpt(); A(); musicFor(); break;
     case 'vib': save.opt.vib ^= 1; persist(); renderOpt(); break;
-    case 'lang': LI = (LI + 1) % LANGS.length; save.opt.lang = LANGS[LI].id; persist(); applyLang(); renderOpt(); break;
+    case 'lang': LI = (LI + 1) % LANGS.length; save.opt.lang = LANGS[LI].id; persist(); applyLang(); renderOpt(); buildDockIcons(); break;
     case 'reset': // 按兩次才重置（不用 confirm()，部分嵌入環境不會顯示對話框）
       if (b.dataset.armed) { const lang = save.opt.lang; save = defSave(); save.opt.lang = lang; persist(); renderOpt(); toast(t('reset_done')); }
       else { b.dataset.armed = '1'; b.textContent = t('reset_confirm'); setTimeout(renderOpt, 3000); }
