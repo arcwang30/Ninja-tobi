@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>敵人大福比例</title>
+<style>html, body { margin: 0; background: #0f2a26; } canvas { display: block; }</style>
+<canvas id="cv"></canvas>
+<script>
+// 遊戲 art.js 需要的共用設定（只放畫敵人與主角用得到的部分）
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const INK = '#0e1414', g = null;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const ENEMY = [
+  { w: 34, h: 42 }, { w: 42, h: 46 }, { w: 56, h: 50 }, { w: 38, h: 44 }, { w: 44, h: 48 }, { w: 40, h: 44 }, { w: 46, h: 50 },
+  { w: 30, h: 22 }, { w: 34, h: 34 }, { w: 38, h: 44 }, { w: 28, h: 30 }, { w: 40, h: 44 }, { w: 34, h: 30 }, { w: 72, h: 72 },
+];
+function txt(s, x, y, size, col, align = 'left', stroke, sw = 0) {
+  ctx.font = `900 ${size}px sans-serif`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = sw; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); }
+  ctx.fillStyle = col; ctx.fillText(s, x, y);
+}
+</script>
+<script src="../art.js"></script>
+<script>
+'use strict';
+const CW = 960, CH = 640, DPR = 2;
+cv.width = CW * DPR; cv.height = CH * DPR; cv.style.width = CW + 'px'; cv.style.height = CH + 'px';
+ctx.scale(DPR, DPR);
+const bg = ctx.createLinearGradient(0, 0, 0, CH); bg.addColorStop(0, '#1d4a3c'); bg.addColorStop(1, '#0c241e'); ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
+const T = .4, NAMES = ['瘦忍者', '中忍者', '胖忍者', '手裡劍', '盾忍者', '爆彈', '菁英', '烏鴉', '小天狗', '弓忍', '鬼火', '土遁', '蜘蛛'];
+const lab = (s, x, y) => txt(s, x, y, 13, '#ffe28a', 'center', '#000', 3);
+// 第一排：主角＋七種忍者（放大 2 倍）
+ctx.save(); ctx.translate(70, 150); ctx.scale(2, 2); drawHeroNinja(0, 0, { face: 1, t: T, vy: 0, skin: 0 }); ctx.restore(); lab('主角', 70, 172);
+[0, 1, 2, 3, 4, 5, 6].forEach((ty, i) => { const x = 180 + i * 112; drawEnemy(x, 100, ty, 2, T + i, { look: -1, bx: i, warn: 0 }); lab(NAMES[ty], x, 172); });
+// 第二排：其他敵人
+[9, 11, 7, 8, 10, 12].forEach((ty, i) => { const x = 90 + i * 140; drawEnemy(x, 270, ty, 2, T + i, { look: -1, bx: i, vx: -1 }); lab(NAMES[ty], x, 340); });
+// 第三排：蓄力動作、大天狗、魔王
+[[3, '手裡劍蓄力'], [9, '弓忍拉弓'], [11, '土遁舉苦無']].forEach(([ty, n], i) => { const x = 70 + i * 110; drawEnemy(x, 440, ty, 1.7, T, { look: -1, bx: i, warn: 1 }); lab(n, x, 500); });
+drawEnemy(420, 450, 13, 1.6, T, { look: -1, bx: 2 }); lab('大天狗', 420, 560);
+[0, 1, 2, 3].forEach((k, i) => { const x = 570 + i * 112; drawBoss({ kind: k, t: T + i, skillT: 9, warn: 0 }, x, 455, .95); lab(['真妖鬼', '怠惰鬼', '雪女鬼', '鐵甲鬼'][k], x, 520); });
+</script>
