@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>敵忍者移動方式提案</title>
+<style>html, body { margin: 0; background: #0f2a26; } canvas { display: block; }</style>
+<canvas id="cv"></canvas>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const INK = '#0e1414', g = null;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const ENEMY = [
+  { w: 34, h: 42 }, { w: 42, h: 46 }, { w: 56, h: 50 }, { w: 38, h: 44 }, { w: 44, h: 48 }, { w: 40, h: 44 }, { w: 46, h: 50 },
+  { w: 30, h: 22 }, { w: 34, h: 34 }, { w: 38, h: 44 }, { w: 28, h: 30 }, { w: 40, h: 44 }, { w: 34, h: 30 }, { w: 72, h: 72 },
+];
+function txt(s, x, y, size, col, align = 'left', stroke, sw = 0) {
+  ctx.font = `900 ${size}px sans-serif`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = sw; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); }
+  ctx.fillStyle = col; ctx.fillText(s, x, y);
+}
+</script>
+<script src="../art.js"></script>
+<script>
+'use strict';
+const M = new URLSearchParams(location.search).get('m') || 'ride';
+const INFO = {
+  walk:  ['目前　擺腳', '停在半空中、雙腳前後擺動，看起來像在空氣上走路（對照用）'],
+  ride:  ['方案 A　各自乘坐一樣東西', '瘦：雲朵　中：竹葉　胖：坐葫蘆　手裡劍：旋轉的大手裡劍　爆彈：騎火箭　菁英：紫焰蓮台。每種一眼就能分辨'],
+  levit: ['方案 B　忍術懸浮', '雙腳盤起、空手的忍者雙手結印，腳下有一圈旋轉的氣流。全部一致，像在施展忍術'],
+  kite:  ['方案 C　抓著忍者風箏', '頭上撐著寫「忍」字的大風箏，雙腳懸空輕輕晃，配合原本左右來回飄的移動'],
+  rope:  ['方案 D　垂繩吊著', '從畫面上方垂下繩子，雙手抓繩、腳懸空，左右飄時像鐘擺（和蜘蛛的動作相近）'],
+  tilt:  ['方案 E　依移動方向傾斜（以 A 為例）', '往哪邊飄就往哪邊斜，快速移動時身後留下殘影。可以和 A～D 任何一種搭配'],
+};
+FOE_MOVE = M === 'tilt' ? 'ride' : M; FOE_TILT = M === 'tilt';
+const CW = 960, CH = 640, DPR = 2;
+cv.width = CW * DPR; cv.height = CH * DPR; cv.style.width = CW + 'px'; cv.style.height = CH + 'px';
+ctx.scale(DPR, DPR);
+const bg = ctx.createLinearGradient(0, 0, 0, CH); bg.addColorStop(0, '#1d4a3c'); bg.addColorStop(1, '#0c241e'); ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
+for (let i = 0; i < 9; i++) { ctx.fillStyle = 'rgba(80,160,110,.14)'; ctx.fillRect(30 + i * 115 + (i % 2) * 30, 0, 14, CH); }
+const [name, desc] = INFO[M];
+txt(name, 30, 34, 28, '#ffe28a', 'left', '#000', 4);
+txt(desc, 30, 72, 15, '#d6e6df', 'left');
+const T = .45, NAMES = ['瘦忍者', '中忍者', '胖忍者', '手裡劍', '', '爆彈', '菁英'];
+const TYPES = [0, 1, 2, 3, 5, 6];
+function foe(ty, x, y, s, i, extra) { drawEnemy(x, y, ty, s, T + i * .7, Object.assign({ look: -1, bx: i * 3 }, extra)); }
+// 大圖：六種忍者
+TYPES.forEach((ty, i) => {
+  const x = 95 + i * 154, y = 270, tl = M === 'tilt' ? (i % 2 ? 1 : -1) : 0;
+  if (M === 'tilt' && i % 3 === 0) for (let k = 3; k >= 1; k--) { ctx.save(); ctx.globalAlpha = .13 * (4 - k); foe(ty, x - tl * k * 16, y, 2.4, i, { tilt: tl }); ctx.restore(); }
+  foe(ty, x, y, 2.4, i, { tilt: tl });
+  txt(NAMES[ty], x, 395, 15, '#ffe28a', 'center', '#000', 3);
+  if (M === 'tilt') txt(tl > 0 ? '往右飄 →' : '← 往左飄', x, 418, 12, 'rgba(255,255,255,.6)', 'center');
+});
+// 遊戲中實際大小：配上雲朵地板與主角
+ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.roundRect(24, 440, 912, 180, 16); ctx.fill();
+txt('遊戲中實際大小', 40, 458, 13, 'rgba(255,255,255,.6)', 'left');
+for (const [px, py] of [[140, 600], [450, 560], [780, 600]]) { ctx.fillStyle = '#eef3e6'; ctx.beginPath(); ctx.roundRect(px - 36, py, 72, 10, 5); ctx.fill(); }
+drawHeroNinja(450, 560, { face: 1, t: T, vy: 0, skin: 0 });
+ctx.save(); ctx.beginPath(); ctx.roundRect(24, 440, 912, 180, 16); ctx.clip();
+TYPES.forEach((ty, i) => foe(ty, [80, 200, 320, 580, 710, 850][i], 515 + (i % 2) * 24, 1, i, { tilt: M === 'tilt' ? (i % 2 ? 1 : -1) : 0 }));
+</script>

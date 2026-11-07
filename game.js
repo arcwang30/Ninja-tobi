@@ -232,7 +232,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v21';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v22';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -519,8 +519,11 @@ function enemyAI(e, ed, dt) {
   }
   if (e.type === 11) earthCheck(e);
   // 其餘：原地左右巡邏
+  const ox = e.x;
   if (e.type === 12) e.x = clamp(e.bx + Math.sin(e.ph * 1.6) * e.amp, WALL + ed.w / 2, W - WALL - ed.w / 2);   // 蜘蛛擺盪
   else e.x = clamp(e.bx + Math.sin(e.ph * (e.affix === 'fast' ? 2.6 : 1.3)) * e.amp, WALL + ed.w / 2, W - WALL - ed.w / 2);
+  // 畫圖用：左右飄的速度 → 身體往移動方向傾斜、快的時候留殘影
+  if (dt > 0) { e.sv = (e.x - ox) / dt; e.tilt = (e.tilt || 0) + (clamp(e.sv / 80, -1, 1) - (e.tilt || 0)) * Math.min(1, dt * 6); }
   if (!onScreen) return;
   e.thr -= dt;
   e.warn = e.thr < .45;

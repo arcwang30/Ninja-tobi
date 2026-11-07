@@ -49,12 +49,84 @@ function foeEye(c, x, y, rx, ry, P, warn, blink, glow) {
   aCirc(c, x - rx * .05, y - ry * .3, rx * .26); c.fillStyle = '#fff'; c.fill();
   c.restore();
 }
+// 敵忍者的移動方式（walk = 舊的擺腳）
+// ride 乘坐物、levit 忍術懸浮、kite 抓風箏、rope 垂繩；FOE_TILT 依移動方向傾斜
+let FOE_MOVE = 'ride', FOE_TILT = true;   // 遊戲採用方案 A＋E；其餘方式保留給 design/enemy-move.html 比較
+const FOE_RIDE = { 0: 'cloud', 1: 'leaf', 2: 'gourd', 3: 'star', 5: 'rocket', 6: 'lotus', 9: 'leaf', 11: 'rock' };
+function foeRideBack(c, kind, t, fl) {
+  const W2 = fl ? '#fff' : null;
+  if (kind === 'leaf') {
+    c.save(); c.translate(0, 23.5); c.rotate(Math.sin(t * 3) * .08);
+    c.beginPath(); c.moveTo(-22, 1); c.quadraticCurveTo(-4, -6, 20, -1); c.quadraticCurveTo(26, 0, 27, -3); c.quadraticCurveTo(24, 5, 16, 5); c.quadraticCurveTo(-4, 8, -22, 1); c.closePath(); aFI(c, W2 || '#5fae4a', 1.6);
+    if (!fl) { c.beginPath(); c.moveTo(-20, 1); c.quadraticCurveTo(0, 0, 22, 0); c.strokeStyle = '#3e7d30'; c.lineWidth = 1; c.stroke(); }
+    c.restore();
+  } else if (kind === 'gourd') {
+    aCirc(c, 0, 15, 8.5); aFI(c, W2 || '#e0a84a', 1.8);
+    aCirc(c, 0, 31, 12); aFI(c, W2 || '#e0a84a', 1.8);
+    if (!fl) { aEll(c, -5, 27, 3.5, 2.4, -.5); c.fillStyle = 'rgba(255,255,255,.35)'; c.fill(); c.fillStyle = '#b8323c'; c.fillRect(-7, 20.5, 14, 2.6); }
+  } else if (kind === 'star') {
+    c.save(); c.translate(0, 25); c.scale(1, .34); c.rotate(t * 6);
+    c.beginPath(); for (let i = 0; i < 8; i++) { const r = i % 2 ? 7 : 24, a = i * Math.PI / 4; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath();
+    c.fillStyle = W2 || '#cfd6e2'; c.fill(); c.restore();
+    c.save(); c.translate(0, 25); c.scale(1, .34); c.rotate(t * 6);
+    c.beginPath(); for (let i = 0; i < 8; i++) { const r = i % 2 ? 7 : 24, a = i * Math.PI / 4; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.restore(); aInk(c, 1.6);
+    c.save(); c.translate(0, 25); c.scale(1, .34); aCirc(c, 0, 0, 4); c.restore(); c.fillStyle = INK; c.fill();
+  } else if (kind === 'rocket') {
+    if (!fl) for (let i = 0; i < 3; i++) { const fx = -24 - i * 5 - Math.sin(t * 30 + i) * 2; c.fillStyle = i ? '#ffd25a' : '#ff6a1a'; aEll(c, fx + 3, 24, 6 - i * 1.5, 3 - i * .6); c.fill(); }
+    c.beginPath(); c.rect(-20, 19.5, 30, 9); aFI(c, W2 || '#d8323c', 1.6);
+    c.beginPath(); c.moveTo(10, 19.5); c.lineTo(20, 24); c.lineTo(10, 28.5); c.closePath(); aFI(c, W2 || '#f2c14e', 1.5);
+    if (!fl) { c.fillStyle = '#f4ead2'; c.fillRect(-12, 19.5, 4, 9); c.fillRect(0, 19.5, 4, 9); }
+  } else if (kind === 'rock') {
+    c.beginPath(); c.moveTo(-16, 21); c.lineTo(-10, 18.5); c.lineTo(12, 18.5); c.lineTo(17, 22); c.lineTo(9, 32); c.lineTo(-6, 33); c.closePath(); aFI(c, W2 || '#7a5a34', 1.6);
+    if (!fl) { c.fillStyle = '#5a4026'; aCirc(c, -4, 25, 1.8); c.fill(); aCirc(c, 6, 28, 1.5); c.fill(); }
+  }
+}
+function foeRideFront(c, kind, t, fl) {
+  if (kind === 'cloud') {
+    const pf = [[-12, 23, 6], [-4, 21, 7.5], [5, 21.5, 7.5], [12.5, 23.5, 6]];
+    heroSilhouette(c, [{ path: c => { c.beginPath(); for (const [x, y, r] of pf) { c.moveTo(x + r, y + Math.sin(t * 3 + x) * .6); c.arc(x, y + Math.sin(t * 3 + x) * .6, r, 0, TAU); } }, fill: fl ? '#fff' : '#f2f4ef' }], 1.4);
+    if (!fl) { c.fillStyle = '#d6dde0'; c.fillRect(-15, 26, 30, 2.5); }
+  } else if (kind === 'lotus') {
+    for (let i = -3; i <= 3; i++) {
+      const x = i * 5.5, h = 10 - Math.abs(i) * 1.6 + Math.sin(t * 8 + i) * 1.5;
+      c.beginPath(); c.moveTo(x - 4.5, 25); c.quadraticCurveTo(x - 3, 23 - h, x, 22 - h); c.quadraticCurveTo(x + 3, 23 - h, x + 4.5, 25); c.closePath();
+      aFI(c, fl ? '#fff' : i % 2 ? '#9a5aff' : '#c49aff', 1.3);
+    }
+    aEll(c, 0, 26, 20, 3.5); aFI(c, fl ? '#fff' : '#55308a', 1.4);
+  }
+}
+// 忍術懸浮：腳下的氣流（back = 後半圈）
+function foeSwirl(c, t, back) {
+  c.lineCap = 'round';
+  for (let i = 0; i < 3; i++) {
+    const a = t * 7 + i * 2.1, a0 = back ? Math.PI + a % .6 : a % .6;
+    c.strokeStyle = `rgba(230,245,255,${.6 - i * .15})`; c.lineWidth = 2 - i * .4;
+    c.beginPath(); c.ellipse(0, 24 + i * 2.5, 15 - i * 2, 4 - i * .6, 0, a0, a0 + 2.4); c.stroke();
+  }
+}
+// 忍者風箏：頭頂上方，隨傾斜擺動；兩條線連到手上
+function foeKite(c, t, fl, h1, h2, look = 1) {
+  const sway = Math.sin(t * 2.2) * .18, kx = Math.sin(t * 2.2) * 4, ky = -50;
+  for (const h of [h1, h2]) { c.beginPath(); c.moveTo(h[0], h[1]); c.lineTo(kx + (h[0] > 0 ? 9 : -9), ky + 14); c.strokeStyle = 'rgba(240,240,240,.8)'; c.lineWidth = .9; c.stroke(); }
+  c.save(); c.translate(kx, ky); c.rotate(sway);
+  c.beginPath(); c.moveTo(0, 14); c.quadraticCurveTo(-5, 22, 2, 28); c.quadraticCurveTo(7, 33, 3, 38); c.strokeStyle = fl ? '#fff' : '#d8323c'; c.lineWidth = 2; c.stroke();   // 尾巴
+  c.beginPath(); if (c.roundRect) c.roundRect(-13, -15, 26, 30, 3); else c.rect(-13, -15, 26, 30); aFI(c, fl ? '#fff' : '#f4ead2', 1.8);
+  if (!fl) {
+    c.strokeStyle = '#d8323c'; c.lineWidth = 2; c.strokeRect(-10.5, -12.5, 21, 25);
+    c.strokeStyle = 'rgba(122,82,48,.6)'; c.lineWidth = 1; c.beginPath(); c.moveTo(-12, -14); c.lineTo(12, 14); c.moveTo(12, -14); c.lineTo(-12, 14); c.stroke();
+    c.save(); c.scale(look, 1); c.fillStyle = INK; c.font = '900 15px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('忍', 0, 1); c.restore();
+  }
+  c.restore();
+}
 function drawFoeNinja(type, t, e, look, near) {
   const c = ctx, ed = ENEMY[type], fl = e && e.flash > 0, P = fl ? WHITE_PAL : FOE[type];
   const u = ed.h / 44, fat = type === 2, warn = e && e.warn, atk = e && e.atk > 0;
   const seed = e ? e.bx || 0 : 0, bob = Math.sin(t * 5 + seed) * 1.4;
-  c.save(); c.scale(u * look, u); c.translate(0, bob);
-  const sw = Math.sin(t * 4 + seed) * 1.6, hb = Math.sin(t * 5 + seed + 1.5) * 1.3;
+  const MV = type === 4 ? 'walk' : FOE_MOVE, ride = MV === 'ride' ? FOE_RIDE[type] : null;
+  c.save();
+  if (FOE_TILT && e && e.tilt) c.rotate(e.tilt * .32);   // 往移動方向傾斜
+  c.scale(u * look, u); c.translate(0, bob);
+  const sw = MV === 'walk' ? Math.sin(t * 4 + seed) * 1.6 : MV === 'kite' || MV === 'rope' ? Math.sin(t * 3 + seed) * .8 : 0, hb = Math.sin(t * 5 + seed + 1.5) * 1.3;
   const alarm = near && type !== 6 && type !== 4 && !warn;
   const HY = -5, R = 15, BT = fat ? 7 : 8.5, BB = fat ? 18 : 16.5;
   const wTop = fat ? 10 : 6.5, wMid = fat ? 14.5 : 8.5, wBot = fat ? 9.5 : 5;
@@ -96,10 +168,23 @@ function drawFoeNinja(type, t, e, look, near) {
   if (type === 11) fa = warn ? [15, -12] : [12.5, 11 + hb];                                  // 土遁：舉起苦無
   let bowA = 0;
   if (type === 9) { bowA = e && g && g.p ? clamp(Math.atan2((g.p.y - 20) - e.y, Math.abs(g.p.x - e.x)), -1.1, 1.1) : 0; fa = [6 + Math.cos(bowA) * 9, 6 + Math.sin(bowA) * 9]; }
+  // 依移動方式調整手腳
+  const free = type === 0 || type === 1 || type === 2 || type === 5;   // 手上沒有武器
+  if (MV !== 'walk') { ff = [fat ? 5.5 : 4, fat ? 21.5 : 20.5]; bf = [-ff[0], ff[1]]; }
+  if (ride === 'gourd') { ff = [13, 22]; bf = [-11, 22.5]; }
+  if (ride === 'lotus' || MV === 'levit') { ff = [3.5, 20]; bf = [-3.5, 20.5]; }                 // 盤腿
+  if (MV === 'levit' && free) { fa = [3.5, 10.5]; ba = [-1.5, 10]; }                             // 雙手結印
+  if (MV === 'kite') { ff = [3 + sw, 21.5]; bf = [-3 - sw, 22]; ba = [-9, -21]; if (free || type === 6) fa = [9, -21]; }
+  if (MV === 'rope') { ff = [2.5 + sw, 21.5]; bf = [-1.5 - sw, 22.5]; ba = [-4, -21]; if (free || type === 6) fa = [-4, -27]; }
+  // 身後的東西：繩子、風箏、乘坐物、氣流
+  if (MV === 'rope') { c.beginPath(); c.moveTo(-4, -260); c.lineTo(-4, 10); c.strokeStyle = INK; c.lineWidth = 3.4; c.stroke(); c.strokeStyle = fl ? '#fff' : '#c9a46a'; c.lineWidth = 1.8; c.stroke(); }
+  if (MV === 'kite') foeKite(c, t, fl, ba, fa, look);
+  if (ride) foeRideBack(c, ride, t, fl);
+  if (MV === 'levit') foeSwirl(c, t, true);
   // --- 身體、頭、手套、鞋子：先描黑邊再填色（不會有關節接縫） ---
   const fw = Math.sin(t * 9 + seed) * 2.5, belt = BT + (BB - BT) * .5;
   const parts = [];
-  if (type !== 6) parts.push({ path: c => aCirc(c, ba[0], ba[1], GR * .95), fill: P.dk });
+  if (type !== 6 || MV === 'kite' || MV === 'rope') parts.push({ path: c => aCirc(c, ba[0], ba[1], GR * .95), fill: P.dk });
   parts.push({ path: c => aEll(c, bf[0], bf[1], FR[0], FR[1]), fill: P.dk });
   parts.push({ path: c => { c.beginPath(); c.moveTo(-wTop, BT); c.quadraticCurveTo(0, BT - 4, wTop, BT); c.quadraticCurveTo(wMid, BT + (BB - BT) * .63, wBot, BB - 1); c.quadraticCurveTo(0, BB + 2, -wBot, BB - 1); c.quadraticCurveTo(-wMid, BT + (BB - BT) * .63, -wTop, BT); c.closePath(); }, fill: P.suit,
     after: c => { c.save(); c.clip(); c.fillStyle = P.dk; c.fillRect(-wMid - 2, belt, wMid * 2 + 4, 2.8);
@@ -115,6 +200,8 @@ function drawFoeNinja(type, t, e, look, near) {
       c.fillStyle = P.band; c.fillRect(-R - 1, HY - 12, R * 2 + 2, 4.4); c.restore(); } });
   if (type !== 9) parts.push({ path: c => aCirc(c, fa[0], fa[1], GR), fill: P.dk });
   heroSilhouette(c, parts, 1.6);
+  if (ride) foeRideFront(c, ride, t, fl);
+  if (MV === 'levit') foeSwirl(c, t, false);
   // 頭巾結的顏色（蓋在頭巾結上）
   c.beginPath(); c.moveTo(-13, HY - 7); c.quadraticCurveTo(-21, HY - 6 + fw, -25, HY - 1 + fw); c.quadraticCurveTo(-19, HY - 3, -13, HY - 2); c.closePath(); c.fillStyle = P.band; c.fill();
   if (type === 1 && !fl) { aEll(c, 6, 9.5, 4.2, 2.8, -.3); aFI(c, P.guard, 1.3); }                            // 肩甲
@@ -301,7 +388,10 @@ function drawEnemy(x, y, type, s = 1, t = 0, e = null) {
   const look = e && e.look ? e.look : e && g && g.p ? (Math.sign(g.p.x - x) || 1) : 1;
   const near = e && g && g.p ? Math.hypot(g.p.x - x, g.p.y - 20 - y) < 110 : false;
   ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-  if (FOE[type]) drawFoeNinja(type, t, e, look, near);
+  if (FOE[type]) {
+    if (FOE_TILT && !fl && Math.abs(e && e.sv || 0) > 90) for (let k = 3; k >= 1; k--) { ctx.save(); ctx.globalAlpha *= .12 * (4 - k); ctx.translate(-e.sv * .035 * k / s, 0); drawFoeNinja(type, t, e, look, near); ctx.restore(); }   // 快速移動的殘影
+    drawFoeNinja(type, t, e, look, near);
+  }
   else if (type === 7) drawCrow(t, e, fl);
   else if (type === 8) drawTengu(t, e, fl, false);
   else if (type === 13) drawTengu(t, e, fl, true);
