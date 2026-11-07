@@ -937,16 +937,26 @@ function heroKatana(c, x, y, a) {
   c.fillStyle = '#d9a441'; c.fillRect(-1.5, -3.2, 2.6, 6.4); c.fillStyle = '#3a2a40'; c.fillRect(-9, -1.7, 8, 3.4);
   c.restore();
 }
-function drawHeroNinja(x, y, o, c = ctx) {
+// 主角比例：頭的半徑與高度、身體上下緣與寬度、手腳的位置。改這組數字就能調整頭身比
+// （遊戲使用「大福」；now 是之前的比例，其餘為提案，可用 design/hero-proportions.html 比較）
+const HERO_PROPS = {
+  now:   { hr: 19, hy: -40, bt: -24, bb: -5, bw: 1,    hcy: -22, hk: .7,  hx: .82, fy: 1,  fx: .8,  fs: 1,   gl: 1,   pivot: -30 },
+  round: { hr: 19, hy: -33, bt: -17, bb: -4, bw: 1.18, hcy: -12, hk: .45, hx: .78, fy: 0,  fx: .62, fs: .9,  gl: .9,  pivot: -24 },  // 圓滾滾
+  mochi: { hr: 21, hy: -30, bt: -12, bb: -3, bw: .9,   hcy: -8,  hk: .35, hx: .72, fy: 0,  fx: .5,  fs: .78, gl: .78, pivot: -24 },  // 大福（頭最大）
+  egg:   { hr: 18, hy: -31, bt: -20, bb: -1, bw: 1.45, hcy: -11, hk: .38, hx: .9,  fy: 1,  fx: .55, fs: .8,  gl: .85, pivot: -22 },  // 蛋形一體
+};
+let HERO_PROP = HERO_PROPS.mochi;   // 使用中的比例：大福（頭最大）
+function drawHeroNinja(x, y, o, c = ctx, PR = HERO_PROP) {
   const sk = SKINS[o.skin || 0], t = o.t || 0, vy = o.vy || 0;
   const flash = o.hurt > 0 && ((t * 20) | 0) % 2;
   const C = flash ? { suit: '#ff6a5a', dk: '#c03a30', lt: '#ffb0a0', band: '#ffd0c8', skin: '#ffc4b4' }
     : { suit: sk.suit, dk: sk.dark, lt: heroLighten(sk.suit, .35), band: sk.band, skin: '#f9d8b4' };
-  const pn = heroPoseOf(o), Q = HERO_POSE[pn], cy = y - 30;
+  const pn = heroPoseOf(o), Q = HERO_POSE[pn], cy = y + PR.pivot;
+  const k = PR.hr / 19, HY = PR.hy, BT = PR.bt, BB = PR.bb, BW = PR.bw;
   // 往上衝很快時，身後拉出速度線
   if (vy < -700 && !o.dash && !o.dive) {
     c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1.5;
-    for (let i = 0; i < 3; i++) { const lx = x + (i - 1) * 12 + Math.sin(t * 30 + i) * 2, l = 14 + ((t * 90 + i * 17) % 18); c.beginPath(); c.moveTo(lx, cy + 30); c.lineTo(lx, cy + 30 + l); c.stroke(); }
+    for (let i = 0; i < 3; i++) { const lx = x + (i - 1) * 12 + Math.sin(t * 30 + i) * 2, l = 14 + ((t * 90 + i * 17) % 18); c.beginPath(); c.moveTo(lx, y); c.lineTo(lx, y + l); c.stroke(); }
   }
   c.save(); c.translate(x, cy);
   if (o.inv > 0 && !o.fly && !(o.hurt > 0) && ((t * 16) | 0) % 2) c.globalAlpha *= .4;
@@ -959,51 +969,55 @@ function drawHeroNinja(x, y, o, c = ctx) {
   if (o.spin > 0) rot += (1 - o.spin / .45) * TAU;
   const sq = o.sq || 0, st = o.dash || o.fly ? .1 : clamp(-vy / 2600, -.08, .1);
   c.scale(o.face || 1, 1); c.rotate(rot); c.scale(1 + sq * .22 - st, 1 - sq * .22 + st);
-  c.translate(0, 30);   // 之後以腳底為原點
+  c.translate(0, -PR.pivot);   // 之後以腳底為原點
   if (o.fly) { // 豪天翔：金色旋風
     c.lineCap = 'round';
-    for (let i = 0; i < 3; i++) { const a = t * 6 + i * 2.1; c.strokeStyle = `rgba(255,214,90,${.6 - i * .14})`; c.lineWidth = 3 - i * .6; c.beginPath(); c.ellipse(0, -28, 28 + i * 5, 15 + i * 3, -.3, a, a + 2.4); c.stroke(); }
+    for (let i = 0; i < 3; i++) { const a = t * 6 + i * 2.1; c.strokeStyle = `rgba(255,214,90,${.6 - i * .14})`; c.lineWidth = 3 - i * .6; c.beginPath(); c.ellipse(0, (HY + BB) / 2, 28 + i * 5, 15 + i * 3, -.3, a, a + 2.4); c.stroke(); }
   }
   // 浮在身體旁的手腳：以身體附近的點為基準，依姿勢偏移，並隨呼吸上下浮動
   const bob = Math.sin(t * 6) * 1.5;
-  const hand = (p, k) => [p[0] * .82, -22 + (p[1] + 22) * .7 + k * bob];
-  const foot = p => [p[0] * .8, Math.min(2, p[1] * .9 + 1)];
+  const hand = (p, s) => [p[0] * PR.hx * (p[0] > 0 ? 1 : 1) + (p[0] > 0 ? 1 : -1) * (BW - 1) * 6, PR.hcy + (p[1] + 22) * PR.hk + s * bob];
+  const foot = p => [p[0] * PR.fx, Math.min(PR.fy + 1, p[1] * .9 * PR.fs + PR.fy)];
   const fa = hand(Q.fa, -1), ba = hand(Q.ba, 1), ff = foot(Q.ff), bf = foot(Q.bf);
   const sdir = Q.dash ? [-1, .15] : Q.fly ? [-1, .9] : Q.vy < 0 ? [-1, 1] : Q.vy > 0 ? [-1, -.8] : [-1, .25];
-  const drawn = Q.dash || Q.dive;
+  const drawn = Q.dash || Q.dive, GR = 4.8 * PR.gl, FR = [5.2 * PR.fs, 3.6 * PR.fs];
   const parts = [];
-  parts.push({ path: c => heroScarf(c, -6, -24, sdir, 24, 8, t, 0), fill: C.band });
-  parts.push({ path: c => aCirc(c, ba[0], ba[1], 4.6), fill: C.dk });          // 後手套
-  parts.push({ path: c => aEll(c, bf[0], bf[1], 5.2, 3.6), fill: C.dk });      // 後鞋
+  parts.push({ path: c => heroScarf(c, -6 * BW, BT, sdir, 24 * k, 8 * k, t, 0), fill: C.band });
+  parts.push({ path: c => aCirc(c, ba[0], ba[1], GR * .95), fill: C.dk });   // 後手套
+  parts.push({ path: c => aEll(c, bf[0], bf[1], FR[0], FR[1]), fill: C.dk });  // 後鞋
   // 豆子形的小身體＋腰帶
-  parts.push({ path: c => { c.beginPath(); c.moveTo(-8, -24); c.quadraticCurveTo(0, -28, 8, -24); c.quadraticCurveTo(11, -12, 6, -6); c.quadraticCurveTo(0, -3, -6, -6); c.quadraticCurveTo(-11, -12, -8, -24); c.closePath(); }, fill: C.suit,
-    after: c => { c.save(); c.clip(); c.fillStyle = '#1e1e26'; c.fillRect(-12, -14, 24, 3.4); c.fillStyle = C.band; c.fillRect(-2, -14.5, 4, 4.4); c.restore(); } });
-  parts.push({ path: c => aEll(c, ff[0], ff[1], 5.2, 3.6), fill: C.dk });      // 前鞋
+  const bh = BB - BT, wTop = 8 * BW, wMid = 11 * BW, wBot = 6 * BW, belt = BT + bh * .53;
+  parts.push({ path: c => { c.beginPath(); c.moveTo(-wTop, BT); c.quadraticCurveTo(0, BT - 4, wTop, BT); c.quadraticCurveTo(wMid, BT + bh * .63, wBot, BB - 1); c.quadraticCurveTo(0, BB + 2, -wBot, BB - 1); c.quadraticCurveTo(-wMid, BT + bh * .63, -wTop, BT); c.closePath(); }, fill: C.suit,
+    after: c => { c.save(); c.clip(); c.fillStyle = '#1e1e26'; c.fillRect(-wMid - 2, belt, wMid * 2 + 4, 3.4); c.fillStyle = C.band; c.fillRect(-2, belt - .5, 4, 4.4); c.restore(); } });
+  parts.push({ path: c => aEll(c, ff[0], ff[1], FR[0], FR[1]), fill: C.dk });  // 前鞋
   // 大頭（兜帽尖＋腦後頭巾結，和頭一起描邊）
-  const knot = Math.sin(t * 9) * 2;
-  parts.push({ path: c => { c.beginPath(); c.arc(0, -40, 19, 0, TAU); c.moveTo(-14, -52); c.quadraticCurveTo(-26, -64, -10, -61); c.closePath(); c.moveTo(-17, -46); c.quadraticCurveTo(-26, -44 + knot, -28, -38); c.quadraticCurveTo(-22, -42, -17, -40); c.closePath(); }, fill: C.suit,
-    after: c => { c.save(); c.beginPath(); c.arc(0, -40, 19, 0, TAU); c.clip();
-      const gr = c.createRadialGradient(-6, -52, 3, 0, -40, 22); gr.addColorStop(0, C.lt); gr.addColorStop(.6, C.suit); gr.addColorStop(1, C.dk); c.fillStyle = gr; c.fillRect(-20, -60, 40, 40);
-      c.fillStyle = C.band; c.fillRect(-20, -55, 40, 5.5); c.restore(); } });
-  parts.push({ path: c => aCirc(c, fa[0], fa[1], 4.8), fill: C.dk });          // 前手套
+  const knot = Math.sin(t * 9) * 2, R = PR.hr;
+  parts.push({ path: c => { c.beginPath(); c.arc(0, HY, R, 0, TAU);
+      c.moveTo(-14 * k, HY - 12 * k); c.quadraticCurveTo(-26 * k, HY - 24 * k, -10 * k, HY - 21 * k); c.closePath();
+      c.moveTo(-17 * k, HY - 6 * k); c.quadraticCurveTo(-26 * k, HY - 4 * k + knot, -28 * k, HY + 2 * k); c.quadraticCurveTo(-22 * k, HY - 2 * k, -17 * k, HY); c.closePath(); }, fill: C.suit,
+    after: c => { c.save(); c.beginPath(); c.arc(0, HY, R, 0, TAU); c.clip();
+      const gr = c.createRadialGradient(-6 * k, HY - 12 * k, 3, 0, HY, R * 1.16); gr.addColorStop(0, C.lt); gr.addColorStop(.6, C.suit); gr.addColorStop(1, C.dk); c.fillStyle = gr; c.fillRect(-R - 1, HY - R - 1, R * 2 + 2, R * 2 + 2);
+      c.fillStyle = C.band; c.fillRect(-R - 1, HY - 15 * k, R * 2 + 2, 5.5 * k); c.restore(); } });
+  parts.push({ path: c => aCirc(c, fa[0], fa[1], GR), fill: C.dk });          // 前手套
   heroSilhouette(c, parts, 1.8);
   // 臉：面罩開口、超大眼睛、腮紅、護額
-  aEll(c, 4, -37, 14, 8.5); c.fillStyle = C.skin; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.4; c.stroke();
+  aEll(c, 4 * k, HY + 3 * k, 14 * k, 8.5 * k); c.fillStyle = C.skin; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.4; c.stroke();
   const mood = pn === 'apex' && ((t * .9) % 3.4) < .12 ? 'blink' : Q.eye;
-  heroEye(c, -2, -37.5, 4, 5.6, mood); heroEye(c, 10, -37.5, 4.3, 5.9, mood);
-  c.fillStyle = 'rgba(255,120,120,.45)'; aEll(c, -6, -32.5, 2.6, 1.4); c.fill(); aEll(c, 15, -32.5, 2.6, 1.4); c.fill();
-  c.beginPath(); if (c.roundRect) c.roundRect(-4, -57, 12, 6, 2); else c.rect(-4, -57, 12, 6);
+  heroEye(c, -2 * k, HY + 2.5 * k, 4 * k, 5.6 * k, mood); heroEye(c, 10 * k, HY + 2.5 * k, 4.3 * k, 5.9 * k, mood);
+  c.fillStyle = 'rgba(255,120,120,.45)'; aEll(c, -6 * k, HY + 7.5 * k, 2.6 * k, 1.4 * k); c.fill(); aEll(c, 15 * k, HY + 7.5 * k, 2.6 * k, 1.4 * k); c.fill();
+  c.beginPath(); if (c.roundRect) c.roundRect(-4 * k, HY - 17 * k, 12 * k, 6 * k, 2); else c.rect(-4 * k, HY - 17 * k, 12 * k, 6 * k);
   c.fillStyle = '#dfe4ec'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
-  c.fillStyle = C.suit; c.font = '900 5px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('鳶', 2, -53.8);
+  c.fillStyle = C.suit; c.font = `900 ${5 * k}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('鳶', 2 * k, HY - 13.8 * k);
   // 刀：衝刺斬／急降斬時握在手上，其餘背在背後
   if (drawn) heroKatana(c, fa[0], fa[1], Q.dash ? -.08 : .35);
-  else { c.save(); c.translate(-9, -16); c.rotate(-2.3); c.fillStyle = '#2a1c18'; c.fillRect(-2, -6, 4, 18); c.strokeStyle = INK; c.lineWidth = 1.2; c.strokeRect(-2, -6, 4, 18); c.fillStyle = '#d9a441'; c.fillRect(-2.6, -7.5, 5.2, 2); c.restore(); }
+  else { c.save(); c.translate(-9 * BW, BT + 8); c.rotate(-2.3); c.fillStyle = '#2a1c18'; c.fillRect(-2, -6, 4, 18); c.strokeStyle = INK; c.lineWidth = 1.2; c.strokeRect(-2, -6, 4, 18); c.fillStyle = '#d9a441'; c.fillRect(-2.6, -7.5, 5.2, 2); c.restore(); }
   c.restore();
+  const top = y + HY - PR.hr - 4;
   if (o.freeze > 0) { // 冰凍：半透明冰塊
-    c.save(); c.globalAlpha = .5; c.fillStyle = '#bdeaff'; c.beginPath(); if (c.roundRect) c.roundRect(x - 24, y - 70, 48, 72, 8); else c.rect(x - 24, y - 70, 48, 72); c.fill();
+    c.save(); c.globalAlpha = .5; c.fillStyle = '#bdeaff'; c.beginPath(); if (c.roundRect) c.roundRect(x - 25, top, 50, y - top + 3, 8); else c.rect(x - 25, top, 50, y - top + 3); c.fill();
     c.globalAlpha = .9; c.strokeStyle = '#ffffff'; c.lineWidth = 2; c.stroke(); c.restore();
   }
-  if (o.slow > 0) { c.strokeStyle = '#c58aff'; c.lineWidth = 2; c.beginPath(); c.arc(x, cy, 32, t * 6, t * 6 + 4); c.stroke(); }
+  if (o.slow > 0) { c.strokeStyle = '#c58aff'; c.lineWidth = 2; c.beginPath(); c.arc(x, (y + top) / 2, 32, t * 6, t * 6 + 4); c.stroke(); }
 }
 // 標題大圖與商店頭像：在獨立畫布上畫一張大的主角
 function heroPortrait(skin, size) {

@@ -1,0 +1,74 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>主角頭身比例提案</title>
+<style>
+  html, body { margin: 0; background: #0f2a26; }
+  canvas { display: block; }
+</style>
+<canvas id="cv"></canvas>
+<script>
+// 遊戲裡 art.js 會用到的共用設定（這裡只放畫主角需要的部分）
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const INK = '#0e1414';
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [
+  { n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' },
+  { n: '蒼', suit: '#2b5fb8', dark: '#173a78', band: '#ffd54a' },
+  { n: '桜', suit: '#e56aa0', dark: '#a03a6a', band: '#ffffff' },
+  { n: '影', suit: '#2a2a33', dark: '#111116', band: '#e8403a' },
+];
+</script>
+<script src="../art.js"></script>
+<script>
+'use strict';
+/* 主角頭身比例提案：直接用遊戲的 art.js 畫，畫面和放進遊戲後的樣子一致。
+   ?p=round 圓滾滾／mochi 大福／egg 蛋形一體 */
+const PK = new URLSearchParams(location.search).get('p') || 'round';
+const INFO = {
+  round: { name: '提案 1　圓滾滾', tag: '頭身比約 1.3 : 1', desc: '身體縮短一半、變得更圓，手套貼在身體兩側，腳直接長在身體下面。整體變矮變胖，跳起來像一顆球。' },
+  mochi: { name: '提案 2　大福', tag: '頭身比約 2 : 1（頭最大）', desc: '頭再放大一點，身體縮到只剩一小截藏在頭下面，手腳都變小。像麻糬一樣圓，表情佔了大半個角色，最可愛。' },
+  egg:   { name: '提案 3　蛋形一體', tag: '頭和身體連成一顆蛋', desc: '身體加寬、往上和頭連在一起，整隻角色是一顆蛋的形狀，腳只露出一點點。輪廓最簡單，縮小後最好辨認。' },
+};
+const POSE_LIST = [['上升', { vy: -500 }], ['頂點', { vy: 0 }], ['下落', { vy: 400 }], ['衝刺斬', { dash: true, dvx: 900, dvy: -200 }], ['急降斬', { dive: true }], ['飛行', { fly: true, vy: -600 }], ['受傷', { hurt: .3 }]];
+const CW = 960, CH = 640, DPR = 2, FONT = '"Noto Sans TC","Microsoft JhengHei",sans-serif';
+cv.width = CW * DPR; cv.height = CH * DPR; cv.style.width = CW + 'px'; cv.style.height = CH + 'px';
+ctx.scale(DPR, DPR);
+const T = .4;
+function hero(x, y, k, o, prop) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(k, k);
+  drawHeroNinja(0, 0, Object.assign({ face: 1, t: T, skin: 0 }, o), ctx, prop);
+  ctx.restore();
+}
+function panel(x, y, w, h) { ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 16); ctx.fill(); }
+function label(s, x, y, size = 14, col = '#ffe28a', align = 'center') { ctx.fillStyle = col; ctx.font = `700 ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'top'; ctx.fillText(s, x, y); }
+function wrapText(s, x, y, w, lh) { let line = ''; for (const ch of s) { if (ctx.measureText(line + ch).width > w) { ctx.fillText(line, x, y); line = ch; y += lh; } else line += ch; } ctx.fillText(line, x, y); }
+
+const P = HERO_PROPS[PK], NOW = HERO_PROPS.now, I = INFO[PK];
+// 背景
+const bg = ctx.createLinearGradient(0, 0, 0, CH); bg.addColorStop(0, '#1d4a3c'); bg.addColorStop(1, '#0c241e'); ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
+for (let i = 0; i < 9; i++) { const x = 30 + i * 115 + (i % 2) * 30; ctx.fillStyle = 'rgba(80,160,110,.16)'; ctx.fillRect(x, 0, 14, CH); }
+// 標題與說明
+label(I.name, 36, 22, 28, '#ffe28a', 'left');
+ctx.font = `700 15px ${FONT}`; const tw = ctx.measureText(I.tag).width;
+ctx.fillStyle = '#e8462f'; ctx.beginPath(); ctx.roundRect(36, 64, tw + 26, 26, 13); ctx.fill(); label(I.tag, 49, 69, 15, '#fff', 'left');
+ctx.fillStyle = '#d6e6df'; ctx.font = `500 15px ${FONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; wrapText(I.desc, 36, 102, 470, 22);
+// 新舊對照（同樣大小）
+panel(540, 18, 396, 300);
+const gy = 290;
+ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(556, gy); ctx.lineTo(920, gy); ctx.stroke(); ctx.setLineDash([]);
+hero(640, gy, 3.3, { vy: 0 }, NOW); label('目前', 640, gy + 6, 14, 'rgba(255,255,255,.6)');
+hero(830, gy, 3.3, { vy: 0 }, P); label('新比例', 830, gy + 6, 15);
+// 遊戲中的實際大小（手機上約這麼大）
+panel(24, 196, 500, 122);
+label('遊戲中實際大小（約為手機畫面上的比例）', 40, 206, 13, 'rgba(255,255,255,.6)', 'left');
+for (let i = 0; i < 3; i++) { ctx.fillStyle = '#e8f3dc'; ctx.beginPath(); ctx.roundRect(70 + i * 150, 296, 64, 9, 5); ctx.fill(); }
+hero(102, 296, 1, { vy: -300 }, NOW); label('目前', 102, 300, 12, 'rgba(255,255,255,.6)');
+hero(252, 296, 1, { vy: -300 }, P); label('新比例', 252, 300, 12);
+hero(402, 296, 1, { vy: 300 }, P); label('新比例・下落', 402, 300, 12);
+// 七種姿勢
+panel(24, 332, 912, 150);
+POSE_LIST.forEach(([n, o], i) => { const x = 92 + i * 130, y = 450; hero(x, y - (o.dive ? 10 : 0), 1.7, o, P); label(n, x, y + 8); });
+// 四個角色
+panel(24, 494, 912, 130);
+SKINS.forEach((s, i) => { const x = 110 + i * 222, y = 606; hero(x, y, 1.75, { vy: 0, skin: i }, P); label('忍者「' + s.n + '」', x + 46, y - 46, 18, '#ffe28a', 'left'); });
+</script>
