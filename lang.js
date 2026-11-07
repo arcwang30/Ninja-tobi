@@ -25,6 +25,14 @@ const STR = {
   cut2: ['鬼族奪走了守護村子的「秘傳之卷」……', '鬼の一族が、里を守る「秘伝の巻」を奪い去った……', 'The Oni clan stole the Secret Scroll that guarded the village...'],
   cut3: ['「……交給我吧。」', '「……オレに任せろ。」', '"...Leave it to me."'],
   replay: ['重看開場', 'オープニングを見る', 'Watch Opening'],
+  // ---- 每一幕的開場演出 ----
+  zi_0: ['鬼火把竹林點燃了！', '鬼火が竹林に火を放った！', 'Oni fire set the bamboo ablaze!'],
+  zi_1: ['大浪捲上來了！', '大波が押し寄せてくる！', 'A giant wave is rolling in!'],
+  zi_2: ['鬼群從地底爬上來了！', '鬼の群れが地の底から這い上がる！', 'Oni are crawling up from below!'],
+  zi_3: ['山洪暴發了！', '山津波だ！', 'A flash flood is coming!'],
+  zi_run: ['往上逃！', '上へ逃げろ！', 'Climb for your life!'],
+  zi_go: ['走！', '行け！', 'GO!'],
+  zi_skip: ['點一下跳過', 'タップでスキップ', 'Tap to skip'],
   // ---- 標題與選單 ----
   tagline: ['我が名は鳶、いざ参る！', '我が名は鳶、いざ参る！', 'I am Tobi. Here I come!'],
   start: ['開始修行', '修行開始', 'Start Training'],

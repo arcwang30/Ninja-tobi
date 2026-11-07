@@ -232,7 +232,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v30';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v31';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -317,6 +317,8 @@ function toL(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX -
 cv.addEventListener('pointerdown', e => {
   A();
   if (state === 'menu' && INTRO.tap()) return;   // 開場：點一下開始／跳過
+  if (state === 'zintro') { skipZIntro(); return; }   // 每一幕的開場演出：點一下跳過
+  if (state === 'ascend') { skipAscend(); return; }
   const p = toL(e);
   if (state === 'play' && !paused) {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
@@ -416,7 +418,7 @@ function startRun() {
   paused = false;
   inp.mode = null;
   g.skills[SKINS[save.skin].sk] = 1;   // 每個角色的起始技能不同
-  state = 'play'; stageBanner();
+  stageBanner(); startZIntro();   // 第一幕的開場演出（stagefx.js）
   // 操作改版後（彈射、牆壁）再顯示一次說明
   if (save.seen < 2) { save.seen = 2; persist(); openHelp(); paused = true; }
 }
@@ -655,6 +657,8 @@ function update(dt) {
     case 'slash': updateSlash(dt); break;
     case 'cast': g.castT -= dt; if (g.castT <= 0) { state = 'play'; g.fly = 1.7 * (1 + .4 * pk('feather')); g.p.inv = Math.max(g.p.inv, g.fly + .6); } break;
     case 'qte': updateQte(dt); break;
+    case 'zintro': updateZIntro(dt); break;
+    case 'ascend': updateAscend(dt); break;
     case 'kill': g.killT -= dt; if (g.killT <= 0) finishBoss(true); break;
     case 'dying': g.dieT -= dt; g.p.vy += GRAV * dt; g.p.y += g.p.vy * dt; if (g.dieT <= 0) showOver(); break;
   }
@@ -1282,7 +1286,7 @@ function updateBoss(dt) {
 function qteHit(n) {
   const q = g.qte, b = g.boss; if (!q || !b) return;
   b.hp -= n * (q.type === 'mash' ? 1 : q.type === 'swipe' ? 1.6 : 1.4);
-  q.hits.push({ a: rnd(0, Math.PI), t: 0, x: rnd(-40, 40), y: rnd(-40, 40) });
+  q.hits.push({ a: rnd(0, Math.PI), t: 0, x: rnd(-40, 40), y: rnd(-40, 40) }); q.n = (q.n || 0) + 1;
   g.shake = 5; SFX.slash(); vib(15);
   if (b.hp <= 0) { b.hp = 0; state = 'kill'; g.killT = 1.5; SFX.kill(); vib([60, 40, 160]); }
 }
@@ -1327,9 +1331,9 @@ function finishBoss(killed) {
   afterBoss();
 }
 function afterBoss() {
+  g.ascendPending = true;   // 選完寶箱的秘傳後，接「飛昇過雲海」換幕（stagefx.js）
   if (g.pendingPerk) { openPerks('boss'); return; }
-  state = 'play';
-  stageBanner();
+  startAscend();
 }
 
 // ===== 秘傳（Roguelike 強化） =====
@@ -1410,6 +1414,7 @@ function choosePerk(i) {
   SFX.item();
   hide('perk');
   if (g.lvQueue > 0) { g.lvQueue--; openPerks('lv'); return; }   // 一次升了好幾級就接著選
+  if (g.ascendPending) { startAscend(); return; }
   state = 'play';
   if (perkWhy === 'start' || perkWhy === 'boss') stageBanner();
 }
@@ -1768,7 +1773,14 @@ function drawQte() {
   ctx.fillStyle = 'rgba(40,0,0,.8)'; ctx.fillRect(0, 0, W, H);
   speedLines(q.t * 6);
   const sh = q.hits.length ? 5 : 1;
-  drawBoss(b, W / 2 + rnd(-sh, sh), H * .42 + rnd(-sh, sh), 3.2);
+  // 魔王受擊：往刀的方向被打退、閃白
+  const last = q.hits[q.hits.length - 1], lt = last ? last.t : 1, d = (q.n || 0) % 2 ? 1 : -1;
+  const kb = last ? (1 - Math.min(1, lt / .16)) * 22 : 0, bx = W / 2 + d * kb + rnd(-sh, sh), by = H * .42 - kb * .3 + rnd(-sh, sh);
+  drawBoss(b, bx, by, 3.2);
+  if (last && lt < .06) drawSil(bx, by, 420, 420, 210, 210, 'rgba(255,255,255,.85)', c2 => drawBoss(b, 0, 0, 3.2, c2));
+  // 主角背影：在畫面左下方左右交替揮刀（和一般斬擊特寫相同）
+  const u = Math.min(1, lt / .07), eu = 1 - (1 - u) * (1 - u), A0 = d > 0 ? -2.7 : -.35, A1 = d > 0 ? .05 : -3.05;
+  drawHeroBack(ctx, W * .24 + (last ? eu * 10 : 0), H * 1.02 - eu * 8, 2.6, last ? A0 + (A1 - A0) * eu : -2.3, q.t, save.skin, A0, last ? 1 - Math.min(1, lt / .14) : 0);
   for (const h of q.hits) {
     ctx.save(); ctx.translate(W / 2 + h.x, H * .42 + h.y); ctx.rotate(h.a); ctx.globalAlpha = 1 - h.t / .35; ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.moveTo(-120, 0); ctx.lineTo(0, -5); ctx.lineTo(120, 0); ctx.lineTo(0, 5); ctx.fill(); ctx.restore();
@@ -1868,6 +1880,8 @@ function render() {
   else if (state === 'cast') drawCast();
   else if (state === 'qte') drawQte();
   else if (state === 'kill') drawKill();
+  else if (state === 'zintro') drawZIntro();
+  else if (state === 'ascend') drawAscend();
   if (state !== 'slash' && state !== 'cast' && state !== 'qte' && state !== 'kill') drawHUD();
   if (state === 'play') drawBanner();
   if (inp.mode === 'aim' && state === 'play') drawSling();
