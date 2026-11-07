@@ -25,8 +25,8 @@ const INTRO = {
     if (state === 'menu') { show('title'); playIntro(); }
   },
   // 標題的主角輪播：前景現身（playIntro 也會呼叫）
-  heroFront() { this.cyc = 'front'; this.ct = 0; TH.vis = 0; },
-  heroAnim(cls) { const it = $('intro'); it.classList.remove('play', 'hero-in', 'hero-out'); void it.offsetWidth; it.classList.add(cls); },
+  heroFront() { this.cyc = 'front'; this.ct = 0; TH.vis = 0; poofAt(.85); },
+  heroAnim(cls) { const it = $('intro'); it.classList.remove('play', 'hero-in', 'hero-out'); void it.offsetWidth; it.classList.add(cls); poofAt(cls === 'hero-in' ? .4 : .05); },
   // 畫布被點擊（只有開場階段會收到；回傳 true 表示已處理）
   tap() {
     if (this.ph === 'tap') { if (this.t > .3) this.playCut(); return true; }
@@ -65,7 +65,7 @@ const INTRO = {
     if (this.ph === 'boot') { c.fillStyle = '#000'; c.fillRect(0, 0, W, H); return; }
     if (this.ph === 'tap') return drawTapScreen(this.t);
     if (this.ph === 'cut') return drawCut(this.t);
-    drawTitleBG(performance.now() / 1000); drawFrontHero(performance.now() / 1000);
+    drawTitleBG(performance.now() / 1000); drawFrontHero(performance.now() / 1000); drawPoofs();
     if (this.attract >= 0) drawAttract(this.attract);
     if (this.flash > 0) { c.fillStyle = `rgba(255,255,255,${this.flash})`; c.fillRect(0, 0, W, H); }
   },
@@ -302,7 +302,7 @@ function cutShot4(st, PY, PH) {
       c.restore();
     } else {   // 化煙 → 鳶的黑影飛過月亮、往竹林深處
       const pq = (st - 1.25) / .5;
-      if (pq < 1) { c.globalAlpha = 1 - pq; for (let i = 0; i < 7; i++) { const a = i / 7 * TAU; c.fillStyle = i % 2 ? '#e8ecef' : '#c7cdd3'; aCirc(c, hx + Math.cos(a) * 26 * (.4 + pq), ridge - PH * .3 - 20 + Math.sin(a) * 18 * (.4 + pq), 16 * (1 - pq * .4)); c.fill(); } c.globalAlpha = 1; }
+      if (pq < 1) { c.save(); c.translate(hx, ridge - PH * .3 - 26); c.scale(1.9, 1.9); poofSmoke(c, pq); c.restore(); }   // 化成一陣卡通煙霧
       const q = ez((st - 1.25) / .9), x0 = hx, y0 = ridge - PH * .3 - 24, x1 = W * .8, y1 = PY + PH * .14;
       const bxp = lerp2(x0, x1, q), byp = lerp2(y0, y1, q) - Math.sin(q * Math.PI) * PH * .12;
       kiteBird(c, bxp, byp, lerp2(1.4, .45, q), Math.sin(st * 14), '#05040c');
@@ -364,7 +364,7 @@ function drawTitleBG(t) {
     const spin = h.mode === 'hop' && h.spin ? .45 * (1 - q) : 0;
     drawSil(h.x, h.y, 100, 100, 50, 84, 'rgba(6,18,16,.9)', g3 => drawHeroNinja(0, 0, { face: h.face, t, vy, skin: 0, spin }, g3));
   }
-  for (const p of h.puffs) { const k = p.t / .5; c.globalAlpha = (1 - k) * .85; for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; c.fillStyle = i % 2 ? '#eef3f0' : '#c4d2cc'; aCirc(c, p.x + Math.cos(a) * 14 * (.5 + k), p.y + Math.sin(a) * 10 * (.5 + k) - k * 8, 9 * (1 - k * .3)); c.fill(); } c.globalAlpha = 1; }
+  for (const p of h.puffs) { c.save(); c.translate(p.x, p.y - 4); c.scale(.7, .7); poofSmoke(c, p.t / .5); c.restore(); }   // 化煙瞬移：和前景同一種卡通煙霧
 }
 // 待機展示：黑邊滑入，主角剪影在滿月前連跳三下，最後四鬼的眼睛在山脊上亮起
 function drawAttract(a) {
@@ -402,15 +402,15 @@ function fhStart(a) {
     spin: () => SFX.dash(), clone: () => SFX.scroll(), poke: () => tone(520, .12, 'square', .04, -260), happy: () => SFX.item(), windy: () => SFX.wind(), stretch: () => tone(330, .25, 'triangle', .03, 160) }[a];
   if (s) s();
 }
-function frontHeroBox() {
+function frontHeroBox(any) {   // any：不管目前透明度（噴煙用，主角還沒現身也要知道位置）
   const el = document.querySelector('#title .hero-art'), ti = $('title');
   if (!el || !ti.classList.contains('on') || ti.classList.contains('attract')) return null;
   const cs = getComputedStyle(el), op = +cs.opacity, par = el.offsetParent;
-  if (op < .02 || !par) return null;
+  if ((!any && op < .02) || !par) return null;
   const pr = par.getBoundingClientRect(), cr = cv.getBoundingClientRect(), k = W / cr.width;
   const m = cs.transform && cs.transform !== 'none' ? new DOMMatrix(cs.transform) : new DOMMatrix();
   return { x: (pr.left - cr.left + el.offsetLeft + el.offsetWidth / 2 + m.e) * k, y: (pr.top - cr.top + el.offsetTop + el.offsetHeight / 2 + m.f) * k,
-    s: Math.hypot(m.a, m.b) * el.offsetWidth * k / 84, rot: Math.atan2(m.b, m.a), op };
+    s: (any ? 1 : Math.hypot(m.a, m.b)) * el.offsetWidth * k / 84, rot: any ? 0 : Math.atan2(m.b, m.a), op };
 }
 function frontHeroUpdate(dt) {
   if (!FH.vis || INTRO.cyc !== 'front') { FH.act = null; FH.rest = 1.3; return; }
@@ -499,4 +499,37 @@ function drawFrontHero(t) {
   drawHeroNinja(0, 32, o, c);
   for (const f of front) f();
   c.restore();
+}
+
+// ===== 忍術現身／消失的卡通煙霧（前景主角與背景剪影共用；座標：主角盒子單位，中心 (0,6)；k = 0→1 的進度） =====
+function poofSmoke(c, k) {
+  const a = 1 - ez((k - .65) / .35);
+  if (a <= 0) return;
+  c.save(); c.globalAlpha *= a;
+  const parts = [];
+  for (let i = 0; i < 9; i++) {
+    const an = i / 9 * TAU + .3, d = 6 + ez(k / .5) * 26, s = (.35 + ez(k / .35) * .65) * (1 - ez((k - .7) / .3) * .4);
+    const x = Math.cos(an) * d * 1.15, y = 8 + Math.sin(an) * d * .75 - k * 10;
+    parts.push({ path: c => { c.beginPath(); for (const [ox, oy, r] of [[0, 0, 9], [-6, 3, 6.5], [6, 2.5, 7]]) { c.moveTo(x + ox * s + r * s, y + oy * s); c.arc(x + ox * s, y + oy * s, r * s, 0, TAU); } }, fill: i % 2 ? '#ffffff' : '#e9eef0',
+      after: c => { c.save(); c.clip(); c.fillStyle = 'rgba(150,170,180,.35)'; aEll(c, x + 2 * s, y + 6 * s, 10 * s, 5 * s); c.fill(); c.restore(); } });
+  }
+  parts.push({ path: c => aCirc(c, 0, 8, (4 + ez(k / .4) * 16) * (1 - ez((k - .5) / .4) * .7)), fill: '#ffffff' });
+  heroSilhouette(c, parts, 1.4);
+  c.strokeStyle = INK; c.lineWidth = 1.2; c.lineCap = 'round';
+  for (let i = 0; i < 4; i++) { const an = i / 4 * TAU + .8, d = 18 + k * 26, x = Math.cos(an) * d, y = 8 + Math.sin(an) * d * .7 - k * 12; c.beginPath(); for (let j = 0; j < 14; j++) { const r = 4 - j * .25, aa = j * .55; c.lineTo(x + Math.cos(aa) * r, y + Math.sin(aa) * r); } c.stroke(); }
+  for (let i = 0; i < 5; i++) { const an = i / 5 * TAU + 1.2, d = 22 + k * 30; drawStar4(c, Math.cos(an) * d, 6 + Math.sin(an) * d * .8, 2.6 * (1 - k * .5), k * 4, '#ffe28a'); }
+  c.restore();
+}
+// 排程：前景現身／消失時，在主角位置噴一團煙（delay 秒後開始，配合 CSS 動畫的時間）
+const POOFS = [];
+function poofAt(delay) { POOFS.push({ at: performance.now() / 1000 + delay }); }
+function drawPoofs() {
+  if (!POOFS.length) return;
+  const now = performance.now() / 1000, b = frontHeroBox(true);
+  for (let i = POOFS.length - 1; i >= 0; i--) {
+    const k = (now - POOFS[i].at) / .8;
+    if (k > 1) { POOFS.splice(i, 1); continue; }
+    if (k < 0 || !b) continue;
+    ctx.save(); ctx.translate(b.x, b.y); ctx.scale(b.s * 1.15, b.s * 1.15); poofSmoke(ctx, k); ctx.restore();
+  }
 }

@@ -75,7 +75,8 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .jutsu-lines { position: absolute; inset: -20%; border-radius: 50%; opacity: 0;
   background: repeating-conic-gradient(rgba(255,240,200,.55) 0 3deg, transparent 3deg 15deg); -webkit-mask: radial-gradient(circle, transparent 28%, #000 30%, transparent 70%); mask: radial-gradient(circle, transparent 28%, #000 30%, transparent 70%); }
 .jutsu-flash { position: absolute; inset: 20%; border-radius: 50%; background: radial-gradient(circle, #fff 0 30%, rgba(255,240,200,.8) 45%, transparent 70%); opacity: 0; }
-.puff { position: absolute; left: 50%; top: 50%; width: 34%; aspect-ratio: 1; border-radius: 50%; opacity: 0;
+.puff { display: none !important; }   /* 舊的圓形煙霧不用了，改由畫布畫卡通煙霧（cut.js poofSmoke） */
+.puff-old { position: absolute; left: 50%; top: 50%; width: 34%; aspect-ratio: 1; border-radius: 50%; opacity: 0;
   background: radial-gradient(circle at 40% 35%, #fff, #d8dee0 55%, #9aa6aa); border: calc(var(--u)*3) solid var(--ink); }
 #title .hero-art { visibility: hidden; }   /* 前景主角改由畫布繪製（cut.js drawFrontHero），這張圖只用來提供現身／消失動畫的時間與位置 */
 .hero-art { position: absolute; left: 50%; top: 66%; width: 66%; transform: translate(-50%, -50%); opacity: 0; pointer-events: none;

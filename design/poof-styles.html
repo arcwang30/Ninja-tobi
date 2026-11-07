@@ -1,0 +1,100 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>現身特效提案</title>
+<style>html, body { margin: 0; background: #1d4a3c; } canvas { display: block; } #title { display: none; }</style>
+<canvas id="cv"></canvas><div id="title"></div><div id="intro"></div>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), $ = id => document.getElementById(id);
+const INK = '#0e1414', g = null, WALL = 14, FONT = '"Noto Sans TC","Microsoft JhengHei",sans-serif';
+let W = 960, H = 640, SAFE_T = 0;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const save = { skin: 0 }, SFX = new Proxy({}, { get: () => () => {} }), tone = () => {}, noise = () => {};
+function txt(s, x, y, size, color = '#fff', align = 'center', stroke = '#000', lw = 4) {
+  ctx.font = `900 ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); }
+  ctx.fillStyle = color; ctx.fillText(s, x, y);
+}
+</script>
+<script src="../art.js"></script>
+<script src="../cut.js"></script>
+<script>
+'use strict';
+/* 三種現身／消失特效（座標：主角盒子單位，中心 (0,6)，腳底在 (0,32)；k = 0→1 的進度） */
+// A 卡通煙霧「咚」：有描邊的煙團往外噴、往上飄，帶捲曲的煙尾和小星星
+function poofSmoke(c, k) {
+  const a = 1 - ez((k - .65) / .35);
+  if (a <= 0) return;
+  c.save(); c.globalAlpha *= a;
+  const parts = [];
+  for (let i = 0; i < 9; i++) {
+    const an = i / 9 * TAU + .3, d = 6 + ez(k / .5) * 26, s = (.35 + ez(k / .35) * .65) * (1 - ez((k - .7) / .3) * .4);
+    const x = Math.cos(an) * d * 1.15, y = 8 + Math.sin(an) * d * .75 - k * 10;
+    parts.push({ path: c => { c.beginPath(); for (const [ox, oy, r] of [[0, 0, 9], [-6, 3, 6.5], [6, 2.5, 7]]) { c.moveTo(x + ox * s + r * s, y + oy * s); c.arc(x + ox * s, y + oy * s, r * s, 0, TAU); } }, fill: i % 2 ? '#ffffff' : '#e9eef0',
+      after: c => { c.save(); c.clip(); c.fillStyle = 'rgba(150,170,180,.35)'; aEll(c, x + 2 * s, y + 6 * s, 10 * s, 5 * s); c.fill(); c.restore(); } });
+  }
+  parts.push({ path: c => aCirc(c, 0, 8, (4 + ez(k / .4) * 16) * (1 - ez((k - .5) / .4) * .7)), fill: '#ffffff' });
+  heroSilhouette(c, parts, 1.4);
+  c.strokeStyle = INK; c.lineWidth = 1.2; c.lineCap = 'round';
+  for (let i = 0; i < 4; i++) { const an = i / 4 * TAU + .8, d = 18 + k * 26, x = Math.cos(an) * d, y = 8 + Math.sin(an) * d * .7 - k * 12; c.beginPath(); for (let j = 0; j < 14; j++) { const r = 4 - j * .25, aa = j * .55; c.lineTo(x + Math.cos(aa) * r, y + Math.sin(aa) * r); } c.stroke(); }
+  for (let i = 0; i < 5; i++) { const an = i / 5 * TAU + 1.2, d = 22 + k * 30; drawStar4(c, Math.cos(an) * d, 6 + Math.sin(an) * d * .8, 2.6 * (1 - k * .5), k * 4, '#ffe28a'); }
+  c.restore();
+}
+// B 木葉旋風：竹葉繞著主角捲成旋風，越轉越大後四散
+function poofLeaves(c, k) {
+  const a = 1 - ez((k - .7) / .3);
+  if (a <= 0) return;
+  c.save(); c.globalAlpha *= a;
+  c.strokeStyle = 'rgba(220,255,220,.55)'; c.lineWidth = 1.6; c.lineCap = 'round';
+  for (let i = 0; i < 3; i++) { const r = 14 + i * 8 + k * 20, a0 = k * 9 + i * 2; c.beginPath(); c.ellipse(0, 10 - i * 7, r, r * .38, 0, a0, a0 + 2.2); c.stroke(); }
+  for (let i = 0; i < 20; i++) {
+    const an = i / 20 * TAU + k * 8 + (i % 3), r = 10 + ez(k / .6) * 30 + (i % 4) * 3 + (k > .6 ? (k - .6) * 60 : 0);
+    const x = Math.cos(an) * r, y = 14 - (i % 5) * 7 + Math.sin(an) * r * .38 - k * 14, rot = an + k * 10;
+    c.save(); c.translate(x, y); c.rotate(rot); const s = .9 + (i % 3) * .2;
+    c.beginPath(); c.moveTo(-6 * s, 0); c.quadraticCurveTo(0, -3.4 * s, 6 * s, 0); c.quadraticCurveTo(0, 3.4 * s, -6 * s, 0); c.closePath();
+    c.fillStyle = i % 3 === 0 ? '#9be07a' : i % 3 === 1 ? '#5fae4a' : '#3f8a36'; c.fill(); c.strokeStyle = INK; c.lineWidth = .8; c.stroke();
+    c.beginPath(); c.moveTo(-5 * s, 0); c.lineTo(5 * s, 0); c.strokeStyle = 'rgba(20,60,20,.6)'; c.lineWidth = .6; c.stroke();
+    c.restore();
+  }
+  c.restore();
+}
+// C 墨筆圓＋光芒：一筆畫出的墨色圓圈（禪圓），中心爆出放射光芒與衝擊波，墨點飛濺
+function poofInk(c, k) {
+  const a = 1 - ez((k - .7) / .3);
+  if (a <= 0) return;
+  c.save(); c.globalAlpha *= a;
+  const sweep = ez(k / .45) * TAU * .92, R = 30;
+  for (let i = 0; i < 40; i++) {   // 筆畫：起筆粗、收筆細
+    const t0 = i / 40, t1 = (i + 1) / 40; if (t0 * TAU * .92 > sweep) break;
+    const a0 = -2.2 + t0 * TAU * .92, a1 = -2.2 + Math.min(t1 * TAU * .92, sweep);
+    c.beginPath(); c.arc(0, 6, R + Math.sin(i * 1.7) * .8, a0, a1); c.strokeStyle = INK; c.lineWidth = 6.5 * (1 - t0 * .75); c.lineCap = 'round'; c.stroke();
+  }
+  if (k > .3) {   // 放射光芒＋衝擊波
+    const q = ez((k - .3) / .4);
+    for (let i = 0; i < 12; i++) { const an = i / 12 * TAU + .13, r0 = 6 + q * 10, r1 = 14 + q * 34; c.beginPath(); c.moveTo(Math.cos(an - .05) * r0, 6 + Math.sin(an - .05) * r0); c.lineTo(Math.cos(an) * r1, 6 + Math.sin(an) * r1); c.lineTo(Math.cos(an + .05) * r0, 6 + Math.sin(an + .05) * r0); c.fillStyle = i % 2 ? 'rgba(255,236,170,.95)' : 'rgba(255,255,255,.95)'; c.fill(); }
+    c.strokeStyle = `rgba(255,255,255,${.9 * (1 - q)})`; c.lineWidth = 3 * (1 - q) + .5; aCirc(c, 0, 6, 10 + q * 36); c.stroke();
+    bossGlow(c, 0, 6, 26 * (1 - q * .5), 'rgba(255,240,190,.7)');
+  }
+  c.fillStyle = INK;   // 墨點飛濺
+  for (let i = 0; i < 9; i++) { const an = i * 2.4, d = R + 4 + ez(k / .5) * (8 + (i % 3) * 6); aCirc(c, Math.cos(an) * d, 6 + Math.sin(an) * d, 1.2 + (i % 3) * .8); c.fill(); }
+  c.restore();
+}
+const DPR = 2; cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.scale(DPR, DPR);
+const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#2f8a4c'); bg.addColorStop(1, '#14522c'); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+for (let x = 20; x < W; x += 70) { ctx.fillStyle = 'rgba(100,200,110,.25)'; ctx.fillRect(x, 0, 14, H); }
+txt('現身／消失特效提案（左→右：時間順序；主角從特效中現身）', 24, 26, 18, '#ffe28a', 'left', '#000', 4);
+const ROWS = [['A　卡通煙霧「咚」', poofSmoke], ['B　木葉旋風', poofLeaves], ['C　墨筆圓＋光芒', poofInk]];
+const KS = [.12, .3, .5, .75, 1];
+ROWS.forEach(([name, fx], r) => {
+  const y = 130 + r * 185;
+  txt(name, 24, y - 70, 16, '#ffffff', 'left', '#000', 4);
+  KS.forEach((k, i) => {
+    const x = 150 + i * 175;
+    ctx.save(); ctx.translate(x, y); ctx.scale(1.8, 1.8);
+    const hk = ez((k - .35) / .35);   // 主角在特效中段現身
+    if (hk > 0) { ctx.save(); ctx.translate(0, 6); ctx.scale(hk, hk); ctx.translate(0, -6); drawHeroNinja(0, 32, { face: 1, t: .4, vy: 0, skin: 0 }, ctx); ctx.restore(); }
+    fx(ctx, k);
+    ctx.restore();
+  });
+});
+</script>
