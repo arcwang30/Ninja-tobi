@@ -14,7 +14,10 @@ const INTRO = {
     // 預覽用：網址加 ?cutshot=秒數 會停在過場的那一刻（截圖檢查用）
     const q = new URLSearchParams(location.search).get('cutshot');
     if (q !== null && !isNaN(+q)) { this.ph = 'cut'; this.t = +q; this.frozen = true; const b = $('boot'); if (b) b.remove(); }
+    if (new URLSearchParams(location.search).has('still')) document.head.insertAdjacentHTML('beforeend', '<style>*,*::before,*::after{animation-duration:0s!important;animation-delay:0s!important;transition:none!important}</style>');   // 開發用：?still 讓 CSS 動畫直接跳到結束畫面（截圖用）
+    const bg0 = new URLSearchParams(location.search).get('bg'); if (bg0 !== null) TB.cur = +bg0;   // 開發用：?bg=0～3 固定標題背景的幕
     if (new URLSearchParams(location.search).has('skip')) this.toTitle();   // 開發用：網址加 ?skip 直接到標題
+    if (new URLSearchParams(location.search).has('still')) this.flash = 0;
     const op = new URLSearchParams(location.search).get('open');   // 開發用：?open=help(,頁) ／ credit → 直接打開說明或製作名單
     if (op) { this.toTitle(); const [w, pg] = op.split(','); if (w === 'help') { helpPg = +pg || 0; openHelp(); } else openSub(w); const b = $('boot'); if (b) b.remove(); }
     // 開發用：?slashshot=敵人種類,第幾刀,這一刀經過秒數 → 停在斬擊特寫的那一刻（截圖檢查用）

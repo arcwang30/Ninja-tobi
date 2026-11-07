@@ -1631,6 +1631,7 @@ function dockGlyph(c, k, col, lw = 3.6) {
 function dockPlate(kind, size = 220) {
   const cnv = document.createElement('canvas'); cnv.width = cnv.height = size;
   const c = cnv.getContext('2d'); c.scale(size / 100, size / 100);
+  if (DOCK_STYLE !== 'plate') { DOCK_STYLES[DOCK_STYLE](c, kind); return cnv; }   // 手裡劍徽章＋框（B1／B2／B3）
   // 布帶（深藍，橫過金屬板後面）
   c.fillStyle = '#2a3a6a'; c.beginPath(); c.moveTo(0, 38); c.quadraticCurveTo(50, 30, 100, 38); c.lineTo(100, 64); c.quadraticCurveTo(50, 56, 0, 64); c.closePath(); c.fill(); aInk(c, 2);
   c.strokeStyle = 'rgba(255,255,255,.12)'; c.lineWidth = 1; for (let x = 6; x < 100; x += 8) { c.beginPath(); c.moveTo(x, 38); c.lineTo(x, 62); c.stroke(); }
@@ -1787,3 +1788,45 @@ function drawYamaTengu(t, e, look) {
   if (fl && typeof drawSil === 'function') drawSil(0, 0, 150, 150, 75, 85, 'rgba(255,255,255,.85)', draw);
   c.restore();
 }
+
+// ===== 底部選單：手裡劍徽章＋框（B1 鋼框方牌／B2 金環圓徽／B3 朱漆八角框）；網址 ?dock=b1|b2|b3 可預覽 =====
+let DOCK_STYLE = new URLSearchParams(location.search).get('dock') || 'plate';
+function dkShuriken(c, x, y, R, r) {
+  c.save(); c.translate(x, y); c.rotate(Math.PI / 4);
+  c.beginPath(); for (let i = 0; i < 8; i++) { const rr = i % 2 ? r : R, a = i * Math.PI / 4; c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } c.closePath();
+  const sg = c.createLinearGradient(-R, -R, R, R); sg.addColorStop(0, '#f2f5fa'); sg.addColorStop(1, '#78828f'); c.fillStyle = sg; c.fill(); aInk(c, 2.4);
+  c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1; for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; c.beginPath(); c.moveTo(Math.cos(a) * r * 1.2, Math.sin(a) * r * 1.2); c.lineTo(Math.cos(a) * R * .85, Math.sin(a) * R * .85); c.stroke(); }
+  c.restore();
+}
+function dkBadge(c, k, x, y, r) { aCirc(c, x, y, r); c.fillStyle = '#20262c'; c.fill(); aInk(c, 2.2); c.save(); c.translate(x, y); c.scale(r / 21, r / 21); dockGlyph(c, k, '#ffd25a', 3.4); c.restore(); }
+function dkRibbon(c, k, y, col = '#c0262d') {
+  c.beginPath(); c.moveTo(12, y - 8); c.lineTo(88, y - 8); c.lineTo(82, y); c.lineTo(88, y + 8); c.lineTo(12, y + 8); c.lineTo(18, y); c.closePath(); c.fillStyle = col; c.fill(); aInk(c, 2);
+  const s = L(DOCK_LABEL[k]); let fs = 14; c.font = `900 ${fs}px ${FONT}`; while (c.measureText(s).width > 58 && fs > 8) { fs -= .5; c.font = `900 ${fs}px ${FONT}`; }
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff'; c.fillText(s, 50, y + .5);
+}
+const DOCK_STYLES_LIST = [
+  ['B1　鋼框方牌', '深色鐵框方牌、四角金鉚釘，裡面是手裡劍徽章，下方紅布條寫字', (c, k) => {
+    aRR(c, 3, 3, 94, 94, 14); const fg = c.createLinearGradient(0, 3, 0, 97); fg.addColorStop(0, '#5a6270'); fg.addColorStop(1, '#2a3038'); c.fillStyle = fg; c.fill(); aInk(c, 3);
+    aRR(c, 10, 10, 80, 80, 9); c.fillStyle = '#1a2026'; c.fill(); c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = 1.4; c.stroke();
+    for (const [x, y] of [[9, 9], [91, 9], [9, 91], [91, 91]]) { aCirc(c, x, y, 3.4); c.fillStyle = '#e8b84a'; c.fill(); aInk(c, 1.2); }
+    dkShuriken(c, 50, 42, 34, 12); dkBadge(c, k, 50, 42, 15);
+    dkRibbon(c, k, 77);
+  }],
+  ['B2　金環圓徽', '粗金色圓環當框、內圈深藍，手裡劍和徽章在中間，布條橫過下緣', (c, k) => {
+    aCirc(c, 50, 46, 44); const rg = c.createLinearGradient(0, 2, 0, 90); rg.addColorStop(0, '#fff0a8'); rg.addColorStop(.5, '#e8b84a'); rg.addColorStop(1, '#9a6a1a'); c.fillStyle = rg; c.fill(); aInk(c, 3);
+    aCirc(c, 50, 46, 36); c.fillStyle = '#1e2a4a'; c.fill(); aInk(c, 2);
+    c.strokeStyle = 'rgba(122,74,16,.7)'; c.lineWidth = 1.2; for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; c.beginPath(); c.moveTo(50 + Math.cos(a) * 38, 46 + Math.sin(a) * 38); c.lineTo(50 + Math.cos(a) * 42, 46 + Math.sin(a) * 42); c.stroke(); }
+    dkShuriken(c, 50, 44, 30, 11); dkBadge(c, k, 50, 44, 13.5);
+    dkRibbon(c, k, 82);
+  }],
+  ['B3　朱漆八角框', '紅漆八角形外框、內緣一圈金線，像神社的額匾；文字在下方黑色帶上', (c, k) => {
+    const oct = (r, cy) => { c.beginPath(); for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; c.lineTo(50 + Math.cos(a) * r, cy + Math.sin(a) * r); } c.closePath(); };
+    oct(50, 50); const lg = c.createLinearGradient(0, 0, 0, 100); lg.addColorStop(0, '#e0463a'); lg.addColorStop(1, '#8e1c16'); c.fillStyle = lg; c.fill(); aInk(c, 3);
+    oct(41, 50); c.fillStyle = '#20180f'; c.fill(); c.strokeStyle = '#e8b84a'; c.lineWidth = 2.2; c.stroke();
+    dkShuriken(c, 50, 42, 28, 10); dkBadge(c, k, 50, 42, 12.5);
+    c.fillStyle = '#0e0e10'; c.fillRect(18, 66, 64, 15); c.strokeStyle = '#e8b84a'; c.lineWidth = 1.2; c.strokeRect(18, 66, 64, 15);
+    const s = L(DOCK_LABEL[k]); let fs = 13; c.font = `900 ${fs}px ${FONT}`; while (c.measureText(s).width > 58 && fs > 8) { fs -= .5; c.font = `900 ${fs}px ${FONT}`; }
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#ffe28a'; c.fillText(s, 50, 74);
+  }],
+];
+const DOCK_STYLES = { b1: DOCK_STYLES_LIST[0][2], b2: DOCK_STYLES_LIST[1][2], b3: DOCK_STYLES_LIST[2][2] };
