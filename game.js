@@ -232,21 +232,27 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v26';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v27';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
 let DIAG = '';
+let APPFIX = { w: 0, full: 0, gap: 0 };   // iOS 主畫面模式的高度修正（只增不減，避免畫面來回跳）
 function resize() {
   const app = $('app');
   let vw = innerWidth, vh = innerHeight, gap = 0;
   const appMode = isAppMode();
   // iOS「加入主畫面」＋透明狀態列：回報的高度少了一段狀態列，畫面卻整個上移，底部會空一條黑邊。
   // 這時改用「100vh、螢幕實際高度」中最高的來排版，少掉的那段就是狀態列（瀏海）高度。
+  // 量到的高度會被「網頁長到全高」本身影響（長高後回報值變大、落差變 0，又縮回去……），一來一回畫面就會抖個不停。
+  // 所以同一個寬度下，量到過的最高值與落差都記住、只增不減，排版固定在補好的狀態（轉向、寬度改變時才重新量）。
   if (appMode && vw < vh) {
     const vp = $('vhProbe'), full = Math.max(vh, vp ? vp.offsetHeight : 0, IS_IOS ? Math.max(screen.height, screen.width) : 0);
-    if (full > vh) { gap = full - vh; vh = full; }
-  }
+    if (APPFIX.w !== vw) APPFIX = { w: vw, full: 0, gap: 0 };
+    APPFIX.full = Math.max(APPFIX.full, full);
+    APPFIX.gap = Math.max(APPFIX.gap, APPFIX.full - vh);
+    if (APPFIX.gap > 0) { gap = APPFIX.gap; vh = APPFIX.full; }
+  } else APPFIX = { w: 0, full: 0, gap: 0 };
   // 比 9:16 還寬的螢幕（iPad、橫向）：高度固定 640，把世界加寬到剛好填滿左右
   if (!W_LOCK) { W = vh / vw >= 640 / 360 ? 360 : clamp(640 * vw / vh, 360, 960); PL_MAX = W - WALL - 11; }
   // 依螢幕比例調整邏輯高度（640～900），長螢幕手機也能上下滿版
@@ -1783,7 +1789,7 @@ function drawKill() {
 // （標題＝夜空深綠、遊戲中＝HUD 深藍），避免頂端出現紅色霧罩
 let rootBg = '';
 function syncRootBg() {
-  const c = (state === 'menu' || !g) && INTRO.ph === 'title' ? '#0d2a2a' : state === 'menu' || !g ? '#000' : '#0a0d14';
+  const c = (state === 'menu' || !g) && INTRO.ph === 'title' ? '#161c1e' : state === 'menu' || !g ? '#000' : '#0a0d14';
   if (c === rootBg) return;
   rootBg = c;
   document.documentElement.style.background = document.body.style.background = c;
