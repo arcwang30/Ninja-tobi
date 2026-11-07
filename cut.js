@@ -15,6 +15,9 @@ const INTRO = {
     const q = new URLSearchParams(location.search).get('cutshot');
     if (q !== null && !isNaN(+q)) { this.ph = 'cut'; this.t = +q; this.frozen = true; const b = $('boot'); if (b) b.remove(); }
     if (new URLSearchParams(location.search).has('skip')) this.toTitle();   // 開發用：網址加 ?skip 直接到標題
+    // 開發用：?slashshot=敵人種類,第幾刀,這一刀經過秒數 → 停在斬擊特寫的那一刻（截圖檢查用）
+    const ss = new URLSearchParams(location.search).get('slashshot');
+    if (ss) { const [ty, n, lt] = ss.split(',').map(Number); this.toTitle(); save.seen = 2; startRun(); hideAll(); const e = mkEnemy(ty, W / 2, g.p.y - 120, 0); g.enemies.push(e); g.slash = { e, t: .5, dur: 9, lines: n ? [{ a: .6, t: lt, off: 0 }] : [], n, nextL: 9, frozen: true }; state = 'slash'; const b = $('boot'); if (b) b.remove(); }
   },
   // 進入過場（重看開場也從這裡開始）
   playCut() { hideAll(); this.ph = 'cut'; this.t = 0; this.said = -1; this.sfx = {}; },

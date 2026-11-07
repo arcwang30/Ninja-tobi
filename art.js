@@ -209,7 +209,10 @@ function drawFoeNinja(type, t, e, look, near) {
   // 臉（面罩開口）與大眼睛：朝向玩家
   aEll(c, 4, HY + 3.5, 11, 6.8); c.fillStyle = P.skin; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.3; c.stroke();
   const blink = e && aBlink(t, seed), ey = HY + 3.5, glow = type === 6 && !fl ? P.eye : null;
-  foeEye(c, -.5, ey, 3, 3.9, P, warn, blink, glow); foeEye(c, 8.5, ey, 3.2, 4.1, P, warn, blink, glow);
+  if (e && e.hurt) {   // 受擊（斬擊特寫）：眼睛變成 ＞＜
+    c.strokeStyle = INK; c.lineWidth = 1.8; c.lineCap = 'round';
+    for (const [ex, sd] of [[-.5, 1], [8.5, -1]]) { c.beginPath(); c.moveTo(ex - sd * 2.6, ey - 3); c.lineTo(ex + sd * 2.2, ey); c.lineTo(ex - sd * 2.6, ey + 3); c.stroke(); }
+  } else { foeEye(c, -.5, ey, 3, 3.9, P, warn, blink, glow); foeEye(c, 8.5, ey, 3.2, 4.1, P, warn, blink, glow); }
   // 眉毛：生氣的斜線（內側壓低）；警戒時更斜
   const ang = warn || alarm ? 1.4 : .6;
   c.strokeStyle = INK; c.lineWidth = 1.7; c.lineCap = 'round';
@@ -270,7 +273,7 @@ function drawCrow(t, e, fl) {
       after: c => { if (fl) return; c.save(); aCirc(c, 5, -2.5, 8.5); c.clip(); c.fillStyle = '#d8323c'; c.fillRect(-4, -8.5, 18, 2.4); c.restore(); } },
   ], 1.4);
   c.beginPath(); c.moveTo(12, -2.5); c.lineTo(18, 0); c.lineTo(12, 2); c.closePath(); aFI(c, fl ? '#fff' : '#f2c14e', 1.2);
-  foeEye(c, 8.5, -3, 2.6, 3, null, false, aBlink(t, e ? e.bx || 0 : 0), fl ? null : '#ff3a3a');
+  foeEye(c, 8.5, -3, 2.6, 3, null, false, (e && e.hurt) || aBlink(t, e ? e.bx || 0 : 0), fl ? null : '#ff3a3a');
   c.beginPath(); c.moveTo(5.8, -7.4); c.lineTo(11, -6); c.strokeStyle = INK; c.lineWidth = 1.5; c.stroke();
   // 前翅（羽毛尖）
   c.beginPath(); c.moveTo(2, -1); c.quadraticCurveTo(-2, -14 - w * 9, -9, -16 - w * 11); c.lineTo(-5, -9 - w * 6); c.lineTo(-9, -8 - w * 7); c.lineTo(-3, -4 - w * 3); c.lineTo(-6, -3 - w * 3); c.lineTo(0, 2); c.closePath(); aFI(c, wing, 1.4);
@@ -308,7 +311,7 @@ function drawTengu(t, e, fl, big) {
   c.beginPath(); c.moveTo(-9, -8); c.quadraticCurveTo(-4.5, -12, 0, -7); c.lineTo(-1, -5); c.quadraticCurveTo(-4.5, -9, -9, -6); c.fill();
   c.beginPath(); c.moveTo(1.5, -7); c.quadraticCurveTo(6, -12, 10.5, -8); c.lineTo(10.5, -6); c.quadraticCurveTo(6, -9, 2.5, -5); c.fill();
   // 大眼睛
-  const bl = aBlink(t, e ? e.x || 0 : 0);
+  const bl = (e && e.hurt) || aBlink(t, e ? e.x || 0 : 0);
   foeEye(c, -4, -1.5, 3, 3.6, null, e && e.warn, bl); foeEye(c, 5.5, -1.5, 3, 3.6, null, e && e.warn, bl);
   // 長鼻子
   c.beginPath(); c.moveTo(-1, 2); c.quadraticCurveTo(6, 4.5, 14, 3); c.quadraticCurveTo(8, 7.5, -.5, 6.5); c.closePath(); aFI(c, fl ? '#fff' : '#e8584a', 1.3);
@@ -341,7 +344,7 @@ function drawOnibi(t, e, fl) {
   c.beginPath(); c.moveTo(-6, 6); c.quadraticCurveTo(-6, -3, f * .6, -10); c.quadraticCurveTo(6, -3, 6, 6); c.arc(0, 6, 6, 0, Math.PI); c.closePath();
   c.fillStyle = fl ? '#fff' : '#d4b8ff'; c.fill();
   // 臉
-  const bl = aBlink(t, e ? e.bx || 0 : 0);
+  const bl = (e && e.hurt) || aBlink(t, e ? e.bx || 0 : 0);
   foeEye(c, -3.2, 3.5, 2.6, 3.3, null, false, bl); foeEye(c, 3.6, 3.5, 2.6, 3.3, null, false, bl);
   if (!fl) { c.fillStyle = 'rgba(255,120,200,.4)'; aEll(c, -6.5, 7.5, 2, 1.1); c.fill(); aEll(c, 7, 7.5, 2, 1.1); c.fill(); }
   c.beginPath(); c.arc(.2, 8, 1.6, .2, Math.PI - .2); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
@@ -364,7 +367,7 @@ function drawSpider(t, e, fl) {
     { path: c => aCirc(c, 0, -4, 10.5), fill: body,
       after: c => { if (fl) return; c.save(); aCirc(c, 0, -4, 10.5); c.clip(); const gr = c.createRadialGradient(-4, -9, 1, 0, -4, 12); gr.addColorStop(0, '#6a5480'); gr.addColorStop(1, body); c.fillStyle = gr; c.fill(); c.restore(); } },
   ], 1.5);
-  const bl = aBlink(t, e ? e.bx || 0 : 0);
+  const bl = (e && e.hurt) || aBlink(t, e ? e.bx || 0 : 0);
   foeEye(c, -3.6, -4, 2.8, 3.4, null, warn, bl, fl ? null : '#ff3a4a'); foeEye(c, 3.6, -4, 2.8, 3.4, null, warn, bl, fl ? null : '#ff3a4a');
   if (!fl) { c.fillStyle = '#ff4a4a'; aCirc(c, -7.6, -8, 1.1); c.fill(); aCirc(c, 7.6, -8, 1.1); c.fill(); }   // 小眼睛
   c.beginPath(); c.moveTo(-2, 2.5); c.lineTo(-1, 4.6); c.moveTo(2, 2.5); c.lineTo(1, 4.6); c.strokeStyle = fl ? '#fff' : '#e8e0d0'; c.lineWidth = 1.3; c.stroke();   // 小獠牙
@@ -1142,6 +1145,48 @@ function drawHeroNinja(x, y, o, c = ctx, PR = HERO_PROP) {
     c.globalAlpha = .9; c.strokeStyle = '#ffffff'; c.lineWidth = 2; c.stroke(); c.restore();
   }
   if (o.slow > 0) { c.strokeStyle = '#c58aff'; c.lineWidth = 2; c.beginPath(); c.arc(x, (y + top) / 2, 32, t * 6, t * 6 + 4); c.stroke(); }
+}
+// 主角背影（斬擊特寫用）：從背後看到的大頭、頭巾結與飄動的布條、小身體；右手握刀，ang = 刀身方向（弧度）
+// 原點在腳底；比例與正面的「大福」相同
+function drawHeroBack(c, x, y, s, ang, t, skin = 0, from = null, trail = 0) {   // from＋trail：從 from 揮到 ang 的刀光（trail 是透明度）
+  const sk = SKINS[skin] || SKINS[0], PR = HERO_PROP, R = PR.hr, HY = PR.hy, BT = PR.bt, BB = PR.bb;
+  const C = { suit: sk.suit, dk: sk.dark, lt: heroLighten(sk.suit, .35), band: sk.band };
+  c.save(); c.translate(x, y); c.scale(s, s);
+  const sx = 4, sy = HY + 12;                                   // 右肩（握刀的手繞著它轉）
+  const hx = sx + Math.cos(ang) * 17, hy = sy + Math.sin(ang) * 17;
+  // 刀光殘影（揮刀的弧線）
+  if (trail > 0 && from !== null) {
+    c.save(); c.globalAlpha *= trail; c.fillStyle = 'rgba(255,255,255,.85)';
+    const a0 = from;
+    c.beginPath(); c.arc(sx, sy, 58, Math.min(a0, ang), Math.max(a0, ang)); c.arc(sx, sy, 30, Math.max(a0, ang), Math.min(a0, ang), true); c.closePath(); c.fill();
+    c.restore();
+  }
+  const fw = Math.sin(t * 14) * 3;
+  heroSilhouette(c, [
+    { path: c => { c.beginPath(); c.moveTo(-3, HY + 6); c.quadraticCurveTo(-14, HY + 22 + fw, -10, HY + 38 + fw); c.lineTo(-4, HY + 36 + fw); c.quadraticCurveTo(-6, HY + 22, 2, HY + 8); c.closePath(); }, fill: C.band },   // 圍巾尾
+    { path: c => aCirc(c, -15, sy + 10, 4.6), fill: C.dk },                                                     // 左手套
+    { path: c => aEll(c, -5, -1, 5, 3.4), fill: C.dk }, { path: c => aEll(c, 5, -1, 5, 3.4), fill: C.dk },       // 鞋
+    { path: c => { c.beginPath(); c.moveTo(-8, BT); c.quadraticCurveTo(0, BT - 4, 8, BT); c.quadraticCurveTo(10, BT + 6, 6, BB); c.quadraticCurveTo(0, BB + 2, -6, BB); c.quadraticCurveTo(-10, BT + 6, -8, BT); c.closePath(); }, fill: C.suit,
+      after: c => { c.save(); c.clip(); c.fillStyle = '#1e1e26'; c.fillRect(-12, BT + 4, 24, 3); c.restore(); } },
+    { path: c => { c.beginPath(); c.arc(0, HY, R, 0, TAU); c.moveTo(-6, HY - R + 2); c.quadraticCurveTo(0, HY - R - 10, 7, HY - R + 2); c.closePath(); }, fill: C.suit,   // 頭＋兜帽尖
+      after: c => { c.save(); c.beginPath(); c.arc(0, HY, R, 0, TAU); c.clip();
+        const gr = c.createRadialGradient(-7, HY - 10, 3, 0, HY, R * 1.15); gr.addColorStop(0, C.lt); gr.addColorStop(.6, C.suit); gr.addColorStop(1, C.dk); c.fillStyle = gr; c.fillRect(-R - 1, HY - R - 1, R * 2 + 2, R * 2 + 2);
+        c.fillStyle = C.band; c.fillRect(-R - 1, HY - 8, R * 2 + 2, 6); c.restore(); } },
+  ], 1.8);
+  // 頭巾結與兩條飄動的布條（背影最明顯的特徵）
+  for (const i of [0, 1]) {   // 兩條布條一起往左後方飄（衝刺時迎風）
+    const w = Math.sin(t * 13 + i * 1.7) * 3, ex = -18 - i * 7, ey = HY - 8 + i * 9 + w;
+    c.beginPath(); c.moveTo(-1, HY - 7); c.quadraticCurveTo(ex * .5, HY - 10 + i * 4 + w, ex, ey); c.lineTo(ex + 2, ey + 4.5); c.quadraticCurveTo(ex * .45, HY - 4 + i * 4 + w, 0, HY - 3); c.closePath(); aFI(c, C.band, 1.4);
+  }
+  aCirc(c, 0, HY - 5, 3.4); aFI(c, C.band, 1.4);
+  // 刀與握刀的手
+  c.save(); c.translate(hx, hy); c.rotate(ang);
+  c.beginPath(); c.moveTo(4, -2); c.quadraticCurveTo(26, -4, 46, -.5); c.lineTo(44, 2); c.quadraticCurveTo(24, 1, 4, 2); c.closePath();
+  const bg = c.createLinearGradient(0, -3, 0, 3); bg.addColorStop(0, '#ffffff'); bg.addColorStop(1, '#a8b2c0'); c.fillStyle = bg; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke();
+  c.fillStyle = '#d9a441'; c.fillRect(2, -3.4, 2.6, 6.8); c.fillStyle = '#3a2a40'; c.fillRect(-7, -1.8, 9, 3.6);
+  c.restore();
+  aCirc(c, hx, hy, 5); aFI(c, C.dk, 1.8);
+  c.restore();
 }
 // 標題大圖與商店頭像：在獨立畫布上畫一張大的主角
 function heroPortrait(skin, size) {

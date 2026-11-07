@@ -232,7 +232,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v29';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v30';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -1206,6 +1206,7 @@ function startDive() {
 
 function updateSlash(dt) {
   const s = g.slash;
+  if (s.frozen) return;   // 預覽截圖用（cut.js 的 ?slashshot）
   s.t += dt; s.nextL -= dt;
   if (s.nextL <= 0 && s.t < s.dur - .08) {
     s.nextL = .09; s.n++;
@@ -1719,9 +1720,23 @@ function drawSlash() {
   const s = g.slash;
   ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(0, 0, W, H);
   speedLines(s.t * 10);
-  ctx.save(); ctx.translate(rnd(-3, 3), rnd(-3, 3));
-  drawEnemy(W / 2, H / 2, s.e.type, 3, s.t);
+  // 最近一刀：揮刀方向左右交替；敵人受擊＝閃白、往刀的方向被打退、壓扁回彈、眼睛變 ＞＜
+  const last = s.lines[s.lines.length - 1], lt = last ? last.t : 1, d = s.n % 2 ? 1 : -1;
+  const u = Math.min(1, lt / .07), eu = 1 - (1 - u) * (1 - u);
+  const kb = last ? (1 - Math.min(1, lt / .16)) * 18 : 0, sq = last ? 1 - Math.min(1, lt / .12) : 0;
+  const ex = W / 2 + 18 + d * kb, ey = H * .42 - kb * .35;
+  ctx.save(); ctx.translate(ex + rnd(-2, 2), ey + rnd(-2, 2)); ctx.scale(1 + sq * .16, 1 - sq * .12);
+  drawEnemy(0, 0, s.e.type, 3, s.t, { flash: last && lt < .06 ? 1 : 0, hurt: !!last, look: -1, bx: s.e.bx, x: s.e.x });
   ctx.restore();
+  if (last && lt < .14) {   // 命中的火花
+    const k = lt / .14; ctx.save(); ctx.translate(ex - d * 10, ey - 6); ctx.rotate(last.a); ctx.globalAlpha = 1 - k;
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, r1 = 10 + k * 30, r2 = 26 + k * 50; ctx.strokeStyle = i % 2 ? '#ffe28a' : '#fff'; ctx.lineWidth = 4 - k * 3; ctx.beginPath(); ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1); ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2); ctx.stroke(); }
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
+  if (last) for (let i = 0; i < 3; i++) { const a = s.t * 6 + i * 2.1; drawStar4(ctx, ex + Math.cos(a) * 46, ey - 70 + Math.sin(a) * 12, 6, s.t * 8, '#ffe28a'); }   // 頭上轉圈的星星
+  // 主角背影：在畫面左下方往前揮刀（揮刀時往敵人方向衝一點）
+  const A0 = d > 0 ? -2.7 : -.35, A1 = d > 0 ? .05 : -3.05, ang = last ? A0 + (A1 - A0) * eu : -2.3;
+  drawHeroBack(ctx, W * .3 + eu * 10 * (last ? 1 : 0), H * .99 - eu * 8, 2.8, ang, s.t, save.skin, A0, last ? 1 - Math.min(1, lt / .14) : 0);
   for (const l of s.lines) {
     const a = Math.max(0, 1 - l.t * 3); if (a <= 0) continue;
     ctx.save(); ctx.translate(W / 2, H / 2 + l.off); ctx.rotate(l.a);
