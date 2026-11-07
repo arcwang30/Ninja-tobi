@@ -1,0 +1,124 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>大天狗 面具版</title>
+<style>html, body { margin: 0; background: #1d3a4a; } canvas { display: block; } #title { display: none; }</style>
+<canvas id="cv"></canvas><div id="title"></div><div id="intro"></div>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), $ = id => document.getElementById(id);
+const INK = '#0e1414', g = null, WALL = 14, FONT = '"Noto Sans TC","Microsoft JhengHei",sans-serif';
+let W = 960, H = 640, SAFE_T = 0;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const save = { skin: 0 }, SFX = new Proxy({}, { get: () => () => {} }), tone = () => {}, noise = () => {};
+function txt(s, x, y, size, color = '#fff', align = 'center', stroke = '#000', lw = 4) { ctx.font = `900 ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle'; if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); } ctx.fillStyle = color; ctx.fillText(s, x, y); }
+</script>
+<script src="../art.js"></script>
+<script src="../cut.js"></script>
+<script src="tengu-lib.js"></script>
+<script>
+'use strict';
+/* 大天狗・面具版三案（參考圖：大大的紅色天狗面具蓋住整張臉、面具後面露出頭和耳朵、頭襟、白道服、黑翼、羽扇與木杖）
+   原點在身體中心；面具在 (0,-34)，臉朝左（朝向玩家時會左右翻） */
+const MX = 0, MY = -34;
+const SKIN = '#f4c8a0';
+// 天狗面具：橢圓紅面、金邊、額頭皺紋、濃黑亂眉、圓滾滾的大眼、小黃瓜形長鼻（朝左）、八字鬍與下垂的嘴
+function tenguMask(c, o = {}) {
+  const red = o.red || '#d8322a';
+  aEll(c, MX, MY, 21, 26); c.fillStyle = bossBall(c, MX - 4, MY - 6, 26, '#ff6a52', red, '#8a1612'); c.fill(); aInk(c, 2.4);
+  aEll(c, MX, MY, 21, 26); c.strokeStyle = o.rim || '#c89a3a'; c.lineWidth = 1.4; c.save(); c.clip(); c.lineWidth = 3; aEll(c, MX, MY, 20, 25); c.stroke(); c.restore();
+  c.strokeStyle = 'rgba(90,10,10,.6)'; c.lineWidth = 1.2; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(MX - 8 + i, MY - 18 + i * 3); c.quadraticCurveTo(MX, MY - 21 + i * 3, MX + 8 - i, MY - 18 + i * 3); c.stroke(); }   // 額頭皺紋
+  // 濃黑亂眉（內側往下壓）
+  c.fillStyle = INK;
+  for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(MX + sd * 2, MY - 9); for (let i = 0; i <= 5; i++) { const x = MX + sd * (3 + i * 3), y = MY - 12 - i * 1.6 + (i % 2 ? -2.4 : 0); c.lineTo(x, y); } c.lineTo(MX + sd * 18, MY - 13); c.quadraticCurveTo(MX + sd * 10, MY - 9, MX + sd * 3, MY - 6); c.closePath(); c.fill(); }
+  // 圓滾滾的大眼（白眼＋黑瞳＋亮點），瞳孔看向左前方
+  for (const sd of [-1, 1]) { aCirc(c, MX + sd * 8, MY - 2, 5.4); c.fillStyle = '#fff'; c.fill(); aInk(c, 1.6); aCirc(c, MX + sd * 8 - 1.4, MY - 1.6, 3.2); c.fillStyle = INK; c.fill(); aCirc(c, MX + sd * 8 - 2.2, MY - 3, 1.1); c.fillStyle = '#fff'; c.fill(); }
+  // 嘴：下垂的苦臉＋八字鬍＋下巴小鬚
+  c.strokeStyle = INK; c.lineWidth = 2; c.beginPath(); c.moveTo(MX - 8, MY + 15); c.quadraticCurveTo(MX, MY + 10, MX + 8, MY + 15); c.stroke();
+  c.fillStyle = INK; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(MX + sd * 1, MY + 9); c.quadraticCurveTo(MX + sd * 9, MY + 6, MX + sd * 14, MY + 12); c.quadraticCurveTo(MX + sd * 11, MY + 9.5, MX + sd * 9, MY + 11); c.quadraticCurveTo(MX + sd * 5, MY + 10, MX + sd * 1, MY + 11.5); c.closePath(); c.fill(); }
+  if (o.beard) { c.beginPath(); c.moveTo(MX - 9, MY + 18); c.quadraticCurveTo(MX - 6, MY + 40, MX + 1, MY + 50); c.quadraticCurveTo(MX + 6, MY + 38, MX + 9, MY + 18); c.quadraticCurveTo(MX, MY + 22, MX - 9, MY + 18); c.fillStyle = '#f4f6fa'; c.fill(); aInk(c, 1.6); c.strokeStyle = 'rgba(150,165,185,.6)'; c.lineWidth = 1; for (const x of [-4, 0, 4]) { c.beginPath(); c.moveTo(MX + x, MY + 22); c.quadraticCurveTo(MX + x * 1.2, MY + 34, MX + x * .5, MY + 44); c.stroke(); } }
+  else { c.beginPath(); c.moveTo(MX - 3, MY + 18); c.lineTo(MX, MY + 25); c.lineTo(MX + 3, MY + 18); c.closePath(); c.fill(); }
+  // 小黃瓜形長鼻（從兩眼之間往左伸出、略微下垂，前端圓頭）
+  c.save(); c.translate(MX - 1, MY + 3); c.rotate(Math.PI + .12);
+  aRR(c, -3, -4.6, 31, 9.2, 4.6); const ng = c.createLinearGradient(0, -5, 0, 5); ng.addColorStop(0, '#ff7a62'); ng.addColorStop(.5, '#e0402e'); ng.addColorStop(1, '#a02218'); c.fillStyle = ng; c.fill(); aInk(c, 2);
+  c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1.6; c.lineCap = 'round'; c.beginPath(); c.moveTo(5, 2.4); c.lineTo(24, 2.4); c.stroke();
+  c.restore();
+}
+// 面具後面露出的頭（光頭、耳朵、綁面具的黑帶）＋頭襟
+function headBehind(c, o = {}) {
+  aCirc(c, MX + 6, MY - 2, 21); c.fillStyle = o.hair || SKIN; c.fill(); aInk(c, 2.2);
+  c.strokeStyle = INK; c.lineWidth = 4; c.beginPath(); c.moveTo(MX + 10, MY - 10); c.quadraticCurveTo(MX + 24, MY - 6, MX + 26, MY + 2); c.stroke();   // 綁帶
+  aEll(c, MX + 24, MY + 4, 4, 5.6); c.fillStyle = SKIN; c.fill(); aInk(c, 1.8); c.strokeStyle = 'rgba(160,90,60,.6)'; c.lineWidth = 1; c.beginPath(); c.arc(MX + 24, MY + 4, 2.4, -1, 1.5); c.stroke();   // 耳朵
+}
+function tokinTop(c, o = {}) {
+  c.save(); c.translate(MX + 1, MY - 26);
+  c.beginPath(); c.moveTo(-13, 6); c.lineTo(-11, -6); c.lineTo(0, -11); c.lineTo(11, -6); c.lineTo(13, 6); c.quadraticCurveTo(0, 9, -13, 6); c.closePath(); aFI(c, '#1c1c22', 2);
+  c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.moveTo(-9, -5); c.lineTo(0, -9); c.lineTo(-2, -3); c.closePath(); c.fill();
+  c.fillStyle = o.crest || '#e8b84a'; c.beginPath(); c.moveTo(-4, 1); c.lineTo(-3, -3); c.lineTo(-1, -1); c.lineTo(0, -4); c.lineTo(1, -1); c.lineTo(3, -3); c.lineTo(4, 1); c.closePath(); c.fill();
+  c.restore();
+}
+// 道服身體：交領、黑腰帶打結、寬袖、短袴、綁腿、木屐
+function dogi(c, o) {
+  heroSilhouette(c, [
+    ...[-1, 1].map(sd => ({ path: c => { c.beginPath(); c.moveTo(sd * 12, -10); c.quadraticCurveTo(sd * 26, -8, sd * 27, 10); c.lineTo(sd * 19, 14); c.quadraticCurveTo(sd * 15, 4, sd * 11, 0); c.closePath(); }, fill: o.col })),
+    { path: c => { c.beginPath(); c.moveTo(-14, -12); c.quadraticCurveTo(0, -15, 14, -12); c.lineTo(16, 14); c.lineTo(-16, 14); c.closePath(); }, fill: o.col },
+    { path: c => { c.beginPath(); c.moveTo(-16, 12); c.lineTo(16, 12); c.lineTo(17, 24); c.lineTo(2, 24); c.lineTo(0, 18); c.lineTo(-2, 24); c.lineTo(-17, 24); c.closePath(); }, fill: o.hakama },
+  ], 2);
+  if (o.vest) { c.fillStyle = o.vest; c.beginPath(); c.moveTo(-14, -12); c.lineTo(-5, -12); c.lineTo(-5, 10); c.lineTo(-15, 10); c.closePath(); c.fill(); c.beginPath(); c.moveTo(14, -12); c.lineTo(5, -12); c.lineTo(5, 10); c.lineTo(15, 10); c.closePath(); c.fill(); }
+  c.strokeStyle = INK; c.lineWidth = 1.6; c.beginPath(); c.moveTo(-7, -13); c.lineTo(3, 2); c.moveTo(7, -13); c.lineTo(-1, -3); c.stroke();   // 交領
+  c.fillStyle = o.inner || '#2a2a30'; c.beginPath(); c.moveTo(-4, -13); c.lineTo(1, -5); c.lineTo(4, -13); c.closePath(); c.fill();
+  aRR(c, -16, 5, 32, 5, 1.5); aFI(c, o.belt, 1.3);
+  c.save(); c.translate(-3, 9); c.fillStyle = o.belt; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(0, 0); c.lineTo(sd * 4, 9); c.lineTo(sd * 1, 9); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); } c.restore();
+  for (const sd of [-1, 1]) { c.save(); c.translate(sd * 7, 25); aRR(c, -3.6, 0, 7.2, 7, 1.5); aFI(c, '#5a4a3a', 1.3); c.restore(); geta1(c, sd * 7, 34, 1.15); }
+}
+function featherBundle(c, x, y, s, rot, cols) {   // 參考圖裡的羽扇：幾根大羽毛綁在木柄上
+  c.save(); c.translate(x, y); c.rotate(rot); c.scale(s, s);
+  c.beginPath(); c.rect(-1.4, 0, 2.8, 20); aFI(c, '#8a5a2a', 1.2);
+  for (let i = 0; i < 4; i++) { const a = -Math.PI / 2 + (i - 1.5) * .32; c.save(); c.rotate(a + Math.PI / 2); c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-6, -12, 0, -24); c.quadraticCurveTo(6, -12, 0, 0); c.fillStyle = cols[i % cols.length]; c.fill(); aInk(c, 1.2); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = .8; c.beginPath(); c.moveTo(0, -2); c.lineTo(0, -21); c.stroke(); for (let j = 0; j < 4; j++) { c.beginPath(); c.moveTo(0, -6 - j * 4); c.lineTo(j % 2 ? 3 : -3, -9 - j * 4); c.stroke(); } c.restore(); }
+  c.restore();
+}
+const hand = (c, x, y) => { aCirc(c, x, y, 4.6); aFI(c, SKIN, 1.6); };
+const woodStaff = (c, x, y0, y1) => { c.strokeStyle = INK; c.lineWidth = 4.4; c.beginPath(); c.moveTo(x, y0); c.lineTo(x + 3, y1); c.stroke(); c.strokeStyle = '#a8763a'; c.lineWidth = 2.6; c.stroke(); };
+const DESIGNS = [
+  ['A　修行天狗（參考圖風格）', '紅色天狗面具蓋住整張臉：濃黑亂眉、圓滾滾大眼、八字鬍和小黃瓜長鼻；面具後露出光頭與耳朵，戴頭襟；白道服黑腰帶、黑翼，一手羽扇一手木杖', (c, t) => {
+    const fl = Math.sin(t * 4);
+    c.save(); c.translate(0, -6); wing(c, -1, 40, 36, 6, '#16171e', '#3a3e56', fl * .4); wing(c, 1, 40, 36, 6, '#16171e', '#3a3e56', fl * .4); c.restore();
+    woodStaff(c, 20, -6, 36);
+    dogi(c, { col: '#f6f6f2', hakama: '#ececea', belt: '#1c1c22' });
+    headBehind(c); tenguMask(c); tokinTop(c);
+    featherBundle(c, -22, 4, 1, -.35, ['#8a6a4a', '#e8e0d0', '#6a4a2a']); hand(c, -21, 6); hand(c, 20, 6);
+  }],
+  ['B　山伏天狗', '同樣的大面具加上金色邊框；深藍山伏背心配橘色梵天球、紫色袈裟；白羽團扇與金環錫杖，翅膀更大更有氣勢', (c, t) => {
+    const fl = Math.sin(t * 4);
+    c.save(); c.translate(0, -6); wing(c, -1, 48, 42, 7, '#16171e', '#3a3e56', fl * .4); wing(c, 1, 48, 42, 7, '#16171e', '#3a3e56', fl * .4); c.restore();
+    staff(c, 20, 34, 24, -30);
+    dogi(c, { col: '#f6f6f2', hakama: '#3a2a5a', belt: '#7a3aa8', vest: '#2a3a6a' });
+    for (const y of [-6, 2]) for (const sd of [-1, 1]) bonten(c, sd * 9, y, 2.8, '#ff8a2a');
+    headBehind(c); tenguMask(c, { rim: '#ffd25a' }); tokinTop(c, { crest: '#ffd25a' });
+    featherFan(c, -22, 2, .7, -.4, '#ffffff', '#e8eef4'); hand(c, -21, 6); hand(c, 21, 6);
+  }],
+  ['C　長老天狗', '面具下垂著一大把白色長鬚，頭後是白色長髮；穿深紅色和服與金色袈裟，羽扇高舉、木杖拄地，像天狗一族的老大', (c, t) => {
+    const fl = Math.sin(t * 4);
+    c.save(); c.translate(0, -6); wing(c, -1, 44, 40, 7, '#16171e', '#3a3e56', fl * .4); wing(c, 1, 44, 40, 7, '#16171e', '#3a3e56', fl * .4); c.restore();
+    c.fillStyle = '#f4f6fa'; c.beginPath(); c.moveTo(MX + 8, MY - 18); c.quadraticCurveTo(MX + 34, MY - 6, MX + 30, MY + 30); c.quadraticCurveTo(MX + 22, MY + 20, MX + 16, MY + 4); c.closePath(); c.fill(); aInk(c, 1.6);   // 白長髮
+    woodStaff(c, 22, -10, 36);
+    dogi(c, { col: '#8e1c22', hakama: '#5a1218', belt: '#e8b84a', inner: '#f4f0e4' });
+    c.fillStyle = '#e8b84a'; c.beginPath(); c.moveTo(-14, -12); c.lineTo(-8, -13); c.lineTo(16, 10); c.lineTo(10, 12); c.closePath(); c.fill(); aInk(c, 1.2);   // 金色袈裟
+    headBehind(c, { hair: '#f4f6fa' }); tenguMask(c, { beard: 1 }); tokinTop(c);
+    featherBundle(c, -24, -8, 1.1, -.6, ['#ffffff', '#e8e0d0', '#c8b898']); hand(c, -22, -6); hand(c, 22, 4);
+  }],
+];
+const DPR = 2; cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.scale(DPR, DPR);
+const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#2a4a6a'); bg.addColorStop(1, '#14283a'); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+txt('大天狗・面具版三案（依參考圖）', 24, 28, 20, '#ffe28a', 'left', '#000', 4);
+txt('大大的紅色天狗面具＋小黃瓜長鼻、頭襟、黑翼、羽扇與木杖；大圖＋遊戲中的實際大小', 24, 56, 13, '#c8d8e4', 'left', null);
+DESIGNS.forEach(([name, desc, fn], i) => {
+  const x = 160 + i * 320, y = 300;
+  ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.beginPath(); ctx.roundRect(x - 148, 76, 296, 548, 16); ctx.fill();
+  ctx.save(); ctx.translate(x, y); ctx.scale(2.55, 2.55); fn(ctx, .6 + i); ctx.restore();
+  txt(name, x, 480, 19, '#ffffff', 'center', '#000', 4);
+  ctx.font = `700 12.5px ${FONT}`; ctx.fillStyle = '#d6e2ea'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  let line = '', ly = 504; for (const ch of desc) { if (ctx.measureText(line + ch).width > 268) { ctx.fillText(line, x - 134, ly); line = ch; ly += 19; } else line += ch; } ctx.fillText(line, x - 134, ly);
+  txt('遊戲中大小', x + 90, 600, 11, 'rgba(255,255,255,.55)', 'center', null);
+  ctx.save(); ctx.translate(x + 30, 596); ctx.scale(.62, .62); fn(ctx, .6 + i); ctx.restore();
+});
+</script>
