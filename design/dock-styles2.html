@@ -1,0 +1,73 @@
+<!doctype html>
+<meta charset="utf-8"><title>底部選單：手裡劍徽章＋框</title>
+<style>html,body{margin:0;background:#161c1e}canvas{display:block}#title{display:none}</style>
+<canvas id="cv"></canvas><div id="title"></div><div id="intro"></div>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), $ = id => document.getElementById(id);
+const INK = '#0e1414', g = null, WALL = 14, FONT = '"Noto Sans TC","Noto Sans JP","Microsoft JhengHei",sans-serif';
+let W = 960, H = 640, SAFE_T = 0;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const save = { skin: 0 }, SFX = new Proxy({}, { get: () => () => {} }), tone = () => {}, noise = () => {};
+function txt(s, x, y, size, color = '#fff', align = 'center', stroke = '#000', lw = 4) { ctx.font = `900 ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle'; if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); } ctx.fillStyle = color; ctx.fillText(s, x, y); }
+</script>
+<script src="../lang.js"></script>
+<script src="../art.js"></script>
+<script>
+'use strict';
+/* B 案（手裡劍徽章）加上框的三種做法；每個圖示畫在 100×100 的方框裡 */
+const ITEMS = ['shop', 'rank', 'help', 'opt', 'credit'];
+function shuriken(c, x, y, R, r) {
+  c.save(); c.translate(x, y); c.rotate(Math.PI / 4);
+  c.beginPath(); for (let i = 0; i < 8; i++) { const rr = i % 2 ? r : R, a = i * Math.PI / 4; c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } c.closePath();
+  const sg = c.createLinearGradient(-R, -R, R, R); sg.addColorStop(0, '#f2f5fa'); sg.addColorStop(1, '#78828f'); c.fillStyle = sg; c.fill(); aInk(c, 2.4);
+  c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1; for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; c.beginPath(); c.moveTo(Math.cos(a) * r * 1.2, Math.sin(a) * r * 1.2); c.lineTo(Math.cos(a) * R * .85, Math.sin(a) * R * .85); c.stroke(); }
+  c.restore();
+}
+function badge(c, k, x, y, r) { aCirc(c, x, y, r); c.fillStyle = '#20262c'; c.fill(); aInk(c, 2.2); c.save(); c.translate(x, y); c.scale(r / 21, r / 21); dockGlyph(c, k, '#ffd25a', 3.4); c.restore(); }
+function ribbon(c, k, y, col = '#c0262d') {
+  c.beginPath(); c.moveTo(12, y - 8); c.lineTo(88, y - 8); c.lineTo(82, y); c.lineTo(88, y + 8); c.lineTo(12, y + 8); c.lineTo(18, y); c.closePath(); c.fillStyle = col; c.fill(); aInk(c, 2);
+  const s = L(DOCK_LABEL[k]); let fs = 14; c.font = `900 ${fs}px ${FONT}`; while (c.measureText(s).width > 58 && fs > 8) { fs -= .5; c.font = `900 ${fs}px ${FONT}`; }
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff'; c.fillText(s, 50, y + .5);
+}
+const STYLES = [
+  ['B1　鋼框方牌', '深色鐵框方牌、四角金鉚釘，裡面是手裡劍徽章，下方紅布條寫字', (c, k) => {
+    aRR(c, 3, 3, 94, 94, 14); const fg = c.createLinearGradient(0, 3, 0, 97); fg.addColorStop(0, '#5a6270'); fg.addColorStop(1, '#2a3038'); c.fillStyle = fg; c.fill(); aInk(c, 3);
+    aRR(c, 10, 10, 80, 80, 9); c.fillStyle = '#1a2026'; c.fill(); c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = 1.4; c.stroke();
+    for (const [x, y] of [[9, 9], [91, 9], [9, 91], [91, 91]]) { aCirc(c, x, y, 3.4); c.fillStyle = '#e8b84a'; c.fill(); aInk(c, 1.2); }
+    shuriken(c, 50, 42, 34, 12); badge(c, k, 50, 42, 15);
+    ribbon(c, k, 77);
+  }],
+  ['B2　金環圓徽', '粗金色圓環當框、內圈深藍，手裡劍和徽章在中間，布條橫過下緣', (c, k) => {
+    aCirc(c, 50, 46, 44); const rg = c.createLinearGradient(0, 2, 0, 90); rg.addColorStop(0, '#fff0a8'); rg.addColorStop(.5, '#e8b84a'); rg.addColorStop(1, '#9a6a1a'); c.fillStyle = rg; c.fill(); aInk(c, 3);
+    aCirc(c, 50, 46, 36); c.fillStyle = '#1e2a4a'; c.fill(); aInk(c, 2);
+    c.strokeStyle = 'rgba(122,74,16,.7)'; c.lineWidth = 1.2; for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; c.beginPath(); c.moveTo(50 + Math.cos(a) * 38, 46 + Math.sin(a) * 38); c.lineTo(50 + Math.cos(a) * 42, 46 + Math.sin(a) * 42); c.stroke(); }
+    shuriken(c, 50, 44, 30, 11); badge(c, k, 50, 44, 13.5);
+    ribbon(c, k, 82);
+  }],
+  ['B3　朱漆八角框', '紅漆八角形外框、內緣一圈金線，像神社的額匾；文字在下方黑色帶上', (c, k) => {
+    const oct = (r, cy) => { c.beginPath(); for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; c.lineTo(50 + Math.cos(a) * r, cy + Math.sin(a) * r); } c.closePath(); };
+    oct(50, 50); const lg = c.createLinearGradient(0, 0, 0, 100); lg.addColorStop(0, '#e0463a'); lg.addColorStop(1, '#8e1c16'); c.fillStyle = lg; c.fill(); aInk(c, 3);
+    oct(41, 50); c.fillStyle = '#20180f'; c.fill(); c.strokeStyle = '#e8b84a'; c.lineWidth = 2.2; c.stroke();
+    shuriken(c, 50, 42, 28, 10); badge(c, k, 50, 42, 12.5);
+    c.fillStyle = '#0e0e10'; c.fillRect(18, 66, 64, 15); c.strokeStyle = '#e8b84a'; c.lineWidth = 1.2; c.strokeRect(18, 66, 64, 15);
+    const s = L(DOCK_LABEL[k]); let fs = 13; c.font = `900 ${fs}px ${FONT}`; while (c.measureText(s).width > 58 && fs > 8) { fs -= .5; c.font = `900 ${fs}px ${FONT}`; }
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#ffe28a'; c.fillText(s, 50, 74);
+  }],
+];
+const DPR = 2; cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.scale(DPR, DPR);
+ctx.fillStyle = '#20262b'; ctx.fillRect(0, 0, W, H);
+txt('底部選單：B 手裡劍徽章＋框（三種）　左：放大看／右：手機上的實際大小（比現在再大一點）', 24, 24, 15, '#ffe28a', 'left', '#000', 4);
+STYLES.forEach(([name, desc, fn], r) => {
+  const y = 50 + r * 196;
+  const gr = ctx.createLinearGradient(0, y, 0, y + 182); gr.addColorStop(0, '#2a3236'); gr.addColorStop(1, '#161c1e'); ctx.fillStyle = gr; ctx.fillRect(12, y, W - 24, 182);
+  txt(name, 24, y + 18, 16, '#ffffff', 'left', '#000', 3);
+  ctx.font = `700 12px ${FONT}`; ctx.fillStyle = '#b8c4cc'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(desc, 170, y + 18);
+  ITEMS.forEach((k, i) => { ctx.save(); ctx.translate(24 + i * 106, y + 40); ctx.scale(1.0, 1.0); fn(ctx, k); ctx.restore(); });
+  // 手機上的底部選單（寬 360 的畫面，五格，每格約 66px）
+  ctx.save(); ctx.translate(560, y + 44); const dw = 380; const dg = ctx.createLinearGradient(0, 0, 0, 120); dg.addColorStop(0, '#2a3236'); dg.addColorStop(1, '#161c1e'); ctx.fillStyle = dg; ctx.fillRect(0, 0, dw, 104); ctx.fillStyle = INK; ctx.fillRect(0, 0, dw, 4);
+  ITEMS.forEach((k, i) => { ctx.save(); ctx.translate(8 + i * 74, 14); ctx.scale(.7, .7); fn(ctx, k); ctx.restore(); });
+  ctx.restore();
+  txt('實際大小', 760, y + 160, 11, 'rgba(255,255,255,.5)', 'center', null);
+});
+</script>
