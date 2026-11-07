@@ -18,6 +18,13 @@ function guessLang() {
 }
 
 const STR = {
+  // ---- 開場 ----
+  tap_start: ['點一下開始', 'タップしてスタート', 'TAP TO START'],
+  cut_skip: ['點一下跳過', 'タップでスキップ', 'Tap to skip'],
+  cut1: ['竹林之里，月圓之夜——', '竹林の里、満月の夜——', 'The Bamboo Village, on a night of the full moon—'],
+  cut2: ['鬼族奪走了守護村子的「秘傳之卷」……', '鬼の一族が、里を守る「秘伝の巻」を奪い去った……', 'The Oni clan stole the Secret Scroll that guarded the village...'],
+  cut3: ['「……交給我吧。」', '「……オレに任せろ。」', '"...Leave it to me."'],
+  replay: ['重看開場', 'オープニングを見る', 'Watch Opening'],
   // ---- 標題與選單 ----
   tagline: ['我が名は鳶、いざ参る！', '我が名は鳶、いざ参る！', 'I am Tobi. Here I come!'],
   start: ['開始修行', '修行開始', 'Start Training'],

@@ -59,21 +59,13 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 /* ===== 標題畫面：月夜竹林＋主角 ===== */
 #title {
   justify-content: space-between; padding: var(--sat) 0 0;
-  background:
-    linear-gradient(90deg, transparent 0 6%, #0f3a2c 6% 11%, transparent 11% 30%, #134a38 30% 34%, transparent 34% 72%, #0f3a2c 72% 78%, transparent 78% 90%, #134a38 90% 93%, transparent 93%),
-    radial-gradient(circle at 74% 20%, var(--moon) 0 15%, rgba(255,241,194,.18) 15.2% 23%, transparent 23.2%),
-    linear-gradient(var(--night), var(--night2));
+  background: none;   /* 夜空、滿月、竹林與主角剪影改由畫布繪製（cut.js 的 drawTitleBG） */
 }
-/* ===== 標題出場動畫（約 3.3 秒，加上 .play 時播放） =====
-   ① 0～0.5s LOGO 彈出；0.5～1.9s 忍者從左邊在 LOGO 上連跳三下往右出畫面
-   ② 1.9～2.5s LOGO 往上移到頂部
-   ③ 2.3～3.3s 忍術陣浮現 → 閃光煙霧 → 忍者放大現身，之後浮動 */
+/* ===== 標題出場動畫（約 1.7 秒，加上 .play 時播放；接在開場過場的白光之後） =====
+   ① 0～0.4s LOGO 像蓋章一樣砸下並震動　② 0.45～1.5s 忍術陣浮現 → 閃光煙霧 → 忍者放大現身，之後浮動　③ 1.2s 起選單淡入 */
 #title .logo { position: relative; z-index: 1; flex: 1; width: 100%; }
 .logo-box { position: absolute; left: 3%; width: 94%; aspect-ratio: 1180 / 447; top: 9%; }
 .logo-img { position: absolute; width: 116.95%; left: -8.47%; top: -34%; max-width: none; filter: drop-shadow(0 calc(var(--u)*6) 0 rgba(0,0,0,.4)); }
-/* 跳躍的忍者：外層負責橫向移動，內層負責上下彈跳；腳底對齊 LOGO 上緣 */
-.hop-x { position: absolute; width: 24%; left: -30%; bottom: 66%; opacity: 0; pointer-events: none; }
-.hop-y img { display: block; width: 100%; filter: drop-shadow(0 calc(var(--u)*4) 0 rgba(0,0,0,.35)); }
 /* 忍術陣與現身後的大圖（畫面中央偏下） */
 .jutsu { position: absolute; left: 50%; top: 66%; width: 84%; aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; }
 .jutsu-ring { position: absolute; inset: 8%; border-radius: 50%; opacity: 0; display: grid; place-items: center;
@@ -88,26 +80,22 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .hero-art { position: absolute; left: 50%; top: 66%; width: 66%; transform: translate(-50%, -50%); opacity: 0; pointer-events: none;
   filter: drop-shadow(0 calc(var(--u)*8) 0 rgba(0,0,0,.35)); }
 
-#intro.play .logo-box { animation: logo-pop .5s cubic-bezier(.2, 1.5, .4, 1) both, logo-up .6s 1.9s cubic-bezier(.5, 0, .3, 1) both; }
-#intro.play .hop-x { animation: hop-x 1.4s .5s linear both; }
-#intro.play .hop-y { animation: hop-y .4667s .5s 3 both; }
-#intro.play .jutsu-ring { animation: ring-in .45s 2.3s cubic-bezier(.2, 1.4, .4, 1) both, ring-out .4s 2.95s ease-in forwards; }
-#intro.play .jutsu-lines { animation: lines 1s 2.4s ease-out both; }
-#intro.play .jutsu-flash { animation: flash .5s 2.75s ease-out both; }
-#intro.play .puff { animation: puff .7s 2.75s ease-out both; }
-#intro.play .hero-art { animation: hero-appear .55s 2.8s cubic-bezier(.2, 1.6, .4, 1) both, hero-bob 2.6s 3.4s ease-in-out infinite; }
+/* 接在開場過場的白光之後：LOGO 像蓋章一樣砸下（帶一點震動）→ 忍術陣浮現 → 主角現身 → 選單淡入 */
+#intro.play .logo-box { animation: logo-stamp .42s cubic-bezier(.5, 0, .7, .4) both, logo-shake .3s .42s linear both; }
+#intro.play .jutsu-ring { animation: ring-in .45s .45s cubic-bezier(.2, 1.4, .4, 1) both, ring-out .4s 1.1s ease-in forwards; }
+#intro.play .jutsu-lines { animation: lines 1s .55s ease-out both; }
+#intro.play .jutsu-flash { animation: flash .5s .9s ease-out both; }
+#intro.play .puff { animation: puff .7s .9s ease-out both; }
+#intro.play .hero-art { animation: hero-appear .55s .95s cubic-bezier(.2, 1.6, .4, 1) both, hero-bob 2.6s 1.55s ease-in-out infinite; }
+#title.on .menu, #title.on .dock { animation: fade-in .5s 1.2s both; }
+/* 待機展示：標題選單暫時淡出，讓畫布上的展示畫面露出來 */
+#title > * { transition: opacity .5s; }
+#title.attract > * { opacity: 0; pointer-events: none; }
+#title.attract .menu, #title.attract .dock { animation: none; }
 
-@keyframes logo-pop { 0% { transform: scale(.2); opacity: 0; } 60% { opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
-/* LOGO 從畫面中段移到頂部（top 9%，避開瀏海） */
-@keyframes logo-up { from { top: 34%; } to { top: 9%; } }
+@keyframes logo-stamp { 0% { transform: scale(2.4) rotate(-6deg); opacity: 0; } 30% { opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+@keyframes logo-shake { 0%, 100% { transform: none; } 20% { transform: translate(-1.5%, 1.5%); } 40% { transform: translate(1.5%, -1%); } 60% { transform: translate(-1%, .5%); } 80% { transform: translate(.5%, -.5%); } }
 @keyframes fade-in { from { opacity: 0; transform: translateY(30%); } to { opacity: 1; transform: none; } }
-@keyframes hop-x { 0% { left: -30%; opacity: 1; } 99% { opacity: 1; } 100% { left: 110%; opacity: 0; } }
-/* 一下跳躍：起跳壓扁 → 高點 → 落地壓扁 */
-@keyframes hop-y {
-  0% { transform: translateY(0) scale(1.08, .9); animation-timing-function: cubic-bezier(.3, .7, .5, 1); }
-  50% { transform: translateY(-85%) rotate(-8deg); animation-timing-function: cubic-bezier(.5, 0, .7, .3); }
-  100% { transform: translateY(0) scale(1.08, .9); }
-}
 @keyframes ring-in { 0% { opacity: 0; transform: scale(.2) rotate(-120deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
 @keyframes ring-out { to { opacity: 0; transform: scale(1.35) rotate(60deg); } }
 @keyframes lines { 0% { opacity: 0; transform: rotate(0) scale(.6); } 40% { opacity: 1; } 100% { opacity: 0; transform: rotate(40deg) scale(1.2); } }

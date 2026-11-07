@@ -440,8 +440,8 @@ const BOSS_ART = [
   { body: '#5ab8e8', dk: '#2a7cb0', horn: '#dff6ff', eye: '#ffffff' },   // 雪女鬼
   { body: '#6a6e7a', dk: '#3a3d46', horn: '#c8ccd4', eye: '#ff6a3a' },   // 鐵甲鬼
 ];
-function drawBoss(b, x, y, s) {
-  if (BOSS_STYLE === 'new') return drawBoss2(b, x, y, s);
+function drawBoss(b, x, y, s, cc) {   // cc：要畫到哪個畫布（預設主畫布；開場剪影用暫存畫布）
+  if (BOSS_STYLE === 'new') return drawBoss2(b, x, y, s, cc || ctx);
   const c = ctx, k = b.kind, P = BOSS_ART[k], t = b.t || performance.now() / 1000, br = 1 + Math.sin(t * 3) * .03;
   const warn = b.warn > 0, slam = k === 0 && b.skillT < .45;
   c.save(); c.translate(x, y); c.scale(s, s);
@@ -1126,7 +1126,7 @@ function drawHeroNinja(x, y, o, c = ctx, PR = HERO_PROP) {
   heroSilhouette(c, parts, 1.8);
   // 臉：面罩開口、超大眼睛、腮紅、護額
   aEll(c, 4 * k, HY + 3 * k, 14 * k, 8.5 * k); c.fillStyle = C.skin; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.4; c.stroke();
-  const mood = pn === 'apex' && ((t * .9) % 3.4) < .12 ? 'blink' : Q.eye;
+  const mood = o.eye || (pn === 'apex' && ((t * .9) % 3.4) < .12 ? 'blink' : Q.eye);   // o.eye 可指定眼神（開場特寫用）
   heroEye(c, -2 * k, HY + 2.5 * k, 4 * k, 5.6 * k, mood); heroEye(c, 10 * k, HY + 2.5 * k, 4.3 * k, 5.9 * k, mood);
   c.fillStyle = 'rgba(255,120,120,.45)'; aEll(c, -6 * k, HY + 7.5 * k, 2.6 * k, 1.4 * k); c.fill(); aEll(c, 15 * k, HY + 7.5 * k, 2.6 * k, 1.4 * k); c.fill();
   c.beginPath(); if (c.roundRect) c.roundRect(-4 * k, HY - 17 * k, 12 * k, 6 * k, 2); else c.rect(-4 * k, HY - 17 * k, 12 * k, 6 * k);
@@ -1554,8 +1554,8 @@ function bossArmor(c, b, t, warn) {
   bossFist(c, kfx, kfy, 8.5, ID, '#15161a', { plate: '#8a8e9a', cuff: '#4a4e58', cuffLine: '#c0262d', rot: ka + Math.PI / 2 });
 }
 
-function drawBoss2(b, x, y, s) {
-  const c = ctx, k = b.kind, P = BOSS_ART[k], t = b.t || performance.now() / 1000, warn = b.warn > 0;
+function drawBoss2(b, x, y, s, c = ctx) {
+  const k = b.kind, P = BOSS_ART[k], t = b.t || performance.now() / 1000, warn = b.warn > 0;
   c.save(); c.translate(x, y); c.scale(s, s);
   const au = c.createRadialGradient(0, 0, 18, 0, 0, 64); au.addColorStop(0, P.body + '60'); au.addColorStop(1, P.body + '00');
   c.fillStyle = au; aCirc(c, 0, 0, 64); c.fill();

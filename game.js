@@ -157,7 +157,7 @@ const ACH = [
 // ===== 存檔 =====
 const defSave = () => ({
   coins: 0, skin: 0, skins: [0],
-  meta: { hp: 0, scroll: 0, gold: 0, reroll: 0 }, ach: {}, opt: { snd: 1, vib: 1, lang: guessLang() }, seen: 0,
+  meta: { hp: 0, scroll: 0, gold: 0, reroll: 0 }, ach: {}, opt: { snd: 1, vib: 1, lang: guessLang() }, seen: 0, intro: 0,
   best: { rogue: 0 }, rank: { rogue: [] },
   stats: { runs: 0, slashes: 0, bosses: 0, coins: 0 },
 });
@@ -224,7 +224,7 @@ const SFX = {
 const ACT_KEY = [0, 2, 5, 3];   // 林／風／火／山 的移調（半音）
 function musicFor() {
   if (!ac || !save.opt.snd || document.hidden) return BGM.stop();
-  if (state === 'menu') return BGM.play(ac, 'title');
+  if (state === 'menu') return INTRO.ph === 'cut' ? BGM.play(ac, 'boss', { sp: .85, tr: -3 }) : INTRO.ph === 'title' ? BGM.play(ac, 'title') : BGM.stop();
   if (!g || paused || state === 'over' || state === 'dying') return BGM.stop();
   BGM.hot = g.fever > 0;
   BGM.play(ac, g.boss ? 'boss' : 'stage', { tr: ACT_KEY[g.stage % 4], sp: 1 + Math.min(.2, .04 * loopN()) });
@@ -232,7 +232,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v23';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v24';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -294,7 +294,7 @@ let booting = true;
     if ((same < 2 || el < 400) && el < 1200) return setTimeout(tick, 100);
     booting = false;
     const b = $('boot'); if (b) b.classList.add('off');
-    if (state === 'menu') playIntro();
+    if (state === 'menu') INTRO.begin();   // 開場：團隊 LOGO → 過場 → 標題（cut.js）
   };
   setTimeout(tick, 100);
 })();
@@ -310,6 +310,7 @@ const inp = { down: false, id: null, lx: 0, ly: 0, dx: 0, keys: {}, sw: 0 };
 function toL(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
 cv.addEventListener('pointerdown', e => {
   A();
+  if (state === 'menu' && INTRO.tap()) return;   // 開場：點一下開始／跳過
   const p = toL(e);
   if (state === 'play' && !paused) {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
@@ -362,6 +363,7 @@ cv.addEventListener('pointerup', endPtr);
 cv.addEventListener('pointercancel', endPtr);
 addEventListener('keydown', e => {
   inp.keys[e.code] = true; A();
+  if (state === 'menu') { INTRO.poke(); if (!e.repeat && INTRO.tap()) { e.preventDefault(); return; } }
   if (e.code === 'Escape' || e.code === 'KeyP') { if (state !== 'menu' && state !== 'over' && state !== 'perk' && state !== 'clearq') paused ? resumeGame() : pauseGame(); }
   if (e.code === 'Space' || e.code === 'Enter') {
     if (state === 'play' && !paused) castScroll();
@@ -375,7 +377,7 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => { inp.keys[e.code] = false; });
 // 在畫面任何地方第一次點擊／按鍵就解鎖音訊（標題曲隨之開始）
-addEventListener('pointerdown', () => A(), true);
+addEventListener('pointerdown', () => { A(); INTRO.poke(); }, true);   // 同時重算標題的閒置時間、結束待機展示
 // 切到背景時停止音樂，回來時由 musicFor() 接著播
 document.addEventListener('visibilitychange', () => { if (document.hidden) BGM.stop(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && g && state !== 'over' && state !== 'menu' && state !== 'perk') pauseGame(); });
@@ -633,7 +635,7 @@ function stageBanner() {
 // ===== 主更新 =====
 function update(dt) {
   musicFor();
-  if (state === 'menu') { updateDemo(dt); return; }
+  if (state === 'menu') { INTRO.update(dt); return; }
   if (!g || paused) return;
   if (state !== 'play' && inp.mode === 'aim') inp.mode = null;   // 進入演出時取消瞄準
   switch (state) {
@@ -1781,7 +1783,7 @@ function drawKill() {
 // （標題＝夜空深綠、遊戲中＝HUD 深藍），避免頂端出現紅色霧罩
 let rootBg = '';
 function syncRootBg() {
-  const c = state === 'menu' || !g ? '#0d2a2a' : '#0a0d14';
+  const c = (state === 'menu' || !g) && INTRO.ph === 'title' ? '#0d2a2a' : state === 'menu' || !g ? '#000' : '#0a0d14';
   if (c === rootBg) return;
   rootBg = c;
   document.documentElement.style.background = document.body.style.background = c;
@@ -1793,9 +1795,7 @@ function render() {
   ctx.setTransform(sc, 0, 0, cv.height / H, 0, 0);
   const t = performance.now() / 1000;
   if (state === 'menu' || !g) {
-    drawBG(-t * 40, Math.floor(t / 6) % 4, t);
-    ctx.fillStyle = '#6b4a22'; ctx.fillRect(0, H - 70, W, 70); ctx.fillStyle = '#4a8a3a'; ctx.fillRect(0, H - 80, W, 12);
-    drawNinja(demo.x, demo.y + H - 550,{ face: demo.face, t: demo.t, vy: demo.vy, skin: save.skin });
+    INTRO.draw();   // 開場（團隊 LOGO／過場）或標題背景（cut.js）
     return;
   }
   const camY = g.camY;
@@ -1871,10 +1871,11 @@ function goTitle() {
   state = 'menu'; g = null; paused = false;
   if (W_LOCK) { W_LOCK = false; resize(); }
   $('tCoins').textContent = save.coins;
-  show('title');
+  // 開場演出還沒播完時先不顯示標題選單（由 INTRO.toTitle() 接上）
+  if (INTRO.ph !== 'title') { hideAll(); $('intro').classList.remove('play'); musicFor(); return; }
+  show('title'); INTRO.poke();
   musicFor();
-  // 重播標題出場動畫（開場遮罩還在時先不播，等拿掉遮罩再播）
-  if (booting) $('intro').classList.remove('play'); else playIntro();
+  playIntro();
 }
 function playIntro() { const it = $('intro'); it.classList.remove('play'); void it.offsetWidth; it.classList.add('play'); }
 function pauseGame() { if (!g || paused || state === 'over' || state === 'perk' || state === 'menu' || state === 'clearq') return; paused = true; show('pause', true); }
@@ -1972,6 +1973,7 @@ document.addEventListener('click', e => {
   switch (a) {
     case 'start': case 'retry': startRun(); break;
     case 'shop': case 'rank': case 'opt': openSub(a); break;
+    case 'replay': INTRO.replay(); break;   // 設定頁：重看開場
     case 'help': openHelp(); break;
     case 'back':
       if ($('help').classList.contains('on') && backTo === 'game') { hide('help'); if (!$('pause').classList.contains('on')) resumeGame(); break; }
