@@ -1654,6 +1654,10 @@ function dockIcon(kind, size = 200) {
     aRR(c, 6, -20, 15, 15, 5); aFI(c, '#ffffff', 1.8);
     c.beginPath(); c.moveTo(9, -6); c.lineTo(7, -1); c.lineTo(13, -6); c.fillStyle = '#ffffff'; c.fill();
     c.fillStyle = '#c0262d'; c.font = '900 13px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 13.5, -12);
+  } else if (kind === 'credit') {   // 製作名單：毛筆＋署名的紅印
+    c.save(); c.rotate(.65); aRR(c, -3.2, -20, 6.4, 24, 2.5); aFI(c, '#8a5a2a', 1.8); c.beginPath(); c.moveTo(-3.6, 4); c.quadraticCurveTo(0, 17, 3.6, 4); c.closePath(); aFI(c, '#1a1a1a', 1.6); c.fillStyle = '#e8b84a'; c.fillRect(-3.2, -2, 6.4, 3); c.restore();
+    c.strokeStyle = '#1a1a1a'; c.lineWidth = 2.6; c.lineCap = 'round'; c.beginPath(); c.moveTo(-17, 14); c.quadraticCurveTo(-9, 8, -2, 14); c.quadraticCurveTo(4, 18, 9, 12); c.stroke();
+    aRR(c, 9, -16, 10, 10, 2); aFI(c, '#c0262d', 1.4); c.fillStyle = '#fff'; c.font = '900 7px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('鳶', 14, -10.6);
   } else {   // 設定：齒輪
     c.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, r = i % 2 ? 13 : 17; const a2 = a + Math.PI / 16; c.lineTo(Math.cos(a - .12) * r, Math.sin(a - .12) * r); c.lineTo(Math.cos(a2 - .08) * r, Math.sin(a2 - .08) * r); } c.closePath();
     const sg = c.createLinearGradient(0, -17, 0, 17); sg.addColorStop(0, '#e8ecf2'); sg.addColorStop(1, '#7c8696'); c.fillStyle = sg; c.fill(); aInk(c, 2);

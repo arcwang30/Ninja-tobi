@@ -15,6 +15,8 @@ const INTRO = {
     const q = new URLSearchParams(location.search).get('cutshot');
     if (q !== null && !isNaN(+q)) { this.ph = 'cut'; this.t = +q; this.frozen = true; const b = $('boot'); if (b) b.remove(); }
     if (new URLSearchParams(location.search).has('skip')) this.toTitle();   // 開發用：網址加 ?skip 直接到標題
+    const op = new URLSearchParams(location.search).get('open');   // 開發用：?open=help(,頁) ／ credit → 直接打開說明或製作名單
+    if (op) { this.toTitle(); const [w, pg] = op.split(','); if (w === 'help') { helpPg = +pg || 0; openHelp(); } else openSub(w); const b = $('boot'); if (b) b.remove(); }
     // 開發用：?slashshot=敵人種類,第幾刀,這一刀經過秒數 → 停在斬擊特寫的那一刻（截圖檢查用）
     const ss = new URLSearchParams(location.search).get('slashshot');
     // 開發用：?shot=zintro,幕,秒 ／ ascend,幕,秒 ／ qte,第幾刀,這一刀經過秒數 → 停在關卡演出的那一刻（stagefx.js）

@@ -233,7 +233,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v32';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v33';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -299,6 +299,7 @@ let booting = true;
     same = DIAG === last ? same + 1 : 0; last = DIAG;
     const el = performance.now() - t0;
     if ((same < 2 || el < 2700) && el < 4000) return setTimeout(tick, 100);
+    try { buildHelpIcons(); } catch (e) { }   // 玩法說明的圖示：趁開機遮罩還蓋著時先畫好
     booting = false;
     const b = $('boot'); if (b) b.classList.add('off');
     if (state === "menu") setTimeout(() => INTRO.begin(), 450);   // 遮罩淡出到全黑後：點一下開始 → 過場 → 標題（cut.js）
@@ -1900,7 +1901,7 @@ function frame(now) {
 requestAnimationFrame(frame);
 
 // ===== UI =====
-const SCRS = ['title', 'pause', 'perk', 'over', 'shop', 'rank', 'opt', 'help', 'clear'];
+const SCRS = ['title', 'pause', 'perk', 'over', 'shop', 'rank', 'opt', 'help', 'clear', 'credit'];
 let backTo = 'title';
 function show(id, keep) { if (!keep) hideAll(); $(id).classList.add('on'); }
 function hide(id) { $(id).classList.remove('on'); }
@@ -1941,6 +1942,7 @@ function showOver() {
 }
 
 function openHelp() {
+  buildHelpIcons(); renderHelp();   // 分類分頁的玩法說明（help.js）
   backTo = (g && state !== 'over') ? 'game' : 'title';
   $('helpBtn').textContent = backTo === 'game' ? (paused && $('pause').classList.contains('on') ? t('back') : t('help_go')) : t('help_ok');
   show('help', backTo === 'game');
@@ -2012,6 +2014,9 @@ document.addEventListener('click', e => {
     case 'start': case 'retry': startRun(); break;
     case 'shop': case 'rank': case 'opt': openSub(a); break;
     case 'replay': INTRO.replay(); break;   // 設定頁：重看開場
+    case 'credit': openSub('credit'); break;   // 製作名單（help.js）
+    case 'hp-prev': helpPage(-1); break;       // 玩法說明：上一頁／下一頁
+    case 'hp-next': helpPage(1); break;
     case 'help': openHelp(); break;
     case 'back':
       if ($('help').classList.contains('on') && backTo === 'game') { hide('help'); if (!$('pause').classList.contains('on')) resumeGame(); break; }

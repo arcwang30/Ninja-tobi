@@ -33,6 +33,14 @@ const STR = {
   zi_run: ['往上逃！', '上へ逃げろ！', 'Climb for your life!'],
   zi_go: ['走！', '行け！', 'GO!'],
   zi_skip: ['點一下跳過', 'タップでスキップ', 'Tap to skip'],
+  // ---- 製作名單 ----
+  credit: ['製作名單', 'クレジット', 'Credits'],
+  cr_r1: ['企劃・製作', '企画・制作', 'Planning & Production'],
+  cr_r2: ['程式・美術', 'プログラム・アート', 'Code & Art'],
+  cr_v2: ['全部以程式繪製（AI 協助製作）', 'すべてプログラムで描画（AI 協力）', 'Everything drawn in code (AI-assisted)'],
+  cr_r3: ['樂曲・音效', '楽曲・効果音', 'Music & Sound'],
+  cr_v3: ['全曲原創（AI 協助製作）', '全曲オリジナル（AI 協力）', 'All original (AI-assisted)'],
+  cr_thx: ['感謝你的遊玩！', '遊んでくれてありがとう！', 'Thanks for playing!'],
   // ---- 標題與選單 ----
   tagline: ['我が名は鳶、いざ参る！', '我が名は鳶、いざ参る！', 'I am Tobi. Here I come!'],
   start: ['開始修行', '修行開始', 'Start Training'],

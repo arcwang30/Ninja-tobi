@@ -48,6 +48,7 @@
       <button data-act="rank"><i class="scroll-ic" data-ic="rank"></i><span data-i18n="rank"></span></button>
       <button data-act="help"><i class="scroll-ic" data-ic="help"></i><span data-i18n="help"></span></button>
       <button data-act="opt"><i class="scroll-ic" data-ic="opt"></i><span data-i18n="opt"></span></button>
+      <button data-act="credit"><i class="scroll-ic" data-ic="credit"></i><span data-i18n="credit"></span></button>
     </nav>
   </div>
 
@@ -130,10 +131,38 @@
   <div class="scr dim" id="help">
     <div class="panel wide">
       <h2 data-i18n="help"></h2>
-      <div class="list help" data-i18n="help_body"></div>
+      <!-- 分類分頁：◀ 分類名稱＋頁點 ▶，內容可左右滑動切頁 -->
+      <div class="hp-nav">
+        <button class="hp-arrow" data-act="hp-prev" aria-label="prev">◀</button>
+        <div class="hp-head"><b id="hpTitle"></b><span class="hp-dots" id="hpDots"></span></div>
+        <button class="hp-arrow" data-act="hp-next" aria-label="next">▶</button>
+      </div>
+      <div class="hp-page" id="hpPage"></div>
       <button data-act="back" id="helpBtn" class="big"></button>
     </div>
   </div>
+
+  <!-- 製作名單（照 yaki_mochi 的做法：一行一行淡入，下方是主角插圖與版權） -->
+  <div class="scr dim" id="credit">
+    <div class="panel credit">
+      <h2>CREDIT <small data-i18n="credit"></small></h2>
+      <div class="cr-line cr-role" style="--d:0" data-i18n="cr_r1"></div>
+      <div class="cr-line cr-name" style="--d:1">Arc Wang</div>
+      <div class="cr-line cr-role" style="--d:2" data-i18n="cr_r2"></div>
+      <div class="cr-line cr-val" style="--d:3" data-i18n="cr_v2"></div>
+      <div class="cr-line cr-role" style="--d:4" data-i18n="cr_r3"></div>
+      <div class="cr-line cr-val" style="--d:5" data-i18n="cr_v3"></div>
+      <div class="cr-line cr-art" style="--d:6">
+        <span class="cr-smoke" style="--x:-30%;--s:0s"></span><span class="cr-smoke" style="--x:20%;--s:.7s"></span><span class="cr-smoke" style="--x:-5%;--s:1.4s"></span>
+        <img class="hero-tint" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
+      </div>
+      <div class="cr-line cr-game" style="--d:7">忍者鳶 NINJA TOBI</div>
+      <div class="cr-line cr-copy" style="--d:8"><img src="assets/team_logo.webp" alt="">© 2026 Arc Concept Games</div>
+      <div class="cr-line cr-thx" style="--d:9" data-i18n="cr_thx"></div>
+      <button data-act="back" data-i18n="back"></button>
+    </div>
+  </div>
+
 
   <div id="toast"></div>
 </div>
@@ -145,5 +174,6 @@
 <script src="cut.js"></script>
 <script src="game.js"></script>
 <script src="stagefx.js"></script>
+<script src="help.js"></script>
 </body>
 </html>
