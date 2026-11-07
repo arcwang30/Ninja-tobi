@@ -1,0 +1,139 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>山伏天狗 修改版</title>
+<style>html, body { margin: 0; background: #1d3a4a; } canvas { display: block; } #title { display: none; }</style>
+<canvas id="cv"></canvas><div id="title"></div><div id="intro"></div>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), $ = id => document.getElementById(id);
+const INK = '#0e1414', g = null, WALL = 14, FONT = '"Noto Sans TC","Microsoft JhengHei",sans-serif';
+let W = 960, H = 640, SAFE_T = 0;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const save = { skin: 0 }, SFX = new Proxy({}, { get: () => () => {} }), tone = () => {}, noise = () => {};
+function txt(s, x, y, size, color = '#fff', align = 'center', stroke = '#000', lw = 4) { ctx.font = `900 ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle'; if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); } ctx.fillStyle = color; ctx.fillText(s, x, y); }
+</script>
+<script src="../art.js"></script>
+<script src="../cut.js"></script>
+<script src="tengu-lib.js"></script>
+<script>
+'use strict';
+/* 山伏天狗・修改版三案：體型改成和真妖鬼一樣的「大頭＋圓壯短身＋浮空拳腳」；眼神改成兇狠；鼻子像小黃瓜一樣往上微彎
+   原點在身體中心；面具在 (0,-14)，臉朝左 */
+const MX = -2, MY = -14, SKIN = '#f4c8a0';
+// 往上微彎的小黃瓜鼻：粗線條＋圓頭，從面具中央往左伸、尾端往上翹
+function curvedNose(c) {
+  const path = () => { c.beginPath(); c.moveTo(MX - 1, MY + 6); c.quadraticCurveTo(MX - 22, MY + 12, MX - 36, MY - 4); };
+  c.lineCap = 'round';
+  path(); c.strokeStyle = INK; c.lineWidth = 13; c.stroke();
+  path(); c.strokeStyle = '#a02218'; c.lineWidth = 10; c.stroke();
+  c.save(); c.translate(-1, -1.6); path(); c.strokeStyle = '#e0402e'; c.lineWidth = 7; c.stroke(); c.restore();
+  c.save(); c.translate(-.5, -3.6); path(); c.strokeStyle = 'rgba(255,200,180,.75)'; c.lineWidth = 1.6; c.stroke(); c.restore();
+  c.fillStyle = 'rgba(255,210,190,.6)'; for (const [x, y] of [[-16, 8], [-25, 5], [-31, 0]]) { aCirc(c, MX + x, MY + y, .9); c.fill(); }
+}
+// 大面具：金邊、額頭皺紋；eye：'gold' 細長金色怒目／'glow' 面具眼洞透出紅光／'white' 三白眼
+function bigMask(c, eye, rim) {
+  aEll(c, MX, MY, 25, 29); c.fillStyle = bossBall(c, MX - 5, MY - 8, 30, '#ff6a52', '#d02e26', '#82120e'); c.fill(); aInk(c, 2.6);
+  c.save(); aEll(c, MX, MY, 25, 29); c.clip(); c.strokeStyle = rim; c.lineWidth = 3.6; aEll(c, MX, MY, 24, 28); c.stroke(); c.restore();
+  c.strokeStyle = 'rgba(90,10,10,.6)'; c.lineWidth = 1.3; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(MX - 10 + i, MY - 22 + i * 3); c.quadraticCurveTo(MX, MY - 26 + i * 3, MX + 10 - i, MY - 22 + i * 3); c.stroke(); }
+  // 眼睛（兇狠版）
+  for (const sd of [-1, 1]) {
+    const ex = MX + sd * 9.5, ey = MY - 3;
+    c.save(); c.translate(ex, ey); c.rotate(sd * .3);   // 外側往上吊
+    if (eye === 'gold') {
+      c.beginPath(); c.moveTo(-6.5, 1.5); c.quadraticCurveTo(0, -4, 6.5, -1.5); c.quadraticCurveTo(0, 3, -6.5, 1.5); c.closePath();
+      c.fillStyle = '#ffd23a'; c.fill(); c.save(); c.clip(); aEll(c, -1, 0, 1.1, 3.4); c.fillStyle = INK; c.fill(); c.restore(); c.strokeStyle = INK; c.lineWidth = 1.8; c.stroke();
+      bossGlow(c, 0, 0, 9, 'rgba(255,200,60,.35)');
+    } else if (eye === 'glow') {
+      c.beginPath(); c.moveTo(-7, 2); c.lineTo(-4, -3.5); c.lineTo(6.5, -2.5); c.lineTo(5, 2.5); c.closePath(); c.fillStyle = '#120808'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.6; c.stroke();
+      bossGlow(c, -.5, -.3, 10, 'rgba(255,60,40,.9)'); c.fillStyle = '#ff6a3a'; aEll(c, -.5, -.3, 2.2, 1.6); c.fill();
+    } else {
+      c.beginPath(); c.moveTo(-6.5, 1.5); c.quadraticCurveTo(0, -4.5, 6.5, -1); c.quadraticCurveTo(0, 3.5, -6.5, 1.5); c.closePath();
+      c.fillStyle = '#ffffff'; c.fill(); c.save(); c.clip(); aCirc(c, -1.6, -.4, 1.5); c.fillStyle = INK; c.fill(); c.strokeStyle = 'rgba(200,40,40,.6)'; c.lineWidth = .6; c.beginPath(); c.moveTo(3, 0); c.lineTo(6, -1); c.moveTo(3.5, 1); c.lineTo(6, 1.5); c.stroke(); c.restore(); c.strokeStyle = INK; c.lineWidth = 1.8; c.stroke();
+    }
+    c.restore();
+  }
+  // 濃眉：往眉心狠狠壓下
+  c.fillStyle = INK;
+  for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(MX + sd * 1.5, MY - 6); for (let i = 0; i <= 5; i++) c.lineTo(MX + sd * (3 + i * 3.2), MY - 10 - i * 2.2 + (i % 2 ? -2.2 : 0)); c.lineTo(MX + sd * 20, MY - 16); c.quadraticCurveTo(MX + sd * 11, MY - 9, MX + sd * 2.5, MY - 3); c.closePath(); c.fill(); }
+  c.strokeStyle = 'rgba(90,10,10,.7)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(MX - 1.5, MY - 8); c.lineTo(MX - 1, MY - 4); c.moveTo(MX + 1.5, MY - 8); c.lineTo(MX + 1, MY - 4); c.stroke();   // 眉心皺紋
+}
+function mouth(c, snarl) {
+  if (snarl) { c.beginPath(); c.moveTo(MX - 9, MY + 16); c.quadraticCurveTo(MX, MY + 12, MX + 9, MY + 16); c.quadraticCurveTo(MX, MY + 22, MX - 9, MY + 16); c.closePath(); aFI(c, '#3a0a0a', 1.6); c.save(); c.clip(); c.fillStyle = '#fff'; for (let i = -3; i <= 3; i++) { c.beginPath(); c.moveTo(MX + i * 2.4 - 1.1, MY + 14); c.lineTo(MX + i * 2.4, MY + 17); c.lineTo(MX + i * 2.4 + 1.1, MY + 14); c.fill(); } c.restore(); }
+  else { c.strokeStyle = INK; c.lineWidth = 2.2; c.beginPath(); c.moveTo(MX - 9, MY + 18); c.quadraticCurveTo(MX, MY + 12, MX + 9, MY + 18); c.stroke(); }
+  c.fillStyle = INK; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(MX + sd * 1, MY + 11); c.quadraticCurveTo(MX + sd * 10, MY + 8, MX + sd * 16, MY + 15); c.quadraticCurveTo(MX + sd * 12, MY + 11.5, MX + sd * 10, MY + 13); c.quadraticCurveTo(MX + sd * 5, MY + 12, MX + sd * 1, MY + 13.5); c.closePath(); c.fill(); }
+  c.beginPath(); c.moveTo(MX - 3, MY + 22); c.lineTo(MX, MY + 29); c.lineTo(MX + 3, MY + 22); c.closePath(); c.fill();
+}
+// 和真妖鬼同比例的圓壯身體：山伏背心（深藍）＋白襟＋紫袴＋梵天球；浮空拳頭與木屐
+function yamaBody(c, t, o) {
+  heroSilhouette(c, [
+    { path: c => { c.beginPath(); c.moveTo(-20, 14); c.quadraticCurveTo(0, 8, 20, 14); c.quadraticCurveTo(25, 28, 16, 39); c.quadraticCurveTo(0, 43, -16, 39); c.quadraticCurveTo(-25, 28, -20, 14); c.closePath(); }, fill: '#f4f2ea',
+      after: c => { c.save(); c.clip();
+        c.fillStyle = o.vest; c.beginPath(); c.moveTo(-26, 10); c.lineTo(-6, 10); c.lineTo(-4, 30); c.lineTo(-26, 30); c.closePath(); c.fill(); c.beginPath(); c.moveTo(26, 10); c.lineTo(6, 10); c.lineTo(4, 30); c.lineTo(26, 30); c.closePath(); c.fill();
+        c.fillStyle = o.hakama; c.fillRect(-27, 30, 54, 14); c.fillStyle = 'rgba(0,0,0,.25)'; for (const x of [-12, -2, 8]) c.fillRect(x, 30, 1.6, 14);
+        c.fillStyle = '#e8b84a'; c.fillRect(-27, 28, 54, 3);
+        c.strokeStyle = INK; c.lineWidth = 1.4; c.beginPath(); c.moveTo(-6, 11); c.lineTo(2, 24); c.moveTo(6, 11); c.lineTo(0, 20); c.stroke();
+        c.restore(); } },
+  ], 2.2);
+  for (const [x, y] of [[-12, 17], [12, 17], [-12, 25], [12, 25]]) bonten(c, x, y, 2.8, '#ff8a2a');
+  bossTabi(c, -12, 44, 7.5, -1, { geta: 1 }); bossTabi(c, 12, 44, 7.5, 1, { geta: 1 });
+}
+function headBack(c) {
+  aCirc(c, MX + 8, MY - 3, 25); c.fillStyle = SKIN; c.fill(); aInk(c, 2.4);
+  c.strokeStyle = INK; c.lineWidth = 4.4; c.beginPath(); c.moveTo(MX + 14, MY - 12); c.quadraticCurveTo(MX + 30, MY - 8, MX + 32, MY + 2); c.stroke();
+  aEll(c, MX + 30, MY + 5, 4.6, 6.4); c.fillStyle = SKIN; c.fill(); aInk(c, 1.8);
+}
+function tokinC(c, crest) {
+  c.save(); c.translate(MX + 1, MY - 31);
+  c.beginPath(); c.moveTo(-15, 7); c.lineTo(-13, -7); c.lineTo(0, -13); c.lineTo(13, -7); c.lineTo(15, 7); c.quadraticCurveTo(0, 10, -15, 7); c.closePath(); aFI(c, '#1c1c22', 2.2);
+  c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.moveTo(-10, -6); c.lineTo(0, -10); c.lineTo(-2, -3); c.closePath(); c.fill();
+  c.fillStyle = crest; c.beginPath(); c.moveTo(-5, 1); c.lineTo(-4, -3.5); c.lineTo(-1.5, -1); c.lineTo(0, -5); c.lineTo(1.5, -1); c.lineTo(4, -3.5); c.lineTo(5, 1); c.closePath(); c.fill();
+  c.restore();
+}
+const DESIGNS = [
+  ['A　金眼山伏', '細長上吊的金色怒目、濃眉壓到眉心；圓壯的身形和浮空拳頭；鼻子往上翹。右拳羽團扇、左拳金環錫杖', (c, t) => {
+    const fl = Math.sin(t * 4);
+    c.save(); c.translate(0, -6); wing(c, -1, 56, 46, 7, '#16171e', '#3a3e56', fl * .4); wing(c, 1, 56, 46, 7, '#16171e', '#3a3e56', fl * .4); c.restore();
+    staff(c, 38, 36, 40, -36);
+    yamaBody(c, t, { vest: '#2a3a6a', hakama: '#3a2a5a' });
+    headBack(c); bigMask(c, 'gold', '#ffd25a'); mouth(c, 0); tokinC(c, '#ffd25a'); curvedNose(c);
+    featherFan(c, -38, 6, .85, -.35, '#ffffff', '#e8eef4');
+    bossFist(c, -37, 13, 9, SKIN, '#c89a78', { rot: -Math.PI / 2 + .2, flip: 1, cuff: '#2a3a6a', cuffLine: '#ffd25a' });
+    bossFist(c, 38, 13, 9, SKIN, '#c89a78', { rot: Math.PI / 2 - .2, cuff: '#2a3a6a', cuffLine: '#ffd25a' });
+  }],
+  ['B　鬼火之眼', '面具的眼洞裡只透出兩點紅光，看不到眼珠，最有壓迫感；黑色面具框、破碎的羽翼，身形同樣圓壯', (c, t) => {
+    const fl = Math.sin(t * 4);
+    c.save(); c.translate(0, -6); wing(c, -1, 60, 50, 7, '#16171e', '#3a3e56', fl * .4, 1); wing(c, 1, 60, 50, 7, '#16171e', '#3a3e56', fl * .4, 1); c.restore();
+    staff(c, 38, 36, 40, -36);
+    yamaBody(c, t, { vest: '#1c1c26', hakama: '#5a1a2a' });
+    headBack(c); bigMask(c, 'glow', '#2a1414'); mouth(c, 0); tokinC(c, '#c0262d'); curvedNose(c);
+    featherFan(c, -38, 6, .85, -.35, '#2a2a34', '#4a4a5a');
+    bossFist(c, -37, 13, 9, SKIN, '#c89a78', { rot: -Math.PI / 2 + .2, flip: 1, cuff: '#1c1c26', cuffLine: '#c0262d' });
+    bossFist(c, 38, 13, 9, SKIN, '#c89a78', { rot: Math.PI / 2 - .2, cuff: '#1c1c26', cuffLine: '#c0262d' });
+  }],
+  ['C　怒吼三白眼', '白色三白眼＋小黑瞳、八字鬍下張嘴露出尖牙，表情最兇；保留金邊面具與深藍山伏背心，羽扇高舉', (c, t) => {
+    const fl = Math.sin(t * 4);
+    c.save(); c.translate(0, -6); wing(c, -1, 56, 46, 7, '#16171e', '#3a3e56', fl * .4); wing(c, 1, 56, 46, 7, '#16171e', '#3a3e56', fl * .4); c.restore();
+    staff(c, 38, 36, 40, -36);
+    yamaBody(c, t, { vest: '#2a3a6a', hakama: '#3a2a5a' });
+    headBack(c); bigMask(c, 'white', '#ffd25a'); mouth(c, 1); tokinC(c, '#ffd25a'); curvedNose(c);
+    featherFan(c, -36, -12, .9, -.7, '#ffffff', '#e8eef4');
+    bossFist(c, -36, -6, 9, SKIN, '#c89a78', { rot: -Math.PI / 2 - .3, flip: 1, cuff: '#2a3a6a', cuffLine: '#ffd25a' });
+    bossFist(c, 38, 13, 9, SKIN, '#c89a78', { rot: Math.PI / 2 - .2, cuff: '#2a3a6a', cuffLine: '#ffd25a' });
+  }],
+];
+const DPR = 2; cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.scale(DPR, DPR);
+const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#2a4a6a'); bg.addColorStop(1, '#14283a'); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+txt('山伏天狗・修改版三案', 24, 28, 20, '#ffe28a', 'left', '#000', 4);
+txt('眼神改兇、體型改成和真妖鬼同比例（大頭＋圓壯短身＋浮空拳腳）、小黃瓜鼻往上微彎；右下是真妖鬼對照', 24, 56, 13, '#c8d8e4', 'left', null);
+DESIGNS.forEach(([name, desc, fn], i) => {
+  const x = 160 + i * 320, y = 270;
+  ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.beginPath(); ctx.roundRect(x - 148, 76, 296, 548, 16); ctx.fill();
+  ctx.save(); ctx.translate(x, y); ctx.scale(2.6, 2.6); fn(ctx, .6 + i); ctx.restore();
+  txt(name, x, 480, 19, '#ffffff', 'center', '#000', 4);
+  ctx.font = `700 12.5px ${FONT}`; ctx.fillStyle = '#d6e2ea'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  let line = '', ly = 504; for (const ch of desc) { if (ctx.measureText(line + ch).width > 268) { ctx.fillText(line, x - 134, ly); line = ch; ly += 19; } else line += ch; } ctx.fillText(line, x - 134, ly);
+  txt('遊戲中大小', x - 60, 600, 11, 'rgba(255,255,255,.55)', 'center', null);
+  ctx.save(); ctx.translate(x + 20, 594); ctx.scale(.7, .7); fn(ctx, .6 + i); ctx.restore();
+  ctx.save(); ctx.translate(x + 100, 594); ctx.scale(.7, .7); drawBoss({ kind: 0, t: .6, skillT: 9, warn: 0 }, 0, 0, 1); ctx.restore();
+});
+</script>

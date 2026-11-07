@@ -124,7 +124,7 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .coinbar b, .coin b { color: var(--gold-l); }
 
 /* 底部選單：鐵灰方塊＋金色字＋鉚釘 */
-.dock { position: relative; z-index: 1; display: flex; width: 100%; gap: .5em; padding: .6em .7em calc(.8em + env(safe-area-inset-bottom, 0px));
+.dock { position: relative; z-index: 1; display: flex; width: 100%; gap: .2em; padding: .5em .4em calc(.8em + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(#2a3236, #161c1e); border-top: calc(var(--u)*4) solid var(--ink); }
 .dock button { flex: 1; margin: 0; padding: 0; background: none; border: 0; box-shadow: none; text-shadow: none; display: flex; flex-direction: column; align-items: center; gap: .25em;
   font-size: .72em; letter-spacing: 0; color: var(--muted); overflow: visible; }
@@ -137,7 +137,7 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .dock button:active { transform: translateY(calc(var(--u)*3)); }
 /* 卷軸圖示：不要鐵灰方塊，直接放攤開的卷軸圖（標題出場時像卷軸一樣由中間往兩邊展開） */
 /* 「護額」圖示：正方形、文字已經在圖示裡，所以下面的文字標籤隱藏；標題出場時依序彈出 */
-.dock button i.scroll-ic { width: 4.5em; height: 4.5em; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.dock button i.scroll-ic { width: 5.8em; height: 5.8em; border: 0; border-radius: 0; background: none; box-shadow: none; }
 .dock button > span { display: none; }
 .dock button i.scroll-ic::after { display: none; }
 .dock button i.scroll-ic img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 calc(var(--u)*3) 0 rgba(0,0,0,.4)); }
@@ -260,13 +260,14 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .cr-role { color: #7fe4ff; font-size: .82em; font-weight: 900; margin-top: .5em; }
 .cr-name { color: #fff; font-size: 1.35em; font-weight: 900; text-shadow: 0 calc(var(--u)*2) 0 var(--ink); }
 .cr-val { color: #fff; font-size: .9em; font-weight: 900; }
-.cr-art { position: relative; width: 42%; margin: .4em auto 0; }
-.cr-art img { width: 100%; display: block; animation: hero-bob 2.6s ease-in-out infinite; }
+.cr-art { position: relative; width: 40%; margin: .6em auto .2em; }
+.cr-art img { width: 100%; display: block; animation: cr-bob 2.6s ease-in-out infinite; }
+@keyframes cr-bob { 0%, 100% { transform: none; } 50% { transform: translateY(-4%) rotate(-2deg); } }
 .cr-smoke { position: absolute; left: 50%; bottom: 18%; width: 22%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.75), rgba(255,255,255,0) 70%);
   animation: cr-smoke 2.1s var(--s) ease-out infinite; opacity: 0; }
 @keyframes cr-smoke { 0% { opacity: 0; transform: translate(calc(-50% + var(--x)), 0) scale(.5); } 25% { opacity: .9; } 100% { opacity: 0; transform: translate(calc(-50% + var(--x) * 1.6), -260%) scale(1.8); } }
 .cr-game { color: #ffe8b0; font-weight: 900; margin-top: .3em; }
-.cr-copy { color: #cfd8ff; font-size: .78em; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: .5em; margin-top: .2em; }
+.cr-copy { color: #cfd8ff; font-size: .78em; font-weight: 700; margin: .2em 0 .8em; }
 .cr-copy img { width: 2.6em; height: 2.6em; object-fit: contain; }
 .cr-thx { color: var(--gold-l); font-weight: 900; margin: .4em 0 .6em; }
 /* 底部選單有五個按鈕：卷軸圖示縮小一點 */

@@ -233,7 +233,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v34';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v35';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -1952,7 +1952,7 @@ function openHelp() {
   buildHelpIcons(); renderHelp();   // 分類分頁的玩法說明（help.js）
   backTo = (g && state !== 'over') ? 'game' : 'title';
   $('helpBtn').textContent = backTo === 'game' ? (paused && $('pause').classList.contains('on') ? t('back') : t('help_go')) : t('help_ok');
-  show('help', backTo === 'game');
+  show('help', backTo === 'game' || (state === 'menu' && $('title').classList.contains('on')));
 }
 
 // 把 HTML 裡 data-i18n 的元素換成目前語言
@@ -2010,7 +2010,7 @@ function openSub(id) {
   if (id === 'shop') renderShop();
   if (id === 'rank') renderRank();
   if (id === 'opt') { renderOpt(); resize(); }
-  show(id);
+  show(id, menuFrom === 'title' && state === 'menu');   // 從主畫面打開時保留主畫面在底下，關掉後不必重演開場、可以立刻再選
 }
 
 document.addEventListener('click', e => {
@@ -2028,6 +2028,7 @@ document.addEventListener('click', e => {
     case 'back':
       if ($('help').classList.contains('on') && backTo === 'game') { hide('help'); if (!$('pause').classList.contains('on')) resumeGame(); break; }
       if (menuFrom === 'over' && g) { show('over'); menuFrom = 'title'; break; }
+      if (state === 'menu' && $('title').classList.contains('on')) { SCRS.forEach(s => { if (s !== 'title') hide(s); }); break; }   // 回到還開著的主畫面：直接關掉子畫面
       goTitle(); break;
     case 'title': goTitle(); break;
     case 'resume': resumeGame(); break;
