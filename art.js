@@ -1075,7 +1075,7 @@ function drawHeroNinja(x, y, o, c = ctx, PR = HERO_PROP) {
   const flash = o.hurt > 0 && ((t * 20) | 0) % 2;
   const C = flash ? { suit: '#ff6a5a', dk: '#c03a30', lt: '#ffb0a0', band: '#ffd0c8', skin: '#ffc4b4' }
     : { suit: sk.suit, dk: sk.dark, lt: heroLighten(sk.suit, .35), band: sk.band, skin: '#f9d8b4' };
-  const pn = heroPoseOf(o), Q = HERO_POSE[pn], cy = y + PR.pivot;
+  const pn = o.pose || heroPoseOf(o), Q = HERO_POSE[pn], cy = y + PR.pivot;
   const k = PR.hr / 19, HY = PR.hy, BT = PR.bt, BB = PR.bb, BW = PR.bw;
   // 往上衝很快時，身後拉出速度線
   if (vy < -700 && !o.dash && !o.dive) {

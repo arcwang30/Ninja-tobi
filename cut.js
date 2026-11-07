@@ -44,7 +44,7 @@ const INTRO = {
       if (this.t >= CUT_END) this.toTitle();
     } else if (this.ph === 'title') {
       if (this.flash > 0) this.flash = Math.max(0, this.flash - dt / .7);
-      titleBgUpdate(dt);
+      titleBgUpdate(dt); frontHeroUpdate(dt);
       // 主角輪播：前景 7 秒 → 化煙消失、背景剪影現身；背景 9 秒 → 剪影化煙、前景用忍術陣傳送出來
       this.ct += dt;
       if (this.cyc === 'front' && this.ct >= FRONT_T) { this.cyc = 'bg'; this.ct = 0; this.heroAnim('hero-out'); TH.wait = .55; }
@@ -65,13 +65,13 @@ const INTRO = {
     if (this.ph === 'boot') { c.fillStyle = '#000'; c.fillRect(0, 0, W, H); return; }
     if (this.ph === 'tap') return drawTapScreen(this.t);
     if (this.ph === 'cut') return drawCut(this.t);
-    drawTitleBG(performance.now() / 1000);
+    drawTitleBG(performance.now() / 1000); drawFrontHero(performance.now() / 1000);
     if (this.attract >= 0) drawAttract(this.attract);
     if (this.flash > 0) { c.fillStyle = `rgba(255,255,255,${this.flash})`; c.fillRect(0, 0, W, H); }
   },
 };
 const CUT_T = [0, 4.2, 8.6, 12.2, 15.6];   // 五個鏡頭的開始時間
-const CUT_FLASH = 15.6, CUT_END = 16.05, IDLE_T = 15, ATTRACT_T = 6.5, FRONT_T = 7, BACK_T = 9;
+const CUT_FLASH = 15.6, CUT_END = 16.05, IDLE_T = 15, ATTRACT_T = 6.5, FRONT_T = 10, BACK_T = 9;
 const ez = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
 const lerp2 = (a, b, q) => a + (b - a) * q;
 
@@ -387,4 +387,116 @@ function drawAttract(a) {
   const bar = H * .1 * fin * fout; c.fillStyle = '#000'; c.fillRect(0, 0, W, bar + SAFE_T * k); c.fillRect(0, H - bar, W, bar);
   txt('NINJA 鳶 TOBI', W / 2, H - bar / 2 - 2, 15, '#ffe28a', 'center', null);
   c.globalAlpha = 1;
+}
+
+// ===== 標題的前景主角：改用畫布即時繪製，位置、大小、旋轉、透明度跟著原本的現身／浮動／消失動畫（DOM 的 .hero-art 只負責動畫時間） =====
+// 表演：A 待機小動作（張望、伸懶腰、拔刀一半）、B 招牌姿勢（亮相、勝利、歡呼）、D 忍術（火遁、轉手裡劍、轉苦無）、
+//       C 點他有反應（空翻、分身、被戳、開心）、E 背景換幕時的反應（林：葉子落頭上／風：被吹得搖晃／火：擦汗／山：轉身遠眺）
+const FH = { act: null, at: 0, dur: 0, rest: 1.6, tapN: 0, stage: -1, bag: [], vis: false, box: null };
+const FH_DUR = { look: 2.2, stretch: 1.7, draw: 1.9, mie: 2, victory: 1.6, cheer: 1.6, fire: 2.5, shuriken: 2.4, kunai: 2.2,
+  spin: .9, clone: 1.4, poke: 1.1, happy: 1.3, leaf: 2.4, windy: 2.2, sweat: 2.2, gaze: 2.2 };
+const FH_IDLE = ['look', 'stretch', 'draw', 'mie', 'victory', 'cheer', 'fire', 'shuriken', 'kunai'];
+function fhStart(a) {
+  FH.act = a; FH.at = 0; FH.dur = FH_DUR[a];
+  const s = { draw: () => SFX.clank(), mie: () => SFX.impact(), victory: () => SFX.item(), cheer: () => SFX.item(), shuriken: () => SFX.throw(), kunai: () => SFX.throw(),
+    spin: () => SFX.dash(), clone: () => SFX.scroll(), poke: () => tone(520, .12, 'square', .04, -260), happy: () => SFX.item(), windy: () => SFX.wind(), stretch: () => tone(330, .25, 'triangle', .03, 160) }[a];
+  if (s) s();
+}
+function frontHeroBox() {
+  const el = document.querySelector('#title .hero-art'), ti = $('title');
+  if (!el || !ti.classList.contains('on') || ti.classList.contains('attract')) return null;
+  const cs = getComputedStyle(el), op = +cs.opacity, par = el.offsetParent;
+  if (op < .02 || !par) return null;
+  const pr = par.getBoundingClientRect(), cr = cv.getBoundingClientRect(), k = W / cr.width;
+  const m = cs.transform && cs.transform !== 'none' ? new DOMMatrix(cs.transform) : new DOMMatrix();
+  return { x: (pr.left - cr.left + el.offsetLeft + el.offsetWidth / 2 + m.e) * k, y: (pr.top - cr.top + el.offsetTop + el.offsetHeight / 2 + m.f) * k,
+    s: Math.hypot(m.a, m.b) * el.offsetWidth * k / 84, rot: Math.atan2(m.b, m.a), op };
+}
+function frontHeroUpdate(dt) {
+  if (!FH.vis || INTRO.cyc !== 'front') { FH.act = null; FH.rest = 1.3; return; }
+  if (FH.act) {
+    FH.at += dt;
+    if (FH.act === 'fire' && FH.at - dt < .5 && FH.at >= .5) { noise(.45, .07); tone(180, .4, 'sawtooth', .04, -80); }
+    if (FH.at >= FH.dur) { FH.act = null; FH.rest = .8 + Math.random() * .8; }
+    return;
+  }
+  if (FH.stage !== TB.cur) { const first = FH.stage < 0; FH.stage = TB.cur; if (!first) { fhStart(['leaf', 'windy', 'sweat', 'gaze'][TB.cur]); return; } }
+  FH.rest -= dt;
+  if (FH.rest <= 0) { if (!FH.bag.length) FH.bag = FH_IDLE.slice().sort(() => Math.random() - .5); fhStart(FH.bag.pop()); }
+}
+// 點前景主角：依序換不同反應
+document.getElementById('title').addEventListener('pointerdown', e => {
+  if (!FH.vis || !FH.box || INTRO.cyc !== 'front') return;
+  const cr = cv.getBoundingClientRect(), k = W / cr.width, x = (e.clientX - cr.left) * k, y = (e.clientY - cr.top) * k, b = FH.box;
+  if (Math.hypot(x - b.x, y - b.y) > b.s * 34) return;
+  fhStart(['spin', 'clone', 'poke', 'happy'][FH.tapN++ % 4]);
+  INTRO.ct = Math.min(INTRO.ct, FRONT_T - 3);   // 互動中不會馬上換成背景剪影
+});
+function heart(c, x, y, r) { c.beginPath(); c.moveTo(x, y + r * .9); c.bezierCurveTo(x - r * 1.6, y - r * .2, x - r * .6, y - r * 1.3, x, y - r * .4); c.bezierCurveTo(x + r * .6, y - r * 1.3, x + r * 1.6, y - r * .2, x, y + r * .9); c.fill(); }
+function drawFrontHero(t) {
+  const b = frontHeroBox(); FH.box = b; FH.vis = !!b && b.op > .9;
+  if (!b) return;
+  const c = ctx, a = FH.act, q = a ? FH.at / FH.dur : 0, at = FH.at, sin = Math.sin;
+  const o = { face: 1, t, vy: 0, skin: save.skin };
+  let dx = 0, dy = 0, rot = 0;
+  const back = [], front = [];   // 主角後面／前面的特效（座標：主角盒子單位，腳底在 (0,32)）
+  switch (a) {
+    case 'look': o.face = q > .22 && q < .62 ? -1 : 1; o.pose = 'apex'; break;
+    case 'stretch': o.pose = 'fall'; o.sq = -sin(q * Math.PI) * .9; if (q > .2 && q < .8) o.eye = 'happy'; break;
+    case 'draw':
+      if (q > .15 && q < .85) { o.pose = 'dash'; o.eye = 'focus'; if (q > .25 && q < .6) front.push(() => drawStar4(c, 40, 20, 4 + sin((q - .25) / .35 * Math.PI) * 6, q * 6, '#ffffff')); }
+      break;
+    case 'mie':
+      o.pose = 'fly'; o.eye = 'focus'; dx = q < .1 ? sin(at * 90) * 1.5 : 0;
+      back.push(() => { c.strokeStyle = `rgba(255,236,170,${.7 * (1 - q)})`; c.lineWidth = 1.6; for (let i = 0; i < 16; i++) { const an = i / 16 * TAU; c.beginPath(); c.moveTo(Math.cos(an) * 26, 4 + sin(an) * 26); c.lineTo(Math.cos(an) * (40 + q * 10), 4 + sin(an) * (40 + q * 10)); c.stroke(); } });
+      front.push(() => { const k = Math.min(1, q / .15); c.save(); c.translate(27, -16); c.scale(2 - k, 2 - k); c.globalAlpha *= k; aCirc(c, 0, 0, 9); aFI(c, '#c0262d', 1.6); txt('忍', 0, .5, 11, '#fff', 'center', null); c.restore(); });
+      break;
+    case 'victory':
+      o.pose = 'up'; o.eye = 'happy'; dy = -sin(q * Math.PI) * 12;
+      front.push(() => { for (let i = 0; i < 4; i++) { const an = i * 1.6 + at * 3; drawStar4(c, 12 + Math.cos(an) * 16, 6 + sin(an) * 10, 2.5 + sin(at * 8 + i) * 1.2, at * 4, '#ffe28a'); } });
+      break;
+    case 'cheer': o.pose = 'fall'; o.eye = 'happy'; dy = -Math.abs(sin(q * TAU)) * 10; break;
+    case 'fire':
+      o.eye = 'focus'; o.pose = q < .2 ? 'apex' : 'fly';
+      if (q < .2) back.push(() => { c.strokeStyle = '#ffe28a'; c.lineWidth = 1.4; c.setLineDash([3, 2]); aCirc(c, 0, 6, 26 * ez(q / .2)); c.stroke(); c.setLineDash([]); });
+      else front.push(() => { for (let i = 0; i < 18; i++) { const f = (at * 2.6 + i / 18) % 1, fx = 16 + f * 46, fy = 9 + sin(i * 3 + at * 20) * f * 9 - f * 4; c.fillStyle = f < .35 ? `rgba(255,240,150,${1 - f})` : f < .7 ? `rgba(255,140,40,${1 - f})` : `rgba(200,40,30,${1 - f})`; aCirc(c, fx, fy, 2.5 + f * 7); c.fill(); } });
+      break;
+    case 'shuriken':
+      o.pose = 'up'; o.eye = 'happy';
+      front.push(() => { for (let i = 0; i < 3; i++) { const an = at * 7 + i / 3 * TAU; drawStar4(c, 12 + Math.cos(an) * 12, -9 + sin(an) * 6, 5.5, at * 20, '#cfd6e2'); } });
+      break;
+    case 'kunai': o.pose = 'up'; if (q > .3 && q < .7) o.eye = 'happy'; front.push(() => drawKunai(c, 13, -8 - sin(q * Math.PI) * 12, at * 16, 1.5)); break;
+    case 'spin': o.eye = 'happy'; o.pose = 'apex'; dy = -sin(q * Math.PI) * 34; o.spin = .45 * (1 - q) + .001; break;
+    case 'clone':
+      o.pose = 'apex'; o.eye = 'focus';
+      back.push(() => { const sp = sin(q * Math.PI) * 34; for (const sd of [-1, 1]) { c.save(); c.globalAlpha *= .45; drawHeroNinja(sd * sp, 32, Object.assign({}, o, { face: sd }), c); c.restore(); } });
+      break;
+    case 'poke': o.pose = 'hurt'; o.eye = 'hurt'; dx = q < .5 ? sin(at * 70) * 2 : 0; front.push(() => txt('!?', 18, -22, 13, '#ffe28a', 'center', '#000', 3)); break;
+    case 'happy':
+      o.pose = 'up'; o.eye = 'happy'; dy = -Math.abs(sin(q * TAU)) * 9;
+      front.push(() => { c.fillStyle = '#ff6a8a'; for (let i = 0; i < 3; i++) { const f = (q * 1.5 + i / 3) % 1; c.save(); c.globalAlpha *= 1 - f; heart(c, -14 + i * 14, -10 - f * 22, 4); c.restore(); } });
+      break;
+    case 'leaf':
+      o.pose = 'apex'; if (q > .55 && q < .8) o.eye = 'blink';
+      front.push(() => {
+        const lq = Math.min(1, q / .55), off = q > .8 ? (q - .8) / .2 : 0, lx = lerp2(-24, 2, lq) + sin(lq * 9) * 6 + off * 40, ly = lerp2(-40, -20, lq) - off * 20;
+        c.save(); c.translate(lx, ly); c.rotate(sin(at * 5) * .6 + off * 4); c.fillStyle = '#5fae4a'; c.beginPath(); c.moveTo(-6, 0); c.quadraticCurveTo(0, -4, 6, 0); c.quadraticCurveTo(0, 4, -6, 0); c.fill(); c.strokeStyle = INK; c.lineWidth = .8; c.stroke(); c.restore();
+        if (q > .78 && q < .95) { c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1.2; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(4, -14 - i * 3); c.lineTo(12 + i * 3, -18 - i * 4); c.stroke(); } }
+      });
+      break;
+    case 'windy':
+      o.pose = 'fall'; o.eye = 'focus'; rot = sin(at * 7) * .14; dx = sin(at * 7) * 3;
+      back.push(() => { c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 1.4; for (let i = 0; i < 5; i++) { const x = 50 - ((at * 120 + i * 30) % 110); c.beginPath(); c.moveTo(x, -16 + i * 11); c.quadraticCurveTo(x - 10, -20 + i * 11, x - 22, -16 + i * 11); c.stroke(); } });
+      break;
+    case 'sweat':
+      o.pose = 'up'; o.eye = 'blink';
+      front.push(() => { c.fillStyle = '#9ad8ff'; for (let i = 0; i < 3; i++) { const f = (at * 1.4 + i / 3) % 1, x = -15 + i * 3, y = -8 + f * 18; c.save(); c.globalAlpha *= 1 - f; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x - 3, y + 6, x, y + 8); c.quadraticCurveTo(x + 3, y + 6, x, y); c.fill(); c.restore(); } });
+      break;
+    case 'gaze': o.pose = 'up'; o.eye = 'focus'; o.face = q < .5 ? 1 : -1; front.push(() => { if (sin(at * 9) > .3) drawStar4(c, o.face * 10, 3, 3, at * 3, '#ffffff'); }); break;
+  }
+  c.save(); c.globalAlpha *= b.op; c.translate(b.x, b.y); c.rotate(b.rot); c.scale(b.s, b.s); c.translate(dx, dy); c.rotate(rot);
+  for (const f of back) f();
+  drawHeroNinja(0, 32, o, c);
+  for (const f of front) f();
+  c.restore();
 }
