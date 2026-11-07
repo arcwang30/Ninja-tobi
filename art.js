@@ -1615,3 +1615,50 @@ function drawBoss2(b, x, y, s, c = ctx) {
   }
   c.restore();
 }
+
+// ===== 主畫面底部選單的圖示：攤開的卷軸＋圖畫（商店／排行・成就／玩法說明／設定） =====
+// 畫在 100×72 的方框裡；回傳畫布（game.js 轉成圖片放進按鈕）
+function dockIcon(kind, size = 200) {
+  const cnv = document.createElement('canvas'); cnv.width = size; cnv.height = Math.round(size * .72);
+  const c = cnv.getContext('2d'), k = size / 100; c.scale(k, k);
+  // 影子
+  c.fillStyle = 'rgba(0,0,0,.35)'; aEll(c, 50, 68, 40, 3.5); c.fill();
+  // 紙（米色、帶淡淡的紋理與紅色內框）
+  c.beginPath(); c.moveTo(16, 8); c.quadraticCurveTo(50, 5, 84, 8); c.lineTo(84, 62); c.quadraticCurveTo(50, 65, 16, 62); c.closePath();
+  const pg = c.createLinearGradient(0, 8, 0, 62); pg.addColorStop(0, '#fbf3df'); pg.addColorStop(1, '#ead8b0'); c.fillStyle = pg; c.fill(); aInk(c, 2.4);
+  c.strokeStyle = 'rgba(192,38,45,.55)'; c.lineWidth = 1.2; c.strokeRect(20.5, 12, 59, 46);
+  // 左右的卷軸軸心（木頭＋金色軸頭）
+  for (const x of [12, 88]) {
+    aRR(c, x - 5, 4, 10, 62, 4); const wg = c.createLinearGradient(x - 5, 0, x + 5, 0); wg.addColorStop(0, '#4a2a14'); wg.addColorStop(.45, '#9a5a2a'); wg.addColorStop(1, '#4a2a14'); c.fillStyle = wg; c.fill(); aInk(c, 2);
+    for (const y of [3, 67]) { aEll(c, x, y, 6.5, 3); aFI(c, '#e8b84a', 1.6); }
+  }
+  // 綁卷軸的紅繩（掛在左邊）
+  c.strokeStyle = '#c0262d'; c.lineWidth = 2; c.lineCap = 'round'; c.beginPath(); c.moveTo(12, 30); c.quadraticCurveTo(4, 40, 7, 52); c.stroke();
+  aCirc(c, 7, 53, 2.4); c.fillStyle = '#c0262d'; c.fill();
+  // 圖畫
+  c.save(); c.translate(50, 36);
+  if (kind === 'shop') {   // 錢袋（巾着）＋小判
+    c.beginPath(); c.moveTo(-14, -6); c.quadraticCurveTo(-20, 16, -2, 18); c.quadraticCurveTo(14, 18, 12, -6); c.quadraticCurveTo(0, -10, -14, -6); c.closePath(); aFI(c, '#7a3aa8', 2);
+    c.beginPath(); c.moveTo(-14, -6); c.lineTo(-17, -14); c.lineTo(-8, -10); c.lineTo(-1, -16); c.lineTo(5, -10); c.lineTo(14, -14); c.lineTo(12, -6); c.closePath(); aFI(c, '#9a5ac8', 1.8);
+    c.strokeStyle = '#f2c14e'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(-13, -6); c.quadraticCurveTo(-1, -2, 12, -6); c.stroke();
+    c.fillStyle = 'rgba(255,255,255,.25)'; aEll(c, -7, 4, 3, 5, -.3); c.fill();
+    drawKoban(c, 12, 8, 7, 9.5, 1, 0);
+  } else if (kind === 'rank') {   // 金色獎盃＋星星
+    const gg = c.createLinearGradient(-12, 0, 12, 0); gg.addColorStop(0, '#c8901e'); gg.addColorStop(.4, '#ffe9a0'); gg.addColorStop(1, '#c8901e');
+    for (const sd of [-1, 1]) { c.beginPath(); if (sd < 0) c.arc(-13, -6, 6, Math.PI * .5, Math.PI * 1.5); else c.arc(13, -6, 6, -Math.PI * .5, Math.PI * .5); c.strokeStyle = INK; c.lineWidth = 4.5; c.stroke(); c.strokeStyle = '#e8b84a'; c.lineWidth = 2.4; c.stroke(); }
+    c.beginPath(); c.moveTo(-13, -15); c.lineTo(13, -15); c.quadraticCurveTo(13, 6, 0, 8); c.quadraticCurveTo(-13, 6, -13, -15); c.closePath(); c.fillStyle = gg; c.fill(); aInk(c, 2);
+    c.beginPath(); c.rect(-3, 8, 6, 6); aFI(c, '#c8901e', 1.6); aRR(c, -10, 13, 20, 6, 2); aFI(c, '#7a3a1e', 1.8);
+    c.fillStyle = '#fff6c8'; c.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 2.4 : 5.6, a = -Math.PI / 2 + i * Math.PI / 5; c.lineTo(Math.cos(a) * r, -5 + Math.sin(a) * r); } c.closePath(); c.fill(); c.strokeStyle = '#a8701a'; c.lineWidth = 1; c.stroke();
+  } else if (kind === 'help') {   // 主角的小臉＋「？」對話框
+    c.save(); c.translate(-6, 0); c.scale(.62, .62); drawHeroNinja(0, 30, { face: 1, t: .4, vy: 0, skin: 0, pose: 'apex', eye: 'open' }, c); c.restore();
+    aRR(c, 6, -20, 15, 15, 5); aFI(c, '#ffffff', 1.8);
+    c.beginPath(); c.moveTo(9, -6); c.lineTo(7, -1); c.lineTo(13, -6); c.fillStyle = '#ffffff'; c.fill();
+    c.fillStyle = '#c0262d'; c.font = '900 13px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 13.5, -12);
+  } else {   // 設定：齒輪
+    c.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, r = i % 2 ? 13 : 17; const a2 = a + Math.PI / 16; c.lineTo(Math.cos(a - .12) * r, Math.sin(a - .12) * r); c.lineTo(Math.cos(a2 - .08) * r, Math.sin(a2 - .08) * r); } c.closePath();
+    const sg = c.createLinearGradient(0, -17, 0, 17); sg.addColorStop(0, '#e8ecf2'); sg.addColorStop(1, '#7c8696'); c.fillStyle = sg; c.fill(); aInk(c, 2);
+    aCirc(c, 0, 0, 7); aFI(c, '#c0262d', 2); aCirc(c, 0, 0, 2.6); c.fillStyle = '#fbf3df'; c.fill();
+  }
+  c.restore();
+  return cnv;
+}

@@ -194,7 +194,8 @@ function noise(d = .2, vol = .08, delay = 0) {
   s.connect(gn).connect(ac.destination); s.start(ac.currentTime + delay);
 }
 const SFX = {
-  jump: () => tone(360, .11, 'square', .03, 260),
+  jump: () => { const f = 480 + Math.random() * 60; tone(f, .1, 'triangle', .09, f * 1.1); tone(f * 1.5, .07, 'square', .025, f, .015); },   // 彈跳：可愛的「啵嚶」聲（每次音高略有不同，不會單調）
+  wallJump: () => { tone(380, .07, 'square', .04, -120); tone(620, .12, 'triangle', .08, 700, .04); },   // 蹬牆跳：先「咚」一下再往上揚
   spring: () => tone(260, .28, 'square', .05, 800),
   coin: () => { tone(988, .06, 'square', .035); tone(1319, .12, 'square', .035, 0, .05); },
   item: () => { tone(660, .1, 'triangle', .06); tone(880, .1, 'triangle', .06, 0, .08); tone(1320, .2, 'triangle', .06, 0, .16); },
@@ -232,7 +233,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v31';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v32';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -703,7 +704,7 @@ function updatePlay(dt) {
       p.wallUsed = true; p.vy = -JUMP * .85; p.vx = -side * 340; p.face = -side; p.sq = .6; p.spin = .45;   // 蹬牆跳：空翻一圈
       floatText(p.x, p.y - 50, t('wall_kick'), '#fff', 15);
       for (let i = 0; i < 5; i++) g.parts.push({ x: p.x + side * 10, y: p.y - 20 + rnd(-10, 10), vx: -side * rnd(40, 120), vy: rnd(-60, 30), life: .35, max: .35, c: '#ffffffaa', s: rnd(2, 3) });
-      SFX.jump();
+      SFX.wallJump();
     }
   }
 
@@ -1480,6 +1481,8 @@ function buildHeroArt() {
   for (let i = 0; i < SKINS.length; i++) heroSprites[i] = heroPortrait(i, 400);
   heroThumbs.length = 0;
   updateHeroArt();
+  // 底部選單：攤開的卷軸圖示（art.js dockIcon）
+  for (const el of document.querySelectorAll('.scroll-ic')) if (!el.firstChild) { const im = new Image(); im.alt = ''; try { im.src = dockIcon(el.dataset.ic, 240).toDataURL(); } catch (e) { } el.appendChild(im); }
 }
 // 商店用的小頭像（快取成 dataURL）
 const heroThumbs = [];

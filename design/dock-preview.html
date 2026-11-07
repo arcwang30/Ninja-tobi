@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8"><title>底部選單圖示</title>
+<style>html,body{margin:0;background:#161c1e}canvas{display:block}#title{display:none}</style>
+<canvas id="cv"></canvas><div id="title"></div><div id="intro"></div>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), $ = id => document.getElementById(id);
+const INK = '#0e1414', g = null, WALL = 14, FONT = '"Noto Sans TC","Microsoft JhengHei",sans-serif';
+let W = 720, H = 260, SAFE_T = 0;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const save = { skin: 0 }, SFX = new Proxy({}, { get: () => () => {} }), tone = () => {}, noise = () => {};
+function txt(s, x, y, size, color = '#fff', align = 'center', stroke = '#000', lw = 4) { ctx.font = `900 ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle'; if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.strokeText(s, x, y); } ctx.fillStyle = color; ctx.fillText(s, x, y); }
+</script>
+<script src="../art.js"></script>
+<script src="../cut.js"></script>
+<script>
+cv.width = W * 2; cv.height = H * 2; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.scale(2, 2);
+const gr = ctx.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#2a3236'); gr.addColorStop(1, '#161c1e'); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+[['shop', '整備商店'], ['rank', '排行・成就'], ['help', '玩法說明'], ['opt', '設定']].forEach(([k, n], i) => {
+  const x = 30 + i * 172; ctx.drawImage(dockIcon(k, 300), x, 30, 150, 108); txt(n, x + 75, 160, 16, '#c8d0d6', 'center', null);
+  ctx.drawImage(dockIcon(k, 120), x + 45, 190, 60, 43);
+});
+</script>
