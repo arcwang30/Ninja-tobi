@@ -1,18 +1,20 @@
 'use strict';
 /* NINJA 鳶 TOBI — 開場演出（在 art.js 之後、game.js 之前載入；用到的 ctx、W、H、save… 都在呼叫時才讀取）
-   流程：團隊 LOGO →（第一次開啟）點一下開始 → 過場「月下的狼煙」→ 白光接標題
-         第二次起：團隊 LOGO → 直接白光接標題；設定頁可「重看開場」
-   標題畫面：背景畫夜空、滿月、竹林與主角剪影（用忍術在竹子間跳躍、化煙瞬移）；閒置一陣子會播一小段待機展示，再回到標題 */
+   流程（每次啟動）：團隊 LOGO（開機遮罩，等畫面尺寸量穩才淡出）→ 點一下開始 → 過場「月下的狼煙」→ 白光接標題
+   標題畫面：背景是遊戲關卡的捲動背景（四幕隨機輪播）；主角輪流在兩個地方出現——
+     「前景」：用忍術陣現身的大圖；「背景」：在左右竹牆間蹬牆跳的剪影。一邊消失時，另一邊就用忍術傳送出來
+   閒置一陣子會播一小段待機展示，再回到標題 */
 const INTRO = {
-  ph: 'boot',        // boot | logo | tap | cut | title
-  t: 0, flash: 0, idle: 0, attract: -1, last: 0, said: -1, sfx: {},
-  logo: (() => { const i = new Image(); i.src = 'assets/team_logo.webp'; return i; })(),
-  // 開機遮罩拿掉後開始
+  ph: 'boot',        // boot | tap | cut | title
+  t: 0, flash: 0, idle: 0, attract: -1, said: -1, sfx: {},
+  cyc: 'front', ct: 0,   // 標題主角輪播：front 前景大圖／bg 背景剪影
+  // 開機遮罩淡出後開始
   begin() {
-    this.ph = 'logo'; this.t = 0; this.leave = -1;
+    this.ph = 'tap'; this.t = 0;
     // 預覽用：網址加 ?cutshot=秒數 會停在過場的那一刻（截圖檢查用）
     const q = new URLSearchParams(location.search).get('cutshot');
     if (q !== null && !isNaN(+q)) { this.ph = 'cut'; this.t = +q; this.frozen = true; const b = $('boot'); if (b) b.remove(); }
+    if (new URLSearchParams(location.search).has('skip')) this.toTitle();   // 開發用：網址加 ?skip 直接到標題
   },
   // 進入過場（重看開場也從這裡開始）
   playCut() { hideAll(); this.ph = 'cut'; this.t = 0; this.said = -1; this.sfx = {}; },
@@ -20,13 +22,14 @@ const INTRO = {
   // 接到標題：顯示標題選單並播放 LOGO 蓋章＋忍術陣現身
   toTitle() {
     this.ph = 'title'; this.flash = 1; this.idle = 0; this.endAttract();
-    if (!save.intro) { save.intro = 1; persist(); }
     if (state === 'menu') { show('title'); playIntro(); }
   },
+  // 標題的主角輪播：前景現身（playIntro 也會呼叫）
+  heroFront() { this.cyc = 'front'; this.ct = 0; TH.vis = 0; },
+  heroAnim(cls) { const it = $('intro'); it.classList.remove('play', 'hero-in', 'hero-out'); void it.offsetWidth; it.classList.add(cls); },
   // 畫布被點擊（只有開場階段會收到；回傳 true 表示已處理）
   tap() {
-    if (this.ph === 'logo') { if (this.t > .3 && this.leave < 0) this.leave = this.t; return true; }
-    if (this.ph === 'tap') { this.playCut(); return true; }
+    if (this.ph === 'tap') { if (this.t > .3) this.playCut(); return true; }
     if (this.ph === 'cut') { if (this.t < CUT_FLASH) this.t = CUT_FLASH; return true; }
     return false;
   },
@@ -36,26 +39,30 @@ const INTRO = {
   update(dt) {
     if (this.frozen) return;
     this.t += dt;
-    if (this.ph === 'logo') {
-      const la = this.t;
-      if (this.leave < 0 && la >= LOGO_IN + LOGO_HOLD) this.leave = this.t;
-      if (this.leave >= 0 && this.t - this.leave >= LOGO_OUT) { this.t = 0; if (save.intro) this.toTitle(); else this.ph = 'tap'; }
-    } else if (this.ph === 'cut') {
+    if (this.ph === 'cut') {
       cutSfx(this.t);
       if (this.t >= CUT_END) this.toTitle();
     } else if (this.ph === 'title') {
       if (this.flash > 0) this.flash = Math.max(0, this.flash - dt / .7);
-      titleHero(dt);
+      titleBgUpdate(dt);
+      // 主角輪播：前景 7 秒 → 化煙消失、背景剪影現身；背景 9 秒 → 剪影化煙、前景用忍術陣傳送出來
+      this.ct += dt;
+      if (this.cyc === 'front' && this.ct >= FRONT_T) { this.cyc = 'bg'; this.ct = 0; this.heroAnim('hero-out'); TH.wait = .55; }
+      else if (this.cyc === 'bg') {
+        if (TH.wait > 0) { TH.wait -= dt; if (TH.wait <= 0) titleHeroShow(); }
+        else titleHero(dt);
+        if (this.ct >= BACK_T && TH.mode !== 'hop') { titleHeroHide(); this.cyc = 'front'; this.ct = 0; this.heroAnim('hero-in'); }
+      }
       const onlyTitle = $('title').classList.contains('on') && !document.querySelector('.scr.on:not(#title)');
       if (this.attract >= 0) { this.attract += dt; if (this.attract >= ATTRACT_T) { this.endAttract(); this.idle = 0; } }
       else if (onlyTitle) { this.idle += dt; if (this.idle >= IDLE_T) { this.attract = 0; $('title').classList.add('attract'); } }
       else this.idle = 0;
+      for (const p of TH.puffs) p.t += dt; TH.puffs = TH.puffs.filter(p => p.t < .5);
     }
   },
   draw() {
     const c = ctx;
     if (this.ph === 'boot') { c.fillStyle = '#000'; c.fillRect(0, 0, W, H); return; }
-    if (this.ph === 'logo') return drawTeamLogo(this.t, this.leave);
     if (this.ph === 'tap') return drawTapScreen(this.t);
     if (this.ph === 'cut') return drawCut(this.t);
     drawTitleBG(performance.now() / 1000);
@@ -63,9 +70,8 @@ const INTRO = {
     if (this.flash > 0) { c.fillStyle = `rgba(255,255,255,${this.flash})`; c.fillRect(0, 0, W, H); }
   },
 };
-const LOGO_IN = .6, LOGO_HOLD = 1.6, LOGO_OUT = .5;
 const CUT_T = [0, 4.2, 8.6, 12.2, 15.6];   // 五個鏡頭的開始時間
-const CUT_FLASH = 15.6, CUT_END = 16.05, IDLE_T = 15, ATTRACT_T = 6.5;
+const CUT_FLASH = 15.6, CUT_END = 16.05, IDLE_T = 15, ATTRACT_T = 6.5, FRONT_T = 7, BACK_T = 9;
 const ez = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
 const lerp2 = (a, b, q) => a + (b - a) * q;
 
@@ -80,17 +86,6 @@ function drawSil(x, y, w, h, ox, oy, col, draw) {
   ctx.drawImage(SIL, 0, 0, pw, ph, x - ox, y - oy, w, h);
 }
 
-// ===== 團隊 LOGO（照 yaki_mochi：深藍底、LOGO 由 0.94 倍放大淡入 → 停留 → 淡出到全黑） =====
-function drawTeamLogo(t, leave) {
-  const c = ctx, bg = c.createRadialGradient(W / 2, H * .45, 0, W / 2, H * .45, Math.max(W, H) * .7);
-  bg.addColorStop(0, '#1a2048'); bg.addColorStop(1, '#070915'); c.fillStyle = bg; c.fillRect(0, 0, W, H);
-  const img = INTRO.logo, fin = ez(t / LOGO_IN), out = leave < 0 ? 0 : ez((t - leave) / LOGO_OUT);
-  if (img.complete && img.naturalWidth) {
-    const box = Math.min(W * .78, H * .5), s = (.94 + .06 * fin) * box / Math.max(img.naturalWidth, img.naturalHeight), w = img.naturalWidth * s, h = img.naturalHeight * s;
-    c.save(); c.globalAlpha = fin * (1 - out); c.drawImage(img, W / 2 - w / 2, H * .45 - h / 2, w, h); c.restore();
-  }
-  if (out > 0) { c.fillStyle = `rgba(0,0,0,${out})`; c.fillRect(0, 0, W, H); }
-}
 
 // ===== 共用的夜景零件 =====
 function nightSky(y0, y1, t, top = '#0a0f2e', bot = '#2b1d4c') {
@@ -156,6 +151,7 @@ function drawTapScreen(t) {
   c.globalAlpha *= .55 + .45 * Math.sin(t * 4);
   txt(t_('tap_start'), W / 2, H * .68, 17, '#ffffff', 'center', '#000', 4);
   c.globalAlpha = 1;
+  if (t < .6) { c.fillStyle = `rgba(0,0,0,${1 - ez(t / .6)})`; c.fillRect(0, 0, W, H); }   // 從開機遮罩的全黑淡入
 }
 const t_ = k => (typeof t === 'function' ? t(k) : k);
 
@@ -325,44 +321,50 @@ function cutShot4(st, PY, PH) {
   }
 }
 
-// ===== 標題背景：夜空、滿月、竹林，主角剪影在竹子間跳躍、化煙瞬移 =====
-const TH = { mode: 'cling', t: 0, dur: 1, i: 0, x: 0, y: 0, x0: 0, y0: 0, x1: 0, y1: 0, face: 1, vis: 1, spin: 0, puffs: [] };
-const titleStalks = () => [.085, .32, .75, .915].map(f => f * W);
+// ===== 標題背景：遊戲關卡的捲動背景（四幕隨機輪播）＋左右竹牆；主角剪影在竹牆間蹬牆跳、化煙瞬移 =====
+// 換幕：下一幕從畫面上方往下蓋過來，交界處是一排雲（像往上爬進下一幕）
+const TB = { cur: Math.random() * 4 | 0, nxt: -1, t: 0, wipe: 0 };
+function titleBgUpdate(dt) {
+  TB.t += dt;
+  if (TB.nxt < 0 && TB.t >= 8) { do TB.nxt = Math.random() * 4 | 0; while (TB.nxt === TB.cur); TB.wipe = 0; }
+  if (TB.nxt >= 0) { TB.wipe += dt / 1.4; if (TB.wipe >= 1) { TB.cur = TB.nxt; TB.nxt = -1; TB.t = 0; } }
+}
+const TH = { mode: 'cling', t: 0, dur: 1, x: 0, y: 0, x0: 0, y0: 0, x1: 0, y1: 0, side: -1, face: 1, vis: 0, spin: 0, wait: 0, puffs: [] };
+const wallX = sd => sd < 0 ? WALL + 13 : W - WALL - 13;
+const heroPuff = () => TH.puffs.push({ x: TH.x, y: TH.y - 18, t: 0 });
+function titleHeroShow() { TH.side = Math.random() < .5 ? -1 : 1; TH.x = wallX(TH.side); TH.y = H * (.45 + Math.random() * .25); TH.face = -TH.side; TH.vis = 1; TH.mode = 'cling'; TH.t = 0; TH.dur = .5; heroPuff(); }
+function titleHeroHide() { if (TH.vis) heroPuff(); TH.vis = 0; TH.mode = 'cling'; }
 function titleHero(dt) {
   const h = TH; h.t += dt;
-  for (const p of h.puffs) p.t += dt; h.puffs = h.puffs.filter(p => p.t < .5);
-  const xs = titleStalks();
-  if (!h.x) { h.i = 0; h.x = xs[0] + 9; h.y = H * .6; h.mode = 'cling'; h.t = 0; h.dur = 1; }
-  if (h.t < h.dur) {
-    if (h.mode === 'hop') { const q = h.t / h.dur; h.x = lerp2(h.x0, h.x1, q); h.y = lerp2(h.y0, h.y1, q) - Math.sin(q * Math.PI) * H * .14; }
-    return;
-  }
-  // 決定下一個動作
-  const pickStalk = () => { let j; do j = Math.random() * xs.length | 0; while (j === h.i); return j; };
-  if (h.mode === 'warp' && !h.vis) { h.vis = 1; h.puffs.push({ x: h.x, y: h.y - 18, t: 0 }); h.mode = 'cling'; h.t = 0; h.dur = .6 + Math.random() * .6; return; }
-  if (h.mode !== 'cling') { h.mode = 'cling'; h.t = 0; h.dur = .5 + Math.random() * .8; h.face = h.x < W / 2 ? 1 : -1; return; }
-  const j = pickStalk(), side = xs[j] < W / 2 ? 9 : -9, ny = H * (.36 + Math.random() * .42);
-  if (Math.random() < .3) {   // 化煙瞬移
-    h.puffs.push({ x: h.x, y: h.y - 18, t: 0 }); h.vis = 0; h.mode = 'warp'; h.t = 0; h.dur = .35; h.i = j; h.x = xs[j] + side; h.y = ny;
-  } else {
-    h.mode = 'hop'; h.t = 0; h.dur = .7 + Math.random() * .25; h.x0 = h.x; h.y0 = h.y; h.x1 = xs[j] + side; h.y1 = ny; h.i = j;
-    h.face = h.x1 > h.x0 ? 1 : -1; h.spin = Math.random() < .4 ? 1 : 0;
+  if (h.mode === 'warp') { if (h.t >= h.dur) { h.vis = 1; heroPuff(); h.mode = 'cling'; h.t = 0; h.dur = .5 + Math.random() * .5; } return; }
+  if (!h.vis) return;
+  if (h.t < h.dur) { if (h.mode === 'hop') { const q = h.t / h.dur; h.x = lerp2(h.x0, h.x1, q); h.y = lerp2(h.y0, h.y1, q) - Math.sin(q * Math.PI) * H * .1; } return; }
+  if (h.mode === 'hop') { h.mode = 'cling'; h.t = 0; h.dur = .3 + Math.random() * .5; h.side = h.x1 < W / 2 ? -1 : 1; h.face = -h.side; return; }
+  if (Math.random() < .22) {   // 化煙瞬移到另一處牆上
+    heroPuff(); h.vis = 0; h.mode = 'warp'; h.t = 0; h.dur = .4;
+    h.side = Math.random() < .5 ? -1 : 1; h.x = wallX(h.side); h.y = H * (.38 + Math.random() * .38); h.face = -h.side;
+  } else {   // 蹬牆跳到對面的牆
+    const ns = -h.side; h.mode = 'hop'; h.t = 0; h.dur = .6 + Math.random() * .18;
+    h.x0 = h.x; h.y0 = h.y; h.x1 = wallX(ns); h.y1 = clamp(h.y + (Math.random() - .6) * H * .2, H * .3, H * .8); h.face = ns; h.spin = Math.random() < .35 ? 1 : 0;
   }
 }
 function drawTitleBG(t) {
-  const c = ctx, g2 = c.createLinearGradient(0, 0, 0, H); g2.addColorStop(0, '#0d2a2a'); g2.addColorStop(1, '#13443a'); c.fillStyle = g2; c.fillRect(0, 0, W, H);
-  const r = aRng(3); for (let i = 0; i < 34; i++) { const x = r() * W, y = r() * H * .6, tw = .5 + .5 * Math.sin(t * 2.4 + i); c.fillStyle = `rgba(230,255,240,${.15 + tw * .4})`; c.fillRect(x, y, 1.4, 1.4); }
-  bigMoon(W * .74, H * .2, W * .15);
-  for (const [fx, w] of [[.2, 9], [.55, 8], [.66, 11]]) bambooSil(fx * W, -10, H, w, '#0f3a2c', 3, t);   // 遠景竹子
-  const xs = titleStalks(); [16, 13, 19, 12].forEach((w, i) => bambooSil(xs[i], -10, H, w, '#134a38', 2.5, t));
-  // 主角剪影
+  const c = ctx, camY = -t * 40;
+  drawBG(camY, TB.cur, t); drawWalls(camY, TB.cur);
+  if (TB.nxt >= 0) {   // 下一幕從上方蓋下來
+    const ey = ez(TB.wipe) * (H + 40) - 20;
+    c.save(); c.beginPath(); c.rect(0, 0, W, ey); c.clip(); drawBG(camY, TB.nxt, t); drawWalls(camY, TB.nxt); c.restore();
+    for (let x = -10; x < W + 30; x += 26) { const r = 16 + Math.sin(x * .7) * 5; c.fillStyle = '#f2f6f2'; aCirc(c, x, ey + Math.sin(x + t * 3) * 3, r); c.fill(); }
+    c.fillStyle = '#d8e2dc'; c.fillRect(0, ey + 6, W, 6);
+  }
+  c.fillStyle = 'rgba(0,12,12,.2)'; c.fillRect(0, 0, W, H);   // 稍微壓暗，讓標題字清楚
   const h = TH;
   if (h.vis) {
     const q = h.mode === 'hop' ? h.t / h.dur : 0, vy = h.mode === 'hop' ? (q < .5 ? -600 : 500) : 0;
     const spin = h.mode === 'hop' && h.spin ? .45 * (1 - q) : 0;
-    drawSil(h.x, h.y, 100, 100, 50, 84, 'rgba(4,22,17,.92)', g3 => drawHeroNinja(0, 0, { face: h.face, t, vy, skin: 0, spin }, g3));
+    drawSil(h.x, h.y, 100, 100, 50, 84, 'rgba(6,18,16,.9)', g3 => drawHeroNinja(0, 0, { face: h.face, t, vy, skin: 0, spin }, g3));
   }
-  for (const p of h.puffs) { const k = p.t / .5; c.globalAlpha = (1 - k) * .8; for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; c.fillStyle = i % 2 ? '#cfe3da' : '#9fc2b4'; aCirc(c, p.x + Math.cos(a) * 14 * (.5 + k), p.y + Math.sin(a) * 10 * (.5 + k) - k * 8, 9 * (1 - k * .3)); c.fill(); } c.globalAlpha = 1; }
+  for (const p of h.puffs) { const k = p.t / .5; c.globalAlpha = (1 - k) * .85; for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; c.fillStyle = i % 2 ? '#eef3f0' : '#c4d2cc'; aCirc(c, p.x + Math.cos(a) * 14 * (.5 + k), p.y + Math.sin(a) * 10 * (.5 + k) - k * 8, 9 * (1 - k * .3)); c.fill(); } c.globalAlpha = 1; }
 }
 // 待機展示：黑邊滑入，主角剪影在滿月前連跳三下，最後四鬼的眼睛在山脊上亮起
 function drawAttract(a) {

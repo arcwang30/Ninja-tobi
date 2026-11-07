@@ -232,7 +232,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v24';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v25';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -283,7 +283,7 @@ addEventListener('orientationchange', () => setTimeout(resize, 300));
 resize();
 // iOS 從主畫面開啟時，瀏海高度會晚一點才給，開啟後再量幾次
 for (const ms of [100, 400, 1000, 2500]) setTimeout(resize, ms);
-// 開場遮罩：每 100ms 量一次，至少等 0.4 秒且連續兩次結果一樣（最多 1.2 秒）才拿掉遮罩，並從這時才開始 LOGO 出場動畫
+// 開機遮罩（兼團隊 LOGO）：每 100ms 量一次，至少等 2.7 秒（LOGO 播完，也涵蓋 iOS 晚給瀏海高度的 2.5 秒重量）且連續兩次結果一樣（最多 4 秒）才淡出，之後才開始畫面演出
 let booting = true;
 (() => {
   const t0 = performance.now(); let last = DIAG, same = 0;
@@ -291,10 +291,10 @@ let booting = true;
     resize();
     same = DIAG === last ? same + 1 : 0; last = DIAG;
     const el = performance.now() - t0;
-    if ((same < 2 || el < 400) && el < 1200) return setTimeout(tick, 100);
+    if ((same < 2 || el < 2700) && el < 4000) return setTimeout(tick, 100);
     booting = false;
     const b = $('boot'); if (b) b.classList.add('off');
-    if (state === 'menu') INTRO.begin();   // 開場：團隊 LOGO → 過場 → 標題（cut.js）
+    if (state === "menu") setTimeout(() => INTRO.begin(), 450);   // 遮罩淡出到全黑後：點一下開始 → 過場 → 標題（cut.js）
   };
   setTimeout(tick, 100);
 })();
@@ -1877,7 +1877,7 @@ function goTitle() {
   musicFor();
   playIntro();
 }
-function playIntro() { const it = $('intro'); it.classList.remove('play'); void it.offsetWidth; it.classList.add('play'); }
+function playIntro() { const it = $('intro'); it.classList.remove('play', 'hero-in', 'hero-out'); void it.offsetWidth; it.classList.add('play'); INTRO.heroFront(); }
 function pauseGame() { if (!g || paused || state === 'over' || state === 'perk' || state === 'menu' || state === 'clearq') return; paused = true; show('pause', true); }
 function resumeGame() { paused = false; hide('pause'); hide('help'); inp.dx = 0; lastT = performance.now(); }
 
