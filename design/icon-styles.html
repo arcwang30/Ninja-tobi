@@ -1,0 +1,96 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>App 圖示提案</title>
+<style>html, body { margin: 0; background: #20262b; } canvas { display: block; } #title { display: none; }</style>
+<canvas id="cv"></canvas><div id="title"></div><div id="intro"></div>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), $ = id => document.getElementById(id);
+const INK = '#0e1414', g = null, WALL = 14, FONT = '"Noto Sans TC","Microsoft JhengHei",sans-serif';
+let W = 960, H = 640, SAFE_T = 0;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const save = { skin: 0 }, SFX = new Proxy({}, { get: () => () => {} }), tone = () => {}, noise = () => {};
+function txt(s, x, y, size, color = '#fff', align = 'center', stroke = '#000', lw = 4) {
+  ctx.font = `900 ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); }
+  ctx.fillStyle = color; ctx.fillText(s, x, y);
+}
+</script>
+<script src="../art.js"></script>
+<script src="../cut.js"></script>
+<script>
+'use strict';
+/* 六組 App 圖示：每個都畫在 100×100 的方框裡（之後可直接輸出成 180／192／512 的 PNG） */
+const lin = (c, y0, y1, a, b) => { const gr = c.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, a); gr.addColorStop(1, b); return gr; };
+const rad = (c, x, y, r, a, b) => { const gr = c.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, a); gr.addColorStop(1, b); return gr; };
+const ICONS = [
+  ['① 大臉特寫', '主角的大頭塞滿整個圖示，紅色漸層底', c => {
+    c.fillStyle = rad(c, 50, 30, 90, '#ff9a6a', '#d42e24'); c.fillRect(0, 0, 100, 100);
+    c.save(); c.translate(50, 50); c.scale(1.6, 1.6); drawHeroNinja(-2, 30, { face: 1, t: .4, vy: 0, skin: 0, pose: 'apex' }, c); c.restore();
+  }],
+  ['② 頭巾徽章', '扁平的紅色圓臉＋白頭巾＋「鳶」字護額，米色底', c => {
+    c.fillStyle = '#fff1d2'; c.fillRect(0, 0, 100, 100);
+    c.fillStyle = 'rgba(192,38,45,.12)'; aCirc(c, 50, 54, 44); c.fill();
+    aCirc(c, 50, 54, 33); c.fillStyle = '#d0302f'; c.fill(); c.lineWidth = 4; c.strokeStyle = INK; c.stroke();
+    c.save(); aCirc(c, 50, 54, 33); c.clip(); c.fillStyle = '#ffffff'; c.fillRect(10, 30, 80, 11); c.restore();
+    c.beginPath(); c.moveTo(18, 40); c.quadraticCurveTo(6, 38, 4, 50); c.quadraticCurveTo(12, 44, 19, 46); c.closePath(); c.fillStyle = '#fff'; c.fill(); c.lineWidth = 2.5; c.stroke();
+    aEll(c, 53, 60, 22, 13); c.fillStyle = '#f9d8b4'; c.fill(); c.lineWidth = 3; c.stroke();
+    for (const ex of [44, 63]) { aEll(c, ex, 59, 4.2, 5.6); c.fillStyle = INK; c.fill(); aCirc(c, ex - 1.4, 57, 1.6); c.fillStyle = '#fff'; c.fill(); }
+    c.fillStyle = 'rgba(255,120,120,.5)'; aEll(c, 36, 66, 4, 2.2); c.fill(); aEll(c, 71, 66, 4, 2.2); c.fill();
+    c.beginPath(); c.roundRect(41, 27, 20, 14, 3); c.fillStyle = '#dfe4ec'; c.fill(); c.lineWidth = 2.5; c.stroke();
+    c.fillStyle = '#c0262d'; c.font = '900 11px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('鳶', 51, 34.5);
+  }],
+  ['③ 滿月跳躍剪影', '夜空大滿月前，主角黑色剪影一躍而過', c => {
+    c.fillStyle = lin(c, 0, 100, '#141a46', '#3a2a6e'); c.fillRect(0, 0, 100, 100);
+    c.fillStyle = 'rgba(255,240,190,.25)'; aCirc(c, 56, 44, 40); c.fill();
+    c.fillStyle = rad(c, 48, 36, 34, '#fffbe6', '#f3d27e'); aCirc(c, 56, 44, 31); c.fill();
+    c.fillStyle = '#0a0a1c'; c.beginPath(); c.moveTo(0, 100); c.lineTo(0, 84); c.lineTo(22, 78); c.lineTo(40, 86); c.lineTo(64, 76); c.lineTo(100, 82); c.lineTo(100, 100); c.fill();
+    c.save(); c.filter = 'brightness(0)'; c.translate(46, 74); c.rotate(-.3); c.scale(.72, .72); drawHeroNinja(0, 0, { face: 1, t: .4, vy: -600, skin: 0 }, c); c.restore();
+    c.fillStyle = '#fff'; for (const [x, y] of [[14, 16], [26, 30], [86, 14], [12, 52], [90, 64]]) { c.fillRect(x, y, 1.6, 1.6); }
+  }],
+  ['④ 鳶紋章', '金色圓徽中間一隻展翅的鳶，深藍底，最簡潔', c => {
+    c.fillStyle = lin(c, 0, 100, '#1f2a5a', '#0e1430'); c.fillRect(0, 0, 100, 100);
+    aCirc(c, 50, 50, 36); c.fillStyle = rad(c, 42, 38, 46, '#ffe9a0', '#e0a63a'); c.fill(); c.lineWidth = 3.5; c.strokeStyle = '#7a4a10'; c.stroke();
+    aCirc(c, 50, 50, 30); c.lineWidth = 1.5; c.strokeStyle = 'rgba(122,74,16,.6)'; c.stroke();
+    kiteBird(c, 50, 52, 1.05, .35, '#8e1c16');
+    c.fillStyle = '#fff6c8'; aCirc(c, 50, 43.5, 1.4); c.fill();
+  }],
+  ['⑤ 衝刺跳躍', '主角舉手往上衝，竹林綠底＋速度線', c => {
+    c.fillStyle = lin(c, 0, 100, '#4cc46a', '#1a7a40'); c.fillRect(0, 0, 100, 100);
+    for (const [x, w] of [[8, 7], [84, 8]]) { c.fillStyle = 'rgba(20,90,45,.55)'; c.fillRect(x, 0, w, 100); for (let y = 12; y < 100; y += 26) c.fillRect(x - 1, y, w + 2, 2.5); }
+    c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 2.2; c.lineCap = 'round';
+    for (const [x, y, l] of [[30, 66, 20], [40, 80, 16], [62, 74, 22], [72, 88, 14], [52, 90, 12]]) { c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + l); c.stroke(); }
+    c.save(); c.translate(50, 88); c.scale(1.12, 1.12); drawHeroNinja(0, 0, { face: 1, t: .4, vy: -900, skin: 0, eye: 'happy' }, c); c.restore();
+  }],
+  ['⑥ 手裡劍忍者', '一枚戴著紅色面罩、有大眼睛的手裡劍吉祥物', c => {
+    c.fillStyle = lin(c, 0, 100, '#ff6a4a', '#c8282a'); c.fillRect(0, 0, 100, 100);
+    c.save(); c.translate(50, 52); c.rotate(Math.PI / 4 + .12);
+    c.beginPath(); for (let i = 0; i < 8; i++) { const r = i % 2 ? 13 : 42, a = i * Math.PI / 4; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath();
+    c.fillStyle = lin(c, -40, 40, '#f0f4fa', '#8e98aa'); c.fill(); c.lineWidth = 3.5; c.strokeStyle = INK; c.lineJoin = 'round'; c.stroke();
+    c.restore();
+    aCirc(c, 50, 52, 17); c.fillStyle = '#2a2a36'; c.fill(); c.lineWidth = 3; c.strokeStyle = INK; c.stroke();
+    c.save(); aCirc(c, 50, 52, 17); c.clip(); c.fillStyle = '#ffffff'; c.fillRect(30, 41, 40, 5); c.restore();
+    aEll(c, 51, 55, 12, 6.5); c.fillStyle = '#f9d8b4'; c.fill(); c.lineWidth = 2; c.stroke();
+    for (const ex of [46, 56]) { aEll(c, ex, 55, 2.6, 3.4); c.fillStyle = INK; c.fill(); aCirc(c, ex - .8, 53.8, 1); c.fillStyle = '#fff'; c.fill(); }
+    c.beginPath(); c.moveTo(34, 44); c.quadraticCurveTo(24, 40, 22, 48); c.quadraticCurveTo(28, 45, 34, 47); c.closePath(); c.fillStyle = '#fff'; c.fill(); c.lineWidth = 1.8; c.stroke();
+  }],
+];
+// iOS 風格的圓角方形（近似 squircle）
+function iconShape(c, x, y, s) { const r = s * .225; c.beginPath(); c.roundRect(x, y, s, s, r); }
+function drawIcon(i, x, y, s) {
+  ctx.save(); iconShape(ctx, x, y, s); ctx.clip(); ctx.translate(x, y); ctx.scale(s / 100, s / 100); ICONS[i][2](ctx); ctx.restore();
+  ctx.save(); iconShape(ctx, x, y, s); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.stroke(); ctx.restore();
+}
+const DPR = 2; cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.scale(DPR, DPR);
+ctx.fillStyle = '#20262b'; ctx.fillRect(0, 0, W, H);
+txt('App 圖示提案（大圖＋桌面實際大小）', 24, 26, 18, '#ffe28a', 'left', '#000', 4);
+ICONS.forEach(([name, desc], i) => {
+  const col = i % 3, row = Math.floor(i / 3), x = 30 + col * 310, y = 56 + row * 290;
+  drawIcon(i, x, y, 170);
+  drawIcon(i, x + 190, y + 20, 60);   // 手機桌面上的實際大小
+  txt('桌面大小', x + 220, y + 96, 11, 'rgba(255,255,255,.55)', 'center', null);
+  drawIcon(i, x + 205, y + 120, 30);
+  txt(name, x, y + 196, 17, '#ffffff', 'left', '#000', 3);
+  ctx.font = `700 12px ${FONT}`; ctx.fillStyle = '#c8d0d6'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(desc, x, y + 222);
+});
+</script>

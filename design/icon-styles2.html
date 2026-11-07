@@ -1,0 +1,67 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>App 圖示提案</title>
+<style>html, body { margin: 0; background: #20262b; } canvas { display: block; } #title { display: none; }</style>
+<canvas id="cv"></canvas><div id="title"></div><div id="intro"></div>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), $ = id => document.getElementById(id);
+const INK = '#0e1414', g = null, WALL = 14, FONT = '"Noto Sans TC","Microsoft JhengHei",sans-serif';
+let W = 960, H = 380, SAFE_T = 0;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const save = { skin: 0 }, SFX = new Proxy({}, { get: () => () => {} }), tone = () => {}, noise = () => {};
+function txt(s, x, y, size, color = '#fff', align = 'center', stroke = '#000', lw = 4) {
+  ctx.font = `900 ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); }
+  ctx.fillStyle = color; ctx.fillText(s, x, y);
+}
+</script>
+<script src="../art.js"></script>
+<script src="../cut.js"></script>
+<script>
+'use strict';
+/* 六組 App 圖示：每個都畫在 100×100 的方框裡（之後可直接輸出成 180／192／512 的 PNG） */
+const lin = (c, y0, y1, a, b) => { const gr = c.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, a); gr.addColorStop(1, b); return gr; };
+const rad = (c, x, y, r, a, b) => { const gr = c.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, a); gr.addColorStop(1, b); return gr; };
+const NIGHT = c => { c.fillStyle = lin(c, 0, 100, '#141a46', '#3a2a6e'); c.fillRect(0, 0, 100, 100); c.fillStyle = '#fff'; for (const [x, y, s] of [[10, 14, 1.6], [24, 8, 1.2], [88, 12, 1.6], [8, 46, 1.2], [92, 52, 1.2], [80, 30, 1]]) c.fillRect(x, y, s, s); };
+const MOON = (c, x, y, r) => { c.fillStyle = 'rgba(255,240,190,.22)'; aCirc(c, x, y, r * 1.3); c.fill(); c.fillStyle = rad(c, x - r * .3, y - r * .3, r * 1.1, '#fffbe6', '#f3d27e'); aCirc(c, x, y, r); c.fill(); c.fillStyle = 'rgba(214,180,110,.35)'; for (const [dx, dy, rr] of [[-.35, -.25, .14], [.3, .15, .18], [-.1, .45, .1]]) { aCirc(c, x + dx * r, y + dy * r, rr * r); c.fill(); } };
+const ICONS = [
+  ['A　月下大臉', '大滿月像光環一樣在主角頭後面，夜空底；臉是彩色的', c => {
+    NIGHT(c); MOON(c, 50, 46, 38);
+    c.save(); c.translate(50, 54); c.scale(1.45, 1.45); drawHeroNinja(-2, 30, { face: 1, t: .4, vy: 0, skin: 0, pose: 'apex' }, c); c.restore();
+  }],
+  ['B　月下剪影大臉', '主角的大頭化成黑色剪影映在滿月上，只留發亮的大眼睛', c => {
+    NIGHT(c); MOON(c, 50, 48, 40);
+    c.save(); c.filter = 'brightness(0)'; c.translate(50, 56); c.scale(1.45, 1.45); drawHeroNinja(-2, 30, { face: 1, t: .4, vy: 0, skin: 0, pose: 'apex' }, c); c.restore();
+    // 剪影上的眼睛：白色大眼＋亮點
+    for (const [ex, ry] of [[-2 * 1.105 * 1.45 + 50 - 2 * 1.45, 1], [10 * 1.105 * 1.45 + 50 - 2 * 1.45, 1.06]]) {
+      const ey = 56 + (30 - 30 + 2.5 * 1.105) * 1.45; aEll(c, ex, ey, 5.6, 7.6 * ry); c.fillStyle = '#ffffff'; c.fill();
+      aCirc(c, ex + 1, ey + .6, 3.2); c.fillStyle = '#ffd25a'; c.fill(); aCirc(c, ex + 1, ey + .6, 1.6); c.fillStyle = '#1a0f0a'; c.fill(); aCirc(c, ex - 1.2, ey - 2.4, 1.4); c.fillStyle = '#fff'; c.fill();
+    }
+  }],
+  ['C　月下躍起', '彩色的主角在滿月前躍起，下方是屋頂剪影，臉和動作都看得到', c => {
+    NIGHT(c); MOON(c, 58, 40, 30);
+    c.fillStyle = '#0a0a1c'; c.beginPath(); c.moveTo(0, 100); c.lineTo(0, 86); c.lineTo(10, 86); c.quadraticCurveTo(22, 80, 30, 74); c.lineTo(48, 74); c.quadraticCurveTo(56, 80, 68, 86); c.lineTo(100, 84); c.lineTo(100, 100); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1.8; c.lineCap = 'round'; for (const [x, y, l] of [[30, 78, 12], [40, 86, 10], [60, 82, 12]]) { c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + l); c.stroke(); }
+    c.save(); c.translate(47, 80); c.rotate(-.12); c.scale(1.05, 1.05); drawHeroNinja(0, 0, { face: 1, t: .4, vy: -900, skin: 0, eye: 'happy' }, c); c.restore();
+  }],
+];
+// iOS 風格的圓角方形（近似 squircle）
+function iconShape(c, x, y, s) { const r = s * .225; c.beginPath(); c.roundRect(x, y, s, s, r); }
+function drawIcon(i, x, y, s) {
+  ctx.save(); iconShape(ctx, x, y, s); ctx.clip(); ctx.translate(x, y); ctx.scale(s / 100, s / 100); ICONS[i][2](ctx); ctx.restore();
+  ctx.save(); iconShape(ctx, x, y, s); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.stroke(); ctx.restore();
+}
+const DPR = 2; cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.scale(DPR, DPR);
+ctx.fillStyle = '#20262b'; ctx.fillRect(0, 0, W, H);
+txt('App 圖示提案 第二輪：① 大臉 × ③ 滿月剪影（大圖＋桌面實際大小）', 24, 26, 18, '#ffe28a', 'left', '#000', 4);
+ICONS.forEach(([name, desc], i) => {
+  const col = i % 3, row = 0, x = 30 + col * 310, y = 90;
+  drawIcon(i, x, y, 170);
+  drawIcon(i, x + 190, y + 20, 60);   // 手機桌面上的實際大小
+  txt('桌面大小', x + 220, y + 96, 11, 'rgba(255,255,255,.55)', 'center', null);
+  drawIcon(i, x + 205, y + 120, 30);
+  txt(name, x, y + 196, 17, '#ffffff', 'left', '#000', 3);
+  ctx.font = `700 12px ${FONT}`; ctx.fillStyle = '#c8d0d6'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(desc, x, y + 222);
+});
+</script>
