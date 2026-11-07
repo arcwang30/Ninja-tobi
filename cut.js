@@ -334,9 +334,11 @@ function cutShot4(st, PY, PH) {
 
 // ===== 標題背景：遊戲關卡的捲動背景（四幕隨機輪播）＋左右竹牆；主角剪影在竹牆間蹬牆跳、化煙瞬移 =====
 // 換幕：下一幕從畫面上方往下蓋過來，交界處是一排雲（像往上爬進下一幕）
-const TB = { cur: Math.random() * 4 | 0, nxt: -1, t: 0, wipe: 0 };
+const TB = { cur: Math.random() * 4 | 0, nxt: -1, t: 0, wipe: 0, cam: 0, spd: 1 };   // cam：背景捲動位置；spd：捲動速度（主角往上奔跑時加快）
 function titleBgUpdate(dt) {
   TB.t += dt;
+  TB.spd += ((typeof FH !== 'undefined' && FH.mode === 'dash' && !FH.act && INTRO.cyc === 'front' && FH.vis ? 3.4 : 1) - TB.spd) * Math.min(1, dt * 3);
+  TB.cam -= 40 * TB.spd * dt;
   if (TB.nxt < 0 && TB.t >= 8) { do TB.nxt = Math.random() * 4 | 0; while (TB.nxt === TB.cur); TB.wipe = 0; }
   if (TB.nxt >= 0) { TB.wipe += dt / 1.4; if (TB.wipe >= 1) { TB.cur = TB.nxt; TB.nxt = -1; TB.t = 0; } }
 }
@@ -360,7 +362,7 @@ function titleHero(dt) {
   }
 }
 function drawTitleBG(t) {
-  const c = ctx, camY = -t * 40;
+  const c = ctx, camY = TB.cam;
   drawBG(camY, TB.cur, t); drawWalls(camY, TB.cur);
   if (TB.nxt >= 0) {   // 下一幕從上方蓋下來
     const ey = ez(TB.wipe) * (H + 40) - 20;
@@ -403,7 +405,7 @@ function drawAttract(a) {
 // ===== 標題的前景主角：改用畫布即時繪製，位置、大小、旋轉、透明度跟著原本的現身／浮動／消失動畫（DOM 的 .hero-art 只負責動畫時間） =====
 // 表演：A 待機小動作（張望、伸懶腰、拔刀一半）、B 招牌姿勢（亮相、勝利、歡呼）、D 忍術（火遁、轉手裡劍、轉苦無）、
 //       C 點他有反應（空翻、分身、被戳、開心）、E 背景換幕時的反應（林：葉子落頭上／風：被吹得搖晃／火：擦汗／山：轉身遠眺）
-const FH = { act: null, at: 0, dur: 0, rest: 1.6, tapN: 0, stage: -1, bag: [], vis: false, box: null };
+const FH = { act: null, at: 0, dur: 0, rest: 2.4, tapN: 0, stage: -1, bag: [], vis: false, box: null, mode: 'bounce', mt: 0, hop: 0, dust: [] };   // mode：沒在表演時的動態——bounce 在雲上原地彈跳／dash 往上奔跑（兩者輪流）
 const FH_DUR = { look: 2.2, stretch: 1.7, draw: 1.9, mie: 2, victory: 1.6, cheer: 1.6, fire: 2.5, shuriken: 2.4, kunai: 2.2,
   spin: .9, clone: 1.4, poke: 1.1, happy: 1.3, leaf: 2.4, windy: 2.2, sweat: 2.2, gaze: 2.2 };
 const FH_IDLE = ['look', 'stretch', 'draw', 'mie', 'victory', 'cheer', 'fire', 'shuriken', 'kunai'];
@@ -424,11 +426,15 @@ function frontHeroBox(any) {   // any：不管目前透明度（噴煙用，主�
     s: (any ? 1 : Math.hypot(m.a, m.b)) * el.offsetWidth * k / 84, rot: any ? 0 : Math.atan2(m.b, m.a), op };
 }
 function frontHeroUpdate(dt) {
+  // 沒在表演時的動態：每 6 秒在「雲上原地彈跳」和「往上奔跑」之間切換；彈跳落地時噴小煙塵
+  FH.mt += dt; if (FH.mt >= 6) { FH.mt = 0; FH.mode = FH.mode === 'bounce' ? 'dash' : 'bounce'; }
+  const ph0 = FH.hop % 1; FH.hop += dt * 1.45; if (FH.hop % 1 < ph0 && FH.mode === 'bounce' && !FH.act) FH.dust.push({ t: 0 });
+  for (const d of FH.dust) d.t += dt; FH.dust = FH.dust.filter(d => d.t < .45);
   if (!FH.vis || INTRO.cyc !== 'front') { FH.act = null; FH.rest = 1.3; return; }
   if (FH.act) {
     FH.at += dt;
     if (FH.act === 'fire' && FH.at - dt < .5 && FH.at >= .5) { noise(.45, .07); tone(180, .4, 'sawtooth', .04, -80); }
-    if (FH.at >= FH.dur) { FH.act = null; FH.rest = .8 + Math.random() * .8; }
+    if (FH.at >= FH.dur) { FH.act = null; FH.rest = 2.2 + Math.random() * 1.6; }
     return;
   }
   if (FH.stage !== TB.cur) { const first = FH.stage < 0; FH.stage = TB.cur; if (!first) { fhStart(['leaf', 'windy', 'sweat', 'gaze'][TB.cur]); return; } }
@@ -505,7 +511,29 @@ function drawFrontHero(t) {
       break;
     case 'gaze': o.pose = 'up'; o.eye = 'focus'; o.face = q < .5 ? 1 : -1; front.push(() => { if (sin(at * 9) > .3) drawStar4(c, o.face * 10, 3, 3, at * 3, '#ffffff'); }); break;
   }
-  c.save(); c.globalAlpha *= b.op; c.translate(b.x, b.y); c.rotate(b.rot); c.scale(b.s, b.s); c.translate(dx, dy); c.rotate(rot);
+  // 沒在表演時：A 在雲上原地彈跳（落地壓扁、噴煙塵、每三下空翻一次）／C 往上奔跑（速度線、殘影、背景加速捲動）
+  const ground = [];
+  if (!a && FH.mode === 'bounce') {
+    const p = FH.hop % 1, n = Math.floor(FH.hop);
+    dy = -Math.sin(p * Math.PI) * 24; o.vy = p < .5 ? -700 : 500;
+    o.sq = p < .08 ? (.08 - p) * 9 : p > .93 ? (p - .93) * 9 : 0;
+    if (n % 3 === 2 && p > .15 && p < .8) o.spin = .45 * (1 - (p - .15) / .65) + .001;
+    ground.push(() => {
+      heroSilhouette(c, [{ path: c => { c.beginPath(); for (const [x, y, r] of [[-15, 38, 7], [-5, 36, 8.5], [6, 36, 8.5], [16, 38, 7]]) { c.moveTo(x + r, y); c.arc(x, y, r, 0, TAU); } }, fill: '#f2f6f2' }], 1.6);
+      c.fillStyle = '#d8e2dc'; c.fillRect(-21, 40, 42, 3);
+      for (const d of FH.dust) { const k = d.t / .45; c.globalAlpha = (1 - k) * .9; for (const sd of [-1, 1]) { c.fillStyle = '#ffffff'; aCirc(c, sd * (10 + k * 16), 32 - k * 6, 4 * (1 - k * .5)); c.fill(); } c.globalAlpha = 1; }
+    });
+  } else if (!a && FH.mode === 'dash') {
+    o.vy = -950; o.pose = 'up'; o.eye = 'focus'; rot = -.12; dy = Math.sin(t * 14) * 1.5;
+    back.push(() => {
+      c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineCap = 'round';
+      for (let i = 0; i < 7; i++) { const x = -34 + i * 11, y = ((i * 37 + t * 260) % 90) - 30, l = 14 + (i % 3) * 8; c.lineWidth = 1.6 + (i % 2); c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + l); c.stroke(); }
+      for (let k = 2; k >= 1; k--) { c.save(); c.globalAlpha *= .18 * (3 - k); drawHeroNinja(0, 32 + k * 9, Object.assign({}, o), c); c.restore(); }   // 殘影
+    });
+  }
+  c.save(); c.globalAlpha *= b.op; c.translate(b.x, b.y); c.rotate(b.rot); c.scale(b.s, b.s);
+  for (const f of ground) f();
+  c.translate(dx, dy); c.rotate(rot);
   for (const f of back) f();
   drawHeroNinja(0, 32, o, c);
   for (const f of front) f();

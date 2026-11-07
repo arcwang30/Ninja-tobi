@@ -1,0 +1,35 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>主畫面主角動態</title>
+<style>html, body { margin: 0; background: #1d4a3c; } canvas { display: block; } #title { display: none; }</style>
+<canvas id="cv"></canvas><div id="title"></div><div id="intro"></div>
+<script>
+// cut.js、art.js 用到的共用設定（只放畫主角表演需要的部分）
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), $ = id => document.getElementById(id);
+const INK = '#0e1414', g = null, WALL = 14, FONT = '"Noto Sans TC","Microsoft JhengHei",sans-serif';
+let W = 720, H = 520, SAFE_T = 0;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const save = { skin: 0 }, SFX = new Proxy({}, { get: () => () => {} }), tone = () => {}, noise = () => {};
+function txt(s, x, y, size, color = '#fff', align = 'center', stroke = '#000', lw = 4) {
+  ctx.font = `900 ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); }
+  ctx.fillStyle = color; ctx.fillText(s, x, y);
+}
+</script>
+<script src="../art.js"></script>
+<script src="../cut.js"></script>
+<script>
+'use strict';
+const DPR = 2; cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.scale(DPR, DPR);
+ctx.fillStyle = '#1d4a3c'; ctx.fillRect(0, 0, W, H);
+// 上排：雲上原地彈跳（不同時間點）；中排：往上奔跑；下排：中魔王山伏天狗（遊戲中大小、朝左／朝右、蓄力）
+FH.act = null;
+[.02, .25, .5, .75, 2.5].forEach((hp, i) => { FH.mode = 'bounce'; FH.hop = hp; const x = 70 + i * 120; window.frontHeroBox = () => ({ x, y: 90, s: 1.05, rot: 0, op: 1 }); drawFrontHero(1.3); });
+txt('A 雲上彈跳（最右：空翻）', 20, 168, 13, '#ffe28a', 'left', '#000', 3);
+[0, .4].forEach((tt, i) => { FH.mode = 'dash'; const x = 70 + i * 120; window.frontHeroBox = () => ({ x, y: 260, s: 1.05, rot: 0, op: 1 }); drawFrontHero(1.3 + tt); });
+txt('C 往上奔跑', 20, 330, 13, '#ffe28a', 'left', '#000', 3);
+[[1, 0], [-1, 0], [1, 1]].forEach(([lk, w], i) => { const x = 380 + i * 120; ctx.save(); ctx.translate(x, 270); drawYamaTengu(1 + i, { look: lk, warn: w }, lk); ctx.restore(); });
+txt('中魔王山伏天狗（遊戲中大小：朝左／朝右／蓄力）', 330, 340, 13, '#ffe28a', 'left', '#000', 3);
+ctx.save(); ctx.translate(380, 450); ctx.scale(.78 * 1.4, .78 * 1.4); drawYamaTengu(2, { look: 1, flash: 1 }, 1); ctx.restore(); txt('被斬中閃白', 380, 510, 12, '#fff', 'center', '#000', 3);
+</script>
