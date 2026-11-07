@@ -60,6 +60,7 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 #title {
   justify-content: space-between; padding: var(--sat) 0 0;
   background: none;   /* 夜空、滿月、竹林與主角剪影改由畫布繪製（cut.js 的 drawTitleBG） */
+  z-index: 0;   /* 自成一層：裡面的 LOGO、按鈕不會蓋到疊在上面的子畫面（說明、商店…） */
 }
 /* ===== 標題出場動畫（約 1.7 秒，加上 .play 時播放；接在開場過場的白光之後） =====
    ① 0～0.4s LOGO 像蓋章一樣砸下並震動　② 0.45～1.5s 忍術陣浮現 → 閃光煙霧 → 忍者放大現身，之後浮動　③ 1.2s 起選單淡入 */

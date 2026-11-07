@@ -233,7 +233,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v36';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v37';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -1865,7 +1865,7 @@ function render() {
     for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(p.x + i * 9, p.y - 60); ctx.lineTo(p.x + i * 9, p.y - 110); ctx.stroke(); }
   }
   if (state === 'dying') { ctx.save(); ctx.translate(p.x, p.y - 20); ctx.rotate(g.t * 10 + (1.1 - g.dieT) * 12); drawNinja(0, 20, { face: p.face, t: g.t, vy: 0, skin: save.skin }); ctx.restore(); }
-  else drawNinja(p.x, p.y, { face: p.face, t: g.t, vy: p.vy, sq: p.sq, inv: p.inv, fly: g.fly > 0, slow: p.slow, freeze: p.freeze, skin: save.skin, dash: p.dash > 0, dvx: p.dvx, dvy: p.dvy, dive: p.dive, spin: p.spin, hurt: p.hurt });
+  else if (!(g.zi && g.zi.hide)) drawNinja(p.x, p.y, { face: p.face, t: g.t, vy: p.vy, sq: p.sq, inv: p.inv, fly: g.fly > 0, slow: p.slow, freeze: p.freeze, skin: save.skin, dash: p.dash > 0, dvx: p.dvx, dvy: p.dvy, dive: p.dive, spin: p.spin, hurt: p.hurt });
   for (const s of g.shots) drawPlayerShot(s);
   drawSkillFx();
   for (const s of g.eshots) drawEShot(s);   // 敵方攻擊

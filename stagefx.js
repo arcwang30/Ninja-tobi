@@ -10,9 +10,16 @@ const zez = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
 // ===== 每一幕的開場演出 =====
 function startZIntro() {
   state = 'zintro';
-  g.zi = { t: 0, st: g.stage % 4, sfx: {} };
+  g.zi = { t: 0, st: g.stage % 4, sfx: {}, hide: g.stage > 0 };   // 過關後的新一幕：倒數完才讓主角現身
   g.zoneY = g.camY + H + 90;              // 先藏在畫面下方
   const p = g.p; p.vy = 0; p.dash = 0; p.dive = false;
+  if (g.zi.hide) {
+    // 主角現身的位置：畫面中下方，腳下一定放一塊可以踩的地板，附近的敵人先清掉
+    p.x = W / 2; p.y = g.camY + H * .66; p.vx = 0;
+    g.plats = g.plats.filter(o => o.type === 'ground' || Math.abs(o.y - p.y) > 26 || Math.abs(o.x - p.x) > 90);
+    g.plats.push({ x: p.x, y: p.y + 4, w: 96, type: 'normal', bx: p.x, ph: 0, sp: 0, amp: 0 });
+    g.enemies = g.enemies.filter(e => Math.hypot(e.x - p.x, e.y - p.y) > 120);
+  }
 }
 function updateZIntro(dt) {
   const z = g.zi; z.t += dt;
@@ -26,7 +33,10 @@ function updateZIntro(dt) {
   g.zoneY = g.camY + H + 90 - zez((z.t - .8) / .9) * 130;
   if (z.st === 2 && z.t > .2 && z.t < 1.6) g.shake = Math.max(g.shake, 3);
   if (g.shake > 0) g.shake = Math.max(0, g.shake - dt * 20);
-  if (z.t >= ZI_T) { state = 'play'; g.zi = null; g.p.vy = -JUMP; g.p.inv = Math.max(g.p.inv, .6); }
+  if (z.t >= ZI_T) {
+    if (z.hide) { g.puffs.push({ x: g.p.x, y: g.p.y - 20, t: 0, r: 30 }); SFX.scroll(); }   // 倒數完：主角化煙現身
+    state = 'play'; g.zi = null; g.p.vy = -JUMP; g.p.inv = Math.max(g.p.inv, .6);
+  }
 }
 function skipZIntro() { if (g && g.zi) g.zi.t = Math.max(g.zi.t, ZI_T); }
 function drawZIntro() {
