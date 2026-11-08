@@ -6,7 +6,7 @@ const HELP_PAGES = [
   { t: ['基本操作', '基本操作', 'Basics'], items: [
     ['move', ['移動與跳躍', '移動とジャンプ', 'Move & Jump'], ['忍者會自動彈跳；按住畫面左右滑動來移動。', '忍者は自動で跳ねる。押したまま左右にスライドで移動。', 'You bounce automatically. Hold and slide left/right to move.']],
     ['wall', ['蹬牆跳', '壁蹴り', 'Wall Kick'], ['空中往牆推會自動蹬牆，每次落地前一次。', '空中で壁に向かうと自動で壁蹴り（着地まで一回）。', 'Push into a wall mid-air to kick off (once per landing).']],
-    ['scroll', ['忍法卷軸', '忍法巻物', 'Ninjutsu Scroll'], ['點左上的卷軸發動「豪天翔」：無敵並急速上升。', '左上の巻物で「豪天翔」：無敵で急上昇。', 'Tap the scroll (top-left) to soar up, invincible.']],
+    ['scroll', ['忍法卷軸', '忍法巻物', 'Ninjutsu Scroll'], ['點右下角的卷軸按鈕發動「豪天翔」：無敵並急速上升。', '右下の巻物ボタンで「豪天翔」：無敵で急上昇。', 'Tap the scroll button (bottom-right) to soar up, invincible.']],
   ] },
   { t: ['斬擊', '斬撃', 'Slashing'], items: [
     ['aim', ['彈射斬', '弾き斬り', 'Sling Slash'], ['按住不動瞄準、往反方向拉、放開發射。消耗 1 格氣。', '押したまま止めて照準、反対に引いて離すと発射。気を1消費。', 'Hold still to aim, pull back and release. Uses 1 Ki.']],

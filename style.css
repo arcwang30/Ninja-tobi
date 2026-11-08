@@ -366,7 +366,7 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .pause-sk .ps-none { color: #889; font-size: .85em; padding: .2em .5em; }
 
 /* 新手教學：右下角的「跳過教學」、選關畫面的「新手教學」按鈕 */
-.tut-skip { display: none; position: absolute; right: 3%; bottom: calc(var(--sab, 0px) + 2.5%); z-index: 1; width: auto; margin: 0; padding: .45em 1em; font-size: .85em; border-radius: 2em; background: rgba(16,20,30,.85); color: #ffd27a; border: 2px solid #e8b84a; box-shadow: none; }
+.tut-skip { display: none; position: absolute; left: 3%; bottom: calc(var(--sab, 0px) + 2.5%); z-index: 1; width: auto; margin: 0; padding: .45em 1em; font-size: .85em; border-radius: 2em; background: rgba(16,20,30,.85); color: #ffd27a; border: 2px solid #e8b84a; box-shadow: none; }
 .tut-skip::before { display: none; }
 body.tut .tut-skip { display: block; }
 .lvsel .lv-tut { margin: 0 0 .6em; background: #2a3a5a; color: #fff; }

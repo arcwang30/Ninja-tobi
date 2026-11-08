@@ -20,7 +20,7 @@ const TUT_STEPS = [
   { k: 'soul', t: ['吸收藍色的魂，集滿就升級，從三個強化選一個', '青い魂を集めてレベルアップ、3つから1つ選ぶ', 'Collect blue souls to level up, then pick 1 of 3'],
     start() { g.tut.lv0 = g.lv; tutSouls(); },
     done: () => g.lv > g.tut.lv0 && state === 'play' },
-  { k: 'scroll', t: ['點左上的卷軸：忍法「豪天翔」，無敵並急速上升', '左上の巻物をタップ：忍法「豪天翔」で無敵の急上昇', 'Tap the scroll (top-left): soar up, invincible'],
+  { k: 'scroll', t: ['點右下角的卷軸按鈕：忍法「豪天翔」，無敵並急速上升', '右下の巻物ボタン：忍法「豪天翔」で無敵の急上昇', 'Tap the scroll button (bottom-right): soar up, invincible'],
     start() { g.scrolls = Math.max(g.scrolls, 1); g.tut.s0 = g.scrollN; }, done: () => g.scrollN > g.tut.s0 },
 ];
 // 在主角身邊放一圈魂：總量一定夠升一級（之前固定 12 點，等級高時不夠升級，教學就卡住）
@@ -96,6 +96,6 @@ function drawTutorial() {
   else if (S.k === 'wall') { c.fillStyle = '#8a6a3a'; c.fillRect(gx + 16, gy - 22, 6, 44); c.strokeStyle = '#fff'; arrow(gx - 14, gy, gx + 12, gy); }
   else if (S.k === 'soul') { c.fillStyle = '#5ad1ff'; aCirc(c, gx, gy + Math.sin(g.t * 5) * 4, 8); c.fill(); }
   // 卷軸那一步：在 HUD 的卷軸上畫一個閃爍的圈
-  if (S.k === 'scroll' && !T.ok) { c.strokeStyle = `rgba(255,210,90,${.5 + .5 * Math.sin(g.t * 8)})`; c.lineWidth = 3; aCirc(c, 136, SAFE_T + BLUR_T + HUD_ROW / 2, 18); c.stroke(); }
+  if (S.k === 'scroll' && !T.ok) { const sb = scrollBtnPos(); c.strokeStyle = `rgba(255,210,90,${.5 + .5 * Math.sin(g.t * 8)})`; c.lineWidth = 4; aCirc(c, sb.x, sb.y, sb.r + 8 + 4 * Math.sin(g.t * 8)); c.stroke(); }
   c.restore();
 }
