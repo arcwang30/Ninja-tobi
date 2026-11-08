@@ -26,12 +26,12 @@ function updateZIntro(dt) {
   const once = (k, at, fn) => { if (z.t >= at && !z.sfx[k]) { z.sfx[k] = 1; fn(); } };
   const T = [() => { SFX.throw(); }, () => SFX.wind(), () => SFX.crack(), () => SFX.thunder()][z.st];
   once('a', .15, T);
-  once('b', .95, () => { [() => SFX.boom(), () => { noise(.6, .08); SFX.wind(); }, () => { SFX.impact(); g.shake = 8; }, () => { SFX.thunder(); g.shake = 6; }][z.st](); vib(60); });
+  once('b', .95, () => { [() => SFX.boom(), () => { noise(.6, .08); SFX.wind(); }, () => { SFX.impact(); g.shake = 8; }, () => { noise(.9, .1); SFX.impact(); g.shake = 8; }][z.st](); vib(60); });
   for (let i = 0; i < 3; i++) once('c' + i, 1.6 + i * .6, () => tone(660, .1, 'square', .05));
   once('go', 3.4, () => SFX.fever());
   // 追兵從畫面下方升上來，停在看得到的位置
   g.zoneY = g.camY + H + 90 - zez((z.t - .8) / .9) * 130;
-  if (z.st === 2 && z.t > .2 && z.t < 1.6) g.shake = Math.max(g.shake, 3);
+  if ((z.st === 2 || z.st === 3) && z.t > .2 && z.t < 1.6) g.shake = Math.max(g.shake, 3);
   if (g.shake > 0) g.shake = Math.max(0, g.shake - dt * 20);
   if (z.t >= ZI_T) {
     if (z.hide) { g.puffs.push({ x: g.p.x, y: g.p.y - 20, t: 0, r: 30 }); SFX.scroll(); }   // 倒數完：主角化煙現身
@@ -50,33 +50,52 @@ function drawZIntro() {
       if (q < 1) drawEnemy(x + Math.sin(k * 6 + i) * 6, y, 10, 1.1, k + i, { vx: 0, vy: -200 });
       else if (k - t0 - .7 < .5) { const f = (k - t0 - .7) / .5; c.globalAlpha = 1 - f; for (let j = 0; j < 7; j++) { const a = j / 7 * Math.PI * 2; c.fillStyle = j % 2 ? '#ffd25a' : '#ff6a1a'; c.beginPath(); c.arc(x + Math.cos(a) * 26 * f, y + Math.sin(a) * 20 * f - f * 20, 8 * (1 - f) + 2, 0, Math.PI * 2); c.fill(); } c.globalAlpha = 1; }
     }
-  } else if (st === 1) {   // 風：狂風＋大浪捲上來
+  } else if (st === 1) {   // 風：烏雲壓下、狂風大作，巨大的龍捲風從下方捲上來
+    c.fillStyle = `rgba(40,50,70,${.45 * zez(k / .6)})`; c.fillRect(0, 0, W, H);
     c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 2;
-    for (let i = 0; i < 9; i++) { const x = ((k * 700 + i * 97) % (W + 160)) - 80, y = H * (.2 + i * .07); c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x - 30, y - 8, x - 70, y); c.stroke(); }
-    const q = zez((k - .4) / .7) * (1 - zez((k - 1.3) / .5)), cy = H - q * H * .42;
+    for (let i = 0; i < 10; i++) { const x = ((k * 760 + i * 97) % (W + 160)) - 80, y = H * (.15 + i * .07); c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x - 30, y - 8, x - 70, y); c.stroke(); }
+    const q = zez((k - .35) / .8);
     if (q > 0) {
-      c.fillStyle = '#2f8ad8'; c.beginPath(); c.moveTo(-10, H); c.lineTo(-10, cy + 40);
-      c.quadraticCurveTo(W * .35, cy - 30, W * .62, cy); c.quadraticCurveTo(W * .8, cy + 6, W * .74, cy + 34); c.quadraticCurveTo(W * .9, cy + 24, W + 10, cy + 50); c.lineTo(W + 10, H); c.fill();
-      c.strokeStyle = '#ffffff'; c.lineWidth = 4; c.beginPath(); c.moveTo(-10, cy + 40); c.quadraticCurveTo(W * .35, cy - 30, W * .62, cy); c.quadraticCurveTo(W * .8, cy + 6, W * .74, cy + 34); c.stroke();
-      c.fillStyle = 'rgba(255,255,255,.85)'; for (let i = 0; i < 10; i++) { c.beginPath(); c.arc(W * .3 + i * 22 + Math.sin(k * 9 + i) * 6, cy - 12 - (i % 3) * 8 - Math.sin(k * 7 + i) * 5, 3 + (i % 2), 0, Math.PI * 2); c.fill(); }
+      const top = H - q * H * .62, cx = W / 2 + Math.sin(k * 3) * 14;
+      // 漏斗：越往上越寬，帶著旋轉的條紋
+      c.save(); c.globalAlpha = .92;
+      c.fillStyle = '#7a8aa4'; c.beginPath(); c.moveTo(cx - 14, H + 10); c.quadraticCurveTo(cx - 40, (H + top) / 2, cx - W * .42, top); c.quadraticCurveTo(cx, top - 26, cx + W * .42, top); c.quadraticCurveTo(cx + 40, (H + top) / 2, cx + 14, H + 10); c.closePath(); c.fill();
+      c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 2.4;
+      for (let j = 0; j < 9; j++) { const yy = top + (H - top) * (j / 9), ww = 14 + (W * .42 - 14) * (1 - j / 9), a = k * 9 + j; c.beginPath(); c.ellipse(cx, yy + 6, ww * .95, 5 + ww * .06, 0, a % TAU, a % TAU + 2.6); c.stroke(); }
+      c.restore();
+      for (let i = 0; i < 10; i++) { const a = k * 7 + i * .63, rr2 = 30 + (i % 4) * 30, y = H - (i * 41 + k * 260) % (H - top + 1); c.save(); c.translate(cx + Math.cos(a) * rr2, y); c.rotate(a * 3); c.fillStyle = i % 2 ? '#8a6a3a' : '#c8a46a'; c.fillRect(-4, -2, 8, 4); c.restore(); }
     }
-  } else if (st === 2) {   // 火：地面龜裂，鬼爪從地底伸上來
-    const q = zez((k - .3) / .5);
-    c.strokeStyle = `rgba(255,120,40,${q})`; c.lineWidth = 3;
-    for (let i = 0; i < 5; i++) { let x = W * (.1 + i * .2), y = H; c.beginPath(); c.moveTo(x, y); for (let j = 0; j < 5; j++) { x += (j % 2 ? 12 : -10); y -= 18 * q; c.lineTo(x, y); } c.stroke(); }
-    for (let i = 0; i < 4; i++) {
-      const h = zez((k - .6 - i * .1) / .7), x = W * (.16 + i * .23), y = H + 40 - h * 120;
-      if (h <= 0) continue;
-      c.fillStyle = i % 2 ? '#8a2a8a' : '#c0262d'; c.strokeStyle = '#0e1414'; c.lineWidth = 3;
-      c.beginPath(); c.moveTo(x - 12, H + 40); c.lineTo(x - 10, y + 10); c.quadraticCurveTo(x, y - 6, x + 10, y + 10); c.lineTo(x + 12, H + 40); c.closePath(); c.fill(); c.stroke();
-      for (let f = -1; f <= 1; f++) { c.beginPath(); c.moveTo(x + f * 6 - 3, y + 4); c.lineTo(x + f * 8, y - 14 - Math.abs(f) * -4); c.lineTo(x + f * 6 + 3, y + 4); c.closePath(); c.fillStyle = '#f5e6b8'; c.fill(); c.stroke(); }
+  } else if (st === 2) {   // 火：火山爆發，紅光一閃，岩漿柱噴上來再從下方湧起
+    const fl = k > .25 && k < .7 ? 1 - (k - .25) / .45 : 0;
+    if (fl > 0) { c.fillStyle = `rgba(255,120,40,${fl * .55})`; c.fillRect(0, 0, W, H); }
+    const q = zez((k - .3) / .45) * (1 - zez((k - 1.2) / .6));
+    if (q > 0) {   // 中央的岩漿柱
+      const top = H - q * H * .75, gr = c.createLinearGradient(0, top, 0, H); gr.addColorStop(0, '#ffe27a'); gr.addColorStop(.4, '#ff7a1a'); gr.addColorStop(1, '#a82a08');
+      c.fillStyle = gr; c.beginPath(); c.moveTo(W / 2 - 34, H); c.quadraticCurveTo(W / 2 - 22, (H + top) / 2, W / 2 - 14, top + 10); c.quadraticCurveTo(W / 2, top - 14, W / 2 + 14, top + 10); c.quadraticCurveTo(W / 2 + 22, (H + top) / 2, W / 2 + 34, H); c.closePath(); c.fill();
     }
-    if (k > 1) { c.fillStyle = `rgba(255,220,60,${.6 + .4 * Math.sin(k * 10)})`; for (let i = 0; i < 4; i++) { c.beginPath(); c.ellipse(W * (.24 + i * .18) - 5, H - 18, 3.5, 1.8, .3, 0, Math.PI * 2); c.ellipse(W * (.24 + i * .18) + 5, H - 18, 3.5, 1.8, -.3, 0, Math.PI * 2); c.fill(); } }
-  } else {   // 山：大雨、雷光，山洪漫上來
-    c.strokeStyle = 'rgba(200,220,255,.55)'; c.lineWidth = 1.5;
-    for (let i = 0; i < 40; i++) { const x = (i * 53 + k * 90) % W, y = ((i * 97) + k * 900) % H; c.beginPath(); c.moveTo(x, y); c.lineTo(x - 6, y + 18); c.stroke(); }
-    if (k > .4 && k < .7) { c.fillStyle = `rgba(255,255,255,${(1 - (k - .4) / .3) * .7})`; c.fillRect(0, 0, W, H); }
-    if (k > .9 && k < 1.2) { c.fillStyle = `rgba(255,255,255,${(1 - (k - .9) / .3) * .5})`; c.fillRect(0, 0, W, H); }
+    for (let i = 0; i < 9; i++) {   // 飛出的熔岩塊
+      const t0 = .45 + i * .06, u = k - t0; if (u <= 0 || u > 1.6) continue;
+      const vx = (i - 4) * 55, x = W / 2 + vx * u, y = H * .45 - 520 * u + 600 * u * u;
+      c.fillStyle = '#2a0e06'; aCirc(c, x, y, 6 + (i % 3) * 2); c.fill(); c.strokeStyle = '#ffb04a'; c.lineWidth = 1.6; c.stroke();
+      c.fillStyle = 'rgba(255,150,50,.5)'; aCirc(c, x - vx * .02, y + 8, 3); c.fill();
+    }
+  } else {   // 山：山頂轟隆一響，大塊積雪崩落，雪浪從谷底翻湧上來
+    for (let i = 0; i < 14; i++) {   // 從上方崩落的雪塊
+      const t0 = .1 + (i % 7) * .08, u = k - t0; if (u <= 0) continue;
+      const x = W * ((i * .137) % 1), y = -30 + 700 * u * u, r = 8 + (i % 4) * 5;
+      if (y > H + 30) continue;
+      c.fillStyle = '#ffffff'; aCirc(c, x, y, r); c.fill(); c.strokeStyle = 'rgba(140,170,210,.8)'; c.lineWidth = 1.4; c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.5)'; aCirc(c, x, y - r * 1.6, r * .8); c.fill();
+    }
+    c.fillStyle = `rgba(255,255,255,${.35 * zez((k - .2) / .5) * (1 - zez((k - 1.4) / .4))})`; c.fillRect(0, 0, W, H);   // 雪煙
+    const q = zez((k - .6) / .7) * (1 - zez((k - 1.4) / .5));
+    if (q > 0) {   // 雪浪
+      const cy = H - q * H * .4;
+      c.fillStyle = '#f4f8fd'; c.beginPath(); c.moveTo(-10, H); c.lineTo(-10, cy + 20);
+      for (let x = 0; x <= W + 40; x += 40) c.quadraticCurveTo(x - 20, cy - 30 - Math.sin(x * .1 + k * 6) * 12, x, cy + 10);
+      c.lineTo(W + 10, H); c.fill();
+      c.fillStyle = 'rgba(150,180,215,.5)'; for (let x = 0; x < W; x += 36) { c.beginPath(); c.arc(x + 18, cy + 26, 14, 0, Math.PI); c.fill(); }
+    }
   }
   // 字幕：發生什麼事＋往上逃
   if (k > .9) {

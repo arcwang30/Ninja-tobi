@@ -27,9 +27,9 @@ const STR = {
   replay: ['重看開場', 'オープニングを見る', 'Watch Opening'],
   // ---- 每一幕的開場演出 ----
   zi_0: ['鬼火把竹林點燃了！', '鬼火が竹林に火を放った！', 'Oni fire set the bamboo ablaze!'],
-  zi_1: ['大浪捲上來了！', '大波が押し寄せてくる！', 'A giant wave is rolling in!'],
-  zi_2: ['鬼群從地底爬上來了！', '鬼の群れが地の底から這い上がる！', 'Oni are crawling up from below!'],
-  zi_3: ['山洪暴發了！', '山津波だ！', 'A flash flood is coming!'],
+  zi_1: ['風神召來了巨大的龍捲風！', '風神が巨大な竜巻を呼んだ！', 'The Wind God summoned a giant tornado!'],
+  zi_2: ['火山爆發，岩漿湧上來了！', '火山が噴火、溶岩が迫る！', 'The volcano erupts and lava is rising!'],
+  zi_3: ['雪崩了！雪浪從谷底湧上來！', '雪崩だ！雪の波が谷から押し寄せる！', 'Avalanche! A wave of snow is surging up!'],
   zi_run: ['往上逃！', '上へ逃げろ！', 'Climb for your life!'],
   zi_go: ['走！', '行け！', 'GO!'],
   zi_skip: ['點一下跳過', 'タップでスキップ', 'Tap to skip'],

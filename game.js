@@ -27,9 +27,9 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 const THEMES = [
   { k: '林', sky: ['#1f7a40', '#0b3a20'], stalk: '#4f9c48', node: '#2b6a30', far: '#2d6e3a', zone: 'fire' },
-  { k: '風', sky: ['#4aa6e6', '#d4efff'], stalk: '#8ccf98', node: '#5aa070', far: '#a8d8f0', zone: 'sea' },
-  { k: '火', sky: ['#5c1610', '#1e0604'], stalk: '#7a3626', node: '#4e1e14', far: '#3a100a', zone: 'monster' },
-  { k: '山', sky: ['#33266a', '#e58a68'], stalk: '#5d4a8a', node: '#392d66', far: '#4a3a7a', zone: 'sea' },
+  { k: '風', sky: ['#2f7fd8', '#d6f0ff'], stalk: '#8ccf98', node: '#5aa070', far: '#a8d8f0', zone: 'tornado' },
+  { k: '火', sky: ['#0e0302', '#8a2208'], stalk: '#7a3626', node: '#4e1e14', far: '#3a100a', zone: 'lava' },
+  { k: '山', sky: ['#7fa8d6', '#f2f8fd'], stalk: '#5d4a8a', node: '#392d66', far: '#4a3a7a', zone: 'avalanche' },
 ];
 // 角色（商店「角色」分頁）：每名角色外觀不同、開局自帶專屬技能。
 // out = 預設換裝顏色（OUTFITS 的索引，免費）；req = 要先達成的成就才會在商店上架（參考吸血鬼倖存者）
@@ -337,7 +337,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v47';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v48';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;

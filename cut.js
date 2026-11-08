@@ -26,7 +26,7 @@ const INTRO = {
     const ss = new URLSearchParams(location.search).get('slashshot');
     // 開發用：?shot=zintro,幕,秒 ／ ascend,幕,秒 ／ qte,第幾刀,這一刀經過秒數 → 停在關卡演出的那一刻（stagefx.js）
     const sh = new URLSearchParams(location.search).get('shot');
-    if (sh) { const [k, a1, a2] = sh.split(','); this.toTitle(); save.seen = 2; startRun(); hideAll(); const b = $('boot'); if (b) b.remove(); g.stage = +a1; g.bossN = +a1;
+    if (sh) { const [k, a1, a2] = sh.split(','); this.toTitle(); save.seen = 2; startRun(+(new URLSearchParams(location.search).get('lv') || 0)); hideAll();   /* ?lv=關卡 */ const b = $('boot'); if (b) b.remove(); g.stage = +a1; g.bossN = +a1;
       if (k === 'zintro') { startZIntro(); g.zi.t = +a2; window.updateZIntro = () => {}; }
       if (k === 'ascend') { startAscend(); g.asc.t = +a2; window.updateAscend = () => {}; }
       if (k === 'qte') { g.stage = 0; spawnBoss(); g.boss.y = g.camY + 200; g.qte = { t: .5, tl: 99, hits: +a1 ? [{ a: .6, t: +a2, x: 0, y: 0 }] : [], n: +a1, type: 'mash', q: QTE_TYPES[0] }; state = 'qte'; window.updateQte = () => {}; } }
