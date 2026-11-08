@@ -202,7 +202,7 @@ const metaCost = (m, l) => TEST_FREE ? 0 : m.cost(l);
 const ACH = [];
 {
   const add = (id, cat, n, d) => ACH.push({ id, cat, n, d });
-  const LV = [['風', '風', 'Wind'], ['林', '林', 'Forest'], ['火', '火', 'Fire'], ['山', '山', 'Mountain']];
+  const LV = [['林', '林', 'Forest'], ['風', '風', 'Wind'], ['火', '火', 'Fire'], ['山', '山', 'Mountain']];
   add('run1', 0, ['初陣', '初陣', 'First Battle'], ['完成第一次挑戰', '初めての挑戦を終える', 'Finish your first run']);
   LV.forEach((k, i) => {
     add('lv' + i + 'r5', 0, [k[0] + '之卷・中', k[1] + 'の巻・中', k[2] + ' Midway'], ['在「' + k[0] + '」到達第 5 舞台', '「' + k[1] + '」で第5舞台に到達', 'Reach Stage 5 in ' + k[2]]);
@@ -339,7 +339,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v50';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v51';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;

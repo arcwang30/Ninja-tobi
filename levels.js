@@ -6,8 +6,8 @@
 
 // th = THEMES 的索引（林 0、風 1、火 2、山 3）
 const LEVELS = [
-  { th: 1, wx: 'rain', motto: ['其疾如風', '疾きこと風の如く', 'Swift as the Wind'] },
   { th: 0, wx: 'fog', motto: ['其徐如林', '徐かなること林の如く', 'Silent as the Forest'] },
+  { th: 1, wx: 'rain', motto: ['其疾如風', '疾きこと風の如く', 'Swift as the Wind'] },
   { th: 2, wx: 'dark', motto: ['侵掠如火', '侵掠すること火の如く', 'Fierce as Fire'] },
   { th: 3, wx: 'snow', motto: ['不動如山', '動かざること山の如し', 'Steady as the Mountain'] },
 ];
@@ -40,6 +40,16 @@ function lvSave() {
   if (!Array.isArray(s.clear)) s.clear = [0, 0, 0, 0];
   if (!s.open) s.open = 1;                              // 已開放幾關
   if (s.sel == null) s.sel = 0;
+  // 舊存檔（v51 以前第一關是風、第二關是林）：把兩關的紀錄與成就對調一次
+  if (!s.v2) {
+    s.v2 = 1;
+    if (s.best[0] || s.best[1] || s.clear[0] || s.clear[1] || (save.ach && (save.ach.lv0r5 || save.ach.lv1r5 || save.ach.lv0c || save.ach.lv1c))) {
+      [s.best[0], s.best[1]] = [s.best[1], s.best[0]]; [s.clear[0], s.clear[1]] = [s.clear[1], s.clear[0]];
+      const A = save.ach || {}; for (const k of ['r5', 'c']) { const a = A['lv0' + k], b = A['lv1' + k]; if (b) A['lv0' + k] = b; else delete A['lv0' + k]; if (a) A['lv1' + k] = a; else delete A['lv1' + k]; }
+      if (s.sel <= 1) s.sel = 1 - s.sel;
+    }
+    persist();
+  }
   return s;
 }
 // 到達新舞台時呼叫：記錄最佳、檢查是否開放下一關
