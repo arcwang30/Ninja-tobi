@@ -1833,7 +1833,7 @@ const DOCK_STYLES_LIST = [
 const DOCK_STYLES = { b1: DOCK_STYLES_LIST[0][2], b2: DOCK_STYLES_LIST[1][2], b3: DOCK_STYLES_LIST[2][2] };
 
 // ===== 主畫面左上角的商店圖示（三案；網址 ?shop=a|b|c 可預覽） =====
-let SHOP_STYLE = new URLSearchParams(location.search).get('shop') || 'a';
+let SHOP_STYLE = new URLSearchParams(location.search).get('shop') || 'c';   // 遊戲使用 C 千兩箱
 function shopIcon(style = SHOP_STYLE, size = 200) {
   const cnv = document.createElement('canvas'); cnv.width = cnv.height = size;
   const c = cnv.getContext('2d'); c.scale(size / 100, size / 100);
