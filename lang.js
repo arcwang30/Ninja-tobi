@@ -88,6 +88,7 @@ const STR = {
   tut_done: ['新手教學完成！', 'チュートリアル完了！', 'Tutorial complete!'],
   tab_outfit: ['換裝', '着せ替え', 'Outfits'],
   outfit_for: ['「{0}」的換裝', '「{0}」の着せ替え', 'Outfits for {0}'],
+  outfit_def: ['預設', 'デフォルト', 'Default'],
   char_req: ['上架條件：{0}', '入荷条件：{0}', 'Unlock: {0}'],
   meta_t1: ['開放第 2 關後才能修行', '2つ目のステージ解放後に修行できる', 'Opens after unlocking the 2nd stage'],
   meta_t2: ['任一關破台後才能修行', 'どこかをクリアすると修行できる', 'Opens after clearing any stage'],

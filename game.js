@@ -339,7 +339,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v58';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v59';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -2251,9 +2251,10 @@ function renderShop() {
     }).join('');
   } else if (shopTab === 1) {   // 換裝：目前角色穿上各種顏色的預覽
     const ci = save.skin, cur = outOf(ci);
-    h = `<div class="meta-head">${t('outfit_for', L(SKINS[ci].n))}</div><div class="outfits">` + OUTFITS.map((o, i) => {
+    h = `<div class="meta-head">${t('outfit_for', L(SKINS[ci].n))}</div><div class="outfits">` + [SKINS[ci].out, ...OUTFITS.map((_, k) => k).filter(k => k !== SKINS[ci].out)].map(i => {   // 第一格固定是這名角色的預設顏色
+      const o = OUTFITS[i], def = i === SKINS[ci].out;
       const own = outOwned(i, ci), sel = cur === i;
-      return `<button class="of ${sel ? 'sel' : ''} ${own ? '' : 'nown'}" data-act="${own ? 'outfit' : 'buyout'}" data-arg="${i}" ${!own && save.coins < o.cost ? 'disabled' : ''}><img src="${outThumb(ci, i)}" alt=""><b style="color:${o.suit}">${L(o.n)}</b><small>${sel ? t('equipped') : own ? t('equip') : t('price', o.cost)}</small></button>`;
+      return `<button class="of ${sel ? 'sel' : ''} ${own ? '' : 'nown'}" data-act="${own ? 'outfit' : 'buyout'}" data-arg="${i}" ${!own && save.coins < o.cost ? 'disabled' : ''}><img src="${outThumb(ci, i)}" alt="">${def ? `<em class="of-def">${t('outfit_def')}</em>` : ''}<b style="color:${o.suit}">${L(o.n)}</b><small>${sel ? t('equipped') : own ? t('equip') : t('price', o.cost)}</small></button>`;
     }).join('') + '</div>';
   } else {
     const tot = META.reduce((s, m) => s + m.max, 0), now = META.reduce((s, m) => s + mt(m.id), 0), spent = metaSpent();

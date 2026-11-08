@@ -383,3 +383,5 @@ body.rotate #app { visibility: hidden; }
 #rotateTip .rt-phone { width: 3.2em; height: 5.4em; border: .35em solid #ffe8b0; border-radius: .7em; position: relative; animation: rt-turn 2.2s ease-in-out infinite; }
 #rotateTip .rt-phone::after { content: ""; position: absolute; left: 50%; bottom: .3em; width: .7em; height: .7em; margin-left: -.35em; border-radius: 50%; background: #ffe8b0; }
 @keyframes rt-turn { 0%, 25% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0); } }
+.outfits .of { position: relative; }
+.outfits .of .of-def { position: absolute; left: .15em; top: .15em; font-style: normal; font-size: .58em; font-weight: 900; color: #fff; background: #c0262d; border: 1.5px solid #fff; border-radius: .6em; padding: 0 .4em; line-height: 1.5; box-shadow: 0 1px 2px rgba(0,0,0,.4); }   /* 預設顏色的標籤 */
