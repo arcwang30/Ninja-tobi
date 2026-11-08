@@ -77,14 +77,14 @@ const SIDEBG = (() => {
   function birds(x, y, n, s, col, seed) { const r = aRng(seed); c.strokeStyle = col; c.lineWidth = 1.6 * s; c.lineCap = 'round'; for (let i = 0; i < n; i++) { const bx = x + i * 22 * s + r() * 10, by = y + Math.abs(i - n / 2) * 8 * s + r() * 6, w = 7 * s; c.beginPath(); c.moveTo(bx - w, by - w * .4); c.quadraticCurveTo(bx - w * .4, by - w * .7, bx, by); c.quadraticCurveTo(bx + w * .4, by - w * .7, bx + w, by - w * .4); c.stroke(); } }
   // 忍者剪影：leap 躍起（張開手腳）、run 奔跑、crouch 蹲在屋頂、stand 持刀站立
   // 用遊戲主角的畫法畫成黑色剪影（大頭、頭巾飄帶、刀）：pose = up 躍起／dash 奔跑衝刺／apex 站立／fall 落下
-  const NJ = document.createElement('canvas'); NJ.width = NJ.height = 240; const NJC = NJ.getContext('2d');
+  const NJ = document.createElement('canvas'); NJ.width = NJ.height = 480; const NJC = NJ.getContext('2d');
   function ninja(x, y, s, pose, col, face = 1) {
     const map = { leap: 'up', run: 'dash', crouch: 'fall', stand: 'apex' }, ps = map[pose] || pose;
-    NJC.setTransform(1, 0, 0, 1, 0, 0); NJC.globalCompositeOperation = 'source-over'; NJC.clearRect(0, 0, 240, 240);
-    NJC.setTransform(2.4, 0, 0, 2.4, 120, 190);
+    NJC.setTransform(1, 0, 0, 1, 0, 0); NJC.globalCompositeOperation = 'source-over'; NJC.clearRect(0, 0, 480, 480);
+    NJC.setTransform(2.4, 0, 0, 2.4, 240, 330);
     drawHeroNinja(0, 0, { face: 1, t: .4, vy: ps === 'up' ? -400 : 0, pose: ps, dash: ps === 'dash', dvx: 1, dvy: -.2, skin: (typeof save !== 'undefined' && save.skin) || 0 }, NJC);
-    NJC.setTransform(1, 0, 0, 1, 0, 0); NJC.globalCompositeOperation = 'source-in'; NJC.fillStyle = col; NJC.fillRect(0, 0, 240, 240);
-    c.save(); c.translate(x, y); c.scale(face * s / 2.4, s / 2.4); c.drawImage(NJ, -120, -190); c.restore();
+    NJC.setTransform(1, 0, 0, 1, 0, 0); NJC.globalCompositeOperation = 'source-in'; NJC.fillStyle = col; NJC.fillRect(0, 0, 480, 480);
+    c.save(); c.translate(x, y); c.scale(face * s / 2.4, s / 2.4); c.drawImage(NJ, -240, -330); c.restore();
   }
   // 左側／右側可見區域中的位置（f = 0～1）
   const L = f => GX * f, R = f => GX + GW + (VW - GX - GW) * f;
@@ -102,7 +102,7 @@ const SIDEBG = (() => {
     c.strokeStyle = '#06071a'; c.lineWidth = 8; c.beginPath(); c.moveTo(L(.05), VH * .9); c.quadraticCurveTo(L(.5), VH * .8, L(.95), VH * .9); c.stroke();   // 橋
     c.lineWidth = 3; for (let i = 0; i <= 8; i++) { const t = i / 8, x = L(.05 + .9 * t), y = (1 - t) * (1 - t) * VH * .9 + 2 * (1 - t) * t * VH * .8 + t * t * VH * .9; c.beginPath(); c.moveTo(x, y); c.lineTo(x, y - 16); c.stroke(); }
     for (let k = 0; k < 3; k++) lanternString(L(.02 + k * .33), VH * (.6 + k * .03), L(.34 + k * .33), VH * (.62 + k * .03), 7);
-    ninja(R(.5), VH * .74 - 232 * cs, 1.5 * Math.min(1, cs), 'stand', '#04050f', -1);   // 站在天守閣頂端
+    ninja(R(.5), VH * .74 - 241 * cs, (+new URLSearchParams(location.search).get('njs') || .7) * Math.min(1, cs), 'stand', '#04050f', -1);   // 站在天守閣頂端
     { const gg = c.createLinearGradient(0, VH * .88, 0, VH); gg.addColorStop(0, 'rgba(5,6,26,0)'); gg.addColorStop(.45, '#05061a'); gg.addColorStop(1, '#04050f'); c.fillStyle = gg; c.fillRect(0, VH * .88, VW, VH * .12); }
     { const rg = c.createLinearGradient(0, 0, GX, 0); rg.addColorStop(0, 'rgba(90,110,200,.35)'); rg.addColorStop(.7, 'rgba(90,110,200,.2)'); rg.addColorStop(1, 'rgba(90,110,200,0)'); c.fillStyle = rg; c.fillRect(0, VH * .935, GX, VH * .04); }
     mist(VH * .9, 34, .28);

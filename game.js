@@ -339,7 +339,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v59';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v60';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
