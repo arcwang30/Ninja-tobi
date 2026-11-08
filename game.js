@@ -162,7 +162,7 @@ const EVO = {
 };
 // HP：基礎 100，體魄／鋼身每級 +20；各種攻擊的傷害
 const HP_BASE = 100, HP_STEP = 20;
-const DMG = { shot: 15, kunai: 15, arrow: 20, spike: 20, onibi: 25, zone: 30 };
+const DMG = { shot: 15, kunai: 15, arrow: 20, spike: 20, onibi: 25, zone: 30, ember: 8, fire: 12 };   // ember＝火關提燈妖怪的火星、fire＝火車留下的火焰
 const SOUL_V = [1, 2, 3, 2, 3, 2, 8, 1, 1, 2, 2, 2, 2, 25];   // 各種敵人掉落的魂量
 const xpNeed = l => Math.round(5 + 3.5 * (l - 1) + .4 * (l - 1) ** 2);
 const MODS = [
@@ -339,7 +339,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v62';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v63';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -544,7 +544,7 @@ function startRun(lvl) {
     t: 0, camY: -H * .68, top: 0, bonus: 0, coins: 0,
     p: { x: W / 2, y: 40, vx: 0, vy: -JUMP, face: 1, inv: 0, slow: 0, freeze: 0, sq: 0, dash: 0, dvx: 0, dvy: 0, dive: false, wallUsed: false, banks: 0 },
     plats: [], items: [], enemies: [], parts: [], texts: [], fx: [], shots: [],
-    eshots: [], booms: [], ghosts: [], corpses: [], puffs: [], hitstop: 0,
+    eshots: [], booms: [], fires: [], mists: [], ghosts: [], corpses: [], puffs: [], hitstop: 0,
     drops: [], bolts: [], blades: [], skills: {}, sks: {}, xp: 0, lv: 1, lvQueue: 0, barrier: 0, barT: 0,
     genY: 40, lastX: W / 2, rowN: 0, ladderCD: 3,
     zoneY: 360, boss: null, bossN: 0, stage: 0, base: 0,
@@ -670,6 +670,7 @@ function enemyAI(e, ed, dt) {
       e.vx += (Math.cos(a) * sp - e.vx) * Math.min(1, dt * 1.5);
       e.vy += (Math.sin(a) * sp - e.vy) * Math.min(1, dt * 1.5);
       free(); e.x = clamp(e.x, WALL + ed.w / 2, W - WALL - ed.w / 2);
+      if (e.type === 10 && g.th === 2 && (e.trT = (e.trT || 0) - dt) <= 0) { e.trT = .18; g.fires.push({ x: e.x, y: e.y + 6, t: 0 }); }   // 火關火車：沿路留下火焰
       return;
     }
     case 13: return midAI(e, ed, dt);
@@ -689,25 +690,27 @@ function enemyAI(e, ed, dt) {
   const a = Math.atan2(py - e.y, px - e.x);
   if (e.type === 3) { // 手裡劍：直線
     e.thr = rnd(2.3, 3);
-    g.eshots.push({ x: e.x, y: e.y, vx: Math.cos(a) * 175, vy: Math.sin(a) * 175, t: 0 });
+    g.eshots.push({ x: e.x, y: e.y, vx: Math.cos(a) * 175, vy: Math.sin(a) * 175, t: 0, skin: g.th, wave: g.th === 1 ? a : null });   // 風關：風車手裡劍走 S 形
     SFX.throw();
   } else if (e.type === 9) { // 弓：瞄準玩家目前位置的拋物線
     e.thr = rnd(2.6, 3.2);
     const T = 1.1, G2 = 420;
-    g.eshots.push({ x: e.x, y: e.y, vx: (px - e.x) / T, vy: (py - e.y) / T - G2 * T / 2, grav: G2, t: 0, kind: 'arrow' });
+    g.eshots.push({ x: e.x, y: e.y, vx: (px - e.x) / T, vy: (py - e.y) / T - G2 * T / 2, grav: G2, t: 0, kind: 'arrow', skin: g.th });
     SFX.throw();
   } else if (e.type === 12) { // 蜘蛛：吐絲（減速）
     e.thr = rnd(3, 3.8);
-    g.eshots.push({ x: e.x, y: e.y, vx: Math.cos(a) * 120, vy: Math.sin(a) * 120, t: 0, kind: 'web' });
+    g.eshots.push({ x: e.x, y: e.y, vx: Math.cos(a) * 120, vy: Math.sin(a) * 120, t: 0, kind: ['web', 'web', 'ember', 'frost'][g.th] || 'web', skin: g.th });   // 火關噴火星（小傷害）、山關冰絲（凍住 0.5 秒）
   } else e.thr = 99;
 }
 // ===== 中 BOSS 大天狗：每幕中段出現，停在畫面上方，扇形射擊；碰到它扣它的血 =====
+// 依關卡換文字：有 key_1／key_2／key_3（風／火／山）就用那個，沒有就用林的
+const tl = (k, ...a) => g && g.th && STR[k + '_' + g.th] ? t(k + '_' + g.th, ...a) : t(k, ...a);
 function spawnMid() {
   const hp = 8 + 2 * g.stage + 4 * g.lvl;
   const e = mkEnemy(13, W / 2, g.camY - 60, 0);
   e.hp = e.max = hp; e.life = 25; e.thr = 2;
   g.enemies.push(e); g.mid = e; g.midDone = true;
-  g.banner = { t: 2, a: t('mid_in'), b: t('mid_name'), c: t('mid_desc') };
+  g.banner = { t: 2, a: t('mid_in'), b: tl('mid_name'), c: t('mid_desc') };
   SFX.boss(); vib(120);
 }
 function midAI(e, ed, dt) {
@@ -723,14 +726,14 @@ function midAI(e, ed, dt) {
     for (let i = -2; i <= 2; i++) { const a = a0 + i * .28; g.eshots.push({ x: e.x, y: e.y + 20, vx: Math.cos(a) * 160, vy: Math.sin(a) * 160, t: 0 }); }
     SFX.throw();
   }
-  if (e.life <= 0) { e.dead = true; g.mid = null; floatText(W / 2, g.camY + H * .4, t('mid_gone'), '#ccc', 20); }
+  if (e.life <= 0) { e.dead = true; g.mid = null; floatText(W / 2, g.camY + H * .4, tl('mid_gone'), '#ccc', 20); }
 }
 // 中 BOSS 被擊倒：大量魂與小判，並開寶箱（可能進化）
 function midDown(e) {
   g.mid = null;
   for (let i = 0; i < 14; i++) g.drops.push({ k: i < 10 ? 'soul' : 'coin', x: e.x + rnd(-30, 30), y: e.y, vx: rnd(-100, 100), vy: -rnd(140, 280), v: i < 10 ? 3 : 2, ph: rnd(0, 6) });
   burst(e.x, e.y, '#c0262d', 36); g.shake = 12; SFX.kill(); vib([60, 40, 120]);
-  floatText(W / 2, g.camY + H * .4, t('mid_down'), '#ffd27a', 24);
+  floatText(W / 2, g.camY + H * .4, tl('mid_down'), '#ffd27a', 24);
   unlock('mid1'); if (++save.stats.mids >= 5) unlock('mid5');
   g.pendingChest = true;
 }
@@ -744,7 +747,7 @@ function spawnWave() {
   const k = pick(kinds), n = Math.round((rnd(4, 6) + st * .4 + hardN() * 2) * Math.sqrt(WK()));   // 寬螢幕稍微多幾隻
   if (k === 'crow') { // 從左或右排成一列飛過
     const side = Math.random() < .5 ? -1 : 1, y = top + rnd(40, H * .4);
-    for (let i = 0; i < n + 2; i++) { const e = mkEnemy(7, side < 0 ? -30 - i * 34 : W + 30 + i * 34, y, 0); e.by = y + (i % 2) * 18; e.vx = -side * rnd(120, 150); g.enemies.push(e); }
+    for (let i = 0; i < n + 2; i++) { const e = mkEnemy(7, side < 0 ? -30 - i * 34 : W + 30 + i * 34, y, 0); e.by = y + (i % 2) * 18; e.vx = -side * rnd(120, 150) * (g.th === 1 ? 1.2 : 1); g.enemies.push(e); }   /* 風關燕子飛得快 20% */
   } else if (k === 'tengu') { // 從畫面上方俯衝下來
     for (let i = 0; i < n; i++) { const e = mkEnemy(8, rnd(WALL + 30, W - WALL - 30), g.camY - 30 - i * 40, 0); e.vy = 60; g.enemies.push(e); }
   } else if (k === 'onibi') { // 從畫面兩側包圍
@@ -755,7 +758,7 @@ function spawnWave() {
   } else { // 蜘蛛從上方垂下
     for (let i = 0; i < Math.ceil(n * .5); i++) g.enemies.push(mkEnemy(12, rnd(WALL + 40, W - WALL - 40), g.camY - 20 - i * 60, 0));
   }
-  floatText(W / 2, -24, t('wave_' + k), '#ff9a7a', 18, true);
+  floatText(W / 2, -24, tl('wave_' + k), '#ff9a7a', 18, true);
 }
 
 // 土遁忍者：玩家靠近時從地板冒出，往上散射三支苦無
@@ -944,15 +947,22 @@ function updatePlay(dt) {
   // 敵方攻擊：飛鏢／箭（有重力）／苦無／蛛絲（減速不扣血）
   for (const s of g.eshots) {
     s.t += dt; if (s.grav) s.vy += s.grav * dt;
+    if (s.wave != null) { const sp = Math.hypot(s.vx, s.vy), an = s.wave + Math.sin(s.t * 7) * .52; s.vx = Math.cos(an) * sp; s.vy = Math.sin(an) * sp; }
     s.x += s.vx * dt; s.y += s.vy * dt;
-    if (Math.hypot(s.x - p.x, s.y - (p.y - 20)) < (s.kind === 'web' ? 18 : 14)) {
+    if (Math.hypot(s.x - p.x, s.y - (p.y - 20)) < (s.kind === 'web' || s.kind === 'frost' ? 18 : 14)) {
       s.dead = true;
       if (p.dash > 0 || p.dive || g.fly > 0) { sparkle(s.x, s.y, '#fff'); SFX.clank(); }   // 衝刺中可以彈開
-      else if (s.kind === 'web') { p.slow = Math.max(p.slow, 1.6); floatText(p.x, p.y - 50, t('webbed'), '#ddd', 15); }
+      else if (s.kind === 'web') { p.slow = Math.max(p.slow, 1.6); floatText(p.x, p.y - 50, t(s.skin === 1 ? 'webbed_1' : 'webbed'), '#ddd', 15); }
+      else if (s.kind === 'frost') { p.freeze = Math.max(p.freeze, .5); floatText(p.x, p.y - 50, t('frozen'), '#bfefff', 15); }
       else if (hurt(s.kind || 'shot')) return;
     }
   }
   g.eshots = g.eshots.filter(s => !s.dead && s.t < 4);
+  // 火關：火車留下的火焰（1.5 秒，碰到會受傷）；山關：雪崩球爆開後的冰霧（2 秒，在裡面會變慢）
+  for (const f of g.fires) { f.t += dt; if (f.t < 1.5 && !(p.dash > 0 || p.dive || g.fly > 0) && Math.hypot(f.x - p.x, f.y - (p.y - 10)) < 13) { f.t = 1.5; if (hurt('fire')) return; } }
+  g.fires = g.fires.filter(f => f.t < 1.5);
+  for (const m of g.mists) { m.t += dt; if (Math.hypot(m.x - p.x, m.y - (p.y - 20)) < m.r) p.slow = Math.max(p.slow, .25); }
+  g.mists = g.mists.filter(m => m.t < 2);
 
   // 自動技能、掉落物
   updateSkills(dt * (1 + .05 * mt('cd')));   // 修行「迅術」：技能冷卻更快
@@ -1219,7 +1229,7 @@ function touchEnemy(e) {
   }
   // 盾忍者：從下方往上撞會被重重打落並中斷連斬（衝刺斬可以破盾）
   if (e.type === 4 && !fast && p.vy < 0 && (p.y - 20) > e.y) {
-    e.cool = .6; p.vy = 520; p.sq = 1;
+    e.cool = .6; p.vy = g.th === 1 ? 680 : 520; p.sq = 1;   /* 風關大團扇吹得更遠 */
     floatText(e.x, e.y - 30, '盾!', '#ccc', 18); SFX.clank(); g.shake = 7; vib(60);
     if (g.fever <= 0) { g.combo = 0; g.comboT = 0; }
     return false;
@@ -1244,7 +1254,7 @@ function touchEnemy(e) {
   p.inv = Math.max(p.inv, .2);
   if (cine) {
     state = 'slash';
-    g.slash = { e, t: 0, dur: ENEMY[e.type].dur, lines: [], n: 0, nextL: 0 };
+    g.slash = { e, t: 0, dur: ENEMY[e.type].dur + (g.th === 3 && e.type === 2 ? .2 : 0),   /* 山關雪男比較硬 */ lines: [], n: 0, nextL: 0 };
     return true;
   }
   g.hitstop = .08;
@@ -1282,8 +1292,9 @@ function slay(e, auto) {
 
 // 爆彈忍者爆炸：炸死附近敵人（可連鎖）並炸碎附近地板
 function explode(x, y) {
-  const r = 95;
-  g.booms.push({ x, y, r, t: 0, c: '#ff8a3a' });
+  const r = g.th === 2 ? 119 : 95;   // 火關火藥桶狸的爆炸大 25%
+  g.booms.push({ x, y, r, t: 0, c: g.th === 3 ? '#cfefff' : '#ff8a3a' });
+  if (g.th === 3) g.mists.push({ x, y, r: 85, t: 0 });   // 山關雪崩球：留下冰霧
   burst(x, y, '#ff8a3a', 24); SFX.boom(); g.shake = 12; vib(80);
   let n = 0;
   for (const e of g.enemies) if (!e.dead && Math.hypot(e.x - x, e.y - y) < r) { slay(e); n++; }
@@ -2129,6 +2140,7 @@ function render() {
   else if (!(g.zi && g.zi.hide)) drawNinja(p.x, p.y, { face: p.face, t: g.t, vy: p.vy, sq: p.sq, inv: p.inv, fly: g.fly > 0, slow: p.slow, freeze: p.freeze, skin: save.skin, dash: p.dash > 0, dvx: p.dvx, dvy: p.dvy, dive: p.dive, spin: p.spin, hurt: p.hurt });
   for (const s of g.shots) drawPlayerShot(s);
   drawSkillFx();
+  for (const f of g.fires) drawFireTrail(f); for (const m of g.mists) drawIceMist(m);   // 火關的火焰、山關的冰霧
   for (const s of g.eshots) drawEShot(s);   // 敵方攻擊
   for (const o of g.fx) drawSlashFx(o);     // 斬痕
   for (const o of g.booms) drawBoom(o);     // 爆炸／衝擊波

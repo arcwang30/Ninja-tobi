@@ -1,0 +1,55 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>中魔王候選與修正</title>
+<style>html, body { margin: 0; background: #14161c; } canvas { display: block; }</style>
+<canvas id="cv"></canvas>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const INK = '#0e1414', g = null;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', out: 0 }], OUTFITS = [{ suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const heroPal = () => OUTFITS[0];
+const ENEMY = [
+  { w: 34, h: 42 }, { w: 42, h: 46 }, { w: 56, h: 50 }, { w: 38, h: 44 }, { w: 44, h: 48 }, { w: 40, h: 44 }, { w: 46, h: 50 },
+  { w: 30, h: 22 }, { w: 34, h: 34 }, { w: 38, h: 44 }, { w: 28, h: 30 }, { w: 40, h: 44 }, { w: 34, h: 30 }, { w: 72, h: 72 },
+];
+function txt(s, x, y, size, col, align = 'left', stroke, sw = 0) {
+  ctx.font = `900 ${size}px "Microsoft JhengHei", sans-serif`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = sw; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); }
+  ctx.fillStyle = col; ctx.fillText(s, x, y);
+}
+</script>
+<script src="../art.js"></script>
+<script src="../foes2.js"></script>
+<script>
+'use strict';
+const WID = 1050, RH = 460, HGT = 60 + RH, DPR = 2;
+cv.width = WID * DPR; cv.height = HGT * DPR; cv.style.width = WID + 'px'; cv.style.height = HGT + 'px'; ctx.scale(DPR, DPR);
+const T = .45;
+const rows = [
+  { title: '風關中魔王：火鳳凰 B 細緻化（三款）', bg: ['#4a86c8', '#bcd8f0'], items: [['B1 細緻版', FOE2_PHOENIX_B.B1], ['B2 華麗版', FOE2_PHOENIX_B.B2], ['B3 燄羽版', FOE2_PHOENIX_B.B3]], s: 2.6, tall: true },
+
+
+];
+ctx.fillStyle = '#14161c'; ctx.fillRect(0, 0, WID, HGT);
+txt('火鳳凰 B 細緻化', WID / 2, 30, 24, '#ffe28a', 'center', '#000', 5);
+rows.forEach((r, ri) => {
+  const y0 = 60 + ri * RH, gr = ctx.createLinearGradient(0, y0, 0, y0 + RH); gr.addColorStop(0, r.bg[0]); gr.addColorStop(1, r.bg[1]);
+  ctx.fillStyle = gr; ctx.fillRect(6, y0 + 4, WID - 12, RH - 8);
+  txt(r.title, 20, y0 + 24, 17, '#fff', 'left', '#000', 4);
+  for (let i = 0; i < (r.one || r.fix ? 1 : 3); i++) {
+    const x = r.one || r.fix ? WID / 2 : 175 + i * 350, cy = y0 + RH * .52;
+    const e = { look: 1, bx: i + ri, vx: -120, warn: 0, flash: 0, tilt: 0 };
+    ctx.save(); ctx.translate(x, cy);
+    if (r.fix) {
+      const [th, ty, s, nm] = [1, 6, 4.2, '鴉天狗武者'];
+      ctx.scale(s, s); drawFoe2(th, ty, T + i, e, -1, false); ctx.restore();
+      txt(nm, x, y0 + RH - 22, 16, '#fff', 'center', '#000', 4);
+    } else {
+      ctx.scale(r.s, r.s); r.items[i][1](ctx, { t: T + i, fl: false, seed: i, warn: false, blink: false, near: false });
+      ctx.restore();
+      txt(r.items[i][0], x, y0 + RH - 22, 18, '#fff', 'center', '#000', 4);
+    }
+  }
+});
+</script>

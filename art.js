@@ -391,7 +391,8 @@ function drawEnemy(x, y, type, s = 1, t = 0, e = null) {
   const look = e && e.look ? e.look : e && g && g.p ? (Math.sign(g.p.x - x) || 1) : 1;
   const near = e && g && g.p ? Math.hypot(g.p.x - x, g.p.y - 20 - y) < 110 : false;
   ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-  if (FOE[type]) {
+  if (g && g.th && typeof drawFoe2 !== 'undefined' && drawFoe2(g.th, type, t, e, look, near)) { }   // 風／火／山關：各關自己的敵人造型（foes2.js）
+  else if (FOE[type]) {
     if (FOE_TILT && !fl && Math.abs(e && e.sv || 0) > 90) for (let k = 3; k >= 1; k--) { ctx.save(); ctx.globalAlpha *= .12 * (4 - k); ctx.translate(-e.sv * .035 * k / s, 0); drawFoeNinja(type, t, e, look, near); ctx.restore(); }   // 快速移動的殘影
     drawFoeNinja(type, t, e, look, near);
   }
@@ -1236,6 +1237,7 @@ function drawPlayerShot(s) {
   c.restore();
 }
 function drawEShot(s) {
+  if (typeof drawEShot2 !== 'undefined' && drawEShot2(s)) return;   // 風／火／山關的敵方攻擊造型（foes2.js）
   const c = ctx;
   if (s.kind === 'arrow' || s.kind === 'kunai') {
     c.save(); c.translate(s.x, s.y); c.rotate(Math.atan2(s.vy, s.vx));

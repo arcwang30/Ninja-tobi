@@ -1,0 +1,64 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>風火山敵人設計</title>
+<style>html, body { margin: 0; background: #14161c; } canvas { display: block; }</style>
+<canvas id="cv"></canvas>
+<script>
+// art.js 需要的共用設定（只放畫敵人用得到的部分）
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const INK = '#0e1414', g = null;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', out: 0 }], OUTFITS = [{ suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const heroPal = () => OUTFITS[0];
+const ENEMY = [
+  { w: 34, h: 42 }, { w: 42, h: 46 }, { w: 56, h: 50 }, { w: 38, h: 44 }, { w: 44, h: 48 }, { w: 40, h: 44 }, { w: 46, h: 50 },
+  { w: 30, h: 22 }, { w: 34, h: 34 }, { w: 38, h: 44 }, { w: 28, h: 30 }, { w: 40, h: 44 }, { w: 34, h: 30 }, { w: 72, h: 72 },
+];
+function txt(s, x, y, size, col, align = 'left', stroke, sw = 0) {
+  ctx.font = `900 ${size}px "Microsoft JhengHei", sans-serif`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = sw; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); }
+  ctx.fillStyle = col; ctx.fillText(s, x, y);
+}
+</script>
+<script src="../art.js"></script>
+<script src="../foes2.js"></script>
+<script>
+'use strict';
+// 版面：?part=1 → 編號 0～6（人形）；?part=2 → 編號 7～13（妖怪類與中魔王）
+const part = +(new URLSearchParams(location.search).get('part') || 1);
+const ROWS = part === 1 ? [0, 1, 2, 3, 4, 5, 6] : [7, 8, 9, 10, 12, 13];
+const ROLE = { 0: '0 瘦小雜兵', 1: '1 中型雜兵', 2: '2 胖子', 3: '3 射飛鏢', 4: '4 盾牌', 5: '5 自爆', 6: '6 菁英', 7: '7 成群橫飛', 8: '8 俯衝', 9: '9 拋物線射箭', 10: '10 追蹤飄浮', 12: '12 垂絲擺盪', 13: '13 中魔王' };
+const NAMES = {
+  0: ['黑衣小忍', '雲隱小忍', '火鼠', '雪兔忍'], 1: ['黑衣忍者', '鎌鼬', '赤小鬼', '雪童子'], 2: ['胖忍者', '風袋鬼', '熔岩力士', '雪男'],
+  3: ['手裡劍忍', '風車忍', '焰忍', '冰柱忍'], 4: ['盾忍', '大團扇忍', '鍛冶鐵甲', '石佛僧兵'], 5: ['爆彈忍', '爆風紙鳶', '火藥桶狸', '雪崩球'],
+  6: ['紫衣菁英忍', '鴉天狗武者', '赤鬼武者', '山伏武者'], 7: ['烏鴉群', '燕子群', '火蝙蝠群', '雷鳥群'], 8: ['小天狗', '風鈴精', '火之雛鳥', '雪鴞'],
+  9: ['弓忍', '紙鳶射手', '火矢足輕', '獵師'], 10: ['鬼火', '旋風玉', '火車', '雪靈'], 12: ['蜘蛛', '斷線紙鳶', '提燈妖怪', '雪蓑蟲'], 13: ['大天狗', '火鳳凰', '輪入道', '銀鬃狒狒'],
+};
+const COLS = [['林', '#1d4a3c', '#0c241e'], ['風', '#4a86c8', '#bcd8f0'], ['火', '#4a1410', '#1a0606'], ['山', '#7a8ea8', '#d8e2ee']];
+const LW = 150, CW = 250, HEAD = 70, RH = part === 1 ? 200 : 230, WID = LW + CW * 4, HGT = HEAD + RH * ROWS.length;
+const DPR = 2; cv.width = WID * DPR; cv.height = HGT * DPR; cv.style.width = WID + 'px'; cv.style.height = HGT + 'px'; ctx.scale(DPR, DPR);
+ctx.fillStyle = '#14161c'; ctx.fillRect(0, 0, WID, HGT);
+COLS.forEach(([k, a, b], i) => {
+  const x = LW + i * CW, gr = ctx.createLinearGradient(0, 0, 0, HGT); gr.addColorStop(0, a); gr.addColorStop(1, b);
+  ctx.fillStyle = gr; ctx.fillRect(x + 3, 0, CW - 6, HGT);
+  txt(k, x + CW / 2 - 60, HEAD / 2, 34, '#fff', 'center', '#000', 5);
+  txt(i ? '新造型' : '林系列（原版）', x + CW / 2 + 30, HEAD / 2 + 2, 15, '#ffe28a', 'center', '#000', 4);
+});
+const T = .45;
+ROWS.forEach((ty, r) => {
+  const y0 = HEAD + r * RH, cy = y0 + RH * .47;
+  ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(0, y0, WID, 1);
+  txt(ROLE[ty], 12, cy, 15, '#cfd8ff', 'left', '#000', 3);
+  for (let col = 0; col < 4; col++) {
+    const x = LW + col * CW + CW / 2;
+    const s = ty === 13 ? 1.55 : ty === 7 ? 3.6 : ty === 10 ? 3.2 : ty === 12 ? 3 : 2.8;
+    const e = { look: -1, bx: col + r, vx: -120, warn: 0, flash: 0, tilt: 0 };
+    ctx.save();
+    if (ty === 12) { ctx.beginPath(); ctx.rect(x - CW / 2 + 3, y0 + 2, CW - 6, RH - 2); ctx.clip(); }   // 垂絲不要超出格子
+    if (col === 0) drawEnemy(x, cy - 8, ty, ty === 13 ? s * .78 : s, T + col, e);
+    else { ctx.translate(x, cy - 8); ctx.scale(ty === 13 ? s * .78 : s, ty === 13 ? s * .78 : s); drawFoe2(col, ty, T + col, e, -1, false); }
+    ctx.restore();
+    txt(NAMES[ty][col], x, y0 + RH - 18, 17, '#fff', 'center', '#000', 4);
+  }
+});
+</script>
