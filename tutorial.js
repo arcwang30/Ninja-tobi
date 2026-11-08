@@ -20,7 +20,7 @@ const TUT_STEPS = [
   { k: 'soul', t: ['吸收藍色的魂，集滿就升級，從三個強化選一個', '青い魂を集めてレベルアップ、3つから1つ選ぶ', 'Collect blue souls to level up, then pick 1 of 3'],
     start() { g.tut.lv0 = g.lv; tutSouls(); },
     done: () => g.lv > g.tut.lv0 && state === 'play' },
-  { k: 'scroll', t: ['點右下角的卷軸按鈕：忍法「豪天翔」，無敵並急速上升', '右下の巻物ボタン：忍法「豪天翔」で無敵の急上昇', 'Tap the scroll button (bottom-right): soar up, invincible'],
+  { k: 'scroll', t: ['點一下畫面下方中間的卷軸按鈕：忍法「豪天翔」，無敵並急速上升', '画面下の中央の巻物ボタンをタップ：忍法「豪天翔」で無敵の急上昇', 'Tap the scroll button (lower center): soar up, invincible'],
     start() { g.scrolls = Math.max(g.scrolls, 1); g.tut.s0 = g.scrollN; }, done: () => g.scrollN > g.tut.s0 },
 ];
 // 在主角身邊放一圈魂：總量一定夠升一級（之前固定 12 點，等級高時不夠升級，教學就卡住）

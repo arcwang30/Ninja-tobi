@@ -339,7 +339,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v56';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v57';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -443,7 +443,8 @@ cv.addEventListener('pointerdown', e => {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
     if (hy < HUD_Y1 + 6 && p.x > W - 40) { pauseGame(); return; }
     if (hy > HUD_Y0 - 4 && hy < HUD_Y1 + 6 && p.x > 116 && p.x < 172) { castScroll(); return; }
-    const sb = scrollBtnPos(); if (Math.hypot(p.x - sb.x, p.y - sb.y) < sb.r + 10) { castScroll(); if (g.scrolls <= 0 && state === 'play') floatText(sb.x, g.camY + sb.y - 44, t('no_scroll'), '#ccc', 13); return; }   // 右下角的豪天翔按鈕
+    // 豪天翔按鈕（畫面中間偏下）：按鈕在操作區中間，所以只有「點一下就放開」才算按鈕；按住滑動仍是一般移動
+    { const sb = scrollBtnPos(); inp.btn = Math.hypot(p.x - sb.x, p.y - sb.y) < sb.r + 8 ? { t: performance.now(), x: p.x, y: p.y } : null; }
   }
   inp.down = true; inp.id = e.pointerId; inp.lx = p.x; inp.ly = p.y; inp.sw = 0;
   inp.hist = [{ x: p.x, y: p.y, t: performance.now() }]; inp.flicked = false;
@@ -479,6 +480,16 @@ cv.addEventListener('pointermove', e => {
 });
 const endPtr = e => {
   if (e.pointerId !== inp.id) return;
+  // 點一下豪天翔按鈕（沒怎麼移動、很快放開）：發動忍法，不當作瞄準或移動
+  if (inp.btn && e.type === 'pointerup' && state === 'play' && !paused) {
+    const p = toL(e), b = inp.btn;
+    if (performance.now() - b.t < 350 && Math.hypot(p.x - b.x, p.y - b.y) < 14) {
+      inp.btn = null; inp.down = false; inp.id = null; inp.mode = null;
+      if (g.scrolls > 0) castScroll(); else { const sb = scrollBtnPos(); floatText(sb.x, g.camY + sb.y - 44, t('no_scroll'), '#ccc', 13); }
+      return;
+    }
+  }
+  inp.btn = null;
   // 放開時發射彈射斬（拉得不夠遠就當作取消）
   if (inp.mode === 'aim' && e.type === 'pointerup' && state === 'play' && !paused) {
     const a = aimInfo();
@@ -1783,12 +1794,12 @@ function drawSling() {
 }
 
 // 右下角的豪天翔按鈕：大圓鈕、裡面是卷軸，有卷軸時發光並顯示張數（拇指最好按的位置）
-function scrollBtnPos() { return { x: W - 46, y: H - 78, r: 32 }; }
+function scrollBtnPos() { return { x: W / 2, y: H * 2 / 3, r: 32 }; }   // 畫面中間、下方三分之一的位置
 function drawScrollBtn() {
   const { x, y, r } = scrollBtnPos(), c = ctx, has = g.scrolls > 0 && g.fly <= 0, pu = has ? .5 + .5 * Math.sin(g.t * 5) : 0;
   c.save();
   if (has) { const gl = c.createRadialGradient(x, y, r * .6, x, y, r * 1.6); gl.addColorStop(0, `rgba(255,210,90,${.35 + .25 * pu})`); gl.addColorStop(1, 'rgba(255,210,90,0)'); c.fillStyle = gl; aCirc(c, x, y, r * 1.6); c.fill(); }
-  c.globalAlpha = has ? 1 : .55;
+  c.globalAlpha = has ? .85 : .4;   // 在畫面中間，半透明一點才不會擋住視線
   aCirc(c, x, y, r + 3); c.fillStyle = INK; c.fill();
   const bg = c.createRadialGradient(x - 8, y - 10, 4, x, y, r); bg.addColorStop(0, has ? '#3a4a7a' : '#3a3a44'); bg.addColorStop(1, has ? '#141a36' : '#1a1a20'); aCirc(c, x, y, r); c.fillStyle = bg; c.fill();
   c.lineWidth = 3; c.strokeStyle = has ? '#e8b84a' : '#777'; aCirc(c, x, y, r - 2); c.stroke();
