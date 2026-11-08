@@ -271,7 +271,7 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 /* 底部選單有五個按鈕：卷軸圖示縮小一點 */
 
 /* ===== 主畫面右上角的商店寶箱：平常關著、會輕輕搖晃並冒出小閃光，點下去打開 ===== */
-.shop-corner { position: absolute; z-index: 2; right: 3%; left: auto; top: calc(var(--sat) + .5em); width: 3.7em; height: 3.7em; padding: 0; margin: 0; border: 0; background: none; box-shadow: none; overflow: visible; }
+.shop-corner { position: absolute; z-index: 2; left: 3%; right: auto; bottom: calc(7.4em + env(safe-area-inset-bottom, 0px)); top: auto;   /* 主畫面左下角、底部選單上方 */ width: 3.7em; height: 3.7em; padding: 0; margin: 0; border: 0; background: none; box-shadow: none; overflow: visible; }
 .shop-corner::before { display: none; }
 .shop-corner img { position: relative; width: 100%; height: 100%; display: block; filter: drop-shadow(0 calc(var(--u)*3) 0 rgba(0,0,0,.45)); transform-origin: 50% 85%; }
 #title.on .shop-corner img { animation: plate-pop .45s 1.25s cubic-bezier(.2, 1.5, .4, 1) both, chest-idle 3.2s 2s ease-in-out infinite; }
