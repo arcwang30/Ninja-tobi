@@ -76,9 +76,17 @@
   <div class="scr dim" id="clear">
     <div class="panel">
       <h2 data-i18n="clear_title"></h2>
-      <p class="clear-body" data-i18n="clear_body"></p>
-      <button data-act="endless" class="big red" data-i18n="clear_go"></button>
-      <button data-act="finish" data-i18n="clear_end"></button>
+      <p class="clear-body" id="clearBody"></p>
+      <button data-act="finish" class="big red" data-i18n="clear_end"></button>
+    </div>
+  </div>
+
+  <!-- 選關：四大關的圖卡（levels.js） -->
+  <div class="scr dim" id="lvsel">
+    <div class="panel wide lvsel">
+      <h2 data-i18n="lv_title"></h2>
+      <div class="lv-list" id="lvList"></div>
+      <button data-act="back" data-i18n="back"></button>
     </div>
   </div>
 
@@ -186,6 +194,7 @@
 <script src="cut.js"></script>
 <script src="game.js"></script>
 <script src="stagefx.js"></script>
+<script src="levels.js"></script>
 <script src="help.js"></script>
 <script src="history.js"></script>
 </body>

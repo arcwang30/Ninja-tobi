@@ -8,7 +8,7 @@ let W = 360, W_LOCK = false;
 let H = 640;                    // 依螢幕比例在 640~900 之間調整（長螢幕手機不留黑邊）
 const WK = () => W / 360;       // 世界比手機寬幾倍，生成地板和敵人時用來補密度
 const GRAV = 1500, JUMP = 740, SPRING = 1060, FLY_V = 820;
-const STAGE_PX = 12000;         // 每一幕的高度（px），10px = 1m。約 2～3 分鐘一幕，主線約 10 分鐘
+const STAGE_PX = 6000;          // 每個舞台的高度（px），10px = 1m。約 1～1.5 分鐘一個舞台，一關 10 個舞台
 const SENS = 1.25;              // 手指滑動靈敏度
 const DASH_V = 950, DASH_T = .2, DIVE_V = 1150;   // 衝刺斬／急降斬
 const FLICK_PX = 42, FLICK_MS = 130;             // 快速滑動判定：130ms 內垂直移動 42px
@@ -128,38 +128,90 @@ const MODS = [
   { id: 'rich', n: ['黃金鄉', '黄金郷', 'El Dorado'], d: ['小判倍增，但釘刺也變多', '小判が倍、まきびしも増える', 'Double koban, but more spikes'] },
   { id: 'crumble', n: ['朽木', '朽ち木', 'Rotten Wood'], d: ['大部分地板只能踩一次', 'ほとんどの床が一度きり', 'Most floors break after one step'] },
 ];
+// 修行（永久強化）：16 項，共 56 級。cost(l) = 從 Lv l 升到 Lv l+1 的價格
 const META = [
-  { id: 'hp', n: ['體魄', '体力', 'Vitality'], d: ['最大 HP +20', '最大HP +20', 'Max HP +20'], max: 3, cost: l => 150 * (l + 1), ic: '❤️' },
-  { id: 'scroll', n: ['秘卷', '秘巻', 'Secret Scroll'], d: ['起始卷軸 +1', '開始時の巻物 +1', 'Start with +1 scroll'], max: 2, cost: l => 200 * (l + 1), ic: '📜' },
+  { id: 'hp', n: ['體魄', '体力', 'Vitality'], d: ['最大 HP +20', '最大HP +20', 'Max HP +20'], max: 5, cost: l => 150 * (l + 1), ic: '❤️' },
+  { id: 'armor', n: ['鎖帷子', '鎖帷子', 'Chain Mail'], d: ['受到的傷害 -6%', '受けるダメージ -6%', 'Damage taken -6%'], max: 5, cost: l => 180 * (l + 1), ic: '🛡️' },
+  { id: 'revive', n: ['再起', '再起', 'Second Wind'], d: ['每局一次：倒下時以一半 HP 復活', '1回だけ、倒れてもHP半分で復活', 'Once per run, revive with half HP'], max: 1, cost: () => 2000, ic: '🔥' },
+  { id: 'reach', n: ['長刀', '長刀', 'Long Blade'], d: ['斬擊接觸範圍擴大', '斬撃の当たり判定が広がる', 'Larger slash reach'], max: 3, cost: l => 200 * (l + 1), ic: '🗡️' },
+  { id: 'power', n: ['剛力', '剛力', 'Might'], d: ['對魔王與大天狗的傷害 +10%', '魔王・大天狗へのダメージ +10%', 'Damage to bosses +10%'], max: 5, cost: l => 200 * (l + 1), ic: '💪' },
+  { id: 'cd', n: ['迅術', '迅術', 'Quick Arts'], d: ['自動技能的冷卻縮短 5%', '自動技の再使用 -5%', 'Skill cooldowns -5%'], max: 5, cost: l => 220 * (l + 1), ic: '⏱️' },
+  { id: 'speed', n: ['輕身', '軽身', 'Light Feet'], d: ['左右移動速度 +5%', '左右の移動速度 +5%', 'Move speed +5%'], max: 3, cost: l => 160 * (l + 1), ic: '👟' },
+  { id: 'ki', n: ['丹田', '丹田', 'Inner Core'], d: ['「氣」上限 +1', '「気」の上限 +1', 'Max Ki +1'], max: 2, cost: l => 400 * (l + 1), ic: '🔷' },
+  { id: 'kireg', n: ['調息', '調息', 'Breathing'], d: ['「氣」回復速度 +15%', '「気」の回復 +15%', 'Ki regen +15%'], max: 3, cost: l => 180 * (l + 1), ic: '🌬️' },
+  { id: 'magnet', n: ['吸魂', '吸魂', 'Soul Magnet'], d: ['魂與小判的吸收範圍擴大', '魂と小判を吸い寄せる範囲が広がる', 'Larger pickup range'], max: 3, cost: l => 150 * (l + 1), ic: '🧲' },
+  { id: 'xp', n: ['悟性', '悟性', 'Insight'], d: ['獲得的經驗 +8%', '経験値 +8%', 'XP +8%'], max: 5, cost: l => 200 * (l + 1), ic: '📖' },
   { id: 'gold', n: ['商才', '商才', 'Merchant'], d: ['小判 +10%', '小判 +10%', 'Koban +10%'], max: 5, cost: l => 120 * (l + 1), ic: '💰' },
-  { id: 'reroll', n: ['天眼', '天眼', 'Third Eye'], d: ['選擇秘傳時可重抽次數 +1', '秘伝の引き直し +1回', '+1 reroll when choosing Secret Arts'], max: 2, cost: l => 250 * (l + 1), ic: '👁️' },
+  { id: 'luck', n: ['福運', '福運', 'Good Luck'], d: ['寶箱與卷軸更容易出現', '宝箱と巻物が出やすい', 'More chests and scrolls'], max: 3, cost: l => 220 * (l + 1), ic: '🍀' },
+  { id: 'scroll', n: ['秘卷', '秘巻', 'Secret Scroll'], d: ['起始卷軸 +1', '開始時の巻物 +1', 'Start with +1 scroll'], max: 2, cost: l => 200 * (l + 1), ic: '📜' },
+  { id: 'reroll', n: ['天眼', '天眼', 'Third Eye'], d: ['三選一時可重抽 +1 次', '三択の引き直し +1回', '+1 reroll on level-up choices'], max: 3, cost: l => 250 * (l + 1), ic: '👁️' },
+  { id: 'banish', n: ['封印', '封印', 'Seal'], d: ['三選一時可封印 +1 次（被封印的選項本局不再出現）', '三択で封印 +1回（その選択肢はもう出ない）', '+1 Seal: remove a choice for the rest of the run'], max: 3, cost: l => 300 * (l + 1), ic: '🈲' },
 ];
-const ACH = [
-  { id: 'run1', n: ['初陣', '初陣', 'First Battle'], d: ['完成第一次挑戰', '初めての挑戦を終える', 'Finish your first run'] },
-  { id: 'h100', n: ['見習忍者', '見習い忍者', 'Apprentice'], d: ['單局爬升 100m', '1回で100m登る', 'Climb 100m in one run'] },
-  { id: 'h500', n: ['中忍', '中忍', 'Chunin'], d: ['單局爬升 500m', '1回で500m登る', 'Climb 500m in one run'] },
-  { id: 'h1500', n: ['上忍', '上忍', 'Jonin'], d: ['單局爬升 1500m', '1回で1500m登る', 'Climb 1500m in one run'] },
-  { id: 'combo5', n: ['五連斬', '五連斬', 'Five Chain'], d: ['達成 5 連斬', '5連斬を達成', 'Reach a 5 chain'] },
-  { id: 'combo10', n: ['狂熱', 'フィーバー', 'Fever'], d: ['達成 10 連斬，進入狂熱狀態', '10連斬でフィーバー', 'Reach a 10 chain and enter FEVER'] },
-  { id: 'chain3', n: ['連鎖爆破', '連鎖爆破', 'Chain Blast'], d: ['一次爆炸炸死 3 名以上敵人', '一度の爆発で3体以上倒す', 'Kill 3+ enemies with one explosion'] },
-  { id: 'bank1', n: ['反射斬', '反射斬り', 'Bank Shot'], d: ['彈射斬撞牆反彈後斬殺敵人', '壁で跳ね返ってから敵を斬る', 'Slash an enemy after bouncing off a wall'] },
-  { id: 'evo1', n: ['進化', '進化', 'Evolution'], d: ['第一次讓技能進化', '初めて技を進化させる', 'Evolve a skill for the first time'] },
-  { id: 'mid1', n: ['天狗退治', '天狗退治', 'Tengu Hunter'], d: ['擊敗中 BOSS 大天狗', '中ボス大天狗を倒す', 'Defeat the Great Tengu'] },
-  { id: 'boss1', n: ['鬼退治', '鬼退治', 'Oni Slayer'], d: ['擊敗第一隻魔王', '初めて魔王を倒す', 'Defeat your first boss'] },
-  { id: 'slash100', n: ['百人斬', '百人斬り', 'Hundred Cuts'], d: ['累計斬殺 100 名敵忍者', '累計100体の敵を斬る', 'Slash 100 enemies in total'] },
-  { id: 'scroll1', n: ['忍法帖', '忍法帖', 'Ninjutsu Scroll'], d: ['第一次發動忍法', '初めて忍法を使う', 'Use ninjutsu for the first time'] },
-  { id: 'coin500', n: ['小判長者', '小判長者', 'Koban Tycoon'], d: ['累計獲得 500 小判', '累計500小判を得る', 'Earn 500 koban in total'] },
-  { id: 'clear', n: ['風林火山', '風林火山', 'Wind Forest Fire Mountain'], d: ['通過四幕，修行完成', '四幕を越え修行完了', 'Clear all four acts'] },
-  { id: 'loop2', n: ['無盡之塔', '無限の塔', 'Endless Tower'], d: ['在無盡之塔爬完一輪', '無限の塔を一周する', 'Finish a loop of the Endless Tower'] },
-  { id: 's50k', n: ['名人', '名人', 'Master'], d: ['單局得分 50000', '1回で50000点', 'Score 50,000 in one run'] },
-];
+const mt = id => (save.meta && save.meta[id]) || 0;   // 修行等級
+const metaSpent = () => META.reduce((s, m) => { let n = 0; for (let l = 0; l < mt(m.id); l++) n += m.cost(l); return s + n; }, 0);
+// 成就：cat 0 關卡／1 戰鬥／2 成長／3 累計／4 挑戰與天候／5 收集（共 76 個）
+const ACH = [];
+{
+  const add = (id, cat, n, d) => ACH.push({ id, cat, n, d });
+  const LV = [['風', '風', 'Wind'], ['林', '林', 'Forest'], ['火', '火', 'Fire'], ['山', '山', 'Mountain']];
+  add('run1', 0, ['初陣', '初陣', 'First Battle'], ['完成第一次挑戰', '初めての挑戦を終える', 'Finish your first run']);
+  LV.forEach((k, i) => {
+    add('lv' + i + 'r5', 0, [k[0] + '之卷・中', k[1] + 'の巻・中', k[2] + ' Midway'], ['在「' + k[0] + '」到達第 5 舞台', '「' + k[1] + '」で第5舞台に到達', 'Reach Stage 5 in ' + k[2]]);
+    add('lv' + i + 'c', 0, [k[0] + '之卷・破', k[1] + 'の巻・破', k[2] + ' Cleared'], ['「' + k[0] + '」破台（突破第 10 舞台）', '「' + k[1] + '」をクリア（第10舞台突破）', 'Clear all 10 stages of ' + k[2]]);
+  });
+  add('clear', 0, ['風林火山', '風林火山', 'Wind Forest Fire Mountain'], ['四關全部破台', '四つのステージをすべてクリア', 'Clear all four stages']);
+  add('loop2', 0, ['第二輪', '二周目', 'Second Round'], ['在任一關到達第 6 舞台', 'どこかで第6舞台に到達', 'Reach Stage 6 anywhere']);
+  add('lvopen', 0, ['天下布武', '天下布武', 'All Roads Open'], ['開放全部四關', '四ステージすべてを解放', 'Unlock all four stages']);
+  add('night', 0, ['夜行', '夜行', 'Night Walker'], ['到達夜晚的舞台', '夜の舞台に到達', 'Reach a night stage']);
+  for (const [id, m, z, j, e] of [['h100', 100, '見習忍者', '見習い忍者', 'Apprentice'], ['h500', 500, '中忍', '中忍', 'Chunin'], ['h1500', 1500, '上忍', '上忍', 'Jonin'], ['h3000', 3000, '影忍', '影忍', 'Shadow'], ['h6000', 6000, '天狗', '天狗', 'Tengu']])
+    add(id, 0, [z, j, e], ['單局爬升 ' + m + 'm', '1回で' + m + 'm登る', 'Climb ' + m + 'm in one run']);
+  for (const [id, n, z, j, e] of [['combo5', 5, '五連斬', '五連斬', 'Five Chain'], ['combo10', 10, '狂熱', 'フィーバー', 'Fever'], ['combo30', 30, '三十連斬', '三十連斬', 'Thirty Chain'], ['combo50', 50, '五十連斬', '五十連斬', 'Fifty Chain']])
+    add(id, 1, [z, j, e], ['達成 ' + n + ' 連斬', n + '連斬を達成', 'Reach a ' + n + ' chain']);
+  add('chain3', 1, ['連鎖爆破', '連鎖爆破', 'Chain Blast'], ['一次爆炸炸死 3 名以上敵人', '一度の爆発で3体以上倒す', 'Kill 3+ enemies with one explosion']);
+  add('chain5', 1, ['大爆破', '大爆破', 'Big Bang'], ['一次爆炸炸死 5 名以上敵人', '一度の爆発で5体以上倒す', 'Kill 5+ enemies with one explosion']);
+  add('bank1', 1, ['反射斬', '反射斬り', 'Bank Shot'], ['彈射斬撞牆反彈後斬殺敵人', '壁で跳ね返ってから敵を斬る', 'Slash an enemy after bouncing off a wall']);
+  add('mid1', 1, ['天狗退治', '天狗退治', 'Tengu Hunter'], ['擊敗中 BOSS 大天狗', '中ボス大天狗を倒す', 'Defeat the Great Tengu']);
+  add('mid5', 1, ['天狗殺', '天狗殺し', 'Tengu Slayer'], ['累計擊敗 5 隻大天狗', '大天狗を累計5体倒す', 'Defeat 5 Great Tengu in total']);
+  add('boss1', 1, ['鬼退治', '鬼退治', 'Oni Slayer'], ['擊敗第一隻魔王', '初めて魔王を倒す', 'Defeat your first boss']);
+  BOSS_KINDS.forEach((b, i) => add('bk' + i, 1, ['討伐・' + b.n[0], '討伐・' + b.n[1], 'Beat ' + b.n[2]], ['擊敗' + b.n[0], b.n[1] + 'を倒す', 'Defeat the ' + b.n[2]]));
+  add('boss10', 1, ['鬼殺', '鬼殺し', 'Oni Bane'], ['累計擊敗 10 隻魔王', '魔王を累計10体倒す', 'Defeat 10 bosses in total']);
+  add('boss30', 1, ['鬼神', '鬼神', 'Demon God'], ['累計擊敗 30 隻魔王', '魔王を累計30体倒す', 'Defeat 30 bosses in total']);
+  add('bossfast', 1, ['一閃', '一閃', 'Flash Cut'], ['魔王出現後 20 秒內擊敗它', '魔王を出現から20秒以内に倒す', 'Defeat a boss within 20s']);
+  add('kill200', 1, ['千軍', '千軍', 'Army Breaker'], ['單局斬殺 200 名敵人', '1回で200体を倒す', 'Defeat 200 enemies in one run']);
+  add('kill500', 1, ['萬軍辟易', '万軍辟易', 'Legion Breaker'], ['單局斬殺 500 名敵人', '1回で500体を倒す', 'Defeat 500 enemies in one run']);
+  add('evo1', 2, ['進化', '進化', 'Evolution'], ['第一次讓技能進化', '初めて技を進化させる', 'Evolve a skill for the first time']);
+  for (const s of SKILLS) add('evo_' + s.id, 2, EVO[s.id].n, ['讓「' + s.n[0] + '」進化', '「' + s.n[1] + '」を進化させる', 'Evolve ' + s.n[2]]);
+  add('lv20', 2, ['修練', '修練', 'Disciple'], ['單局升到 Lv20', '1回でLv20', 'Reach Lv20 in one run']);
+  add('lv40', 2, ['達人', '達人', 'Expert'], ['單局升到 Lv40', '1回でLv40', 'Reach Lv40 in one run']);
+  add('scroll1', 2, ['忍法帖', '忍法帖', 'Ninjutsu Scroll'], ['第一次發動忍法', '初めて忍法を使う', 'Use ninjutsu for the first time']);
+  add('scroll5', 2, ['忍法帖・極', '忍法帖・極', 'Scroll Master'], ['單局發動 5 次忍法', '1回で忍法を5回使う', 'Use ninjutsu 5 times in one run']);
+  add('fever3', 2, ['狂熱三昧', 'フィーバー三昧', 'Fever Trio'], ['單局進入 3 次狂熱', '1回で3回フィーバー', 'Enter FEVER 3 times in one run']);
+  for (const [id, n, z, j, e] of [['slash100', 100, '百人斬', '百人斬り', 'Hundred Cuts'], ['slash1000', 1000, '千人斬', '千人斬り', 'Thousand Cuts'], ['slash5000', 5000, '五千人斬', '五千人斬り', '5,000 Cuts'], ['slash20000', 20000, '一騎當千', '一騎当千', 'One Against a Thousand']])
+    add(id, 3, [z, j, e], ['累計斬殺 ' + n + ' 名敵人', '累計' + n + '体を倒す', 'Defeat ' + n + ' enemies in total']);
+  for (const [id, n, z, j, e] of [['coin500', 500, '小判長者', '小判長者', 'Koban Tycoon'], ['coin5000', 5000, '豪商', '豪商', 'Rich Merchant'], ['coin20000', 20000, '天下的廚房', '天下の台所', 'Nation\'s Kitchen']])
+    add(id, 3, [z, j, e], ['累計獲得 ' + n + ' 小判', '累計' + n + '小判を得る', 'Earn ' + n + ' koban in total']);
+  for (const [id, n, z, j, e] of [['runs10', 10, '十度挑戰', '十度目', 'Ten Runs'], ['runs50', 50, '百折不撓', '百折不撓', 'Never Give Up'], ['runs100', 100, '修行僧', '修行僧', 'Ascetic']])
+    add(id, 3, [z, j, e], ['累計挑戰 ' + n + ' 次', '累計' + n + '回挑戦', 'Play ' + n + ' runs']);
+  for (const [id, n, z, j, e] of [['s50k', 50000, '名人', '名人', 'Master'], ['s100k', 100000, '名人上手', '名人上手', 'Grand Master'], ['s300k', 300000, '傳說', '伝説', 'Legend']])
+    add(id, 3, [z, j, e], ['單局得分 ' + n, '1回で' + n + '点', 'Score ' + n + ' in one run']);
+  for (const [k, z, j, e] of [['rain', '暴風雨', '暴風雨', 'storm'], ['fog', '濃霧', '濃霧', 'fog'], ['dark', '黑暗雷閃', '暗闇と雷', 'darkness'], ['snow', '暴雪', '吹雪', 'blizzard']])
+    add('wx_' + k, 4, ['越過' + z, j + 'を越えて', 'Through the ' + e], ['在' + z + '中突破一個舞台', j + 'の中で舞台を突破', 'Clear a stage in the ' + e]);
+  add('nohit', 4, ['無傷', '無傷', 'Untouched'], ['不受傷突破一個舞台', '無傷で舞台を突破', 'Clear a stage without taking damage']);
+  add('noscroll', 4, ['無忍法', '忍法いらず', 'No Ninjutsu'], ['不使用忍法破台', '忍法を使わずにクリア', 'Clear a stage set without ninjutsu']);
+  add('lowhp', 4, ['九死一生', '九死に一生', 'Close Call'], ['HP 低於 20% 時擊敗魔王', 'HP20%未満で魔王を倒す', 'Defeat a boss under 20% HP']);
+  add('wall50', 4, ['壁走', '壁走り', 'Wall Runner'], ['單局蹬牆跳 50 次', '1回で壁蹴り50回', 'Wall-jump 50 times in one run']);
+  add('skins_all', 5, ['千變萬化', '千変万化', 'Many Faces'], ['擁有全部角色', 'すべてのキャラを入手', 'Own every ninja']);
+  add('meta1', 5, ['一藝', '一芸', 'Specialist'], ['任一修行項目練滿', '修行をひとつ極める', 'Max out any training']);
+  add('metaall', 5, ['免許皆傳', '免許皆伝', 'Full Mastery'], ['全部修行練滿', '修行をすべて極める', 'Max out all training']);
+  add('rich3000', 5, ['千兩箱', '千両箱', 'Treasure Chest'], ['一次持有 3000 小判', '小判を3000枚持つ', 'Hold 3,000 koban at once']);
+}
 
 // ===== 存檔 =====
 const defSave = () => ({
   coins: 0, skin: 0, skins: [0],
-  meta: { hp: 0, scroll: 0, gold: 0, reroll: 0 }, ach: {}, opt: { snd: 1, vib: 1, lang: guessLang() }, seen: 0, intro: 0,
+  meta: Object.fromEntries(META.map(m => [m.id, 0])), ach: {}, lv: { open: 1, best: [0, 0, 0, 0], clear: [0, 0, 0, 0], sel: 0 }, opt: { snd: 1, vib: 1, lang: guessLang() }, seen: 0, intro: 0,
   best: { rogue: 0 }, rank: { rogue: [] },
-  stats: { runs: 0, slashes: 0, bosses: 0, coins: 0 },
+  stats: { runs: 0, slashes: 0, bosses: 0, coins: 0, mids: 0 },
 });
 let save = defSave();
 try {
@@ -228,12 +280,12 @@ function musicFor() {
   if (state === 'menu') return INTRO.ph === 'cut' ? BGM.play(ac, 'boss', { sp: .85, tr: -3 }) : INTRO.ph === 'title' ? BGM.play(ac, 'title') : BGM.stop();
   if (!g || paused || state === 'over' || state === 'dying') return BGM.stop();
   BGM.hot = g.fever > 0;
-  BGM.play(ac, g.boss ? 'boss' : 'stage', { tr: ACT_KEY[g.stage % 4], sp: 1 + Math.min(.2, .04 * loopN()) });
+  BGM.play(ac, g.boss ? 'boss' : 'stage', { tr: ACT_KEY[g.th], sp: 1 + Math.min(.2, .04 * loopN()) });
 }
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v42';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v43';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -396,7 +448,9 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && g &
 const pk = id => (g && g.perks[id]) || 0;
 const sk = id => (g && g.skills[id]) || 0;   // 自動技能等級（0 = 沒有）
 
-function startRun() {
+function startRun(lvl) {
+  if (lvl == null) lvl = (g && g.lvl != null) ? g.lvl : lvSave().sel;   // 「再次挑戰」：同一關
+  lvSave().sel = lvl;
   hideAll();
   W_LOCK = false; resize(); W_LOCK = true;   // 開局時套用目前螢幕的寬度，整局固定
   g = {
@@ -411,7 +465,10 @@ function startRun() {
     hp: 1, maxHp: 1, scrolls: 0, fly: 0, shake: 0,
     perks: {}, mod: null, wind: 0, windT: 0, spikeUsed: false, shurT: 2,
     banner: null, slash: null, qte: null, killT: 0, castT: 0, dieT: 0,
-    rerolls: save.meta.reroll, usedScroll: false, cleared: false,
+    rerolls: mt('reroll'), banishes: mt('banish'), banned: {}, revives: mt('revive'), usedScroll: false, cleared: false,
+    lvl, th: LEVELS[lvl].th, wx: null, todF: null, midDone: false,
+    // 成就用的單局紀錄
+    scrollN: 0, feverN: 0, walls: 0, stHit: false, bossT0: 0,
   };
   g.maxHp = g.hp = HP_BASE + HP_STEP * save.meta.hp;
   g.scrolls = save.meta.scroll;
@@ -424,7 +481,8 @@ function startRun() {
   // 操作改版後（彈射、牆壁）再顯示一次說明
   if (save.seen < 2) { save.seen = 2; persist(); openHelp(); paused = true; }
 }
-const loopN = () => Math.floor(g.stage / 4);   // 無盡之塔第幾輪（0 = 主線）
+const loopN = () => Math.floor(g.stage / 5);   // 第幾輪（0 = 第 1～5 舞台、1 = 第 6～10 舞台）
+const hardN = () => loopN() + g.lvl * .6;       // 難度：第二輪與後面的關卡更難
 
 function diff() { return Math.min(1, g.top / 16000); }   // 地形難度：爬到 1600m 達到最高
 
@@ -469,7 +527,7 @@ function genRow() {
     g.plats.push({ x: x2, y: y + rnd(-25, 25), w, type: Math.random() < .25 ? 'crumble' : 'normal', bx: x2, ph: 0, sp: 0, amp: 0 });
   }
   // 道具
-  const lucky = 1 + pk('lucky') * .8;
+  const lucky = 1 + pk('lucky') * .8 + mt('luck') * .35;
   const coinP = Math.min(.9, (m === 'rich' ? .55 : .28) * (1 + (WK() - 1) * .5));
   if (Math.random() < coinP) {
     const n = Math.random() < .3 ? 3 : 1;
@@ -478,7 +536,7 @@ function genRow() {
   if (Math.random() < .012 * lucky) g.items.push({ t: 'scroll', x: rnd(30, W - 30), y: y - gap / 2, ph: 0 });
   else if (Math.random() < .022 * lucky) g.items.push({ t: 'chest', x: rnd(30, W - 30), y: y - gap / 2, ph: 0 });
   // 敵忍者
-  const pE = g.top < 250 ? 0 : (.08 + .14 * d) * (m === 'horde' ? 2.6 : 1) * (1 + .12 * g.stage + .3 * loopN());   // 越後面的幕敵人越多
+  const pE = g.top < 250 ? 0 : (.08 + .14 * d) * (m === 'horde' ? 2.6 : 1) * (1 + .06 * g.stage + .3 * hardN());   // 越後面的幕敵人越多
   // 倖存者節奏：敵人密度比之前高（技能需要靶子，魂也從這裡來）
   // 世界加寬時敵人也按比例增加（例如 1.5 倍寬 → 平均 1.5 倍敵人）
   for (let k = WK(); k > 0; k--) if (Math.random() < pE * 1.4 * Math.min(1, k)) g.enemies.push(mkEnemy(enemyType(d), rnd(30, W - 30), (y + prevY) / 2, rnd(10, 50)));
@@ -558,7 +616,7 @@ function enemyAI(e, ed, dt) {
 }
 // ===== 中 BOSS 大天狗：每幕中段出現，停在畫面上方，扇形射擊；碰到它扣它的血 =====
 function spawnMid() {
-  const hp = 8 + 3 * g.stage;
+  const hp = 8 + 2 * g.stage + 4 * g.lvl;
   const e = mkEnemy(13, W / 2, g.camY - 60, 0);
   e.hp = e.max = hp; e.life = 25; e.thr = 2;
   g.enemies.push(e); g.mid = e; g.midDone = true;
@@ -573,7 +631,7 @@ function midAI(e, ed, dt) {
   e.x = W / 2 + Math.sin(e.ph * .8) * 105;
   e.thr -= dt; e.warn = e.thr < .5;
   if (e.thr <= 0) { // 五方向扇形手裡劍
-    e.thr = Math.max(1.4, 2.4 - .15 * g.stage);
+    e.thr = Math.max(1.4, 2.4 - .08 * g.stage - .15 * g.lvl);
     const a0 = Math.atan2((p.y - 20) - e.y, p.x - e.x);
     for (let i = -2; i <= 2; i++) { const a = a0 + i * .28; g.eshots.push({ x: e.x, y: e.y + 20, vx: Math.cos(a) * 160, vy: Math.sin(a) * 160, t: 0 }); }
     SFX.throw();
@@ -586,7 +644,7 @@ function midDown(e) {
   for (let i = 0; i < 14; i++) g.drops.push({ k: i < 10 ? 'soul' : 'coin', x: e.x + rnd(-30, 30), y: e.y, vx: rnd(-100, 100), vy: -rnd(140, 280), v: i < 10 ? 3 : 2, ph: rnd(0, 6) });
   burst(e.x, e.y, '#c0262d', 36); g.shake = 12; SFX.kill(); vib([60, 40, 120]);
   floatText(W / 2, g.camY + H * .4, t('mid_down'), '#ffd27a', 24);
-  unlock('mid1');
+  unlock('mid1'); if (++save.stats.mids >= 5) unlock('mid5');
   g.pendingChest = true;
 }
 
@@ -596,7 +654,7 @@ function spawnWave() {
   if (st >= 1 || g.top > 2500) kinds.push('onibi');
   if (st >= 1) kinds.push('archer');
   if (st >= 2) kinds.push('spider');
-  const k = pick(kinds), n = Math.round((rnd(4, 6) + st * .8 + loopN() * 2) * Math.sqrt(WK()));   // 寬螢幕稍微多幾隻
+  const k = pick(kinds), n = Math.round((rnd(4, 6) + st * .4 + hardN() * 2) * Math.sqrt(WK()));   // 寬螢幕稍微多幾隻
   if (k === 'crow') { // 從左或右排成一列飛過
     const side = Math.random() < .5 ? -1 : 1, y = top + rnd(40, H * .4);
     for (let i = 0; i < n + 2; i++) { const e = mkEnemy(7, side < 0 ? -30 - i * 34 : W + 30 + i * 34, y, 0); e.by = y + (i % 2) * 18; e.vx = -side * rnd(120, 150); g.enemies.push(e); }
@@ -623,7 +681,7 @@ function earthCheck(e) {
 }
 // 依高度逐步解鎖新敵人
 function enemyType(d) {
-  const T = g.top, w = [[0, .6 - .4 * d], [1, .3], [2, .1 + .2 * d]];
+  const T = g.top + g.lvl * 2000, w = [[0, .6 - .4 * d], [1, .3], [2, .1 + .2 * d]];
   if (T > 1500) w.push([3, .22]);
   if (T > 2500) w.push([5, .16]);
   if (T > 3200) w.push([4, .2]);
@@ -634,10 +692,8 @@ function enemyType(d) {
 }
 
 function stageBanner() {
-  const th = THEMES[g.stage % 4];
-  const loop = loopN();
   g.banner = {
-    t: 2.6, a: L(STR.act)[g.stage % 4] + (loop ? t('loop', loop) : ''), b: th.k,
+    t: 2.6, a: stageName(g.stage), b: THEMES[g.th].k,
     c: g.mod ? t('mod_line', L(g.mod.n), L(g.mod.d)) : '',
   };
 }
@@ -678,7 +734,9 @@ function updatePlay(dt) {
   g.t += dt;
   if (g.fever > 0) { g.fever -= dt; g.ki = kiMax(); if (g.fever <= 0) settleCombo(); }
   else if (g.comboT > 0) { g.comboT -= dt; if (g.comboT <= 0) settleCombo(); }
-  g.ki = Math.min(kiMax(), g.ki + dt * .12 * (sk('swift') ? SKV.swift(sk('swift')).regen : 1));
+  g.ki = Math.min(kiMax(), g.ki + dt * .12 * (sk('swift') ? SKV.swift(sk('swift')).regen : 1) * (1 + .15 * mt('kireg')));
+  updateWx(dt);   // 天候（levels.js）
+  if (g.todF && g.todF.q < 1) g.todF.q = Math.min(1, g.todF.q + dt / 2.2);   // 換時段的淡入
   if (g.lvQueue > 0) { g.lvQueue--; openPerks('lv'); return; }   // 有待選的升級就先暫停選擇
   if (g.pendingChest) { g.pendingChest = false; openPerks('chest'); return; }   // 中 BOSS 的寶箱
   p.inv =Math.max(0, p.inv - dt); p.spin = Math.max(0, (p.spin || 0) - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt); p.slow = Math.max(0, p.slow - dt); p.freeze = Math.max(0, p.freeze - dt); p.sq = Math.max(0, p.sq - dt * 4);
@@ -689,7 +747,9 @@ function updatePlay(dt) {
   const k = ((inp.keys.ArrowLeft || inp.keys.KeyA) ? -1 : 0) + ((inp.keys.ArrowRight || inp.keys.KeyD) ? 1 : 0);
   mv += k * 310 * dt;
   if (p.slow > 0) mv *= .45;
+  mv *= 1 + .05 * mt('speed');
   if (p.freeze > 0) mv = 0;
+  mv = wxMove(mv, dt);   // 暴風雨的陣風、暴雪打滑
   if (g.mod && g.mod.id === 'wind') {
     g.windT -= dt; if (g.windT <= 0) { g.windT = rnd(3, 5); g.wind = (Math.random() < .5 ? -1 : 1) * rnd(50, 85); }
     mv += g.wind * dt;
@@ -702,7 +762,7 @@ function updatePlay(dt) {
     p.x = clamp(p.x, PL_MIN, PL_MAX);
     if (p.vx * side > 0) p.vx = 0;
     if (!p.wallUsed && Math.sign(mv) === side && p.vy > -150 && p.dash <= 0 && !p.dive && g.fly <= 0) {
-      p.wallUsed = true; p.vy = -JUMP * .85; p.vx = -side * 340; p.face = -side; p.sq = .6; p.spin = .45;   // 蹬牆跳：空翻一圈
+      p.wallUsed = true; g.walls++; p.vy = -JUMP * .85; p.vx = -side * 340; p.face = -side; p.sq = .6; p.spin = .45;   // 蹬牆跳：空翻一圈
       floatText(p.x, p.y - 50, t('wall_kick'), '#fff', 15);
       for (let i = 0; i < 5; i++) g.parts.push({ x: p.x + side * 10, y: p.y - 20 + rnd(-10, 10), vx: -side * rnd(40, 120), vy: rnd(-60, 30), life: .35, max: .35, c: '#ffffffaa', s: rnd(2, 3) });
       SFX.wallJump();
@@ -757,7 +817,7 @@ function updatePlay(dt) {
   // 死亡區域
   let zs = Math.min(110, 24 + g.top / 180);
   if (g.mod && g.mod.id === 'rise') zs *= 1.5;
-  zs *= Math.pow(.85, pk('slowzone')) * (1 + .15 * loopN());
+  zs *= Math.pow(.85, pk('slowzone')) * (1 + .15 * hardN());
   if (g.boss) zs *= .6;
   g.zoneY -= zs * dt;
   const zVis = Math.min(g.zoneY, g.camY + H - 26);
@@ -772,7 +832,7 @@ function updatePlay(dt) {
   }
 
   // 道具
-  const mag = pk('magnet') * 45;
+  const mag = pk('magnet') * 45 + mt('magnet') * 20;
   for (const it of g.items) {
     it.ph += dt * 4;
     const dx = p.x - it.x, dy = (p.y - 18) - it.y, dist = Math.hypot(dx, dy);
@@ -781,7 +841,7 @@ function updatePlay(dt) {
   }
 
   // 敵忍者
-  const reach = pk('reach') * 9 + (p.dash > 0 || p.dive ? 8 : 0);
+  const reach = pk('reach') * 9 + mt('reach') * 4 + (p.dash > 0 || p.dive ? 8 : 0);
   for (const e of g.enemies) {
     if (e.dead) continue;
     e.ph += dt; e.cool = Math.max(0, e.cool - dt); e.flash = Math.max(0, e.flash - dt); e.atk = Math.max(0, (e.atk || 0) - dt);
@@ -807,7 +867,7 @@ function updatePlay(dt) {
   g.eshots = g.eshots.filter(s => !s.dead && s.t < 4);
 
   // 自動技能、掉落物
-  updateSkills(dt);
+  updateSkills(dt * (1 + .05 * mt('cd')));   // 修行「迅術」：技能冷卻更快
   for (const s of g.shots) {
     s.t += dt * (s.pierce ? 2.5 : 4); const e = s.back ? { x: p.x, y: p.y - 20 } : s.tg;
     s.cx = s.x + (e.x - s.x) * Math.min(1, s.t); s.cy = s.y + (e.y - s.y) * Math.min(1, s.t);
@@ -823,11 +883,14 @@ function updatePlay(dt) {
 
   // 波次與中 BOSS
   g.waveT = (g.waveT ?? 8) - dt;
-  if (g.waveT <= 0 && !g.boss && g.top > 300) { spawnWave(); g.waveT = rnd(11, 16) * Math.max(.55, 1 - .07 * g.stage); }
-  if (!g.midDone && !g.boss && !g.mid && g.top >= g.base + STAGE_PX * .5) spawnMid();
+  if (g.waveT <= 0 && !g.boss && g.top > 300) { spawnWave(); g.waveT = rnd(11, 16) * Math.max(.55, 1 - .035 * g.stage - .05 * g.lvl); }
+  // 舞台：第 3、8 舞台中段出現大天狗；第 5、10 舞台（魔王舞台）爬到三成時魔王登場，打倒後才進下一個舞台；其餘舞台爬滿就換下一個
+  const bossSt = g.stage % 5 === 4;
+  if (g.stage % 5 === 2 && !g.midDone && !g.boss && !g.mid && g.top >= g.base + STAGE_PX * .5) spawnMid();
 
   // BOSS
-  if (!g.boss && g.top >= g.base + STAGE_PX) spawnBoss();   // g.base：本舞台起點（上一隻魔王被打倒時的高度）
+  if (!bossSt && g.top >= g.base + STAGE_PX) nextStage();
+  if (bossSt && !g.boss && g.top >= g.base + STAGE_PX * .3) spawnBoss();
   if (g.boss) updateBoss(dt);
 
   checkLiveAch();
@@ -930,7 +993,7 @@ function dropLoot(x, y, type) {
   for (let i = 0; i < cn; i++) g.drops.push({ k: 'coin', x, y, vx: rnd(-80, 80), vy: -rnd(160, 260), v: 1, ph: rnd(0, 6) });
 }
 function updateDrops(dt) {
-  const p = g.p, px = p.x, py = p.y - 20, R = 36 + pk('magnet') * 45;
+  const p = g.p, px = p.x, py = p.y - 20, R = 36 + pk('magnet') * 45 + mt('magnet') * 20;
   for (const d of g.drops) {
     d.ph += dt * 5;
     const dx = px - d.x, dy = py - d.y, dist = Math.hypot(dx, dy);
@@ -960,7 +1023,7 @@ function fireBlades() {
   SFX.wind();
 }
 function gainXp(v) {
-  g.xp += v; SFX.soul();
+  g.xp += v * (1 + .08 * mt('xp')); SFX.soul();
   while (g.xp >= xpNeed(g.lv)) { g.xp -= xpNeed(g.lv); g.lv++; g.lvQueue++; }
 }
 
@@ -1003,7 +1066,7 @@ function hurt(src) {
     floatText(p.x, p.y - 50, t('blocked'), '#9ad8ff', 18); SFX.clank(); vib(40);
     return false;
   }
-  const dmg = DMG[src] ?? 15;
+  const dmg = Math.round((DMG[src] ?? 15) * (1 - .06 * mt('armor'))); g.stHit = true;
   g.hp = Math.max(0, g.hp - dmg); g.shake = 12; SFX.hit(); vib(120);
   floatText(p.x, p.y - 50, '-' + dmg, '#ff4040', 20);
   if (g.hp <= 0) { die(); return true; }
@@ -1018,6 +1081,12 @@ function heal(n, x = g.p.x, y = g.p.y - 60) {
 }
 
 function die() {
+  if (g.revives > 0) {   // 修行「再起」：以一半 HP 復活
+    g.revives--; g.hp = Math.round(g.maxHp / 2); const p = g.p; p.inv = 2.5; p.vy = -JUMP * 1.2; p.hurt = 0; p.dash = 0; p.dive = false;
+    p.y = Math.min(p.y, g.camY + H * .5); g.zoneY = Math.max(g.zoneY, g.camY + H + 260);
+    g.booms.push({ x: p.x, y: p.y - 20, r: 120, t: 0, c: '#ffb04a' }); for (const e of g.enemies) if (!e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 120) slay(e, true);
+    floatText(p.x, p.y - 60, t('revive'), '#ffb04a', 24); SFX.fever(); vib([60, 40, 60]); return;
+  }
   state = 'dying'; g.dieT = 1.1; g.p.vy = -500; SFX.die(); vib([80, 60, 200]);
 }
 
@@ -1045,7 +1114,7 @@ function addBonus(n) { g.bonus += n * (1 + .2 * pk('score')); }
 function score() { return Math.floor(g.top / 4 + g.bonus); }
 
 // ===== 斬擊 =====
-const kiMax = () => 3 + pk('kimax') + (sk('swift') ? SKV.swift(sk('swift')).ki : 0);
+const kiMax = () => 3 + pk('kimax') + mt('ki') + (sk('swift') ? SKV.swift(sk('swift')).ki : 0);
 
 // 碰到敵人。回傳 true 表示進入了全畫面斬擊演出
 function touchEnemy(e) {
@@ -1128,6 +1197,7 @@ function explode(x, y) {
   for (const e of g.enemies) if (!e.dead && Math.hypot(e.x - x, e.y - y) < r) { slay(e); n++; }
   for (const pl of g.plats) if (!pl.broken && pl.type !== 'ground' && Math.hypot(pl.x - x, pl.y - y) < r * .8) { pl.broken = true; pl.vy = -100; }
   if (n >= 3) unlock('chain3');
+  if (n >= 5) unlock('chain5');
 }
 
 // 連斬結束時依連斬數平方給額外分數
@@ -1143,7 +1213,7 @@ function settleCombo() {
 function startFever() {
   g.fever = 6; g.ki = kiMax();
   g.banner = { t: 1.4, a: t('chain_hud', g.combo), b: t('fever'), c: t('fever_desc') };
-  SFX.fever(); vib([40, 30, 40]);
+  SFX.fever(); vib([40, 30, 40]); if (++g.feverN >= 3) unlock('fever3');
   unlock('combo10');
 }
 
@@ -1236,12 +1306,15 @@ function castScroll() {
   g.scrolls--; state = 'cast'; g.castT = 1.0; SFX.scroll(); vib(60);
   g.p.dash = 0; g.p.dive = false;
   if (!g.usedScroll) { g.usedScroll = true; unlock('scroll1'); }
+  if (++g.scrollN >= 5) unlock('scroll5');
 }
 
 // ===== BOSS =====
 function spawnBoss() {
-  const n = g.bossN, kind = n % 4;
+  // 第 5 舞台：這一關的魔王；第 10 舞台：另一隻更強的魔王
+  const second = g.stage >= 5, kind = (g.th + (second ? 2 : 0)) % 4, n = g.lvl * 2 + (second ? 1 : 0);
   const hp = 16 + 6 * n;
+  g.bossT0 = g.t; wxBoss(kind);   // 魔王登場時換成魔王的天候（levels.js）
   g.boss = {
     n, kind, hp, max: hp, x: W / 2, y: g.camY - 60, t: 0, life: 22, cool: 0, skillT: 2.5,
     shield: false, shT: 1.5, r: 30, warn: 0, qtype: QTE_TYPES[(n + (Math.random() * QTE_TYPES.length | 0)) % QTE_TYPES.length].id,
@@ -1287,7 +1360,7 @@ function updateBoss(dt) {
 }
 function qteHit(n) {
   const q = g.qte, b = g.boss; if (!q || !b) return;
-  b.hp -= n * (q.type === 'mash' ? 1 : q.type === 'swipe' ? 1.6 : 1.4);
+  b.hp -= n * (q.type === 'mash' ? 1 : q.type === 'swipe' ? 1.6 : 1.4) * (1 + .1 * mt('power'));
   q.hits.push({ a: rnd(0, Math.PI), t: 0, x: rnd(-40, 40), y: rnd(-40, 40) }); q.n = (q.n || 0) + 1;
   g.shake = 5; SFX.slash(); vib(15);
   if (b.hp <= 0) { b.hp = 0; state = 'kill'; g.killT = 1.5; SFX.kill(); vib([60, 40, 160]); }
@@ -1314,23 +1387,52 @@ function finishBoss(killed) {
     floatText(W / 2, g.camY + H * .4, t('boss_down', Math.round(pts * (1 + .2 * pk('score')))), '#ffd27a', 24);
     burst(b.x, b.y, BOSS_KINDS[b.kind].col, 40);
     for (let i = 0; i < 12; i++) g.drops.push({ k: i < 8 ? 'soul' : 'coin', x: b.x + rnd(-30, 30), y: b.y, vx: rnd(-90, 90), vy: -rnd(120, 260), v: i < 8 ? 3 : 2, ph: rnd(0, 6) });
-    save.stats.bosses++; unlock('boss1');
-  } else {
-    floatText(W / 2, g.camY + H * .4, t('boss_gone'), '#ccc', 22);
+    save.stats.bosses++; unlock('boss1'); unlock('bk' + b.kind);
+    if (save.stats.bosses >= 10) unlock('boss10');
+    if (save.stats.bosses >= 30) unlock('boss30');
+    if (g.t - g.bossT0 <= 20) unlock('bossfast');
+    if (g.hp < g.maxHp * .2) unlock('lowhp');
   }
   g.p.vy = -JUMP * 1.15; g.p.inv = 1.2; g.p.slow = 0; g.p.freeze = 0;
-  g.bossN++; g.stage = g.bossN; g.spikeUsed = false; g.base = g.top;
+  g.bossN++;
+  stageDone();
+  g.stage++; g.spikeUsed = false; g.base = g.top;
   g.midDone = false; if (g.mid) { g.mid.dead = true; g.mid = null; }
-  if (g.stage > 4 && g.stage % 4 === 0) unlock('loop2');
   g.mod = pick(MODS); g.wind = 0; g.windT = 0;
   g.pendingPerk = killed;
-  // 主線第四幕結束：讓玩家選擇挑戰無盡之塔或結算
-  if (g.stage === 4 && !g.cleared) {
-    g.cleared = true; unlock('clear');
+  // 第 10 舞台的魔王倒下：破台
+  if (g.stage >= ST_N) {
+    g.stage = ST_N - 1; g.cleared = true;
+    const s = lvSave(); s.clear[g.lvl] = 1; s.best[g.lvl] = ST_N; persist();
+    unlock('lv' + g.lvl + 'c');
+    if (s.clear.every(x => x)) unlock('clear');
+    if (!g.scrollN) unlock('noscroll');
+    $('clearBody').innerHTML = t('clear_body', THEMES[g.th].k);
     state = 'clearq'; show('clear', true);
     return;
   }
+  g.todF = null; wxForStage(); lvReach(); stageAch();
   afterBoss();
+}
+// 一般舞台爬滿：不停下來，背景時段慢慢換色、天候跟著變
+function nextStage() {
+  stageDone();
+  g.todF = { from: g.stage % 5, q: 0 };
+  g.stage++; g.base = g.top; g.midDone = false;
+  wxForStage(); lvReach(); stageAch();
+  stageBanner(); SFX.item();
+}
+// 突破一個舞台時的成就檢查（天候、無傷）
+function stageDone() {
+  if (g.wx && g.wx.cur > .3) unlock('wx_' + g.wx.k);
+  if (!g.stHit && g.stage >= 2) unlock('nohit');   // 第 3 舞台起才算
+  g.stHit = false;
+}
+function stageAch() {
+  if (g.stage >= ST_UNLOCK) unlock('lv' + g.lvl + 'r5');
+  if (g.stage >= 5) unlock('loop2');
+  if (g.stage % 5 === 2) unlock('night');
+  if (lvSave().open >= LEVELS.length) unlock('lvopen');
 }
 function afterBoss() {
   g.ascendPending = true;   // 選完寶箱的秘傳後，接「飛昇過雲海」換幕（stagefx.js）
@@ -1349,9 +1451,10 @@ function pickPool(why) {
     const l = sk(s.id);
     if (why === 'start' && s.cat !== 0) continue;          // 開局只給攻擊技能
     if (l >= SK_MAX || (!l && owned >= SK_SLOTS)) continue;
+    if (g.banned['skill' + s.id]) continue;   // 被封印的選項不再出現
     out.push({ kind: 'skill', o: s, w: l ? 4 : 2.5 });   // 技能比被動更常出現
   }
-  if (why !== 'start') for (const p of PERKS) if (pk(p.id) < p.max) out.push({ kind: 'perk', o: p, w: 1 });
+  if (why !== 'start') for (const p of PERKS) if (pk(p.id) < p.max && !g.banned['perk' + p.id]) out.push({ kind: 'perk', o: p, w: 1 });
   return out;
 }
 function skillDesc(id, l) {
@@ -1392,18 +1495,25 @@ function openPerks(why) {
     return `<div class="card k${cat}" data-act="perk" data-arg="${i}"><span class="ic">${o.ic}</span><span><em class="cat c${cat}">${L(STR.cat)[cat]}</em><b>${L(o.n)}</b><small>${desc}</small>${hint}</span><span class="lv">${cur ? 'Lv' + (cur + 1) : 'NEW'}</span></div>`;
   }).join('');
   if (!perkChoices.length) h = `<button data-act="perk" data-arg="-1">${t('perk_none')}</button>`;
-  else if (g.rerolls > 0) h += `<button data-act="reroll">${t('reroll', g.rerolls)}</button>`;
+  else {
+    if (g.rerolls > 0) h += `<button data-act="reroll">${t('reroll', g.rerolls)}</button>`;
+    if (g.banishes > 0) h += `<button data-act="banish" class="banish-btn">🈲 ${t('banish', g.banishes)}</button>`;
+  }
+  g.banishMode = false; $('perkCards').classList.remove('banishing');
   $('perkCards').innerHTML = h;
   show('perk', true);
 }
 function choosePerk(i) {
   const c = perkChoices[i];
+  if (g.banishMode && c && c.kind !== 'evo') {   // 修行「封印」：這個選項本局不再出現，重新抽
+    g.banned[c.kind + c.o.id] = 1; g.banishes--; g.banishMode = false; SFX.clank(); openPerks(perkWhy); return;
+  }
   if (!c) { heal(30); addCoins(20); }
   else if (c.kind === 'evo') {
     g.skills[c.o.id] = SK_MAX + 1;
     if (c.o.id === 'barrier') g.barrier = SKV.barrier(6).max;
     floatText(W / 2, 64, t('evo_get', L(EVO[c.o.id].n)), '#ffd27a', 24, true);
-    SFX.fever(); unlock('evo1');
+    SFX.fever(); unlock('evo1'); unlock('evo_' + c.o.id);
   } else if (c.kind === 'skill') {
     g.skills[c.o.id] = sk(c.o.id) + 1;
     if (c.o.id === 'barrier' && g.skills.barrier === 1) g.barrier = 1;   // 剛學會就先有一層
@@ -1457,10 +1567,28 @@ function checkLiveAch() {
   if (h >= 100) unlock('h100');
   if (h >= 500) unlock('h500');
   if (h >= 1500) unlock('h1500');
+  if (h >= 3000) unlock('h3000');
+  if (h >= 6000) unlock('h6000');
+  for (const n of [30, 50]) if (g.maxCombo >= n) unlock('combo' + n);
+  for (const n of [1000, 5000, 20000]) if (save.stats.slashes >= n) unlock('slash' + n);
+  if (score() >= 100000) unlock('s100k');
+  if (score() >= 300000) unlock('s300k');
+  if (g.kills >= 200) unlock('kill200');
+  if (g.kills >= 500) unlock('kill500');
+  if (g.lv >= 20) unlock('lv20');
+  if (g.lv >= 40) unlock('lv40');
+  if (g.walls >= 50) unlock('wall50');
   if (g.maxCombo >= 5) unlock('combo5');
   if (g.maxCombo >= 10) unlock('combo10');
   if (save.stats.slashes >= 100) unlock('slash100');
   if (score() >= 50000) unlock('s50k');
+}
+// 收集類成就（買東西、結算時檢查）
+function collAch() {
+  if (save.skins.length >= SKINS.length) unlock('skins_all');
+  if (META.some(m => mt(m.id) >= m.max)) unlock('meta1');
+  if (META.every(m => mt(m.id) >= m.max)) unlock('metaall');
+  if (save.coins >= 3000) unlock('rich3000');
 }
 let toastT = null;
 function toast(s) {
@@ -1601,8 +1729,8 @@ function drawHUD() {
   bar(192, cy - 8, 76, 16, hr, low ? '#ff9a9a' : hr < .3 ? '#ff3a3a' : '#e5342a');
   txt(`${Math.ceil(g.hp)}/${g.maxHp}`, 230, cy, 9, '#fff', 'center', INK, 3);
   // 幕名（紅色落款方印）、高度＋本幕進度小條
-  seal(283, cy, 18, THEMES[g.stage % 4].k);
-  txt(Math.floor(g.top / 10) + 'm', 323, cy - 4, 11, '#fff', 'right', INK, 3);
+  seal(283, cy, 18, THEMES[g.th].k);
+  txt((g.stage + 1) + '/' + ST_N, 323, cy - 4, 11, g.stage % 5 === 4 ? '#ff9a8a' : '#fff', 'right', INK, 3);   // 舞台 N/10（魔王舞台是紅字）
   const pr = g.boss ? 1 : clamp((g.top - g.base) / STAGE_PX, 0, 1);
   ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(296, cy + 6, 27, 3, 1.5); ctx.fill();
   ctx.fillStyle = '#ffe28a'; rr(296, cy + 6, 27 * pr, 3, 1.5); ctx.fill();
@@ -1848,8 +1976,9 @@ function render() {
     return;
   }
   const camY = g.camY;
-  drawBG(camY, g.stage, g.t);
-  drawWalls(camY, g.stage);
+  drawBG(camY, g.th, g.t);
+  drawWalls(camY, g.th);
+  drawTOD();   // 舞台時段的色調（levels.js）
   ctx.save();
   if (g.shake > 0) ctx.translate(rnd(-g.shake, g.shake) * .5, rnd(-g.shake, g.shake) * .5);
   ctx.translate(0, -camY);
@@ -1884,7 +2013,8 @@ function render() {
   ctx.globalAlpha = 1;
   if (inp.mode === 'aim' && state === 'play') drawAim();
   ctx.restore();
-  drawZone(camY, g.stage, g.t);
+  drawZone(camY, g.th, g.t);
+  drawWeather();   // 天候（levels.js）
   for (const tx of g.texts) if (tx.screen) { ctx.globalAlpha = clamp(1.1 - tx.t, 0, 1); txt(tx.s, W / 2, H * .22 + tx.y - tx.t * 20, tx.size, tx.c, 'center', '#000', 4); }
   ctx.globalAlpha = 1;
   if (g.fly > 0 && state === 'play') { ctx.fillStyle = 'rgba(255,220,120,.12)'; ctx.fillRect(0, 0, W, H); }
@@ -1913,7 +2043,7 @@ function frame(now) {
 requestAnimationFrame(frame);
 
 // ===== UI =====
-const SCRS = ['title', 'pause', 'perk', 'over', 'shop', 'rank', 'opt', 'help', 'clear', 'credit', 'hist'];
+const SCRS = ['title', 'pause', 'perk', 'over', 'shop', 'rank', 'opt', 'help', 'clear', 'credit', 'hist', 'lvsel'];
 let backTo = 'title';
 function show(id, keep) { if (!keep) hideAll(); $(id).classList.add('on'); }
 function hide(id) { $(id).classList.remove('on'); }
@@ -1939,16 +2069,22 @@ function showOver() {
   const nr = sc > save.best.rogue;
   if (nr) save.best.rogue = sc;
   const list = save.rank.rogue;
-  list.push({ s: sc, h, d: new Date().toLocaleDateString(), st: g.stage });
+  list.push({ s: sc, h, d: new Date().toLocaleDateString(), st: g.stage, lv: g.lvl });
   list.sort((a, b) => b.s - a.s); list.length = Math.min(list.length, 10);
   unlock('run1');
   if (save.stats.coins >= 500) unlock('coin500');
+  if (save.stats.coins >= 5000) unlock('coin5000');
+  if (save.stats.coins >= 20000) unlock('coin20000');
+  if (save.stats.runs >= 10) unlock('runs10');
+  if (save.stats.runs >= 50) unlock('runs50');
+  if (save.stats.runs >= 100) unlock('runs100');
+  collAch();
   persist();
   $('overTitle').textContent = g.cleared ? t('over_clear') : t('over_fail');
   $('overBody').innerHTML =
     `<div class="sc">${sc.toLocaleString()}</div>${nr ? `<span class="nr">${t('new_record')}</span><br>` : ''}` +
     t('over_stats', h, g.kills, g.maxCombo) + '<br>' +
-    t('over_reach', L(STR.act)[g.stage % 4] + (loopN() ? t('loop', loopN()) : ''), THEMES[g.stage % 4].k, g.bossN) + '<br>' +
+    t('over_reach', THEMES[g.th].k, stageName(g.stage), g.bossN) + '<br>' +
     t('over_coins', coins, save.coins) + '<br>' + t('over_best', save.best.rogue.toLocaleString());
   show('over');
 }
@@ -1983,10 +2119,11 @@ function renderShop() {
         (sel ? `<button disabled>${t('equipped')}</button>` : own ? `<button data-act="skin" data-arg="${i}">${t('equip')}</button>` : `<button data-act="buyskin" data-arg="${i}" ${save.coins < s.cost ? 'disabled' : ''}>${t('buy')}</button>`) + '</div>';
     }).join('');
   } else {
-    h = META.map(m => {
-      const l = save.meta[m.id], max = l >= m.max, c = m.cost(l);
+    const tot = META.reduce((s, m) => s + m.max, 0), now = META.reduce((s, m) => s + mt(m.id), 0), spent = metaSpent();
+    h = `<div class="meta-head">${t('meta_total', now, tot)}</div>` + META.map(m => {
+      const l = mt(m.id), max = l >= m.max, c = m.cost(l);
       return `<div class="item"><span class="ic" style="background:#fff3d0">${m.ic}</span><span class="nm"><b>${L(m.n)}　Lv ${l}/${m.max}</b><small>${L(m.d)}${max ? '' : '・' + t('price', c)}</small></span><button data-act="buymeta" data-arg="${m.id}" ${max || save.coins < c ? 'disabled' : ''}>${max ? 'MAX' : t('train')}</button></div>`;
-    }).join('');
+    }).join('') + (spent ? `<button class="meta-refund" data-act="refund">${t('meta_refund', spent)}</button>` : '');
   }
   $('shopBody').innerHTML = h;
 }
@@ -1999,7 +2136,13 @@ function renderRank() {
     const l = save.rank.rogue;
     h = l.length ? l.map((r, i) => `<div class="rk"><span>${i + 1}</span><span>${r.s.toLocaleString()}</span><span>${r.h}m・${r.d}</span></div>`).join('') : `<div class="empty">${t('no_record')}</div>`;
   } else {
-    h = ACH.map(a => `<div class="item ${save.ach[a.id] ? '' : 'locked'}"><span class="ic" style="background:${save.ach[a.id] ? '#ffd27a' : '#ccc'}">🏆</span><span class="nm"><b>${L(a.n)}</b><small>${L(a.d)}</small></span></div>`).join('');
+    // 分類顯示，最上面是達成數
+    const got = ACH.filter(a => save.ach[a.id]).length;
+    h = `<div class="meta-head">${t('ach_count', got, ACH.length)}</div>`;
+    t('ach_cat').forEach((cn, ci) => {
+      const list = ACH.filter(a => a.cat === ci), n = list.filter(a => save.ach[a.id]).length;
+      h += `<div class="ach-cat">${cn}<small>${n}/${list.length}</small></div>` + list.map(a => `<div class="item ${save.ach[a.id] ? '' : 'locked'}"><span class="ic" style="background:${save.ach[a.id] ? '#ffd27a' : '#ccc'}">🏆</span><span class="nm"><b>${L(a.n)}</b><small>${L(a.d)}</small></span></div>`).join('');
+    });
   }
   $('rankBody').innerHTML = h;
 }
@@ -2012,6 +2155,7 @@ function renderOpt() {
 
 let menuFrom = 'title';
 function openSub(id) {
+  if (id === 'lvsel') return openLvSel();
   menuFrom = $('over').classList.contains('on') ? 'over' : 'title';
   if (id === 'shop') renderShop();
   if (id === 'rank') renderRank();
@@ -2024,7 +2168,10 @@ document.addEventListener('click', e => {
   A(); SFX.click();
   const a = b.dataset.act, arg = b.dataset.arg;
   switch (a) {
-    case 'start': case 'retry': startRun(); break;
+    case 'start': openLvSel(); break;   // 開始：先進選關畫面（levels.js）
+    case 'retry': startRun(); break;
+    case 'lvgo': startRun(+arg); break;
+    case 'lvlock': toast(t('lv_locked')); break;
     case 'shop':
       if (b.classList.contains('shop-corner')) {   // 主畫面寶箱：打開蓋子、噴出金光，0.4 秒後才進商店
         if (b.classList.contains('opening')) break;
@@ -2050,15 +2197,20 @@ document.addEventListener('click', e => {
     case 'title': goTitle(); break;
     case 'resume': resumeGame(); break;
     case 'quit': if (g) { paused = false; hideAll(); showOver(); } else goTitle(); break;
-    case 'endless': hide('clear'); afterBoss(); break;
+
     case 'finish': hide('clear'); showOver(); break;
     case 'perk': choosePerk(+arg); break;
     case 'reroll': g.rerolls--; openPerks(perkWhy); break;
     case 'stab': shopTab = +arg; renderShop(); break;
     case 'rtab': rankTab = +arg; renderRank(); break;
     case 'skin': save.skin = +arg; persist(); renderShop(); updateHeroArt(); break;
-    case 'buyskin': { const s = SKINS[+arg]; if (save.coins >= s.cost) { save.coins -= s.cost; save.skins.push(+arg); save.skin = +arg; persist(); SFX.item(); } renderShop(); updateHeroArt(); break; }
-    case 'buymeta': { const m = META.find(x => x.id === arg), c = m.cost(save.meta[arg]); if (save.coins >= c && save.meta[arg] < m.max) { save.coins -= c; save.meta[arg]++; persist(); SFX.item(); } renderShop(); break; }
+    case 'buyskin': { const s = SKINS[+arg]; if (save.coins >= s.cost) { save.coins -= s.cost; save.skins.push(+arg); save.skin = +arg; persist(); SFX.item(); collAch(); } renderShop(); updateHeroArt(); break; }
+    case 'buymeta': { const m = META.find(x => x.id === arg), c = m.cost(mt(arg)); if (save.coins >= c && mt(arg) < m.max) { save.coins -= c; save.meta[arg] = mt(arg) + 1; persist(); SFX.item(); collAch(); } renderShop(); break; }
+    case 'refund':   // 修行全部歸零、退還小判（按兩次確認）
+      if (b.dataset.armed) { save.coins += metaSpent(); for (const m of META) save.meta[m.id] = 0; persist(); SFX.coin(); renderShop(); }
+      else { b.dataset.armed = '1'; b.textContent = t('meta_refund_ok'); }
+      break;
+    case 'banish': g.banishMode = !g.banishMode; $('perkCards').classList.toggle('banishing', g.banishMode); break;
     case 'snd': save.opt.snd ^= 1; persist(); renderOpt(); A(); musicFor(); break;
     case 'vib': save.opt.vib ^= 1; persist(); renderOpt(); break;
     case 'lang': LI = (LI + 1) % LANGS.length; save.opt.lang = LANGS[LI].id; persist(); applyLang(); renderOpt(); buildDockIcons(); break;

@@ -313,3 +313,29 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 #title .menu button.st-b { color: #1a2a4a; padding-left: 16%; text-shadow: 0 calc(var(--u)*1) 0 #fff; }
 #title .menu button.st-c { color: #fff; text-shadow: 0 calc(var(--u)*2) 0 #3a0a08, 0 0 calc(var(--u)*6) rgba(0,0,0,.4); }
 #title .menu button[data-act=start]:not(.st) { width: 66%; font-size: 1.1em; padding: .5em .8em; }   /* 還沒選定忍者風底圖前，先縮小預設的紅色按鈕 */
+
+/* ===== 選關（吸血鬼倖存者風的關卡圖卡） ===== */
+.lvsel .lv-list { display: grid; grid-template-columns: 1fr 1fr; gap: .7em; margin: .4em 0 .8em; }
+.lv-card { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; aspect-ratio: 4 / 5; padding: .5em .3em .6em; margin: 0; border: 3px solid #e8b84a; border-radius: .8em; overflow: hidden; background: #111 !important; color: #fff; box-shadow: 0 .25em 0 rgba(0,0,0,.45); }
+.lv-card::before { display: none; }
+.lv-card .lv-art { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.lv-card > span:not(.lv-art) { position: relative; z-index: 1; }
+.lv-card .lv-k { font-size: 2.6em; font-weight: 900; line-height: 1; color: #fff; text-shadow: 0 0 .12em #000, 0 .06em 0 #c0262d, 0 0 .4em rgba(0,0,0,.8); }
+.lv-card .lv-motto { font-size: .72em; font-weight: 700; color: #ffe9a8; margin: .2em 0 .35em; text-shadow: 0 1px 2px #000; }
+.lv-card .lv-best, .lv-card .lv-wx, .lv-card .lv-cond { font-size: .66em; font-weight: 700; background: rgba(0,0,0,.6); border-radius: 1em; padding: .15em .7em; margin-top: .2em; }
+.lv-card .lv-cond { color: #ffd27a; line-height: 1.35; white-space: normal; }
+.lv-card.sel { border-color: #ff6a4a; box-shadow: 0 0 0 3px rgba(255,106,74,.5), 0 .25em 0 rgba(0,0,0,.45); }
+.lv-card.locked { border-color: #555; }
+.lv-card.locked .lv-art { filter: grayscale(1) brightness(.18); }
+.lv-card.locked .lv-k { color: #222; text-shadow: 0 0 .06em #888; }
+.lv-card.locked .lv-motto { color: #888; }
+.lv-card:not(.locked):active { transform: scale(.96); }
+
+/* 修行／成就清單的標題列 */
+.meta-head { text-align: center; font-weight: 900; color: #ffd27a; margin: .2em 0 .4em; }
+.ach-cat { display: flex; justify-content: space-between; align-items: baseline; font-weight: 900; color: #fff; border-bottom: 2px solid #e8b84a; margin: .7em .2em .3em; padding-bottom: .1em; }
+.ach-cat small { color: #ffd27a; }
+.meta-refund { margin-top: .6em; font-size: .8em; opacity: .85; }
+/* 封印模式：卡片變灰紅、提示點選 */
+#perkCards.banishing .card:not(.evo) { outline: 3px dashed #e8403a; filter: saturate(.6); }
+#perkCards .banish-btn { background: #5a1a1a; color: #ffd0c8; }

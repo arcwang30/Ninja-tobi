@@ -10,7 +10,7 @@ const zez = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
 // ===== 每一幕的開場演出 =====
 function startZIntro() {
   state = 'zintro';
-  g.zi = { t: 0, st: g.stage % 4, sfx: {}, hide: g.stage > 0 };   // 過關後的新一幕：倒數完才讓主角現身
+  g.zi = { t: 0, st: g.th, sfx: {}, hide: g.stage > 0 };   // 過關後的新一幕：倒數完才讓主角現身
   g.zoneY = g.camY + H + 90;              // 先藏在畫面下方
   const p = g.p; p.vy = 0; p.dash = 0; p.dive = false;
   if (g.zi.hide) {
@@ -101,7 +101,7 @@ function drawZIntro() {
 function startAscend() {
   g.ascendPending = false;
   state = 'ascend';
-  g.asc = { t: 0, from: Math.max(0, g.stage - 1), to: g.stage, sfx: {} };
+  g.asc = { t: 0, from: 4, to: g.stage % 5, sfx: {} };   // 從魔王的天空飛到下一個舞台（白天）的天空
   SFX.dash(); SFX.wind();
 }
 function updateAscend(dt) {
@@ -114,7 +114,7 @@ function updateAscend(dt) {
 function skipAscend() { if (g && g.asc && g.asc.t < 2.8) g.asc.t = 2.8; }
 const mixHex = (h1, h2, q) => { const a = parseInt(h1.slice(1), 16), b = parseInt(h2.slice(1), 16), m = (s) => Math.round(((a >> s) & 255) * (1 - q) + ((b >> s) & 255) * q); return `rgb(${m(16)},${m(8)},${m(0)})`; };
 function drawAscend() {
-  const A = g.asc, a = A.t, c = ctx, F = THEMES[A.from % 4], T = THEMES[A.to % 4];
+  const A = g.asc, a = A.t, c = ctx, T0 = THEMES[g.th], F = { sky: TOD[A.from].sky || T0.sky }, T = { sky: TOD[A.to].sky || T0.sky };
   // 雲層的邊界：先從上往下蓋住畫面，最後再往下散開露出新的一幕
   const e1 = -40 + (H + 80) * zez(a / .55), e2 = -40 + (H + 80) * zez((a - 2.8) / .6);
   const y0 = a < 2.8 ? 0 : e2, y1 = a < 2.8 ? e1 : H + 40;
@@ -132,12 +132,12 @@ function drawAscend() {
   drawHeroNinja(W / 2 + Math.sin(a * 3) * 10, H * .74 + Math.sin(a * 5) * 6, { face: 1, t: a, vy: -900, skin: save.skin, eye: 'focus' }, ctx);
   // 毛筆字標題「第N幕・X」：由左到右像寫字一樣出現，停留後淡出
   if (a > .8 && a < 2.8) {
-    const reveal = zez((a - .8) / .7), fade = 1 - zez((a - 2.3) / .45), loop = Math.floor(A.to / 4);
-    const title = L(STR.act)[A.to % 4] + '・' + T.k + (loop ? t('loop', loop) : '');
+    const reveal = zez((a - .8) / .7), fade = 1 - zez((a - 2.3) / .45);
+    const title = T0.k + '・' + t('st_n', g.stage + 1);
     c.save(); c.globalAlpha = fade;
     c.fillStyle = 'rgba(192,38,45,.85)'; c.beginPath(); c.arc(W / 2, H * .36, 64 * zez((a - .8) / .3), 0, Math.PI * 2); c.fill();   // 朱紅色的圓（像印章、落日）
     c.beginPath(); c.rect(0, 0, W * reveal * 1.1, H); c.clip();
-    c.font = `900 ${LI === 2 ? 34 : 46}px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.font = `900 ${LI === 2 ? 32 : 40}px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle';
     c.lineWidth = 10; c.lineJoin = 'round'; c.strokeStyle = 'rgba(255,255,255,.9)'; c.strokeText(title, W / 2, H * .36);
     c.fillStyle = '#141414'; c.fillText(title, W / 2, H * .36);
     // 筆刷的飛白：在字下方拉一道墨色筆畫

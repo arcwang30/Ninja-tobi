@@ -20,12 +20,12 @@ const Q = new URLSearchParams(location.search), MODE = Q.get('m') || 'cards', T 
 const CW = 1000;
 function wrap(s, x, y, maxW, lh) { let line = ''; for (const ch of s) { if (ctx.measureText(line + ch).width > maxW) { ctx.fillText(line, x, y); y += lh; line = ch; } else line += ch; } ctx.fillText(line, x, y); return y; }
 if (MODE === 'cards') {
-  cv.width = CW * 2; cv.height = 1180 * 2; ctx.scale(2, 2);
-  ctx.fillStyle = '#14161e'; ctx.fillRect(0, 0, CW, 1180);
-  ctx.font = `900 30px ${FONT}`; ctx.fillStyle = '#ffd27a'; ctx.textAlign = 'center'; ctx.fillText('新角色提案（6 名）— 商店「角色」分頁', CW / 2, 48);
+  cv.width = CW * 2; cv.height = 1700 * 2; ctx.scale(2, 2);
+  ctx.fillStyle = '#14161e'; ctx.fillRect(0, 0, CW, 1700);
+  ctx.font = `900 30px ${FONT}`; ctx.fillStyle = '#ffd27a'; ctx.textAlign = 'center'; ctx.fillText('角色提案 第二版（蒼・桜・影 新造型＋新角色 6 名）', CW / 2, 48);
   ctx.font = `600 15px ${FONT}`; ctx.fillStyle = '#aab'; ctx.fillText('每名角色開局自帶一個專屬技能；外觀可再套用「換裝」的 10 種顏色（下方示範）', CW / 2, 76);
-  NEW_CHARS.forEach((ch, i) => {
-    const col = i % 3, row = (i / 3) | 0, x = 20 + col * 325, y = 100 + row * 535, w = 310, h = 500;
+  ALL_CHARS.forEach((ch, i) => {
+    const col = i % 3, row = (i / 3) | 0, x = 20 + col * 325, y = 100 + row * 535, w = 310, h = 515;
     aRR(ctx, x, y, w, h, 16); const bg = ctx.createLinearGradient(0, y, 0, y + h); bg.addColorStop(0, '#2a3046'); bg.addColorStop(1, '#1a1e2c'); ctx.fillStyle = bg; ctx.fill(); ctx.strokeStyle = '#e8b84a'; ctx.lineWidth = 2; ctx.stroke();
     ctx.fillStyle = 'rgba(0,0,0,.35)'; aEll(ctx, x + w / 2, y + 268, 70, 10); ctx.fill();
     ctx.save(); ctx.translate(x + w / 2 - 6, y + 268); ctx.scale(3.5, 3.5); ch.draw(ctx, OUTFITS[ch.out], T); ctx.restore();
@@ -38,12 +38,12 @@ if (MODE === 'cards') {
     ctx.font = `700 13px ${FONT}`; ctx.fillStyle = '#ffd27a'; wrap('進化 ▶ ' + ch.evo[0], x + 22, yy + 28, w - 44, 20);
   });
 } else {   // 換裝示範：每名角色 × 10 色
-  const rows = NEW_CHARS.length, cell = 92;
+  const rows = ALL_CHARS.length, cell = 92;
   cv.width = (120 + cell * 10) * 2; cv.height = (70 + rows * 110) * 2; ctx.scale(2, 2);
   ctx.fillStyle = '#14161e'; ctx.fillRect(0, 0, 120 + cell * 10, 70 + rows * 110);
-  ctx.font = `900 22px ${FONT}`; ctx.fillStyle = '#ffd27a'; ctx.textAlign = 'center'; ctx.fillText('換裝 10 色 × 新角色（招牌特徵如髮色、面具、斗笠不變色）', (120 + cell * 10) / 2, 36);
+  ctx.font = `900 22px ${FONT}`; ctx.fillStyle = '#ffd27a'; ctx.textAlign = 'center'; ctx.fillText('換裝 10 色 × 各角色（髮色、面具、斗笠、虎斑不變色）', (120 + cell * 10) / 2, 36);
   OUTFITS.forEach((o, j) => { ctx.font = `700 14px ${FONT}`; ctx.fillStyle = o.suit; ctx.fillText(o.n[0], 120 + j * cell + cell / 2, 62); });
-  NEW_CHARS.forEach((ch, i) => {
+  ALL_CHARS.forEach((ch, i) => {
     const y = 70 + i * 110;
     ctx.font = `900 22px ${FONT}`; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(ch.n[0], 60, y + 64);
     OUTFITS.forEach((o, j) => { ctx.save(); ctx.translate(120 + j * cell + cell / 2 - 3, y + 98); ctx.scale(1.6, 1.6); ch.draw(ctx, o, T); ctx.restore(); });
