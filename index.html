@@ -58,6 +58,7 @@
   <div class="scr dim" id="pause">
     <div class="panel">
       <h2 data-i18n="paused"></h2>
+      <div class="pause-sk" id="pauseSk"></div>   <!-- 目前已獲得的技能與秘傳 -->
       <button data-act="resume" class="big" data-i18n="resume"></button>
       <button data-act="help" data-i18n="help"></button>
       <button data-act="quit" data-i18n="giveup"></button>
@@ -86,6 +87,7 @@
     <div class="panel wide lvsel">
       <h2 data-i18n="lv_title"></h2>
       <div class="lv-list" id="lvList"></div>
+      <button class="lv-tut" data-act="tutorial" data-i18n="tutorial"></button>
       <button data-act="back" data-i18n="back"></button>
     </div>
   </div>
@@ -174,7 +176,7 @@
       <div class="cr-line cr-role" style="--d:4" data-i18n="cr_r3"></div>
       <div class="cr-line cr-val" style="--d:5" data-i18n="cr_v3"></div>
       <div class="cr-line cr-art" style="--d:6">
-        <span class="cr-smoke" style="--x:-30%;--s:0s"></span><span class="cr-smoke" style="--x:20%;--s:.7s"></span><span class="cr-smoke" style="--x:-5%;--s:1.4s"></span>
+
         <img class="hero-tint" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
       </div>
       <div class="cr-line cr-game" style="--d:7">忍者鳶 NINJA TOBI</div>
@@ -184,6 +186,7 @@
   </div>
 
 
+  <button id="tutSkip" class="tut-skip" data-act="tutskip" data-i18n="tut_skip"></button>   <!-- 新手教學：跳過 -->
   <div id="toast"></div>
 </div>
 <!-- 開場遮罩：等畫面尺寸量穩了才拿掉，避免一開啟就看到版面跳動 -->
@@ -196,6 +199,7 @@
 <script src="game.js"></script>
 <script src="stagefx.js"></script>
 <script src="levels.js"></script>
+<script src="tutorial.js"></script>
 <script src="help.js"></script>
 <script src="history.js"></script>
 </body>

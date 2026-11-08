@@ -332,12 +332,14 @@ function musicFor() {
   if (state === 'menu') return INTRO.ph === 'cut' ? BGM.play(ac, 'boss', { sp: .85, tr: -3 }) : INTRO.ph === 'title' ? BGM.play(ac, 'title') : BGM.stop();
   if (!g || paused || state === 'over' || state === 'dying') return BGM.stop();
   BGM.hot = g.fever > 0;
-  BGM.play(ac, g.boss ? 'boss' : 'stage', { tr: ACT_KEY[g.th], sp: 1 + Math.min(.2, .04 * loopN()) });
+  // 每關的樂曲：林「疾風ノ道」、風「天翔」、火「紅蓮」、山「雪嶺」；魔王戰共用「鬼哭」並依關卡移調
+  const song = g.boss ? 'boss' : ['stage', 'wind', 'fire', 'mountain'][g.th];
+  BGM.play(ac, song, { tr: g.boss ? ACT_KEY[g.th] : 0, sp: 1 + Math.min(.2, .04 * loopN()) });
 }
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v49';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v50';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -469,7 +471,7 @@ const endPtr = e => {
   if (inp.mode === 'aim' && e.type === 'pointerup' && state === 'play' && !paused) {
     const a = aimInfo();
     if (a && a.dive) startDive();
-    else if (a) startDash(a.dx, a.dy, DASH_T_AIM, .2);
+    else if (a) { startDash(a.dx, a.dy, DASH_T_AIM, .2); if (g.tut && g.p.dash > 0) g.tut.sling = 1; }   // 新手教學：彈射斬
   }
   inp.down = false; inp.id = null; inp.mode = null;
 };
@@ -588,13 +590,13 @@ function genRow() {
   if (Math.random() < .012 * lucky) g.items.push({ t: 'scroll', x: rnd(30, W - 30), y: y - gap / 2, ph: 0 });
   else if (Math.random() < .022 * lucky) g.items.push({ t: 'chest', x: rnd(30, W - 30), y: y - gap / 2, ph: 0 });
   // 敵忍者
-  const pE = g.top < 250 ? 0 : (.08 + .14 * d) * (m === 'horde' ? 2.6 : 1) * (1 + .06 * g.stage + .3 * hardN());   // 越後面的幕敵人越多
+  const pE = g.top < 250 || g.tut ? 0 : (.08 + .14 * d) * (m === 'horde' ? 2.6 : 1) * (1 + .06 * g.stage + .3 * hardN());   // 越後面的幕敵人越多
   // 倖存者節奏：敵人密度比之前高（技能需要靶子，魂也從這裡來）
   // 世界加寬時敵人也按比例增加（例如 1.5 倍寬 → 平均 1.5 倍敵人）
   for (let k = WK(); k > 0; k--) if (Math.random() < pE * 1.4 * Math.min(1, k)) g.enemies.push(mkEnemy(enemyType(d), rnd(30, W - 30), (y + prevY) / 2, rnd(10, 50)));
   // 敵人階梯：間距小於彈跳高度，可以一路空中連斬上去
   g.ladderCD--;
-  if (g.top > 400 && g.ladderCD <= 0 && Math.random() < (.08 + .07 * d) * (m === 'horde' ? 2 : 1)) {
+  if (g.top > 400 && !g.tut && g.ladderCD <= 0 && Math.random() < (.08 + .07 * d) * (m === 'horde' ? 2 : 1)) {
     g.ladderCD = 6;
     const n = 3 + (Math.random() * 3 | 0);
     let lx = rnd(60, W - 60), ly = y - 70;
@@ -772,7 +774,7 @@ function update(dt) {
     case 'kill': g.killT -= dt; if (g.killT <= 0) finishBoss(true); break;
     case 'dying': g.dieT -= dt; g.p.vy += GRAV * dt; g.p.y += g.p.vy * dt; if (g.dieT <= 0) showOver(); break;
   }
-  if (state !== 'perk') updateFx(dt);
+  if (g && state !== 'perk') updateFx(dt);
 }
 
 function updateDemo(dt) {
@@ -871,6 +873,7 @@ function updatePlay(dt) {
   if (g.mod && g.mod.id === 'rise') zs *= 1.5;
   zs *= Math.pow(.85, pk('slowzone')) * (1 + .15 * hardN());
   if (g.boss) zs *= .6;
+  if (g.tut) zs = 0;   // 新手教學：下方沒有追兵
   g.zoneY -= zs * dt;
   const zVis = Math.min(g.zoneY, g.camY + H - 26);
   if (p.y > zVis + 6 && g.fly <= 0) {
@@ -935,17 +938,18 @@ function updatePlay(dt) {
 
   // 波次與中 BOSS
   g.waveT = (g.waveT ?? 8) - dt;
-  if (g.waveT <= 0 && !g.boss && g.top > 300) { spawnWave(); g.waveT = rnd(11, 16) * Math.max(.55, 1 - .035 * g.stage - .05 * g.lvl); }
+  if (g.waveT <= 0 && !g.boss && !g.tut && g.top > 300) { spawnWave(); g.waveT = rnd(11, 16) * Math.max(.55, 1 - .035 * g.stage - .05 * g.lvl); }
   // 舞台：第 3、8 舞台中段出現大天狗；第 5、10 舞台（魔王舞台）爬到三成時魔王登場，打倒後才進下一個舞台；其餘舞台爬滿就換下一個
   const bossSt = g.stage % 5 === 4;
-  if (g.stage % 5 === 2 && !g.midDone && !g.boss && !g.mid && g.top >= g.base + STAGE_PX * .5) spawnMid();
+  if (!g.tut && g.stage % 5 === 2 && !g.midDone && !g.boss && !g.mid && g.top >= g.base + STAGE_PX * .5) spawnMid();
 
   // BOSS
-  if (!bossSt && g.top >= g.base + STAGE_PX) nextStage();
-  if (bossSt && !g.boss && g.top >= g.base + STAGE_PX * .3) spawnBoss();
+  if (!g.tut && !bossSt && g.top >= g.base + STAGE_PX) nextStage();
+  if (!g.tut && bossSt && !g.boss && g.top >= g.base + STAGE_PX * .3) spawnBoss();
   if (g.boss) updateBoss(dt);
 
   checkLiveAch();
+  if (g.tut) updateTutorial(dt);   // 新手教學（tutorial.js）
 }
 
 // ===== 自動技能 =====
@@ -1111,6 +1115,7 @@ function land(pl) {
 
 function hurt(src) {
   const p = g.p;
+  if (g.tut) return false;   // 新手教學中不會受傷
   if (p.inv > 0 && src !== 'zone') return false;
   // 結界：擋下這次傷害
   if (g.barrier > 0) {
@@ -1276,7 +1281,7 @@ function startDash(dx, dy, dur = DASH_T, minUp = .35) {
   const p = g.p;
   if (state !== 'play' || g.fly > 0 || p.dash > 0 || p.freeze > 0) return;
   if (g.ki < 1) { floatText(p.x, p.y - 60, t('ki_low'), '#9ad8ff', 14); return; }
-  g.ki -= 1;
+  g.ki -= 1; if (g.tut) g.tut.dash = (g.tut.dash || 0) + 1;
   [dx, dy] = upDir(dx, dy, minUp);
   p.dash = dur; p.dvx = dx * DASH_V; p.dvy = dy * DASH_V; p.dive = false; p.banks = 0;
   if (Math.abs(dx) > .1) p.face = dx > 0 ? 1 : -1;
@@ -1329,7 +1334,7 @@ function startDive() {
   const p = g.p;
   if (state !== 'play' || g.fly > 0 || p.dive || p.freeze > 0) return;
   if (g.ki < 1) { floatText(p.x, p.y - 60, t('ki_low'), '#9ad8ff', 14); return; }
-  g.ki -= 1;
+  g.ki -= 1; if (g.tut) g.tut.dive = 1;
   p.dash = 0; p.dive = true; p.vy = DIVE_V;
   SFX.dive();
 }
@@ -2098,6 +2103,7 @@ function render() {
   else if (state === 'ascend') drawAscend();
   if (state !== 'slash' && state !== 'cast' && state !== 'qte' && state !== 'kill') drawHUD();
   if (state === 'play') drawBanner();
+  if (g.tut && state !== 'slash' && state !== 'cast') drawTutorial();
   if (inp.mode === 'aim' && state === 'play') drawSling();
 }
 
@@ -2127,7 +2133,19 @@ function goTitle() {
   playIntro();
 }
 function playIntro() { const it = $('intro'); it.classList.remove('play', 'hero-in', 'hero-out'); void it.offsetWidth; it.classList.add('play'); INTRO.heroFront(); }
-function pauseGame() { if (!g || paused || state === 'over' || state === 'perk' || state === 'menu' || state === 'clearq') return; paused = true; show('pause', true); }
+function pauseGame() { if (!g || paused || state === 'over' || state === 'perk' || state === 'menu' || state === 'clearq') return; paused = true; renderPauseSkills(); show('pause', true); }
+// 暫停畫面：列出目前的自動技能（等級／進化）與秘傳（被動）
+function renderPauseSkills() {
+  const el = $('pauseSk'); if (!el || !g) return;
+  const sks = SKILLS.filter(s => sk(s.id)).map(s => {
+    const l = sk(s.id), evo = l > SK_MAX, nm = evo ? L(EVO[s.id].n) : L(s.n), ic = evo ? EVO[s.id].ic : s.ic;
+    const pips = evo ? '<em class="ps-evo">EVO</em>' : `<span class="ps-pips">${'●'.repeat(l)}${'○'.repeat(SK_MAX - l)}</span>`;
+    return `<div class="ps-row ${evo ? 'evo' : ''}"><span class="ps-ic">${ic}</span><b>${nm}</b>${pips}</div>`;
+  }).join('');
+  const pks = PERKS.filter(p => pk(p.id)).map(p => `<span class="ps-perk" title="${L(p.d)}">${p.ic} ${L(p.n)}${p.max > 1 && p.max < 99 ? ` <small>${pk(p.id)}/${p.max}</small>` : ''}</span>`).join('');
+  el.innerHTML = `<div class="ps-head">${t('ps_skills', Object.keys(g.skills).length, SK_SLOTS)}<small>Lv ${g.lv}</small></div>` + (sks || `<div class="ps-none">—</div>`) +
+    `<div class="ps-head">${t('ps_perks')}</div>` + (pks ? `<div class="ps-perks">${pks}</div>` : `<div class="ps-none">—</div>`);
+}
 function resumeGame() { paused = false; hide('pause'); hide('help'); inp.dx = 0; lastT = performance.now(); }
 
 function showOver() {
@@ -2244,7 +2262,9 @@ document.addEventListener('click', e => {
   A(); SFX.click();
   const a = b.dataset.act, arg = b.dataset.arg;
   switch (a) {
-    case 'start': openLvSel(); break;   // 開始：先進選關畫面（levels.js）
+    case 'start': if (!save.tut) startTutorial(); else openLvSel(); break;   // 第一次開始：先進新手教學（tutorial.js），之後進選關
+    case 'tutorial': startTutorial(); break;
+    case 'tutskip': if (g && g.tut) endTutorial(false); break;
     case 'retry': startRun(); break;
     case 'lvgo': startRun(+arg); break;
     case 'lvlock': toast(t('lv_locked')); break;
@@ -2272,7 +2292,7 @@ document.addEventListener('click', e => {
       goTitle(); break;
     case 'title': goTitle(); break;
     case 'resume': resumeGame(); break;
-    case 'quit': if (g) { paused = false; hideAll(); showOver(); } else goTitle(); break;
+    case 'quit': if (g && g.tut) { endTutorial(false); break; } if (g) { paused = false; hideAll(); showOver(); } else goTitle(); break;
 
     case 'finish': hide('clear'); showOver(); break;
     case 'perk': choosePerk(+arg); break;

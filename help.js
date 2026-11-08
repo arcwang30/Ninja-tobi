@@ -28,7 +28,7 @@ const HELP_PAGES = [
   { t: ['魔王與關卡', '魔王とステージ', 'Bosses & Stages'], items: [
     ['tengu', ['大天狗', '大天狗', 'Great Tengu'], ['每一幕中段出現，限時內擊倒可以開寶箱。', '各幕の中盤に出現、時間内に倒すと宝箱。', 'Appears mid-act; defeat it in time for a chest.']],
     ['boss', ['魔王 QTE', '魔王 QTE', 'Boss QTE'], ['碰到魔王進入 QTE：連打或快速滑動。', '魔王に触れるとQTE：連打かスワイプ。', 'Touch the boss to start a QTE: mash or swipe.']],
-    ['zone', ['追上來的危險', '迫る危険', 'Rising Danger'], ['下方的火海、大浪、鬼群會上升，掉進去會扣 HP。', '下から炎・大波・鬼が迫る。落ちるとHPが減る。', 'Fire, waves or oni rise from below — falling in costs HP.']],
+    ['zone', ['追上來的危險', '迫る危険', 'Rising Danger'], ['下方的火海、龍捲風、熔岩、雪崩會上升，掉進去會扣 HP。', '下から炎・竜巻・溶岩・雪崩が迫る。落ちるとHPが減る。', 'Fire, tornadoes, lava or avalanches rise from below — falling in costs HP.']],
     ['plat', ['機關', 'しかけ', 'Gimmicks'], ['跳台雙倍彈跳、半毀地板只能踩一次、釘刺會受傷。', 'ジャンプ台は2倍、壊れる床は一度だけ、まきびしは痛い。', 'Springs boost, cracked floors break, spikes hurt.']],
   ] },
 ];

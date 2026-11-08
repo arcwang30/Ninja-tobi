@@ -264,9 +264,6 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .cr-art { position: relative; width: 40%; margin: .6em auto .2em; }
 .cr-art img { width: 100%; display: block; animation: cr-bob 2.6s ease-in-out infinite; }
 @keyframes cr-bob { 0%, 100% { transform: none; } 50% { transform: translateY(-4%) rotate(-2deg); } }
-.cr-smoke { position: absolute; left: 50%; bottom: 18%; width: 22%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.75), rgba(255,255,255,0) 70%);
-  animation: cr-smoke 2.1s var(--s) ease-out infinite; opacity: 0; }
-@keyframes cr-smoke { 0% { opacity: 0; transform: translate(calc(-50% + var(--x)), 0) scale(.5); } 25% { opacity: .9; } 100% { opacity: 0; transform: translate(calc(-50% + var(--x) * 1.6), -260%) scale(1.8); } }
 .cr-game { color: #ffe8b0; font-weight: 900; margin-top: .3em; }
 .cr-copy { color: #cfd8ff; font-size: .78em; font-weight: 700; margin: .2em 0 .8em; }
 .cr-copy img { width: 2.6em; height: 2.6em; object-fit: contain; }
@@ -352,3 +349,25 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .outfits .of small { font-size: .6em; color: #555; white-space: nowrap; }
 .outfits .of.sel { border-color: #c0262d; background: #fff3d0; }
 .outfits .of.nown img { filter: brightness(.82) saturate(.8); opacity: .85; }
+
+/* 暫停畫面：目前的技能與秘傳 */
+.pause-sk { width: 100%; max-height: 42vh; overflow-y: auto; margin: 0 0 .6em; text-align: left; }
+.pause-sk .ps-head { display: flex; justify-content: space-between; align-items: baseline; font-weight: 900; color: #ffd27a; border-bottom: 2px solid rgba(232,184,74,.6); margin: .3em 0 .3em; padding-bottom: .1em; font-size: .9em; }
+.pause-sk .ps-head small { color: #cfd8ff; }
+.pause-sk .ps-row { display: flex; align-items: center; gap: .45em; background: rgba(255,255,255,.08); border-radius: .5em; padding: .25em .5em; margin: .2em 0; font-size: .88em; }
+.pause-sk .ps-row.evo { background: linear-gradient(90deg, rgba(255,210,90,.3), rgba(255,210,90,.08)); }
+.pause-sk .ps-ic { font-size: 1.2em; width: 1.4em; text-align: center; }
+.pause-sk .ps-row b { flex: 1; color: #fff; }
+.pause-sk .ps-pips { color: #ffd27a; letter-spacing: .05em; font-size: .85em; }
+.pause-sk .ps-evo { font-style: normal; font-weight: 900; color: #1a1a22; background: #ffd27a; border-radius: .4em; padding: 0 .4em; font-size: .8em; }
+.pause-sk .ps-perks { display: flex; flex-wrap: wrap; gap: .3em; }
+.pause-sk .ps-perk { background: rgba(255,255,255,.1); border-radius: 1em; padding: .15em .6em; font-size: .78em; color: #fff; }
+.pause-sk .ps-perk small { color: #ffd27a; }
+.pause-sk .ps-none { color: #889; font-size: .85em; padding: .2em .5em; }
+
+/* 新手教學：右下角的「跳過教學」、選關畫面的「新手教學」按鈕 */
+.tut-skip { display: none; position: absolute; right: 3%; bottom: calc(var(--sab, 0px) + 2.5%); z-index: 1; width: auto; margin: 0; padding: .45em 1em; font-size: .85em; border-radius: 2em; background: rgba(16,20,30,.85); color: #ffd27a; border: 2px solid #e8b84a; box-shadow: none; }
+.tut-skip::before { display: none; }
+body.tut .tut-skip { display: block; }
+.lvsel .lv-tut { margin: 0 0 .6em; background: #2a3a5a; color: #fff; }
+body.tut .scr.on ~ .tut-skip { display: none; }   /* 暫停、三選一時先藏起來 */

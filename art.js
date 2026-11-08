@@ -954,6 +954,7 @@ function drawWalls(camY, stage) {
 
 // ===== 死亡區域：火海／海浪／妖怪群 =====
 function drawZone(camY, stage, t) {
+  if (g && g.tut) return;   // 新手教學：沒有追兵
   const zy = Math.min(g.zoneY, camY + H - 26) - camY;
   const type = THEMES[stage % 4].zone;
   if (zy > H) return;

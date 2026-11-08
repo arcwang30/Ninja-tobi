@@ -35,6 +35,10 @@ const INTRO = {
     if (pl) { const [lv, st, sec, ch, sl] = pl.split(',').map(Number); this.toTitle(); save.seen = 2; if (ch) save.skin = ch; startRun(lv || 0); if (sl) g.skills[SKINS[save.skin].sk] = sl; hideAll();   /* 第 4、5 個參數：角色、技能等級 */ const b = $('boot'); if (b) b.remove();
       g.stage = st || 0; g.zi = null; state = 'play'; wxForStage(); if (g.wx) g.wx.cur = g.wx.lv; if (g.stage % 5 === 4) { spawnBoss(); g.wx.cur = g.wx.lv; }
       g.hp = g.maxHp = 9999; for (let i = 0; i < (sec || 2) * 60; i++) { g.lvQueue = 0; g.p.inv = 1; update(1 / 60); if (state === 'perk') { hide('perk'); state = 'play'; } } paused = true; }
+    // 開發用：?tut=第幾步（0 起）→ 停在新手教學的那一步；&pauseui → ?play 跑完後打開暫停畫面（看技能列表）
+    const tq = new URLSearchParams(location.search).get('tut');
+    if (tq !== null) { this.toTitle(); startTutorial(); hideAll(); const b = $('boot'); if (b) b.remove(); g.tut.i = +tq; TUT_STEPS[g.tut.i].start(); for (let i = 0; i < 40; i++) update(1 / 60); paused = true; }
+    if (pl && new URLSearchParams(location.search).has('pauseui')) { g.skills = { shuriken: 3, kunai: 6, thunder: 2, barrier: 1 }; g.perks = { bounce: 2, magnet: 1, hp: 3, vamp: 1 }; g.lv = 14; renderPauseSkills(); show('pause', true); }
     if (ss) { const [ty, n, lt] = ss.split(',').map(Number); this.toTitle(); save.seen = 2; startRun(); hideAll(); const e = mkEnemy(ty, W / 2, g.p.y - 120, 0); g.enemies.push(e); g.slash = { e, t: .5, dur: 9, lines: n ? [{ a: .6, t: lt, off: 0 }] : [], n, nextL: 9, frozen: true }; state = 'slash'; const b = $('boot'); if (b) b.remove(); }
   },
   // 進入過場（重看開場也從這裡開始）
@@ -448,7 +452,7 @@ function frontHeroBox(any) {   // any：不管目前透明度（噴煙用，主�
 }
 function frontHeroUpdate(dt) {
   // 沒在表演時的動態：每 6 秒在「雲上原地彈跳」和「往上奔跑」之間切換；彈跳落地時噴小煙塵
-  FH.mt += dt; if (FH.mt >= 6) { FH.mt = 0; FH.mode = FH.mode === 'bounce' ? 'dash' : 'bounce'; }
+  FH.mode = 'bounce';   // 已移除「往上快速奔跑」的演出，只保留在雲上彈跳
   const ph0 = FH.hop % 1; FH.hop += dt * 1.45; if (FH.hop % 1 < ph0 && FH.mode === 'bounce' && !FH.act) FH.dust.push({ t: 0 });
   for (const d of FH.dust) d.t += dt; FH.dust = FH.dust.filter(d => d.t < .45);
   if (!FH.vis || INTRO.cyc !== 'front') { FH.act = null; FH.rest = 1.3; return; }
