@@ -46,7 +46,7 @@ function lvSave() {
 function lvReach() {
   const s = lvSave(), i = g.lvl, st = g.stage + 1;
   if (st > s.best[i]) s.best[i] = st;
-  if (g.stage >= ST_UNLOCK && i + 1 < LEVELS.length && s.open < i + 2) {
+  if (g.stage >= ST_UNLOCK && i + 1 < LEVELS.length && s.open < i + 2 && !TEST_FREE) {
     s.open = i + 2;
     floatText(W / 2, 30, t('lv_open', lvName(i + 1)), '#ffd27a', 20, true); SFX.fever();
   }
@@ -178,7 +178,8 @@ function lvThumb(i) {
 function openLvSel() {
   const s = lvSave();
   const h = LEVELS.map((L0, i) => {
-    const open = i < s.open, best = s.best[i], clr = s.clear[i];
+    const open = i < (TEST_FREE ? LEVELS.length : s.open),   // 測試模式：四關全開
+      best = s.best[i], clr = s.clear[i];
     const wx = WX[L0.wx];
     const info = open
       ? `<span class="lv-best">${clr ? '✓ ' + t('lv_cleared') : best ? t('lv_best', best) : t('lv_new')}</span><span class="lv-wx">${wx.ic} ${L(wx.n)}</span>`
