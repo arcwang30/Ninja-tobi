@@ -371,3 +371,15 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 body.tut .tut-skip { display: block; }
 .lvsel .lv-tut { margin: 0 0 .6em; background: #2a3a5a; color: #fff; }
 body.tut .scr.on ~ .tut-skip { display: none; }   /* 暫停、三選一時先藏起來 */
+
+/* iPad／電腦橫向：兩側的月下城夜景鋪滿視窗，遊戲畫面在中間 */
+#sideBg { position: fixed; inset: 0; width: 100vw; height: 100vh; display: none; z-index: 0; }
+body.pillar #sideBg { display: block; }
+body.pillar #app { z-index: 1; }
+/* 手機橫拿：請轉成直向 */
+#rotateTip { display: none; position: fixed; inset: 0; z-index: 99; flex-direction: column; align-items: center; justify-content: center; gap: 1.2em; background: radial-gradient(circle at 50% 40%, #22265a, #07081a); color: #ffe8b0; font-size: 1.15em; text-align: center; padding: 1em; }
+body.rotate #rotateTip { display: flex; }
+body.rotate #app { visibility: hidden; }
+#rotateTip .rt-phone { width: 3.2em; height: 5.4em; border: .35em solid #ffe8b0; border-radius: .7em; position: relative; animation: rt-turn 2.2s ease-in-out infinite; }
+#rotateTip .rt-phone::after { content: ""; position: absolute; left: 50%; bottom: .3em; width: .7em; height: .7em; margin-left: -.35em; border-radius: 50%; background: #ffe8b0; }
+@keyframes rt-turn { 0%, 25% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0); } }

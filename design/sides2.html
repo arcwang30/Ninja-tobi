@@ -1,0 +1,198 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>iPad 橫向補邊（月下城全景）</title>
+<style>html, body { margin: 0; background: #000; } canvas { display: block; } #title { display: none; }</style>
+<canvas id="cv"></canvas><div id="title"></div><div id="intro"></div>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), $ = id => document.getElementById(id);
+const INK = '#0e1414', g = null, WALL = 14, FONT = '"Noto Sans TC","Microsoft JhengHei",sans-serif';
+let W = 960, H = 640, SAFE_T = 0;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ id: 'tobi' }], OUTFITS = [{ suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }], heroPal = () => OUTFITS[0];
+const save = { skin: 0, opt: { lang: 'zh' } }, SFX = new Proxy({}, { get: () => () => {} }), tone = () => {}, noise = () => {};
+</script>
+<script src="../lang.js"></script>
+<script src="../art.js"></script>
+<script>
+'use strict';
+/* 月下城全景：一整張不對稱的夜景，中間被直版遊戲畫面蓋住，左右兩側露出畫面的不同部分。?s=1|2|3 */
+const S = +(new URLSearchParams(location.search).get('s') || 1);
+const VW = 1180, VH = 820, GW = Math.round(VH * 360 / 640), GX = (VW - GW) / 2;
+cv.width = VW; cv.height = VH;
+const c = ctx;
+// ---- 共用的夜景元件 ----
+const mixCol = (a, b, q) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * q)).join(',')})`; };
+function sky(top, mid, bot, seed) {
+  const gr = c.createLinearGradient(0, 0, 0, VH); gr.addColorStop(0, top); gr.addColorStop(.6, mid); gr.addColorStop(1, bot); c.fillStyle = gr; c.fillRect(0, 0, VW, VH);
+  const r = aRng(seed); for (let i = 0; i < 220; i++) { const y = r() * VH * .6, a = .25 + r() * .7 * (1 - y / VH); c.fillStyle = `rgba(255,255,235,${a})`; const s = r() < .08 ? 2.4 : 1.4; c.fillRect(r() * VW, y, s, s); }
+}
+function moon(x, y, R, col = '#fff1c8') {
+  const h = c.createRadialGradient(x, y, R * .6, x, y, R * 3); h.addColorStop(0, 'rgba(255,240,200,.38)'); h.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = h; c.fillRect(x - R * 3, y - R * 3, R * 6, R * 6);
+  c.fillStyle = col; aCirc(c, x, y, R); c.fill();
+  c.fillStyle = 'rgba(210,190,150,.35)'; for (const [dx, dy, r] of [[-.3, -.2, .16], [.25, .3, .12], [.1, -.4, .08], [-.1, .2, .1]]) { aCirc(c, x + dx * R, y + dy * R, r * R); c.fill(); }
+}
+function ridge(base, amp, col, seed, step = 40, x0 = 0, x1 = VW) {
+  // 兩端不是直切，而是緩緩降到地面（沒有生硬的直線）
+  const r = aRng(seed), fade = x1 - x0 < VW ? 120 : 0; c.fillStyle = col; c.beginPath();
+  const pts = []; let x = x0; while (x <= x1) { pts.push([x, base - r() * amp]); x += step * (.6 + r() * .8); } pts.push([x1, base - r() * amp]);
+  c.moveTo(x0 - (x0 > 0 ? fade : 0), VH);
+  pts.forEach(([px, py], i) => { const e0 = x0 > 0 ? Math.min(1, (px - x0) / fade) : 1, e1 = x1 < VW ? Math.min(1, (x1 - px) / fade) : 1, k = Math.max(0, Math.min(e0, e1)); c.lineTo(px, VH - (VH - py) * (k < 1 ? k * k * (3 - 2 * k) : 1)); });
+  c.lineTo(x1 + (x1 < VW ? fade : 0), VH); c.fill();
+}
+function peak(x, base, w, h, col, snow) {   // 單座大山（山頂可加淡淡月光）
+  c.fillStyle = col; c.beginPath(); c.moveTo(x - w / 2, base); c.quadraticCurveTo(x - w * .2, base - h * .7, x, base - h); c.quadraticCurveTo(x + w * .25, base - h * .65, x + w / 2, base); c.fill();
+  if (snow) { c.fillStyle = snow; c.beginPath(); c.moveTo(x, base - h); c.lineTo(x - w * .08, base - h * .82); c.lineTo(x - w * .02, base - h * .86); c.lineTo(x + w * .04, base - h * .8); c.lineTo(x + w * .09, base - h * .84); c.closePath(); c.fill(); }
+}
+function mist(y, h, a) { const gr = c.createLinearGradient(0, y - h, 0, y + h); gr.addColorStop(0, 'rgba(170,180,230,0)'); gr.addColorStop(.5, `rgba(170,180,230,${a})`); gr.addColorStop(1, 'rgba(170,180,230,0)'); c.fillStyle = gr; c.fillRect(0, y - h, VW, h * 2); }
+// 柔和的雲霧：很多個半透明的橢圓光團疊起來
+function cloud(x, y, w, a) { const r = aRng(Math.round(x + y)); for (let i = 0; i < 9; i++) { const cx = x + (r() - .5) * w, cy = y + (r() - .5) * w * .08, rx = w * (.15 + r() * .15), ry = rx * .32; const gr = c.createRadialGradient(cx, cy, 2, cx, cy, rx); gr.addColorStop(0, `rgba(170,180,230,${a * .8})`); gr.addColorStop(1, 'rgba(170,180,230,0)'); c.save(); c.translate(cx, cy); c.scale(1, ry / rx); c.translate(-cx, -cy); c.fillStyle = gr; aCirc(c, cx, cy, rx); c.fill(); c.restore(); } }
+// 天守閣：石垣＋多層屋頂（輪廓用 col，窗戶透出燈光）
+function castle(x, base, s, col, lit = '#ffcf6a') {
+  c.save(); c.translate(x, base); c.scale(s, s); c.fillStyle = col;
+  c.beginPath(); c.moveTo(-120, 0); c.quadraticCurveTo(-112, -40, -96, -64); c.lineTo(96, -64); c.quadraticCurveTo(112, -40, 120, 0); c.fill();   // 石垣（扇形勾配）
+  let y = -64; const tiers = [[176, 34], [140, 30], [104, 28], [70, 26]];
+  tiers.forEach(([w, h], i) => {
+    c.fillStyle = col; c.fillRect(-w / 2 + 12, y - h, w - 24, h);
+    c.beginPath(); c.moveTo(-w / 2 - 14, y - h + 6); c.quadraticCurveTo(0, y - h - 6, w / 2 + 14, y - h + 6); c.lineTo(w / 2 - 6, y - h - 12); c.quadraticCurveTo(0, y - h - 18, -w / 2 + 6, y - h - 12); c.closePath(); c.fill();
+    if (i === 1 || i === 3) { c.beginPath(); c.moveTo(-18, y - h - 12); c.lineTo(0, y - h - 32); c.lineTo(18, y - h - 12); c.fill(); }   // 千鳥破風
+    c.fillStyle = lit; for (let k = 0; k < Math.max(1, (w - 40) / 26 | 0); k++) { if ((k + i) % 3 === 1) continue; c.fillRect(-w / 2 + 22 + k * 26, y - h + 9, 8, 10); }
+    y -= h + 12;
+  });
+  c.fillStyle = '#e8b84a'; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 30, y + 2); c.quadraticCurveTo(sd * 40, y - 12, sd * 34, y - 18); c.lineTo(sd * 28, y - 4); c.fill(); }   // 鯱
+  c.restore();
+}
+// 村子：一排一排的屋子，窗戶透出燈光，屋簷下掛著燈籠
+function village(x0, x1, base, rows, seed, col, s = 1) {
+  // 後排顏色較淡（遠）、前排較大較暗（近）；屋子是寄棟屋頂，紙門透出暖光（有格子），偶爾掛一盞紅燈籠
+  const r = aRng(seed);
+  for (let row = 0; row < rows; row++) {
+    const y = base + row * 24 * s, sc = s * (.7 + row * .18), far = 1 - row / Math.max(1, rows - 1);
+    const wall = row === rows - 1 ? col : mixCol(col, '#2a2e66', far * .45);
+    for (let x = x0 + r() * 20; x < x1; x += (40 + r() * 34) * sc) {
+      const w = (32 + r() * 28) * sc, h = (14 + r() * 10) * sc, rh = (12 + r() * 6) * sc;
+      c.fillStyle = wall; c.fillRect(x, y - h, w, h + 60);
+      c.beginPath(); c.moveTo(x - 7 * sc, y - h + 1); c.lineTo(x + w * .18, y - h - rh); c.lineTo(x + w * .82, y - h - rh); c.lineTo(x + w + 7 * sc, y - h + 1); c.closePath(); c.fill();   // 寄棟屋頂
+      if (r() < .3) { c.beginPath(); c.moveTo(x + w * .4, y - h - rh); c.lineTo(x + w * .5, y - h - rh - 8 * sc); c.lineTo(x + w * .6, y - h - rh); c.fill(); }
+      const lit = r();
+      if (lit < .7) {   // 紙門的燈光
+        const ww = w * (.3 + r() * .25), wx = x + (w - ww) * r(), wh = h * .55, wy = y - h * .78;
+        c.fillStyle = 'rgba(255,180,80,.22)'; aEll(c, wx + ww / 2, wy + wh / 2, ww, wh * 1.2); c.fill();
+        c.fillStyle = lit < .2 ? '#ffe2a0' : '#ffc260'; c.fillRect(wx, wy, ww, wh);
+        c.strokeStyle = wall; c.lineWidth = Math.max(.8, sc); c.beginPath(); for (let k = 1; k < 3; k++) { c.moveTo(wx + ww * k / 3, wy); c.lineTo(wx + ww * k / 3, wy + wh); } c.moveTo(wx, wy + wh / 2); c.lineTo(wx + ww, wy + wh / 2); c.stroke();
+      }
+      if (r() < .18) { const lx = x + w * (r() < .5 ? .05 : .95), ly = y - h + 6 * sc; c.fillStyle = 'rgba(255,90,50,.3)'; aCirc(c, lx, ly, 10 * sc); c.fill(); c.fillStyle = '#ff6a3a'; aEll(c, lx, ly, 4 * sc, 5.5 * sc); c.fill(); }
+    }
+  }
+}
+function lanternString(x0, y0, x1, y1, n) {   // 祭典的提燈串
+  c.strokeStyle = 'rgba(40,20,20,.9)'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo((x0 + x1) / 2, Math.max(y0, y1) + 24, x1, y1); c.stroke();
+  for (let i = 1; i < n; i++) { const t = i / n, x = x0 + (x1 - x0) * t, y = (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * (Math.max(y0, y1) + 24) + t * t * y1 + 8;
+    c.fillStyle = 'rgba(255,120,60,.3)'; aCirc(c, x, y, 10); c.fill(); c.fillStyle = i % 2 ? '#ff5a3a' : '#ffcf6a'; aEll(c, x, y, 4.5, 6); c.fill(); }
+}
+function pagoda(x, base, s, col) { c.save(); c.translate(x, base); c.scale(s, s); c.fillStyle = col; for (let i = 0; i < 5; i++) { const w = 46 - i * 7, y = -i * 18; c.fillRect(-w / 4, y - 12, w / 2, 12); c.beginPath(); c.moveTo(-w / 2 - 8, y - 10); c.quadraticCurveTo(0, y - 15, w / 2 + 8, y - 10); c.lineTo(w / 2 - 2, y - 18); c.lineTo(-w / 2 + 2, y - 18); c.closePath(); c.fill(); } c.fillRect(-1.5, -116, 3, 26); c.restore(); }
+function pine(x, base, s, col) { c.save(); c.translate(x, base); c.scale(s, s); c.fillStyle = col; c.fillRect(-3, -30, 6, 30); for (let i = 0; i < 4; i++) { const w = 34 - i * 7, y = -26 - i * 16; c.beginPath(); c.moveTo(-w, y); c.quadraticCurveTo(0, y - 22, w, y); c.quadraticCurveTo(0, y + 6, -w, y); c.fill(); } c.restore(); }
+function birds(x, y, n, s, col, seed) { const r = aRng(seed); c.strokeStyle = col; c.lineWidth = 1.6 * s; c.lineCap = 'round'; for (let i = 0; i < n; i++) { const bx = x + i * 22 * s + r() * 10, by = y + Math.abs(i - n / 2) * 8 * s + r() * 6, w = 7 * s; c.beginPath(); c.moveTo(bx - w, by - w * .4); c.quadraticCurveTo(bx - w * .4, by - w * .7, bx, by); c.quadraticCurveTo(bx + w * .4, by - w * .7, bx + w, by - w * .4); c.stroke(); } }
+// 忍者剪影：leap 躍起（張開手腳）、run 奔跑、crouch 蹲在屋頂、stand 持刀站立
+// 用遊戲主角的畫法畫成黑色剪影（大頭、頭巾飄帶、刀）：pose = up 躍起／dash 奔跑衝刺／apex 站立／fall 落下
+const NJ = document.createElement('canvas'); NJ.width = NJ.height = 240; const NJC = NJ.getContext('2d');
+function ninja(x, y, s, pose, col, face = 1) {
+  const map = { leap: 'up', run: 'dash', crouch: 'fall', stand: 'apex' }, ps = map[pose] || pose;
+  NJC.setTransform(1, 0, 0, 1, 0, 0); NJC.globalCompositeOperation = 'source-over'; NJC.clearRect(0, 0, 240, 240);
+  NJC.setTransform(2.4, 0, 0, 2.4, 120, 190);
+  drawHeroNinja(0, 0, { face: 1, t: .4, vy: ps === 'up' ? -400 : 0, pose: ps, dash: ps === 'dash', dvx: 1, dvy: -.2, skin: 0 }, NJC);
+  NJC.setTransform(1, 0, 0, 1, 0, 0); NJC.globalCompositeOperation = 'source-in'; NJC.fillStyle = col; NJC.fillRect(0, 0, 240, 240);
+  c.save(); c.translate(x, y); c.scale(face * s / 2.4, s / 2.4); c.drawImage(NJ, -120, -190); c.restore();
+  return;
+  c.save(); c.translate(x, y); c.scale(s * face, s); c.fillStyle = col; c.strokeStyle = col; c.lineCap = 'round';
+  const head = (hx, hy) => { aCirc(c, hx, hy, 7); c.fill(); c.lineWidth = 2; c.beginPath(); c.moveTo(hx - 5, hy - 2); c.quadraticCurveTo(hx - 16, hy - 6, hx - 22, hy + 2); c.stroke(); };
+  c.lineWidth = 5;
+  if (pose === 'leap') { head(6, -26); c.beginPath(); c.moveTo(4, -18); c.lineTo(-4, -2); c.moveTo(2, -14); c.lineTo(18, -24); c.moveTo(2, -14); c.lineTo(-14, -20); c.moveTo(-4, -2); c.lineTo(10, 8); c.moveTo(-4, -2); c.lineTo(-18, 4); c.stroke(); c.lineWidth = 1.6; c.beginPath(); c.moveTo(18, -24); c.lineTo(34, -36); c.stroke(); }
+  else if (pose === 'run') { head(4, -30); c.beginPath(); c.moveTo(2, -22); c.lineTo(-4, -6); c.moveTo(0, -18); c.lineTo(12, -10); c.moveTo(0, -18); c.lineTo(-12, -14); c.moveTo(-4, -6); c.lineTo(8, 4); c.lineTo(10, 14); c.moveTo(-4, -6); c.lineTo(-14, 2); c.lineTo(-22, 0); c.stroke(); c.lineWidth = 1.6; c.beginPath(); c.moveTo(-6, -20); c.lineTo(-20, -34); c.stroke(); }
+  else if (pose === 'crouch') { head(2, -18); c.beginPath(); c.moveTo(0, -11); c.lineTo(-6, 0); c.moveTo(-6, 0); c.lineTo(6, 2); c.moveTo(-6, 0); c.lineTo(-12, 6); c.moveTo(0, -8); c.lineTo(10, -4); c.stroke(); c.lineWidth = 1.6; c.beginPath(); c.moveTo(-4, -12); c.lineTo(-16, -26); c.stroke(); }
+  else { head(0, -36); c.beginPath(); c.moveTo(0, -28); c.lineTo(0, -8); c.moveTo(0, -8); c.lineTo(-6, 6); c.moveTo(0, -8); c.lineTo(6, 6); c.moveTo(0, -24); c.lineTo(10, -16); c.moveTo(0, -24); c.lineTo(-8, -16); c.stroke(); c.lineWidth = 1.6; c.beginPath(); c.moveTo(10, -16); c.lineTo(26, -40); c.stroke(); }
+  c.restore();
+}
+// ---- 三組全景 ----
+const SCENES = {
+  // 1：左邊是山丘上的天守閣與大滿月，右邊山腳下是燈火通明的城下町，屋頂上有忍者奔跑
+  1: () => {
+    sky('#070a22', '#1b2154', '#3a2c5a', 1);
+    moon(VW * .16, VH * .2, 70);
+    birds(VW * .08, VH * .36, 5, 1.1, 'rgba(10,12,30,.9)', 2); birds(VW * .82, VH * .12, 4, .9, 'rgba(10,12,30,.8)', 3);
+    peak(VW * .9, VH * .7, 520, 300, '#232650', 'rgba(200,210,255,.35)'); peak(VW * .7, VH * .72, 380, 200, '#1e2148');
+    ridge(VH * .7, 80, '#15183a', 5, 60);
+    mist(VH * .62, 50, .22); cloud(VW * .82, VH * .5, 300, .35); cloud(VW * .12, VH * .55, 260, .3);
+    ridge(VH * .78, 60, '#0e1030', 6, 50, 0, VW * .42);   // 城所在的山丘
+    castle(VW * .17, VH * .66, 1.05, '#090a20'); pine(VW * .04, VH * .8, 1.2, '#070818'); pine(VW * .3, VH * .8, 1, '#070818');
+    ninja(VW * .27, VH * .27, 1.6, 'leap', '#05060f');   // 躍過月亮附近
+    ridge(VH * .84, 30, '#0a0b24', 7, 40, VW * .55, VW);
+    village(VW * .6, VW, VH * .8, 3, 8, '#06071a', 1.1);
+    lanternString(VW * .66, VH * .72, VW * .96, VH * .7, 9);
+    ninja(VW * .76, VH * .74, 1.3, 'run', '#04050f', -1); ninja(VW * .9, VH * .73, 1.2, 'crouch', '#04050f', -1);
+    mist(VH * .95, 40, .25);
+  },
+  // 2：右邊高山頂上的山城浮在雲海上、月在右上；左邊山谷裡的村子沿河排開，五重塔，忍者站在崖上
+  2: () => {
+    sky('#060820', '#191d4e', '#2c2a5e', 11);
+    moon(VW * .84, VH * .17, 60, '#fff6dc');
+    birds(VW * .6, VH * .1, 6, 1, 'rgba(10,12,30,.85)', 12); birds(VW * .05, VH * .22, 3, .8, 'rgba(10,12,30,.8)', 13);
+    peak(VW * .2, VH * .62, 560, 330, '#20244c', 'rgba(210,220,255,.4)');
+    peak(VW * .88, VH * .72, 420, 360, '#141738');   // 城所在的高山
+    castle(VW * .88, VH * .72 - 330, .8, '#08091e');
+    cloud(VW * .86, VH * .52, 420, .5); cloud(VW * .7, VH * .58, 360, .4); mist(VH * .56, 60, .3);
+    ridge(VH * .74, 60, '#11143a', 14, 70, 0, VW * .5);
+    // 河
+    c.fillStyle = 'rgba(90,110,200,.35)'; c.beginPath(); c.moveTo(0, VH * .86); c.quadraticCurveTo(VW * .2, VH * .82, VW * .42, VH * .88); c.lineTo(VW * .42, VH * .92); c.quadraticCurveTo(VW * .2, VH * .87, 0, VH * .9); c.fill();
+    c.fillStyle = 'rgba(255,207,106,.5)'; for (let i = 0; i < 14; i++) c.fillRect(VW * (.02 + i * .028), VH * (.875 + (i % 2) * .008), 6, 2);   // 河面燈光倒影
+    pagoda(VW * .08, VH * .8, 1.1, '#07081c');
+    village(VW * .12, VW * .44, VH * .8, 3, 15, '#06071a', 1);
+    lanternString(VW * .14, VH * .74, VW * .4, VH * .73, 8);
+    // 右下的崖與忍者
+    c.fillStyle = '#05060f'; c.beginPath(); c.moveTo(VW * .62, VH); c.lineTo(VW * .66, VH * .84); c.lineTo(VW * .74, VH * .8); c.lineTo(VW * .78, VH * .86); c.lineTo(VW, VH * .83); c.lineTo(VW, VH); c.fill();
+    pine(VW * .7, VH * .82, 1.3, '#05060f');
+    ninja(VW * .76, VH * .8, 1.5, 'stand', '#04050c', -1);
+    ninja(VW * .3, VH * .3, 1.4, 'leap', '#05060f');
+    mist(VH * .97, 40, .2);
+  },
+  // 3：城下町祭典之夜：左邊是長長的提燈串、橋與河，右邊大天守閣占滿、月在城後，屋頂上的忍者追逐
+  3: () => {
+    sky('#080a26', '#21245a', '#4a2c5a', 21);
+    moon(VW * .78, VH * .3, 90, '#fff0c0');
+    castle(VW * .8, VH * .74, 1.5, '#080920');
+    birds(VW * .62, VH * .14, 5, 1.2, 'rgba(10,12,30,.9)', 22); birds(VW * .1, VH * .1, 4, 1, 'rgba(10,12,30,.8)', 23);
+    peak(VW * .08, VH * .6, 400, 220, '#1d2050', 'rgba(200,210,255,.3)'); peak(VW * .3, VH * .62, 300, 160, '#191c46');
+    mist(VH * .56, 50, .25); cloud(VW * .2, VH * .46, 300, .3);
+    ridge(VH * .74, 40, '#10123a', 24, 50);
+    village(0, VW * .42, VH * .78, 3, 25, '#06071a', 1.05);
+    village(VW * .58, VW, VH * .78, 3, 26, '#06071a', 1.05);   // 右邊的城下町和左邊同一高度、同樣三排
+    // 橋
+    c.strokeStyle = '#06071a'; c.lineWidth = 8; c.beginPath(); c.moveTo(VW * .02, VH * .9); c.quadraticCurveTo(VW * .2, VH * .8, VW * .38, VH * .9); c.stroke();
+    c.lineWidth = 3; for (let i = 0; i <= 8; i++) { const t = i / 8, x = VW * (.02 + .36 * t), y = (1 - t) * (1 - t) * VH * .9 + 2 * (1 - t) * t * VH * .8 + t * t * VH * .9; c.beginPath(); c.moveTo(x, y); c.lineTo(x, y - 16); c.stroke(); }
+
+    for (let k = 0; k < 3; k++) lanternString(VW * (.01 + k * .14), VH * (.6 + k * .03), VW * (.15 + k * .14), VH * (.62 + k * .03), 7);
+    // 忍者剪影只放在右側、不會被遊戲畫面擋住的位置（?n=1 站在天守閣屋頂、2 躍過月亮、3 蹲在城下町屋頂）
+    const NP = +(new URLSearchParams(location.search).get('n') || 1);
+    if (NP === 1) ninja(VW * .8, VH * .74 - 232 * 1.5, 1.5, 'stand', '#04050f', -1);
+    else if (NP === 2) ninja(VW * .9, VH * .22, 1.6, 'leap', '#04050f', -1);
+    else ninja(VW * .905, VH * .74 - 96 * 1.5 + 4, 1.4, 'crouch', '#04050f', -1);   // 蹲在石垣的轉角上
+    // 下緣：左右連貫的地面＋同一條雲霧帶，河只在左邊、往右淡出
+    { const gg = c.createLinearGradient(0, VH * .88, 0, VH); gg.addColorStop(0, 'rgba(5,6,26,0)'); gg.addColorStop(.45, '#05061a'); gg.addColorStop(1, '#04050f'); c.fillStyle = gg; c.fillRect(0, VH * .88, VW, VH * .12); }
+    { const rg = c.createLinearGradient(0, 0, VW * .45, 0); rg.addColorStop(0, 'rgba(90,110,200,.35)'); rg.addColorStop(.7, 'rgba(90,110,200,.2)'); rg.addColorStop(1, 'rgba(90,110,200,0)'); c.fillStyle = rg; c.fillRect(0, VH * .935, VW * .45, VH * .04); }
+    mist(VH * .9, 34, .28);
+  },
+};
+const NAME = { 1: '月下城 1　山丘天守＋城下町', 2: '月下城 2　雲海山城＋河谷村', 3: '月下城 3　祭典之夜＋大天守' };
+const img = new Image();
+img.onload = () => {
+  SCENES[S]();
+  // 中間的直版遊戲畫面（兩側一點陰影＋金色細邊）
+  const sg = c.createLinearGradient(GX - 30, 0, GX, 0); sg.addColorStop(0, 'rgba(0,0,0,0)'); sg.addColorStop(1, 'rgba(0,0,0,.6)'); c.fillStyle = sg; c.fillRect(GX - 30, 0, 30, VH);
+  const sg2 = c.createLinearGradient(GX + GW, 0, GX + GW + 30, 0); sg2.addColorStop(0, 'rgba(0,0,0,.6)'); sg2.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = sg2; c.fillRect(GX + GW, 0, 30, VH);
+  c.drawImage(img, 0, 0, img.width, img.height, GX, 0, GW, VH);
+  for (const x of [GX - 2, GX + GW]) { c.fillStyle = '#c8a050'; c.fillRect(x, 0, 2, VH); }
+  c.fillStyle = 'rgba(0,0,0,.55)'; aRR(c, 14, 14, 330, 32, 8); c.fill(); c.fillStyle = '#ffd27a'; c.font = `900 18px ${FONT}`; c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText(NAME[S], 26, 31);
+  if (new URLSearchParams(location.search).has('full')) { c.fillStyle = 'rgba(0,0,0,0)'; }
+};
+img.src = 'shop_500_1083.png';
+if (new URLSearchParams(location.search).has('full')) { img.onload = () => { SCENES[S](); }; }
+</script>

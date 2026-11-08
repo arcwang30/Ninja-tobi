@@ -15,6 +15,8 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<canvas id="sideBg" aria-hidden="true"></canvas>   <!-- iPad／電腦橫向：兩側的月下城夜景（sidebg.js） -->
+<div id="rotateTip"><div class="rt-phone"></div><b data-i18n="rotate_tip"></b></div>   <!-- 手機橫拿：請轉成直向 -->
 <div id="app">
   <canvas id="cv"></canvas>
   <!-- 用來量瀏海高度（env(safe-area-inset-top)）的隱形元素 -->
@@ -195,6 +197,7 @@
 <script src="music.js"></script>
 <script src="art.js"></script>
 <script src="chars.js"></script>
+<script src="sidebg.js"></script>
 <script src="cut.js"></script>
 <script src="game.js"></script>
 <script src="stagefx.js"></script>

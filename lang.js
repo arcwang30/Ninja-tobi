@@ -78,6 +78,7 @@ const STR = {
   ps_skills: ['技能 {0}/{1}', '技 {0}/{1}', 'Skills {0}/{1}'],
   ps_perks: ['秘傳', '秘伝', 'Secret Arts'],
   tutorial: ['📖 新手教學', '📖 チュートリアル', '📖 Tutorial'],
+  rotate_tip: ['請把手機轉成直向來玩', 'スマホを縦向きにして遊んでください', 'Please rotate your phone to portrait'],
   tut_skip: ['跳過教學 ▶▶', 'スキップ ▶▶', 'Skip ▶▶'],
   tut_step: ['新手教學 {0}/{1}', 'チュートリアル {0}/{1}', 'Tutorial {0}/{1}'],
   tut_good: ['很好！', 'いいぞ！', 'Nice!'],

@@ -339,8 +339,10 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v53';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v54';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
+const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
 let DIAG = '';
@@ -360,11 +362,20 @@ function resize() {
     APPFIX.gap = Math.max(APPFIX.gap, APPFIX.full - vh);
     if (APPFIX.gap > 0) { gap = APPFIX.gap; vh = APPFIX.full; }
   } else APPFIX = { w: 0, full: 0, gap: 0 };
-  // 比 9:16 還寬的螢幕（iPad、橫向）：高度固定 640，把世界加寬到剛好填滿左右
-  if (!W_LOCK) { W = vh / vw >= 640 / 360 ? 360 : clamp(640 * vw / vh, 360, 960); PL_MAX = W - WALL - 11; }
+  // 手機（iPhone 等）只能直向玩：橫拿時蓋上「請轉成直向」並暫停
+  const land = vw > vh, rot = land && IS_PHONE;
+  document.body.classList.toggle('rotate', rot);
+  if (rot) setTimeout(() => { if (g && state !== 'menu' && state !== 'over') pauseGame(); }, 0);   // 延後執行（第一次 resize 時 g、state 還沒宣告）
+  // iPad／電腦橫向：遊戲維持直版比例放在中間，左右鋪上月下城的夜景（sidebg.js）
+  const pillar = land && !IS_PHONE;
+  document.body.classList.toggle('pillar', pillar);
+  // 比 9:16 還寬的直向螢幕（iPad 直拿）：高度固定 640，把世界加寬到剛好填滿左右；橫向時固定 360 寬
+  if (!W_LOCK) { W = pillar ? 360 : vh / vw >= 640 / 360 ? 360 : clamp(640 * vw / vh, 360, 960); PL_MAX = W - WALL - 11; }
   // 依螢幕比例調整邏輯高度（640～900），長螢幕手機也能上下滿版
-  H = clamp(Math.round(W * vh / vw), 640, 900);
+  H = pillar ? Math.max(760, Math.round(W * 760 / 360)) :   /* 橫向時用接近手機的直長比例 */ clamp(Math.round(W * vh / vw), 640, 900);
   const w = Math.min(vw, vh * W / H), h = w * H / W;
+  const sb = $('sideBg');
+  if (pillar && sb && typeof SIDEBG !== 'undefined') { const key = `${vw}x${vh}x${Math.round(w)}x${save.skin}`; if (sb.dataset.k !== key) { sb.dataset.k = key; SIDEBG.draw(sb, vw, vh, w); } }
   app.style.width = w + 'px'; app.style.height = h + 'px';
   // 主畫面模式從畫面頂端開始排，其餘置中
   // iOS 這個模式下，最下面那段不屬於「可視範圍」，固定定位的元素畫不到。
