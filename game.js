@@ -339,7 +339,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v57';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v58';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -444,7 +444,7 @@ cv.addEventListener('pointerdown', e => {
     if (hy < HUD_Y1 + 6 && p.x > W - 40) { pauseGame(); return; }
     if (hy > HUD_Y0 - 4 && hy < HUD_Y1 + 6 && p.x > 116 && p.x < 172) { castScroll(); return; }
     // 豪天翔按鈕（畫面中間偏下）：按鈕在操作區中間，所以只有「點一下就放開」才算按鈕；按住滑動仍是一般移動
-    { const sb = scrollBtnPos(); inp.btn = Math.hypot(p.x - sb.x, p.y - sb.y) < sb.r + 8 ? { t: performance.now(), x: p.x, y: p.y } : null; }
+    { const sb = scrollBtnPos(); inp.btn = g.scrolls > 0 && g.fly <= 0 && Math.hypot(p.x - sb.x, p.y - sb.y) < sb.r + 8 ? { t: performance.now(), x: p.x, y: p.y } : null; }   // 只有按鈕出現時才算
   }
   inp.down = true; inp.id = e.pointerId; inp.lx = p.x; inp.ly = p.y; inp.sw = 0;
   inp.hist = [{ x: p.x, y: p.y, t: performance.now() }]; inp.flicked = false;
@@ -1794,9 +1794,10 @@ function drawSling() {
 }
 
 // 右下角的豪天翔按鈕：大圓鈕、裡面是卷軸，有卷軸時發光並顯示張數（拇指最好按的位置）
-function scrollBtnPos() { return { x: W / 2, y: H * 2 / 3, r: 32 }; }   // 畫面中間、下方三分之一的位置
+function scrollBtnPos() { return { x: W / 2, y: H * 5 / 6, r: 32 }; }   // 畫面中間偏下（下方六分之一處）
 function drawScrollBtn() {
   const { x, y, r } = scrollBtnPos(), c = ctx, has = g.scrolls > 0 && g.fly <= 0, pu = has ? .5 + .5 * Math.sin(g.t * 5) : 0;
+  if (!has) return;   // 有卷軸、可以發動時才出現
   c.save();
   if (has) { const gl = c.createRadialGradient(x, y, r * .6, x, y, r * 1.6); gl.addColorStop(0, `rgba(255,210,90,${.35 + .25 * pu})`); gl.addColorStop(1, 'rgba(255,210,90,0)'); c.fillStyle = gl; aCirc(c, x, y, r * 1.6); c.fill(); }
   c.globalAlpha = has ? .85 : .4;   // 在畫面中間，半透明一點才不會擋住視線
