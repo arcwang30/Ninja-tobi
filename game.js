@@ -81,14 +81,10 @@ const ENEMY = [
 ];
 // 以下名稱與說明皆為 [繁中, 日文, 英文]
 const BOSS_KINDS = [
-  { n: ['真妖鬼', '真妖鬼', 'True Oni'], skill: ['踩破站台', '足場破壊', 'Breaks platforms'], col: '#d0302a' },
-  { n: ['怠惰鬼', '怠惰鬼', 'Sloth Oni'], skill: ['降速', '鈍足', 'Slows you'], col: '#8a3fd0' },
-  { n: ['雪女鬼', '雪女鬼', 'Snow Oni'], skill: ['冰凍', '凍結', 'Freezes you'], col: '#3fa6e0' },
-  { n: ['鐵甲鬼', '鉄甲鬼', 'Iron Oni'], skill: ['反彈', '弾き返し', 'Repels you'], col: '#5a5a66' },
-];
-const QTE_TYPES = [
-  { id: 'mash', n: ['連打!', '連打!', 'MASH!'], hint: ['連續點擊畫面', '画面を連続タップ', 'Tap rapidly'] },
-  { id: 'swipe', n: ['劃擊!', '斬り払い!', 'SWIPE!'], hint: ['快速滑動畫面', '画面を素早くスワイプ', 'Swipe fast'] },
+  { n: ['真妖鬼', '真妖鬼', 'True Oni'], skill: ['金棒落・踩裂站台', '金棒落とし・足場破壊', 'Club drops, breaks platforms'], col: '#d0302a' },
+  { n: ['怠惰鬼', '怠惰鬼', 'Sloth Oni'], skill: ['睡魔霧（降速）', '睡魔の霧（鈍足）', 'Sleep mist (slows you)'], col: '#8a3fd0' },
+  { n: ['雪女鬼', '雪女鬼', 'Snow Oni'], skill: ['吹雪（冰凍）', '吹雪（凍結）', 'Blizzard (freezes you)'], col: '#3fa6e0' },
+  { n: ['鐵甲鬼', '鉄甲鬼', 'Iron Oni'], skill: ['護盾・突進', '盾・突進', 'Shield, charge'], col: '#5a5a66' },
 ];
 const PERKS = [
   { id: 'bounce', n: ['強腳', '強脚', 'Strong Legs'], d: ['跳躍高度 +8%', 'ジャンプ力 +8%', 'Jump height +8%'], max: 3, ic: '🦶' },
@@ -162,7 +158,7 @@ const EVO = {
 };
 // HP：基礎 100，體魄／鋼身每級 +20；各種攻擊的傷害
 const HP_BASE = 100, HP_STEP = 20;
-const DMG = { shot: 15, kunai: 15, arrow: 20, spike: 20, onibi: 25, zone: 30, ember: 8, fire: 12 };   // ember＝火關提燈妖怪的火星、fire＝火車留下的火焰
+const DMG = { shot: 15, kunai: 15, arrow: 20, spike: 20, onibi: 25, zone: 30, ember: 8, fire: 12, boss: 20, mist: 12, qte: 10 };   // ember＝火關提燈妖怪的火星、fire＝火車留下的火焰
 const SOUL_V = [1, 2, 3, 2, 3, 2, 8, 1, 1, 2, 2, 2, 2, 25];   // 各種敵人掉落的魂量
 const xpNeed = l => Math.round(5 + 3.5 * (l - 1) + .4 * (l - 1) ** 2);
 const MODS = [
@@ -320,6 +316,8 @@ const SFX = {
   clank: () => { tone(1800, .08, 'square', .04, -200); tone(1200, .1, 'triangle', .04); },
   fever: () => { for (let i = 0; i < 8; i++) tone(523 * Math.pow(1.122, i), .1, 'square', .045, 0, i * .05); },
   aim: () => tone(620, .08, 'triangle', .04, 200),
+  warn: () => { tone(880, .07, 'square', .04); tone(880, .07, 'square', .04, 0, .13); },   // 魔王出招的預兆
+  ring: () => tone(1320, .05, 'triangle', .03),
   soul: () => tone(1100 + Math.random() * 300, .05, 'sine', .025),
   thunder: () => { noise(.3, .12); tone(80, .3, 'sawtooth', .06, -30); },
   wind: () => tone(500, .12, 'triangle', .025, 500),
@@ -339,7 +337,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v63';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v64';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -456,7 +454,7 @@ cv.addEventListener('pointerdown', e => {
   inp.mode = state === 'play' && !paused ? 'pending' : null;
   inp.hold = 0; inp.sx = inp.cx = p.x; inp.sy = inp.cy = p.y;
   try { cv.setPointerCapture(e.pointerId); } catch (er) { }
-  if (state === 'qte' && g.qte.type === 'mash') qteHit(1);
+  if (state === 'qte') qteTap();
 });
 cv.addEventListener('pointermove', e => {
   if (!inp.down || e.pointerId !== inp.id) return;
@@ -476,10 +474,6 @@ cv.addEventListener('pointermove', e => {
       if (fy < -FLICK_PX && -fy > Math.abs(fx) * .6) { inp.flicked = true; inp.dx = 0; startDash(fx, fy); }
       else if (fy > FLICK_PX && fy > Math.abs(fx) * .8) { inp.flicked = true; inp.dx = 0; startDive(); }
     } else if (Math.abs(fy) < 8) inp.flicked = false;
-  }
-  if (state === 'qte') {
-    const q = g.qte;
-    if (q.type === 'swipe') { inp.sw += Math.hypot(dx, dy); if (inp.sw > 55) { inp.sw = 0; qteHit(1); } }
   }
 });
 const endPtr = e => {
@@ -516,7 +510,7 @@ addEventListener('keydown', e => {
   if (e.code === 'Escape' || e.code === 'KeyP') { if (state !== 'menu' && state !== 'over' && state !== 'perk' && state !== 'clearq') paused ? resumeGame() : pauseGame(); }
   if (e.code === 'Space' || e.code === 'Enter') {
     if (state === 'play' && !paused) castScroll();
-    else if (state === 'qte') qteHit(1);
+    else if (state === 'qte') qteTap();
     e.preventDefault();
   }
   if (!e.repeat && state === 'play' && !paused) {
@@ -548,7 +542,7 @@ function startRun(lvl) {
     drops: [], bolts: [], blades: [], skills: {}, sks: {}, xp: 0, lv: 1, lvQueue: 0, barrier: 0, barT: 0,
     genY: 40, lastX: W / 2, rowN: 0, ladderCD: 3,
     zoneY: 360, boss: null, bossN: 0, stage: 0, base: 0,
-    combo: 0, comboT: 0, maxCombo: 0, kills: 0, vampN: 0, ki: 3, fever: 0,
+    combo: 0, comboT: 0, maxCombo: 0, kills: 0, vampN: 0, ki: 3, kiChain: 0, fever: 0,
     hp: 1, maxHp: 1, scrolls: 0, fly: 0, shake: 0,
     perks: {}, mod: null, wind: 0, windT: 0, spikeUsed: false, shurT: 2,
     banner: null, slash: null, qte: null, killT: 0, castT: 0, dieT: 0,
@@ -822,7 +816,7 @@ function updateDemo(dt) {
 function updatePlay(dt) {
   const p = g.p;
   g.t += dt;
-  if (g.fever > 0) { g.fever -= dt; g.ki = kiMax(); if (g.fever <= 0) settleCombo(); }
+  if (g.fever > 0) { g.fever -= dt; if (g.fever <= 0) settleCombo(); }
   else if (g.comboT > 0) { g.comboT -= dt; if (g.comboT <= 0) settleCombo(); }
   g.ki = Math.min(kiMax(), g.ki + dt * .12 * (sk('swift') ? SKV.swift(sk('swift')).regen : 1) * (1 + .15 * mt('kireg')));
   updateWx(dt);   // 天候（levels.js）
@@ -1129,7 +1123,7 @@ function gainXp(v) {
 
 function land(pl) {
   const p = g.p;
-  p.y = pl.y; p.sq = 1; p.wallUsed = false;
+  p.y = pl.y; p.sq = 1; p.wallUsed = false; g.kiChain = 0;
   let v = JUMP * (1 + .08 * pk('bounce')) * (p.slow > 0 ? .85 : 1);
   if (p.dive) {
     // 急降斬著地：衝擊波斬殺周圍敵人、擊碎釘刺，並高高彈起；不會中斷連斬
@@ -1216,6 +1210,7 @@ function addBonus(n) { g.bonus += n * (1 + .2 * pk('score')); }
 function score() { return Math.floor(g.top / 4 + g.bonus); }
 
 // ===== 斬擊 =====
+const kiCost = () => g.fever > 0 ? .5 : 1;   // 狂熱中衝刺／急降斬只花半格氣
 const kiMax = () => 3 + pk('kimax') + mt('ki') + (sk('swift') ? SKV.swift(sk('swift')).ki : 0);
 
 // 碰到敵人。回傳 true 表示進入了全畫面斬擊演出
@@ -1278,7 +1273,8 @@ function slay(e, auto) {
   floatText(e.x, e.y - 10, `+${Math.round(ed.pts * mult * (1 + .2 * pk('score')))}`, g.fever > 0 ? '#ffd27a' : '#fff', 16);
   if (g.combo >= 2) { floatText(W / 2, 0, t('chain', g.combo), '#ffd27a', 26, true); SFX.combo(g.combo); }
   if (g.combo % 10 === 0) startFever();
-  if (!auto) g.ki = Math.min(kiMax(), g.ki + .5);   // 只有自己斬的才回氣
+  // 只有自己斬的才回氣；衝刺／急降斬連續斬殺時第一隻回 0.5、之後每隻只回 0.2，踩到地板才重置（避免一路衝到底）
+  if (!auto) g.ki = Math.min(kiMax(), g.ki + (pp.dash > 0 || pp.dive ? (g.kiChain++ ? .2 : .5) : .5));
   g.fx.push({ x: e.x, y: e.y, a: rnd(0, 3.14), t: 0 });
   burst(e.x, e.y, '#222', 12); SFX.slash(); vib(25);
   g.shake = Math.max(g.shake, 5);
@@ -1314,7 +1310,7 @@ function settleCombo() {
 }
 
 function startFever() {
-  g.fever = 6; g.ki = kiMax();
+  g.fever = 6;
   g.banner = { t: 1.4, a: t('chain_hud', g.combo), b: t('fever'), c: t('fever_desc') };
   SFX.fever(); vib([40, 30, 40]); if (++g.feverN >= 3) unlock('fever3');
   unlock('combo10');
@@ -1324,8 +1320,8 @@ function startFever() {
 function startDash(dx, dy, dur = DASH_T, minUp = .35) {
   const p = g.p;
   if (state !== 'play' || g.fly > 0 || p.dash > 0 || p.freeze > 0) return;
-  if (g.ki < 1) { floatText(p.x, p.y - 60, t('ki_low'), '#9ad8ff', 14); return; }
-  g.ki -= 1; if (g.tut) g.tut.dash = (g.tut.dash || 0) + 1;
+  if (g.ki < kiCost()) { floatText(p.x, p.y - 60, t('ki_low'), '#9ad8ff', 14); return; }
+  g.ki -= kiCost(); if (g.tut) g.tut.dash = (g.tut.dash || 0) + 1;
   [dx, dy] = upDir(dx, dy, minUp);
   p.dash = dur; p.dvx = dx * DASH_V; p.dvy = dy * DASH_V; p.dive = false; p.banks = 0;
   if (Math.abs(dx) > .1) p.face = dx > 0 ? 1 : -1;
@@ -1377,8 +1373,8 @@ function aimInfo() {
 function startDive() {
   const p = g.p;
   if (state !== 'play' || g.fly > 0 || p.dive || p.freeze > 0) return;
-  if (g.ki < 1) { floatText(p.x, p.y - 60, t('ki_low'), '#9ad8ff', 14); return; }
-  g.ki -= 1; if (g.tut) g.tut.dive = 1;
+  if (g.ki < kiCost()) { floatText(p.x, p.y - 60, t('ki_low'), '#9ad8ff', 14); return; }
+  g.ki -= kiCost(); if (g.tut) g.tut.dive = 1;
   p.dash = 0; p.dive = true; p.vy = DIVE_V;
   SFX.dive();
 }
@@ -1413,73 +1409,192 @@ function castScroll() {
 }
 
 // ===== BOSS =====
+// 魔王戰：在平台上用衝刺斬／急降斬（或從上方踩下去）打魔王的身體，累積「破綻」後魔王會暈眩；
+// 暈眩時碰到它進入「時機斬」（QTE）。魔王會輪流放有預兆的攻擊，放完會喘一下，那就是反擊的空檔。
+// 從下方直接跳上去撞（沒有衝刺）會被擋開，所以要留「氣」來打它。
+const BOSS_ATK = [['club', 'club', 'fan'], ['mist', 'mist', 'fan'], ['snow', 'snow', 'fan'], ['charge', 'charge', 'fan']];
 function spawnBoss() {
   // 第 5 舞台：這一關的魔王；第 10 舞台：另一隻更強的魔王
   const second = g.stage >= 5, kind = (g.th + (second ? 2 : 0)) % 4, n = g.lvl * 2 + (second ? 1 : 0);
-  const hp = 16 + 6 * n;
+  const hp = 10 + 3 * n;
   g.bossT0 = g.t; wxBoss(kind);   // 魔王登場時換成魔王的天候（levels.js）
   g.boss = {
-    n, kind, hp, max: hp, x: W / 2, y: g.camY - 60, t: 0, life: 22, cool: 0, skillT: 2.5,
-    shield: false, shT: 1.5, r: 30, warn: 0, qtype: QTE_TYPES[(n + (Math.random() * QTE_TYPES.length | 0)) % QTE_TYPES.length].id,
+    n, kind, hp, max: hp, x: W / 2, y: g.camY - 60, t: 0, ai: 0, cool: 0, skillT: 9, crT: 2.6,
+    shield: false, shT: 1.5, r: 30, warn: 0, flash: 0,
+    st: 0, stN: 3 + (n >= 4) + (n >= 8), stun: 0,   // 破綻：打滿 stN 下就暈眩
+    atk: null, atkT: 3, rest: 0, blockN: 0,
   };
   g.banner = { t: 2.2, a: t('boss_in'), b: t('boss_appear', L(BOSS_KINDS[kind].n)), c: t('boss_desc', L(BOSS_KINDS[kind].skill)) };
   SFX.boss(); vib(200);
 }
 function updateBoss(dt) {
-  const b = g.boss, p = g.p;
-  b.t += dt; b.life -= dt; b.cool = Math.max(0, b.cool - dt);
-  const ty = g.camY + 120 + Math.sin(b.t * 1.7) * 20;
-  b.y += (ty - b.y) * Math.min(1, dt * 2.5);
-  b.x = W / 2 + Math.sin(b.t * .9) * 120;
-  // 技能
-  b.skillT -= dt;
-  if (b.kind === 0 && b.skillT <= 0) {
-    b.skillT = 2.2;
-    const c = g.plats.filter(o => !o.broken && !o.crack && o.type !== 'ground' && o.y > g.camY + H * .3 && o.y < g.camY + H * .9);
-    if (c.length) { pick(c).crack = .7; }
-  } else if (b.kind === 1 && b.skillT <= 0) {
-    if (!b.warn) { b.warn = .7; floatText(b.x, b.y + 40, t('boss_slow'), '#c58aff', 20); }
-    b.warn -= dt; if (b.warn <= 0) { b.warn = 0; b.skillT = 5.5; p.slow = 3; vib(60); }
-  } else if (b.kind === 2 && b.skillT <= 0) {
-    if (!b.warn) { b.warn = .8; floatText(b.x, b.y + 40, t('boss_freeze'), '#9ae0ff', 20); }
-    b.warn -= dt; if (b.warn <= 0) { b.warn = 0; b.skillT = 6; p.freeze = 1.5; vib(60); }
-  } else if (b.kind === 3) {
-    b.shT -= dt; if (b.shT <= 0) { b.shield = !b.shield; b.shT = b.shield ? 1.6 : 1.8; }
+  const b = g.boss, p = g.p, fast = p.dash > 0 || p.dive || g.fly > 0;
+  b.t += dt; b.cool = Math.max(0, b.cool - dt); b.flash = Math.max(0, b.flash - dt); b.rest = Math.max(0, b.rest - dt);
+  const a = b.atk, charging = a && a.k === 'charge' && a.ph === 'act';
+  // 移動：暈眩時往下掉到玩家附近；預兆時停住；攻擊後喘氣時降低、變慢
+  if (b.stun > 0) {
+    b.stun -= dt;
+    b.y += (g.camY + H * .36 - b.y) * Math.min(1, dt * 3);
+    if (b.stun <= 0) { b.stun = 0; b.atkT = 1.2; floatText(b.x, b.y - 50, t('boss_recover'), '#ccc', 18); }
+  } else if (!charging) {
+    const ty = g.camY + (b.rest > 0 ? 215 : 165) + Math.sin(b.t * 1.7) * 20;   // 比 HUD 低一點，衝刺搆得到
+    b.y += (ty - b.y) * Math.min(1, dt * 2.5);
+    if (!a || a.ph !== 'warn') b.ai += dt * (b.rest > 0 ? .4 : 1);
+    const tx = W / 2 + Math.sin(b.ai * .9) * Math.min(120, W / 2 - WALL - 50);
+    b.x += (tx - b.x) * Math.min(1, dt * 3);
   }
+  // 常駐技能：真妖鬼踩裂站台；鐵甲鬼的護盾開關（出招和喘氣時沒有護盾）
+  if (b.stun <= 0 && b.kind === 0) {
+    b.crT -= dt;
+    if (b.crT <= 0) {
+      b.crT = 2.6;
+      const c = g.plats.filter(o => !o.broken && !o.crack && o.type !== 'ground' && o.y > g.camY + H * .3 && o.y < g.camY + H * .9);
+      if (c.length) pick(c).crack = .7;
+    }
+  }
+  if (b.kind === 3) {
+    if (b.stun > 0 || a || b.rest > 0) b.shield = false;
+    else { b.shT -= dt; if (b.shT <= 0) { b.shield = !b.shield; b.shT = b.shield ? 1.6 : 1.8; } }
+  }
+  // 出招
+  if (b.stun <= 0 && !a && b.rest <= 0) { b.atkT -= dt; if (b.atkT <= 0) bossAttack(b); }
+  if (b.atk && updateBossAtk(b, b.atk, dt)) return;
   // 接觸
-  if (b.cool <= 0 && g.fly <= 0 && Math.abs(p.x - b.x) < b.r + 12 && Math.abs((p.y - 20) - b.y) < b.r + 18) {
-    if (b.shield) {
+  if (b.cool <= 0 && Math.abs(p.x - b.x) < b.r + 12 && Math.abs((p.y - 20) - b.y) < b.r + 18) {
+    if (b.stun > 0) startQte();
+    else if (charging && !fast) { b.cool = .6; p.vy = 320; p.x += p.x < b.x ? -30 : 30; if (hurt('boss')) return; }
+    else if (b.shield || charging) {
       p.vy = 300; p.dash = 0; p.dive = false; p.x += (p.x < b.x ? -40 : 40); b.cool = .8; g.shake = 6; SFX.hit();
       floatText(b.x, b.y - 40, t('boss_repel'), '#ccc', 20);
-    } else {
-      state = 'qte';
-      const qt = QTE_TYPES.find(q => q.id === b.qtype);
-      g.qte = { type: b.qtype, q: qt, t: 0, tl: 4.5, hits: [], dmg0: b.hp };
-      inp.sw = 0; p.dash = 0; p.dive = false;
-      SFX.boss(); vib(80);
+    } else if (fast || p.vy > 0) bossHit(b);
+    else {   // 從下方跳上去撞：被擋開，提示要用衝刺斬
+      p.vy = 160; b.cool = .5; SFX.clank();
+      floatText(b.x, b.y - 40, t(b.blockN++ < 3 ? 'boss_block' : 'boss_repel'), '#ccc', 15);
     }
   }
   // 魔王不會逃走：一定要打倒才能進入下一個舞台
 }
-function qteHit(n) {
-  const q = g.qte, b = g.boss; if (!q || !b) return;
-  b.hp -= n * (q.type === 'mash' ? 1 : q.type === 'swipe' ? 1.6 : 1.4) * (1 + .1 * mt('power'));
-  q.hits.push({ a: rnd(0, Math.PI), t: 0, x: rnd(-40, 40), y: rnd(-40, 40) }); q.n = (q.n || 0) + 1;
-  g.shake = 5; SFX.slash(); vib(15);
-  if (b.hp <= 0) { b.hp = 0; state = 'kill'; g.killT = 1.5; SFX.kill(); vib([60, 40, 160]); }
+// 打到魔王身體：小傷害＋累積破綻（不會直接打死，最後一擊一定是時機斬）
+function bossHit(b) {
+  const p = g.p, dv = p.dive, d = (dv ? 1.5 : 1) * (1 + .1 * mt('power'));
+  b.hp = Math.max(1, b.hp - d); b.st += dv ? 2 : 1; b.cool = g.fly > 0 ? .8 : .45; b.flash = .15;
+  g.fx.push({ x: b.x, y: b.y, a: rnd(0, 3.14), t: 0 }); burst(b.x, b.y, BOSS_KINDS[b.kind].col, 14);
+  g.hitstop = .1; g.shake = 7; SFX.slash(); vib(40);
+  floatText(b.x, b.y - 46, '-' + Math.round(d * 10) / 10, '#fff', 18);
+  if (g.fly <= 0) { p.dash = 0; p.dive = false; p.vy = -JUMP; p.wallUsed = false; }
+  p.inv = Math.max(p.inv, .3);
+  g.ki = Math.min(kiMax(), g.ki + .5);
+  if (b.st >= b.stN || b.hp <= 1) {   // 破綻：暈眩 3 秒，碰到它就能時機斬
+    b.stun = 3; b.st = 0; b.atk = null; b.warn = 0; b.shield = false; b.rest = 0; b.skillT = 9;
+    floatText(W / 2, 0, t('boss_stun'), '#ffd27a', 28, true); SFX.boom(); vib([40, 30, 80]);
+  }
+}
+// 出招：先預兆（地上畫出危險範圍、魔王眼睛發光），時間到才判定
+function bossAttack(b) {
+  const p = g.p, n = b.n, k = pick(BOSS_ATK[b.kind]);
+  const a = { k, ph: 'warn', t: Math.max(.6, .9 - .03 * n), hit: false };
+  if (k === 'club') {   // 金棒落：幾道直線從天而降，其中一道對準玩家
+    a.w = 54; a.xs = [clamp(p.x, WALL + 30, W - WALL - 30)];
+    const m = 1 + (n >= 3) + (W > 500);
+    for (let tries = 0; a.xs.length < m + 1 && tries < 40; tries++) { const x = rnd(WALL + 30, W - WALL - 30); if (a.xs.every(o => Math.abs(o - x) > 80)) a.xs.push(x); }
+  } else if (k === 'mist') {   // 睡魔霧：在玩家身邊冒出紫霧（降速＋小傷害）
+    a.r = 72; a.cs = [{ x: p.x, y: p.y - 20 }];
+    if (n >= 3) a.cs.push({ x: clamp(p.x + (p.x < W / 2 ? 1 : -1) * rnd(110, 160), WALL + 40, W - WALL - 40), y: p.y - 20 - rnd(40, 110) });
+  } else if (k === 'snow') {   // 吹雪：掃過玩家所在的那半邊（冰凍），強化後兩邊輪流
+    a.side = p.x < W / 2 ? -1 : 1; a.twice = n >= 4;
+  } else if (k === 'charge') {   // 突進：鎖定玩家的位置直線衝過去
+    a.tx = p.x; a.ty = p.y - 20; a.t += .1;
+  } else a.t = .6;   // 扇形飛彈
+  b.atk = a; b.warn = a.t;
+  floatText(b.x, b.y + 48, t('batk_' + k), '#ffd27a', 16); SFX.warn();
+}
+// 回傳 true：玩家死了（這一幀不要再處理）
+function updateBossAtk(b, a, dt) {
+  const p = g.p;
+  a.t -= dt; b.warn = a.ph === 'warn' ? Math.max(.01, a.t) : 0;
+  if (b.kind === 0) b.skillT = a.ph === 'warn' && a.k === 'club' ? a.t : 9;   // 真妖鬼的狼牙棒高舉、砸下（art.js）
+  if (a.ph === 'warn') {
+    if (a.k === 'charge') b.x += rnd(-1.5, 1.5);
+    if (a.t > 0) return false;
+    a.ph = 'act';
+    if (a.k === 'club') { a.t = .3; g.shake = 10; SFX.impact(); vib(60); for (const x of a.xs) burst(x, g.camY + H * .55, '#ffb090', 10); }
+    else if (a.k === 'mist') { a.t = 1.3; SFX.wind(); }
+    else if (a.k === 'snow') { a.t = .4; SFX.wind(); g.shake = 4; }
+    else if (a.k === 'charge') { const dx = a.tx - b.x, dy = a.ty - b.y, d = Math.hypot(dx, dy) || 1; a.vx = dx / d * 680; a.vy = dy / d * 680; a.t = (d + 70) / 680; SFX.dash(); }
+    else {
+      const a0 = Math.atan2((p.y - 20) - b.y, p.x - b.x), m = b.n >= 3 ? 7 : 5;
+      for (let i = 0; i < m; i++) { const an = a0 + (i - (m - 1) / 2) * .26; g.eshots.push({ x: b.x, y: b.y + 20, vx: Math.cos(an) * 175, vy: Math.sin(an) * 175, t: 0, skin: g.th }); }
+      a.t = .1; SFX.throw();
+    }
+    return false;
+  }
+  // 判定（衝刺／急降斬中無敵，所以衝刺也能用來閃招）
+  let hit = false;
+  if (a.k === 'club') hit = a.xs.some(x => Math.abs(p.x - x) < a.w / 2 + 6);
+  else if (a.k === 'mist') { if (a.cs.some(c => Math.hypot(p.x - c.x, p.y - 20 - c.y) < a.r)) { p.slow = Math.max(p.slow, 2.5); hit = true; } }
+  else if (a.k === 'snow') { if (a.side < 0 ? p.x < W / 2 : p.x > W / 2) { if (p.inv <= 0) p.freeze = Math.max(p.freeze, 1); hit = true; } }
+  else if (a.k === 'charge') { b.x = clamp(b.x + a.vx * dt, WALL + 30, W - WALL - 30); b.y += a.vy * dt; }
+  if (hit && !a.hit) { a.hit = true; if (hurt(a.k === 'mist' ? 'mist' : 'boss')) return true; }
+  if (a.t > 0) return false;
+  if (a.k === 'snow' && a.twice) { a.twice = false; a.side = -a.side; a.ph = 'warn'; a.t = .55; a.hit = false; return false; }
+  b.atk = null; b.warn = 0; b.skillT = 9;
+  b.rest = a.k === 'charge' ? 1.8 : .9; b.atkT = Math.max(1.6, 3.2 - .15 * b.n);
+  if (a.k === 'charge') floatText(b.x, b.y - 46, t('boss_tired'), '#9ae0ff', 16);
+  return false;
+}
+// ===== 時機斬（QTE）：圓圈縮到白圈上時點擊，連續 3 次 =====
+function startQte() {
+  const b = g.boss, p = g.p;
+  state = 'qte'; p.dash = 0; p.dive = false;
+  g.qte = { t: 0, hits: [], n: 0, rings: [], log: [], i: 0, cnt: 3, perf: 0, next: .45, fl: 0, end: 0, kill: false,
+    dur: Math.max(.62, .95 - .035 * b.n), R0: 120, RT: 34 };
+  SFX.boss(); vib(80);
+}
+const qteR = r => g.qte.R0 * (1 - (g.qte.t - r.t0) / g.qte.dur);
+function qteTap() {
+  const q = g.qte; if (!q || q.end) return;
+  const cur = q.rings.find(r => !r.res); if (!cur) return;
+  const d = Math.abs(qteR(cur) - q.RT);
+  qteRes(cur, d <= 8 ? 2 : d <= 18 ? 1 : 0);
+}
+function qteRes(r, lv) {
+  const q = g.qte, b = g.boss, pw = 1 + .1 * mt('power');
+  r.res = ['miss', 'good', 'perf'][lv]; r.rt = 0; q.next = q.t + .28; q.log.push(r.res);
+  if (lv) {
+    b.hp -= (lv === 2 ? 2.5 : 1.5) * pw;
+    if (lv === 2 && ++q.perf === q.cnt) { b.hp -= 2 * pw; q.allP = 0; }   // 三連完美：追加傷害
+    q.hits.push({ a: rnd(0, Math.PI), t: 0, x: r.x - W / 2, y: r.y - H * .42 }); q.n++;
+    g.shake = lv === 2 ? 9 : 5; SFX.slash(); vib(lv === 2 ? 40 : 20);
+  } else {   // 失誤：魔王反擊
+    q.fl = .35; g.shake = 9; g.p.inv = 0;
+    if (hurt('qte')) return;
+  }
+  if (b.hp <= 0) { b.hp = 0; q.end = .45; q.kill = true; }
+  else if (q.i >= q.cnt) q.end = .6;
 }
 function updateQte(dt) {
   const q = g.qte;
-  q.t += dt;
+  q.t += dt; q.fl = Math.max(0, q.fl - dt);
+  if (q.allP != null) q.allP += dt;
   for (const h of q.hits) h.t += dt;
   q.hits = q.hits.filter(h => h.t < .35);
-  if (q.t >= q.tl) {
-    // 時間到，回到遊戲
-    state = 'play'; g.qte = null;
-    g.boss.cool = 1.5; g.boss.life = Math.max(g.boss.life, 6);
-    g.p.vy = -JUMP; g.p.inv = 1;
-    floatText(W / 2, g.camY + H * .45, t('boss_flee'), '#ffd27a', 20);
+  for (const r of q.rings) if (r.res) r.rt += dt;
+  q.rings = q.rings.filter(r => !r.res || r.rt < .6);
+  if (q.end) { q.end -= dt; if (q.end <= 0) endQte(); return; }
+  const cur = q.rings.find(r => !r.res);
+  if (cur) { if (qteR(cur) < q.RT - 18) qteRes(cur, 0); return; }   // 縮過頭＝錯過
+  if (q.i < q.cnt && q.t >= q.next) {
+    const sx = Math.min(100, W / 2 - 70);
+    q.rings.push({ x: W / 2 + rnd(-sx, sx), y: H * .42 + rnd(-60, 80), t0: q.t, res: null, rt: 0 }); q.i++; SFX.ring();
   }
+}
+function endQte() {
+  const q = g.qte, b = g.boss;
+  if (q.kill) { state = 'kill'; g.killT = 1.5; SFX.kill(); vib([60, 40, 160]); return; }
+  state = 'play'; g.qte = null;
+  b.stun = 0; b.cool = 1.2; b.atkT = 1.4; b.rest = 0;
+  g.p.vy = -JUMP; g.p.inv = 1;
+  floatText(W / 2, g.camY + H * .45, t('boss_flee'), '#ffd27a', 20);
 }
 function finishBoss(killed) {
   const b = g.boss;
@@ -1762,7 +1877,7 @@ function drawNinja(x, y, o) { drawHeroNinja(x, y, o); }
 
 // 彈射瞄準的軌跡預覽（世界座標）
 function drawAim() {
-  const p = g.p, a = aimInfo(), ok = g.ki >= 1;
+  const p = g.p, a = aimInfo(), ok = g.ki >= kiCost();
   ctx.fillStyle = 'rgba(120,200,255,.08)'; ctx.fillRect(0, g.camY, W, H);   // 慢動作的淡藍色
   if (!a) return;
   const col = ok ? '#ffffff' : '#888888';
@@ -1804,7 +1919,7 @@ function drawAim() {
 
 // 手指位置的彈弓橡皮筋（畫面座標）
 function drawSling() {
-  const a = aimInfo(), ok = g.ki >= 1;
+  const a = aimInfo(), ok = g.ki >= kiCost();
   ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.arc(inp.sx, inp.sy, AIM_MIN, 0, 7); ctx.stroke();
   ctx.strokeStyle = ok ? '#ffd27a' : '#888'; ctx.lineWidth = 4;
@@ -1917,7 +2032,9 @@ function drawHUD() {
   const b = g.boss;
   if (b) {
     bar(40, 110, W - 80, 16, b.hp / b.max, '#e5342a');
-    txt(t('boss_must'), W / 2, 136, 9, '#ffd27a', 'center', '#000', 2);
+    // 破綻：打滿就暈眩（暈眩中改成閃爍提示）
+    if (b.stun > 0) txt(t('boss_stun_hud'), W / 2, 137, 11, Math.sin(g.t * 12) > 0 ? '#ffd27a' : '#fff', 'center', '#000', 3);
+    else txt(t('boss_st') + ' ' + '◆'.repeat(b.st) + '◇'.repeat(Math.max(0, b.stN - b.st)), W / 2, 137, 11, '#ffd27a', 'center', '#000', 3);
     txt(L(BOSS_KINDS[b.kind].n), W / 2, 119, 9, '#fff', 'center', '#000', 2);
   }
   // 中 BOSS
@@ -2070,15 +2187,94 @@ function drawQte() {
   ctx.globalAlpha = 1;
   // HP
   ctx.fillStyle = '#000'; ctx.fillRect(30, 70, W - 60, 18);
-  ctx.fillStyle = '#c0262d'; ctx.fillRect(32, 72, (W - 64) * (b.hp / b.max), 14);
+  ctx.fillStyle = '#c0262d'; ctx.fillRect(32, 72, (W - 64) * Math.max(0, b.hp / b.max), 14);
   txt(`${L(BOSS_KINDS[b.kind].n)}  HP`, W / 2, 60, 13, '#fff', 'center', '#000', 3);
-  // 時間
-  ctx.fillStyle = '#000'; ctx.fillRect(30, H - 70, W - 60, 10);
-  ctx.fillStyle = '#ffd27a'; ctx.fillRect(32, H - 68, (W - 64) * (1 - q.t / q.tl), 6);
-  const pulse = 1 + Math.sin(q.t * 18) * .08;
-  txt(L(q.q.n), W / 2, H * .74, 54 * pulse * (LI === 2 ? .8 : 1), '#fff', 'center', '#c0262d', 8);
-  txt(L(q.q.hint), W / 2, H * .81, 14, '#ffd27a', 'center', '#000', 3);
-  if (q.type === 'swipe') { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 4; const x = (q.t * 500) % (W + 100) - 50; ctx.beginPath(); ctx.moveTo(x - 60, H * .88); ctx.lineTo(x, H * .86); ctx.stroke(); }
+  // 時機圈：外圈往內縮，縮到白圈上時點擊（淡金色帶＝「良」的範圍）
+  for (const r of q.rings) {
+    if (!r.res) {
+      const rr = Math.max(0, qteR(r));
+      ctx.lineWidth = 36; ctx.strokeStyle = 'rgba(255,210,122,.18)'; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT, 0, 7); ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT, 0, 7); ctx.stroke();
+      ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT - 3, 0, 7); ctx.fill();
+      txt(t('qte_mark'), r.x, r.y + 9, 26, '#fff', 'center', '#c0262d', 4);
+      const near = Math.abs(rr - q.RT) <= 8;
+      ctx.lineWidth = near ? 7 : 5; ctx.strokeStyle = near ? '#fff6c0' : '#ffd27a'; ctx.beginPath(); ctx.arc(r.x, r.y, rr, 0, 7); ctx.stroke();
+    } else {
+      const k = r.rt / .6, col = { perf: '#ffd27a', good: '#fff', miss: '#ff5050' }[r.res];
+      if (r.res !== 'miss') { ctx.globalAlpha = Math.max(0, 1 - k * 1.6); ctx.lineWidth = 6; ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT + k * 70, 0, 7); ctx.stroke(); }
+      ctx.globalAlpha = Math.max(0, 1 - k);
+      txt(t('qte_' + r.res), r.x, r.y - 30 - k * 20, (r.res === 'perf' ? 30 : 24) * (LI === 2 ? .8 : 1), col, 'center', '#000', 5);
+      ctx.globalAlpha = 1;
+    }
+  }
+  if (q.allP != null && q.allP < 1.2) txt(t('qte_allp'), W / 2, H * .25, 26 * (LI === 2 ? .8 : 1), '#ffd27a', 'center', '#c0262d', 6);
+  // 標題與三次結果
+  txt(t('qte_n'), W / 2, H * .76, 46 * (LI === 2 ? .8 : 1), '#fff', 'center', '#c0262d', 8);
+  txt(t('qte_hint'), W / 2, H * .82, 14, '#ffd27a', 'center', '#000', 3);
+  for (let i = 0; i < q.cnt; i++) {
+    ctx.fillStyle = { perf: '#ffd27a', good: '#fff', miss: '#ff5050' }[q.log[i]] || 'rgba(255,255,255,.25)';
+    ctx.beginPath(); ctx.arc(W / 2 + (i - 1) * 30, H * .87, 7, 0, 7); ctx.fill();
+  }
+  if (q.fl > 0) { ctx.fillStyle = `rgba(255,30,30,${q.fl})`; ctx.fillRect(0, 0, W, H); }
+}
+
+// 遊戲畫面中的魔王：攻擊預兆、暈眩、受擊閃白
+function drawBossWorld(b) {
+  drawBossAtk(b);
+  ctx.save(); ctx.translate(b.x, b.y);
+  if (b.stun > 0) ctx.rotate(Math.sin(g.t * 7) * .14);
+  drawBoss(b, 0, 0, 1);
+  ctx.restore();
+  if (b.flash > 0) drawSil(b.x, b.y, 150, 150, 75, 75, 'rgba(255,255,255,.85)', c2 => drawBoss(b, 0, 0, 1, c2));
+  if (b.stun > 0) {
+    for (let i = 0; i < 3; i++) { const an = g.t * 4 + i * 2.09; txt('★', b.x + Math.cos(an) * 34, b.y - 44 + Math.sin(an) * 9, 14, '#ffe27a', 'center', '#000', 2); }
+    if (Math.sin(g.t * 10) > -.3) txt(t('boss_stun_tap'), b.x, b.y + 62, 14, '#ffd27a', 'center', '#000', 3);
+  }
+}
+function drawBossAtk(b) {
+  const a = b.atk; if (!a) return;
+  const y0 = g.camY, wv = a.ph === 'warn', bl = .5 + .5 * Math.sin(g.t * 28);
+  ctx.save();
+  if (a.k === 'club') for (const x of a.xs) {
+    if (wv) {
+      ctx.fillStyle = `rgba(230,40,30,${.12 + .12 * bl})`; ctx.fillRect(x - a.w / 2, y0, a.w, H);
+      ctx.strokeStyle = 'rgba(255,90,70,.85)'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]); ctx.strokeRect(x - a.w / 2, y0 - 4, a.w, H + 8); ctx.setLineDash([]);
+    } else {
+      const k = clamp(a.t / .3, 0, 1);
+      ctx.fillStyle = `rgba(255,120,80,${.5 * k})`; ctx.fillRect(x - a.w / 2, y0, a.w, H);
+      ctx.fillStyle = `rgba(255,245,230,${.9 * k})`; ctx.fillRect(x - a.w * .22, y0, a.w * .44, H);
+    }
+  }
+  else if (a.k === 'mist') for (const c of a.cs) {
+    if (wv) {
+      ctx.fillStyle = `rgba(160,90,230,${.1 + .1 * bl})`; ctx.beginPath(); ctx.arc(c.x, c.y, a.r, 0, 7); ctx.fill();
+      ctx.strokeStyle = 'rgba(200,140,255,.9)'; ctx.lineWidth = 2; ctx.setLineDash([7, 6]); ctx.stroke(); ctx.setLineDash([]);
+    } else {
+      const k = clamp(a.t / 1.3, 0, 1);
+      for (let i = 0; i < 6; i++) { const an = g.t * 1.5 + i * 1.05; ctx.fillStyle = `rgba(150,80,220,${.22 * Math.min(1, k * 3)})`; ctx.beginPath(); ctx.arc(c.x + Math.cos(an) * a.r * .4, c.y + Math.sin(an) * a.r * .35, a.r * .6, 0, 7); ctx.fill(); }
+    }
+  }
+  else if (a.k === 'snow') {
+    const x0 = a.side < 0 ? WALL : W / 2, w = W / 2 - WALL;
+    if (wv) {
+      ctx.fillStyle = `rgba(150,215,255,${.1 + .12 * bl})`; ctx.fillRect(x0, y0, w, H);
+      ctx.strokeStyle = 'rgba(190,235,255,.9)'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]); ctx.strokeRect(x0, y0 - 4, w, H + 8); ctx.setLineDash([]);
+      txt(a.side < 0 ? '≪≪' : '≫≫', x0 + w / 2, y0 + H * .5, 30, 'rgba(220,245,255,.8)', 'center', '#000', 3);
+    } else {
+      const k = clamp(a.t / .4, 0, 1);
+      ctx.fillStyle = `rgba(225,245,255,${.55 * k})`; ctx.fillRect(x0, y0, w, H);
+      ctx.strokeStyle = `rgba(255,255,255,${k})`; ctx.lineWidth = 2;
+      for (let i = 0; i < 14; i++) { const yy = y0 + ((i * 97 + g.t * 900) % H), xx = x0 + ((i * 53) % w); ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx - a.side * 40, yy + 8); ctx.stroke(); }
+    }
+  }
+  else if (a.k === 'charge' && wv) {
+    const dx = a.tx - b.x, dy = a.ty - b.y, d = Math.hypot(dx, dy) || 1, ex = b.x + dx / d * (d + 70), ey = b.y + dy / d * (d + 70);
+    ctx.strokeStyle = `rgba(230,40,30,${.18 + .12 * bl})`; ctx.lineWidth = b.r * 2 + 10; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,90,70,.9)'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(ex, ey); ctx.stroke(); ctx.setLineDash([]);
+    ctx.lineCap = 'butt';
+  }
+  ctx.restore();
 }
 
 function drawKill() {
@@ -2124,7 +2320,7 @@ function render() {
   for (const it of g.items) drawItem(it);
   for (const o of g.corpses) drawCorpse(o);   // 斬成兩半的敵人
   for (const e of g.enemies) if (!e.dead) drawEnemy(e.x, e.y, e.type, 1, e.ph, e);
-  if (g.boss && state !== 'kill') drawBoss(g.boss, g.boss.x, g.boss.y, 1);
+  if (g.boss && state !== 'kill') drawBossWorld(g.boss);
   const p = g.p;
   // 殘影
   for (const o of g.ghosts) {

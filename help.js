@@ -12,7 +12,7 @@ const HELP_PAGES = [
     ['aim', ['彈射斬', '弾き斬り', 'Sling Slash'], ['按住不動瞄準、往反方向拉、放開發射。消耗 1 格氣。', '押したまま止めて照準、反対に引いて離すと発射。気を1消費。', 'Hold still to aim, pull back and release. Uses 1 Ki.']],
     ['dive', ['急降斬', '急降斬', 'Dive Slash'], ['往上拉（或快速下滑）往下劈，著地的衝擊波斬殺周圍。', '上に引く（下フリック）と急降下、着地の衝撃波で周りを斬る。', 'Pull up (or flick down) to dive; the landing shockwave cuts nearby foes.']],
     ['combo', ['空中連斬', '空中連斬', 'Air Combo'], ['不落地連續斬殺，得分 × 連斬數，落地時結算。', '着地せずに斬り続けると得点×連斬数、着地で精算。', 'Chain kills without landing: score × combo, cashed in on landing.']],
-    ['fever', ['狂熱', 'フィーバー', 'Fever'], ['10 連斬進入狂熱：得分 ×2、氣無限。', '10連斬でフィーバー：得点×2、気が無限。', 'A 10-hit combo starts Fever: score ×2, infinite Ki.']],
+    ['fever', ['狂熱', 'フィーバー', 'Fever'], ['10 連斬進入狂熱：得分 ×2、衝刺只花半格氣。', '10連斬でフィーバー：得点×2、突進の気が半分。', 'A 10-hit combo starts Fever: score ×2, dashes cost ½ Ki.']],
   ] },
   { t: ['成長', '成長', 'Growth'], items: [
     ['soul', ['魂與升級', '魂とレベルアップ', 'Souls & Level Up'], ['吸收藍色的魂，集滿經驗條就升級，從三個強化選一個。', '青い魂を集めてレベルアップ、3つから1つ強化を選ぶ。', 'Collect blue souls to level up and pick 1 of 3 upgrades.']],
@@ -27,7 +27,7 @@ const HELP_PAGES = [
   ] },
   { t: ['魔王與關卡', '魔王とステージ', 'Bosses & Stages'], items: [
     ['tengu', ['大天狗', '大天狗', 'Great Tengu'], ['每一幕中段出現，限時內擊倒可以開寶箱。', '各幕の中盤に出現、時間内に倒すと宝箱。', 'Appears mid-act; defeat it in time for a chest.']],
-    ['boss', ['魔王 QTE', '魔王 QTE', 'Boss QTE'], ['碰到魔王進入 QTE：連打或快速滑動。', '魔王に触れるとQTE：連打かスワイプ。', 'Touch the boss to start a QTE: mash or swipe.']],
+    ['boss', ['魔王戰', '魔王戦', 'Boss Fight'], ['躲開標出的危險範圍，用衝刺斬打出破綻，再以時機斬了結。', '危険範囲を避け、突進斬で隙を作り、見切り斬でとどめ。', 'Dodge the marked danger zones, dash-slash to break its guard, then finish with a Timing Slash.']],
     ['zone', ['追上來的危險', '迫る危険', 'Rising Danger'], ['下方的火海、龍捲風、熔岩、雪崩會上升，掉進去會扣 HP。', '下から炎・竜巻・溶岩・雪崩が迫る。落ちるとHPが減る。', 'Fire, tornadoes, lava or avalanches rise from below — falling in costs HP.']],
     ['plat', ['機關', 'しかけ', 'Gimmicks'], ['跳台雙倍彈跳、半毀地板只能踩一次、釘刺會受傷。', 'ジャンプ台は2倍、壊れる床は一度だけ、まきびしは痛い。', 'Springs boost, cracked floors break, spikes hurt.']],
   ] },

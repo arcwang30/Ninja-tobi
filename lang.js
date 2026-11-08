@@ -189,7 +189,7 @@ const STR = {
   chain_bonus: ['{0} 連斬結算 +{1}', '{0} 連斬ボーナス +{1}', '{0} Chain Bonus +{1}'],
   chain_hint: ['落地即結算・再 {0} 斬進入狂熱', '着地で精算・あと{0}斬でフィーバー', 'Land to cash in · {0} more for FEVER'],
   fever: ['狂 熱 !!', 'フィーバー!!', 'FEVER!!'],
-  fever_desc: ['得分 ×2・落地不中斷連斬・氣無限', 'スコア×2・着地で途切れない・気が無限', 'Score ×2 · Landing keeps the chain · Infinite Ki'],
+  fever_desc: ['得分 ×2・落地不中斷連斬・衝刺只花半格氣', 'スコア×2・着地で途切れない・突進は気半分', 'Score ×2 · Landing keeps the chain · Dashes cost ½ Ki'],
   fever_hud: ['狂熱 ×2  {0}', 'フィーバー ×2  {0}', 'FEVER ×2  {0}'],
   ki: ['氣', '気', 'Ki'],
   ki_low: ['氣不足', '気が足りない', 'Not enough Ki'],
@@ -201,7 +201,26 @@ const STR = {
   aim_dive: ['急降斬', '急降斬', 'Dive Slash'],
   boss_in: ['BOSS 襲來', 'BOSS 襲来', 'BOSS INCOMING'],
   boss_appear: ['{0}登場!!', '{0}見参!!', '{0} appears!!'],
-  boss_desc: ['技能：{0}　限時內接觸魔王發動 QTE', 'スキル：{0}　時間内に触れてQTE', 'Skill: {0} · Touch it in time to start the QTE'],
+  boss_desc: ['技能：{0}　用衝刺斬打出破綻，再以時機斬了結', 'スキル：{0}　突進斬で隙を作り、見切り斬でとどめ', 'Skill: {0} · Dash-slash to break its guard, then finish with a Timing Slash'],
+  boss_block: ['擋住了！用衝刺斬攻擊', '防がれた！突進斬で攻めろ', 'Blocked! Use a Dash Slash'],
+  boss_st: ['破綻', '隙', 'Guard'],
+  boss_stun: ['破 綻 !!', '隙 あ り !!', 'GUARD BROKEN!!'],
+  boss_stun_hud: ['破綻！碰觸魔王發動時機斬', '隙あり！触れて見切り斬', 'Guard broken! Touch it for a Timing Slash'],
+  boss_stun_tap: ['碰它!', '触れろ!', 'Touch!'],
+  boss_recover: ['重整架勢…', '体勢を立て直した…', 'It recovered…'],
+  boss_tired: ['喘氣中!', '息切れ!', 'Winded!'],
+  batk_club: ['金棒落!', '金棒落とし!', 'Club Drop!'],
+  batk_mist: ['睡魔霧!', '睡魔の霧!', 'Sleep Mist!'],
+  batk_snow: ['吹雪!', '吹雪!', 'Blizzard!'],
+  batk_charge: ['突進!', '突進!', 'Charge!'],
+  batk_fan: ['飛彈!', '飛び道具!', 'Volley!'],
+  qte_n: ['時機斬!', '見切り斬!', 'TIMING SLASH!'],
+  qte_hint: ['圓圈縮到白圈上時點擊', '輪が白い円に重なった瞬間にタップ', 'Tap when the ring meets the white circle'],
+  qte_mark: ['斬', '斬', '斬'],
+  qte_perf: ['完美!', '完璧!', 'PERFECT!'],
+  qte_good: ['良', '良', 'GOOD'],
+  qte_miss: ['失誤', 'ミス', 'MISS'],
+  qte_allp: ['三連完美！追加傷害', '三連完璧！追加ダメージ', 'Triple Perfect! Bonus damage'],
   boss_slow: ['降速!', '鈍足!', 'Slow!'],
   boss_freeze: ['冰凍!', '凍結!', 'Freeze!'],
   boss_repel: ['反彈!', '弾き!', 'Repelled!'],
@@ -216,8 +235,8 @@ const STR = {
   // ---- 說明 ----
   help_body: [
 `<p><b>跳躍</b>：忍者會自動彈跳。按住畫面並<b>左右滑動</b>移動角色，放開手指就停在原位。兩側是牆壁，空中往牆推會自動<b>蹬牆跳</b>（每次落地前一次）。電腦可用 ← → / A D。</p>
-<p><b>彈射斬</b>：手指<b>按住不動一下</b>進入瞄準，時間變慢；往<b>反方向拉</b>，畫面會顯示含牆壁反彈的軌跡，路線上的敵人會亮起，接近敵人時會自動吸附。<b>放開發射</b>。拉回中心再放開可取消。往上拉（瞄準下方）就是<b>急降斬</b>：劈穿敵人，著地衝擊波斬殺周圍敵人、擊碎釘刺並高高彈起。每次消耗 1 格<b>「氣」</b>，斬殺敵人可回氣。熟練後也可以直接<b>快速上滑／下滑</b>（電腦：↑ / ↓）。</p>
-<p><b>空中連斬</b>：碰到敵人會自動斬殺並再彈跳一次。一路踩著敵人往上、不落地，連斬數就會累積，每一斬得分 × 連斬數，<b>落地時結算</b>。<b>10 連斬</b>進入<b>狂熱</b>：得分 ×2、氣無限、落地不中斷。</p>
+<p><b>彈射斬</b>：手指<b>按住不動一下</b>進入瞄準，時間變慢；往<b>反方向拉</b>，畫面會顯示含牆壁反彈的軌跡，路線上的敵人會亮起，接近敵人時會自動吸附。<b>放開發射</b>。拉回中心再放開可取消。往上拉（瞄準下方）就是<b>急降斬</b>：劈穿敵人，著地衝擊波斬殺周圍敵人、擊碎釘刺並高高彈起。每次消耗 1 格<b>「氣」</b>，斬殺敵人可回氣（連續衝刺斬殺時，第二隻起回得比較少，踩到地板才恢復）。熟練後也可以直接<b>快速上滑／下滑</b>（電腦：↑ / ↓）。</p>
+<p><b>空中連斬</b>：碰到敵人會自動斬殺並再彈跳一次。一路踩著敵人往上、不落地，連斬數就會累積，每一斬得分 × 連斬數，<b>落地時結算</b>。<b>10 連斬</b>進入<b>狂熱</b>：得分 ×2、衝刺只花半格氣、落地不中斷。</p>
 <p><b>魂與升級</b>：斬殺敵人會掉落<b>魂</b>（藍色）和<b>小判</b>（金色）。它們會先往上噴再慢慢落下，靠近就會吸收，掉出畫面就沒了。魂集滿畫面上方的藍色經驗條就<b>升級</b>，從 3 個選項選 1 個：<b>自動技能</b>（攻擊／防禦／輔助，最多同時 4 種，各到 Lv5）或<b>被動強化</b>。小判帶回整備商店使用。</p>
 <p><b>敵人</b>：一般忍者和<b>烏鴉、小天狗</b>這類雜兵碰到就斬。攻擊型敵人的攻擊才會傷人：<b>投</b> 射手裡劍、<b>弓</b> 拋物線射箭、<b>土</b> 藏在地板裡，靠近時冒出來往上射苦無、<b>蛛</b> 吐絲讓你減速、<b>火</b>（鬼火）會飄向你，<b>直接碰到會受傷</b>，要用彈射斬、急降斬或技能打掉。<b>盾</b> 從下方撞到會被打落並中斷連斬，<b>爆</b> 斬殺後連鎖爆炸，<b>強</b>（菁英）要斬兩刀以上，帶有「迅捷／分裂／鐵壁」詞綴並掉寶箱。每隔一段時間會有一群敵人湧入（波次）。</p>
 <p><b>中 BOSS 與進化</b>：每一幕中段會出現<b>大天狗</b>，碰到牠就扣牠的血，限時內擊倒會開寶箱。技能練到 <b>Lv5</b>，再持有卡片上寫的對應被動，打開魔王或大天狗的寶箱時就會出現<b>進化</b>選項。</p>
@@ -225,11 +244,11 @@ const STR = {
 <p><b>忍法卷軸</b>：點擊左上卷軸圖示（電腦：空白鍵）發動「豪天翔」，無敵並急速上升。</p>
 <p><b>死亡區域</b>：畫面下方的火海／海嘯／怪獸不斷上升，掉進去會失去 HP。</p>
 <p><b>機關</b>：<span class="t-spring">跳台</span>雙倍彈跳、<span class="t-crumble">半毀地板</span>只能踩一次、<span class="t-move">移動地板</span>、<span class="t-spike">釘刺</span>踩到受傷。</p>
-<p><b>BOSS</b>：每一幕最後出現魔王，限時內碰到牠進入 QTE：<b>連打</b>（連續點擊）或<b>劃擊</b>（快速滑動）。擊破後打開寶箱，再選 1 項強化。</p>
+<p><b>BOSS</b>：每一幕最後出現魔王。用<b>衝刺斬、急降斬</b>或從上方踩下去打牠（直接跳上去撞會被擋開），打滿<b>破綻</b>魔王就會暈眩，這時碰牠進入<b>時機斬</b>：圓圈縮到白圈上時點擊，連續 3 次，三連完美有追加傷害，失誤會被反擊。魔王出招前會在畫面上標出<b>危險範圍</b>，躲開後牠會喘一下，正是反擊的時機。擊破後打開寶箱，再選 1 項強化。</p>
 <p><b>主線與無盡</b>：通過 風・林・火・山 四幕即修行完成，可選擇繼續挑戰<b>無盡之塔</b>，每一輪難度和分數都會提高。</p>`,
 `<p><b>ジャンプ</b>：忍者は自動で跳ねる。画面を押したまま<b>左右にスライド</b>して移動、指を離すとその場に留まる。両側は壁。空中で壁に向かうと自動で<b>壁蹴り</b>（着地までに一回）。PC は ← → / A D。</p>
-<p><b>弾き斬り</b>：指を<b>少し押したまま止める</b>と照準モードになり、時間が遅くなる。<b>反対方向に引く</b>と壁の反射も含めた軌道が表示され、軌道上の敵が光る。敵の近くを狙うと自動で吸い付く。<b>離して発射</b>。中心に戻して離すとキャンセル。上に引く（下を狙う）と<b>急降斬</b>：敵を貫き、着地の衝撃波で周りの敵を斬り、まきびしを砕いて高く跳ねる。一回につき<b>「気」</b>を1つ消費、敵を斬ると回復。慣れたら<b>素早く上下にフリック</b>でも出せる（PC：↑ / ↓）。</p>
-<p><b>空中連斬</b>：敵に触れると自動で斬り、もう一度跳ねる。着地せずに敵を踏み続けると連斬数が増え、得点 × 連斬数。<b>着地で精算</b>。<b>10 連斬</b>で<b>フィーバー</b>：スコア×2、気が無限、着地しても途切れない。</p>
+<p><b>弾き斬り</b>：指を<b>少し押したまま止める</b>と照準モードになり、時間が遅くなる。<b>反対方向に引く</b>と壁の反射も含めた軌道が表示され、軌道上の敵が光る。敵の近くを狙うと自動で吸い付く。<b>離して発射</b>。中心に戻して離すとキャンセル。上に引く（下を狙う）と<b>急降斬</b>：敵を貫き、着地の衝撃波で周りの敵を斬り、まきびしを砕いて高く跳ねる。一回につき<b>「気」</b>を1つ消費、敵を斬ると回復（突進で連続して斬ると二体目からは回復が少なく、床に着地すると元に戻る）。慣れたら<b>素早く上下にフリック</b>でも出せる（PC：↑ / ↓）。</p>
+<p><b>空中連斬</b>：敵に触れると自動で斬り、もう一度跳ねる。着地せずに敵を踏み続けると連斬数が増え、得点 × 連斬数。<b>着地で精算</b>。<b>10 連斬</b>で<b>フィーバー</b>：スコア×2、突進の気が半分、着地しても途切れない。</p>
 <p><b>魂とレベルアップ</b>：敵を斬ると<b>魂</b>（青）と<b>小判</b>（金）を落とす。一度跳ね上がってからゆっくり落ちてくるので、近づくと吸収、画面外に落ちると消える。魂で上の青い経験値バーが満ちると<b>レベルアップ</b>、3つから1つ選ぶ：<b>自動技</b>（攻撃／防御／補助、同時に4種まで、各Lv5）か<b>パッシブ強化</b>。小判はショップで使う。</p>
 <p><b>敵</b>：普通の忍者や<b>カラス・小天狗</b>などの雑兵は触れれば斬れる。攻撃型の敵の攻撃だけがダメージ：<b>投</b> は手裏剣、<b>弓</b> は放物線の矢、<b>土</b> は床に潜み近づくと飛び出して苦無を撃つ、<b>蛛</b> は糸で足止め、<b>火</b>（鬼火）は寄ってきて<b>触れるとダメージ</b>、弾き斬り・急降斬・技で倒そう。<b>盾</b> は下からぶつかると叩き落とされ連斬が途切れる、<b>爆</b> は誘爆、<b>強</b>（精鋭）は二太刀以上必要で「迅速／分裂／鉄壁」の特性を持ち宝箱を落とす。一定時間ごとに敵の群れが押し寄せる。</p>
 <p><b>中ボスと進化</b>：各幕の中盤に<b>大天狗</b>が現れる。触れるとダメージを与え、時間内に倒すと宝箱。技を<b>Lv5</b>にしてカードに書かれたパッシブを持っていると、魔王か大天狗の宝箱で<b>進化</b>を選べる。</p>
@@ -237,11 +256,11 @@ const STR = {
 <p><b>忍法巻物</b>：左上の巻物アイコンをタップ（PC：スペース）で「豪天翔」、無敵で急上昇。</p>
 <p><b>死の領域</b>：画面下の火の海・津波・怪獣がせり上がってくる。落ちると HP を失う。</p>
 <p><b>仕掛け</b>：<span class="t-spring">跳び台</span>は二倍ジャンプ、<span class="t-crumble">朽ちた床</span>は一度きり、<span class="t-move">動く床</span>、<span class="t-spike">まきびし</span>は踏むとダメージ。</p>
-<p><b>BOSS</b>：各幕の最後に魔王が現れる。時間内に触れると QTE：<b>連打</b>（連続タップ）か<b>斬り払い</b>（素早くスワイプ）。撃破すると宝箱から強化を1つ選べる。</p>
+<p><b>BOSS</b>：各幕の最後に魔王が現れる。<b>突進斬・急降斬</b>か上から踏みつけて攻撃（下から跳んでぶつかると防がれる）。<b>隙</b>がたまると魔王がよろめき、触れると<b>見切り斬</b>：輪が白い円に重なった瞬間にタップ、3回連続。三連完璧で追加ダメージ、ミスすると反撃される。魔王は技の前に<b>危険範囲</b>を示す。避けた後の息切れが反撃のチャンス。撃破すると宝箱から強化を1つ選べる。</p>
 <p><b>本編と無限</b>：風・林・火・山 の四幕を越えると修行完了。続けて<b>無限の塔</b>に挑むと、周回ごとに難しく、スコアも高くなる。</p>`,
 `<p><b>Jumping</b>: your ninja bounces automatically. Hold the screen and <b>slide left or right</b> to move; let go to stay put. There are walls on both sides: push into a wall in mid-air to <b>wall-kick</b> (once per landing). PC: ← → / A D.</p>
-<p><b>Slingshot Slash</b>: <b>hold your finger still</b> for a moment to aim, and time slows down. <b>Pull back</b> in the opposite direction: a trajectory appears, including wall bounces, and enemies on the path light up. Aim near an enemy and it snaps on. <b>Release to launch</b>; drag back to the center to cancel. Pull up (aim down) for a <b>Dive Slash</b>: cut through enemies, and the landing shockwave slashes nearby foes, smashes spikes and bounces you high. Each costs 1 <b>Ki</b>; slashing enemies restores it. Once you get the hang of it, you can also <b>flick up / down</b> quickly (PC: ↑ / ↓).</p>
-<p><b>Air Chains</b>: touching an enemy slashes it and bounces you again. Keep chaining enemies without landing to build a chain: each kill scores × chain count, <b>cashed in when you land</b>. A <b>10 chain</b> starts <b>FEVER</b>: score ×2, infinite Ki, landing keeps the chain.</p>
+<p><b>Slingshot Slash</b>: <b>hold your finger still</b> for a moment to aim, and time slows down. <b>Pull back</b> in the opposite direction: a trajectory appears, including wall bounces, and enemies on the path light up. Aim near an enemy and it snaps on. <b>Release to launch</b>; drag back to the center to cancel. Pull up (aim down) for a <b>Dive Slash</b>: cut through enemies, and the landing shockwave slashes nearby foes, smashes spikes and bounces you high. Each costs 1 <b>Ki</b>; slashing enemies restores it (kills in a row from dashes restore less after the first, until you land on a floor). Once you get the hang of it, you can also <b>flick up / down</b> quickly (PC: ↑ / ↓).</p>
+<p><b>Air Chains</b>: touching an enemy slashes it and bounces you again. Keep chaining enemies without landing to build a chain: each kill scores × chain count, <b>cashed in when you land</b>. A <b>10 chain</b> starts <b>FEVER</b>: score ×2, dashes cost ½ Ki, landing keeps the chain.</p>
 <p><b>Souls and Level Ups</b>: slain enemies drop <b>souls</b> (blue) and <b>koban</b> (gold). They pop up, then drift down slowly: get close to absorb them, and they're lost if they fall off screen. Fill the blue XP bar at the top to <b>level up</b> and choose 1 of 3: an <b>auto skill</b> (Attack / Defense / Support, up to 4 at once, each to Lv5) or a <b>passive upgrade</b>. Spend koban in the shop.</p>
 <p><b>Enemies</b>: regular ninjas and fodder like <b>crows</b> and <b>tengu</b> are slashed on touch. Only attackers can hurt you: <b>投</b> throws shuriken, <b>弓</b> lobs arrows, <b>土</b> hides in floors and bursts out firing kunai upward, <b>蛛</b> spits webs that slow you, and <b>火</b> (will-o-wisps) float toward you and <b>hurt on contact</b>: take them out with a slingshot, dive or skills. Hitting a <b>盾</b> shield from below knocks you down and breaks your chain, <b>爆</b> explodes in chains, and <b>強</b> elites take 2+ hits, carry an affix (Swift / Split / Tough) and drop chests. Every so often a wave of enemies pours in.</p>
 <p><b>Mid-boss and Evolution</b>: halfway through each act the <b>Great Tengu</b> appears. Touch it to deal damage; defeat it in time for a chest. Get a skill to <b>Lv5</b> and own the passive shown on its card, and a boss or Great Tengu chest offers an <b>Evolution</b>.</p>
@@ -249,7 +268,7 @@ const STR = {
 <p><b>Ninjutsu Scroll</b>: tap the scroll icon at top left (PC: Space) for SKY SOAR: invincible, rocketing upward.</p>
 <p><b>Death Zone</b>: the fire, tsunami or monster at the bottom keeps rising. Fall in and you lose HP.</p>
 <p><b>Traps</b>: <span class="t-spring">springs</span> double your jump, <span class="t-crumble">cracked floors</span> break after one step, <span class="t-move">moving floors</span>, and <span class="t-spike">spikes</span> hurt.</p>
-<p><b>BOSS</b>: each act ends with a boss. Touch it in time to start a QTE: <b>MASH</b> (tap rapidly) or <b>SWIPE</b> (swipe fast). Defeat it to open a treasure chest and choose an upgrade.</p>
+<p><b>BOSS</b>: each act ends with a boss. Hit it with a <b>Dash Slash, Dive Slash</b> or by landing on it (jumping into it from below gets blocked). Fill its <b>Guard</b> gauge to stun it, then touch it for a <b>Timing Slash</b>: tap when the shrinking ring meets the white circle, 3 times in a row. A triple Perfect deals bonus damage; a miss lets it strike back. Before each attack the boss marks the <b>danger zone</b>; dodge it and the boss is winded, which is your chance to strike. Defeat it to open a treasure chest and choose an upgrade.</p>
 <p><b>Story and Endless</b>: clear all four acts (Wind, Forest, Fire, Mountain) to complete your training, then keep climbing the <b>Endless Tower</b>, where every loop gets harder and scores higher.</p>`,
   ],
 };
