@@ -921,6 +921,7 @@ function drawSkillFx() {
     c.fillStyle = evo ? '#ffd25a' : '#d8323c'; aCirc(c, 4.5, -4.2, 1); c.fill();
     c.restore();
   }
+  if (typeof drawCharSkillFx === 'function') drawCharSkillFx();   // 角色專屬技能（chars.js）
 }
 
 // ===== 攻擊物與特效 =====
@@ -1074,7 +1075,7 @@ const HERO_PROPS = {
 };
 let HERO_PROP = HERO_PROPS.mochi;   // 使用中的比例：大福（頭最大）
 function drawHeroNinja(x, y, o, c = ctx, PR = HERO_PROP) {
-  const sk = SKINS[o.skin || 0], t = o.t || 0, vy = o.vy || 0;
+  const sk = o.pal || heroPal(o.skin || 0), t = o.t || 0, vy = o.vy || 0;   // 顏色＝這名角色目前的換裝（o.pal 可指定，商店預覽用）
   const flash = o.hurt > 0 && ((t * 20) | 0) % 2;
   const C = flash ? { suit: '#ff6a5a', dk: '#c03a30', lt: '#ffb0a0', band: '#ffd0c8', skin: '#ffc4b4' }
     : { suit: sk.suit, dk: sk.dark, lt: heroLighten(sk.suit, .35), band: sk.band, skin: '#f9d8b4' };
@@ -1101,6 +1102,13 @@ function drawHeroNinja(x, y, o, c = ctx, PR = HERO_PROP) {
     c.lineCap = 'round';
     for (let i = 0; i < 3; i++) { const a = t * 6 + i * 2.1; c.strokeStyle = `rgba(255,214,90,${.6 - i * .14})`; c.lineWidth = 3 - i * .6; c.beginPath(); c.ellipse(0, (HY + BB) / 2, 28 + i * 5, 15 + i * 3, -.3, a, a + 2.4); c.stroke(); }
   }
+  // 其他角色（chars.js）：同樣的旋轉、壓扁、受傷閃紅，只換成各自的造型
+  const CD = typeof CHAR_DRAW !== 'undefined' && CHAR_DRAW[(SKINS[o.skin || 0] || {}).id];
+  if (CD) {
+    const mood = o.eye || (pn === 'apex' && ((t * .9) % 3.4) < .12 ? 'blink' : Q.eye);
+    CD(c, { suit: C.suit, dark: C.dk, band: C.band }, t, { eye: mood });
+    if (Q.dash || Q.dive) heroKatana(c, 16, -18, Q.dash ? -.08 : .35);
+  } else {
   // 浮在身體旁的手腳：以身體附近的點為基準，依姿勢偏移，並隨呼吸上下浮動
   const bob = Math.sin(t * 6) * 1.5;
   const hand = (p, s) => [p[0] * PR.hx * (p[0] > 0 ? 1 : 1) + (p[0] > 0 ? 1 : -1) * (BW - 1) * 6, PR.hcy + (p[1] + 22) * PR.hk + s * bob];
@@ -1138,6 +1146,7 @@ function drawHeroNinja(x, y, o, c = ctx, PR = HERO_PROP) {
   // 刀：衝刺斬／急降斬時握在手上，其餘背在背後
   if (drawn) heroKatana(c, fa[0], fa[1], Q.dash ? -.08 : .35);
   else { c.save(); c.translate(-9 * BW, BT + 8); c.rotate(-2.3); c.fillStyle = '#2a1c18'; c.fillRect(-2, -6, 4, 18); c.strokeStyle = INK; c.lineWidth = 1.2; c.strokeRect(-2, -6, 4, 18); c.fillStyle = '#d9a441'; c.fillRect(-2.6, -7.5, 5.2, 2); c.restore(); }
+  }
   c.restore();
   const top = y + HY - PR.hr - 4;
   if (o.freeze > 0) { // 冰凍：半透明冰塊
@@ -1149,7 +1158,7 @@ function drawHeroNinja(x, y, o, c = ctx, PR = HERO_PROP) {
 // 主角背影（斬擊特寫用）：從背後看到的大頭、頭巾結與飄動的布條、小身體；右手握刀，ang = 刀身方向（弧度）
 // 原點在腳底；比例與正面的「大福」相同
 function drawHeroBack(c, x, y, s, ang, t, skin = 0, from = null, trail = 0) {   // from＋trail：從 from 揮到 ang 的刀光（trail 是透明度）
-  const sk = SKINS[skin] || SKINS[0], PR = HERO_PROP, R = PR.hr, HY = PR.hy, BT = PR.bt, BB = PR.bb;
+  const sk = heroPal(skin), PR = HERO_PROP, R = PR.hr, HY = PR.hy, BT = PR.bt, BB = PR.bb;
   const C = { suit: sk.suit, dk: sk.dark, lt: heroLighten(sk.suit, .35), band: sk.band };
   c.save(); c.translate(x, y); c.scale(s, s);
   const sx = 4, sy = HY + 12;                                   // 右肩（握刀的手繞著它轉）

@@ -20,7 +20,7 @@ const INTRO = {
     if (new URLSearchParams(location.search).has('still')) this.flash = 0;
     const lg = new URLSearchParams(location.search).get('lang'); if (lg) { LI = Math.max(0, LANGS.findIndex(l => l.id === lg)); applyLang(); buildDockIcons(); }   // 開發用：?lang=zh|ja|en
     const op = new URLSearchParams(location.search).get('open');   // 開發用：?open=help(,頁) ／ credit → 直接打開說明或製作名單
-    if (op) { this.toTitle(); const [w, pg] = op.split(','); if (w === 'help') { helpPg = +pg || 0; openHelp(); } else if (w === 'hist') { openHist(); histTab = +pg || 0; renderHist(); } else openSub(w); const b = $('boot'); if (b) b.remove(); }
+    if (op) { this.toTitle(); const [w, pg] = op.split(','); if (w === 'help') { helpPg = +pg || 0; openHelp(); } else if (w === 'hist') { openHist(); histTab = +pg || 0; renderHist(); } else { if (w === 'shop') shopTab = +pg || 0; if (w === 'rank') rankTab = +pg || 0; openSub(w); } const b = $('boot'); if (b) b.remove(); }
     // 開發用：?slashshot=敵人種類,第幾刀,這一刀經過秒數 → 停在斬擊特寫的那一刻（截圖檢查用）
     const ss = new URLSearchParams(location.search).get('slashshot');
     // 開發用：?shot=zintro,幕,秒 ／ ascend,幕,秒 ／ qte,第幾刀,這一刀經過秒數 → 停在關卡演出的那一刻（stagefx.js）
@@ -31,7 +31,7 @@ const INTRO = {
       if (k === 'qte') { g.stage = 0; spawnBoss(); g.boss.y = g.camY + 200; g.qte = { t: .5, tl: 99, hits: +a1 ? [{ a: .6, t: +a2, x: 0, y: 0 }] : [], n: +a1, type: 'mash', q: QTE_TYPES[0] }; state = 'qte'; window.updateQte = () => {}; } }
     // 開發用：?play=關卡,舞台,模擬秒數 → 直接從某關某舞台開始，自動跑幾秒後停住（檢查時段色調與天候）
     const pl = new URLSearchParams(location.search).get('play');
-    if (pl) { const [lv, st, sec] = pl.split(',').map(Number); this.toTitle(); save.seen = 2; startRun(lv || 0); hideAll(); const b = $('boot'); if (b) b.remove();
+    if (pl) { const [lv, st, sec, ch, sl] = pl.split(',').map(Number); this.toTitle(); save.seen = 2; if (ch) save.skin = ch; startRun(lv || 0); if (sl) g.skills[SKINS[save.skin].sk] = sl;   // 第 4、5 個參數：角色、技能等級 hideAll(); const b = $('boot'); if (b) b.remove();
       g.stage = st || 0; g.zi = null; state = 'play'; wxForStage(); if (g.wx) g.wx.cur = g.wx.lv; if (g.stage % 5 === 4) { spawnBoss(); g.wx.cur = g.wx.lv; }
       g.hp = g.maxHp = 9999; for (let i = 0; i < (sec || 2) * 60; i++) { g.lvQueue = 0; g.p.inv = 1; update(1 / 60); if (state === 'perk') { hide('perk'); state = 'play'; } } paused = true; }
     if (ss) { const [ty, n, lt] = ss.split(',').map(Number); this.toTitle(); save.seen = 2; startRun(); hideAll(); const e = mkEnemy(ty, W / 2, g.p.y - 120, 0); g.enemies.push(e); g.slash = { e, t: .5, dur: 9, lines: n ? [{ a: .6, t: lt, off: 0 }] : [], n, nextL: 9, frozen: true }; state = 'slash'; const b = $('boot'); if (b) b.remove(); }

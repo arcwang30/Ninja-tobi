@@ -31,12 +31,36 @@ const THEMES = [
   { k: '火', sky: ['#5c1610', '#1e0604'], stalk: '#7a3626', node: '#4e1e14', far: '#3a100a', zone: 'monster' },
   { k: '山', sky: ['#33266a', '#e58a68'], stalk: '#5d4a8a', node: '#392d66', far: '#4a3a7a', zone: 'sea' },
 ];
+// 角色（商店「角色」分頁）：每名角色外觀不同、開局自帶專屬技能。
+// out = 預設換裝顏色（OUTFITS 的索引，免費）；req = 要先達成的成就才會在商店上架（參考吸血鬼倖存者）
 const SKINS = [
-  { n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff', cost: 0, sk: 'shuriken' },
-  { n: '蒼', suit: '#2b5fb8', dark: '#173a78', band: '#ffd54a', cost: 300, sk: 'kunai' },
-  { n: '桜', suit: '#e56aa0', dark: '#a03a6a', band: '#ffffff', cost: 600, sk: 'wind' },
-  { n: '影', suit: '#2a2a33', dark: '#111116', band: '#e8403a', cost: 1000, sk: 'thunder' },
+  { id: 'tobi', n: ['鳶', '鳶', 'Tobi'], cost: 0, sk: 'shuriken', out: 0 },
+  { id: 'ao', n: ['蒼', '蒼', 'Ao'], cost: 300, sk: 'kunai', out: 1, req: 'run1' },
+  { id: 'sakura', n: ['桜', '桜', 'Sakura'], cost: 600, sk: 'wind', out: 4, req: 'lv0r5' },
+  { id: 'kage', n: ['影', '影', 'Kage'], cost: 1000, sk: 'thunder', out: 3, req: 'boss1' },
+  { id: 'homura', n: ['焰', '焔', 'Homura'], cost: 1200, sk: 'tags', out: 0, req: 'chain3' },
+  { id: 'kon', n: ['狐', '狐', 'Kon'], cost: 1500, sk: 'clone', out: 4, req: 'combo30' },
+  { id: 'shizuku', n: ['雫', '雫', 'Shizuku'], cost: 1500, sk: 'water', out: 9, req: 'wx_rain' },
+  { id: 'kasumi', n: ['霞', '霞', 'Kasumi'], cost: 1500, sk: 'mist', out: 6, req: 'wx_fog' },
+  { id: 'gan', n: ['岩', '岩', 'Gan'], cost: 2500, sk: 'rock', out: 5, req: 'lv3c' },
+  { id: 'kasa', n: ['笠', '笠', 'Kasa'], cost: 2500, sk: 'sickle', out: 7, req: 'boss10' },
 ];
+// 換裝：10 種顏色（所有角色共用）。髮色、面具、斗笠、虎斑等招牌特徵不會變色
+const OUTFITS = [
+  { n: ['赤', '赤', 'Red'], suit: '#c0262d', dark: '#7a1218', band: '#ffffff', cost: 0 },
+  { n: ['蒼', '蒼', 'Blue'], suit: '#2b5fb8', dark: '#173a78', band: '#ffd54a', cost: 300 },
+  { n: ['桜', '桜', 'Sakura'], suit: '#e56aa0', dark: '#a03a6a', band: '#ffffff', cost: 300 },
+  { n: ['影', '影', 'Shadow'], suit: '#2a2a33', dark: '#111116', band: '#e8403a', cost: 300 },
+  { n: ['白', '白', 'White'], suit: '#eeeef2', dark: '#a8aab8', band: '#c0262d', cost: 300 },
+  { n: ['翠', '翠', 'Jade'], suit: '#2e9a5a', dark: '#17603a', band: '#f4e27a', cost: 300 },
+  { n: ['紫', '紫', 'Violet'], suit: '#7a3ec0', dark: '#4a2078', band: '#f2c14e', cost: 300 },
+  { n: ['橙', '橙', 'Orange'], suit: '#ec7a22', dark: '#a84a10', band: '#2a2a33', cost: 300 },
+  { n: ['金', '金', 'Gold'], suit: '#e8b84a', dark: '#9a6a1a', band: '#c0262d', cost: 1000 },
+  { n: ['水', '水', 'Aqua'], suit: '#2ab4c8', dark: '#147080', band: '#ffffff', cost: 300 },
+];
+const outOf = i => { const v = save.charOut && save.charOut[i]; return v != null ? v : SKINS[i].out; };   // 角色目前穿的換裝
+const heroPal = i => OUTFITS[outOf(i || 0)] || OUTFITS[0];
+const outOwned = (o, ci = save.skin) => o === SKINS[ci].out || (save.outfits || []).includes(o);   // 預設色永遠可穿
 const ENEMY = [
   { n: '敵', w: 34, h: 42, dur: .45, pts: 100, col: '#15151c' },  // 0 瘦
   { n: '敵', w: 42, h: 46, dur: .8, pts: 200, col: '#15151c' },   // 1 中
@@ -92,6 +116,13 @@ const SKILLS = [
   { id: 'aura', cat: 1, ic: '💠', n: ['金剛氣', '金剛気', 'Diamond Aura'] },
   { id: 'shiki', cat: 2, ic: '🐦', n: ['式神鳥', '式神の鳥', 'Spirit Bird'] },
   { id: 'swift', cat: 2, ic: '💨', n: ['疾風', '疾風', 'Swift Wind'] },
+  // 角色專屬技能（own：只有開局自帶的角色會在升級時抽到）
+  { id: 'tags', cat: 0, ic: '🧧', own: 1, n: ['爆炎札', '爆炎札', 'Blast Tags'] },
+  { id: 'clone', cat: 0, ic: '👥', own: 1, n: ['影分身', '影分身', 'Shadow Clone'] },
+  { id: 'water', cat: 0, ic: '🌊', own: 1, n: ['水龍彈', '水龍弾', 'Water Dragon'] },
+  { id: 'mist', cat: 0, ic: '☁️', own: 1, n: ['毒霧', '毒霧', 'Poison Mist'] },
+  { id: 'rock', cat: 0, ic: '🪨', own: 1, n: ['落石', '落石', 'Rockfall'] },
+  { id: 'sickle', cat: 0, ic: '⛓️', own: 1, n: ['鎖鐮', '鎖鎌', 'Chain Sickle'] },
 ];
 // 各技能在第 l 級的數值；l = 6 代表已進化
 const SKV = {
@@ -103,6 +134,12 @@ const SKV = {
   aura: l => l > 5 ? { r: 120, cd: 1.1, all: true } : { r: 50 + 8 * l, cd: 2.6 - .3 * (l - 1), all: l >= 3 },
   shiki: l => l > 5 ? { r: 2000, atk: 1.2 } : { r: 120 + 45 * l, atk: l >= 3 ? 4.5 - .5 * (l - 3) : 0 },
   swift: l => l > 5 ? { regen: 4, ki: 2 } : { regen: 1 + .3 * l, ki: l >= 5 ? 1 : 0 },
+  tags: l => l > 5 ? { cd: 1.3, n: 3, r: 85, chain: true } : { cd: 2.5 - .25 * (l - 1), n: l >= 4 ? 2 : 1, r: 50 + 6 * l },
+  clone: l => l > 5 ? { cd: 1.2, n: 3, guard: true } : { cd: 3 - .3 * (l - 1), n: l >= 4 ? 2 : 1 },
+  water: l => l > 5 ? { cd: 1.6, w: 30, n: 3 } : { cd: 2.8 - .25 * (l - 1), w: 16 + 3 * l, n: 1 },
+  mist: l => l > 5 ? { r: 80, life: 3.5, follow: true } : { r: 30 + 5 * l, life: 2.4 + .2 * l },
+  rock: l => l > 5 ? { cd: 1.5, n: 3, r: 38, roll: true } : { cd: 3.2 - .3 * (l - 1), n: l >= 4 ? 2 : 1, r: 22 + 3 * l },
+  sickle: l => l > 5 ? { cd: 1.2, r: 115, arc: 2 } : { cd: 2.2 - .2 * (l - 1), r: 70 + 8 * l, arc: 1 },
 };
 // 進化：技能 Lv5 ＋ 持有對應的被動（p），打開魔王或中 BOSS 的寶箱時出現
 const EVO = {
@@ -114,6 +151,12 @@ const EVO = {
   aura: { p: 'quake', ic: '💠', n: ['金剛震', '金剛震', 'Diamond Quake'], d: ['半徑 120 的震波每 1.1 秒斬殺所有敵人', '半径120の波動が1.1秒ごとに全ての敵を斬る', 'A 120px pulse slashes every enemy every 1.1s'] },
   shiki: { p: 'magnet', ic: '🐦', n: ['八咫烏', '八咫烏', 'Yatagarasu'], d: ['收集整個畫面的魂與小判，每 1.2 秒啄擊敵人', '画面全体の魂と小判を集め、1.2秒ごとに敵をついばむ', 'Gathers every soul and koban on screen; pecks every 1.2s'] },
   swift: { p: 'feather', ic: '💨', n: ['神速', '神速', 'Godspeed'], d: ['氣的回復速度 ×4，氣上限 +2', '気の回復速度 ×4、気の上限 +2', 'Ki regen ×4, max Ki +2'] },
+  tags: { p: 'score', ic: '💥', n: ['紅蓮爆陣', '紅蓮爆陣', 'Crimson Blast'], d: ['每 1.3 秒貼 3 張爆炎札，爆炸會連鎖引爆', '1.3秒ごとに爆炎札3枚、爆発が連鎖する', '3 blast tags every 1.3s; explosions chain'] },
+  clone: { p: 'vamp', ic: '🦊', n: ['九尾', '九尾', 'Nine Tails'], d: ['分身變成 3 個，每 12 秒替你擋下一次攻擊', '分身が3体に、12秒ごとに攻撃を1回防ぐ', '3 clones; they block a hit every 12s'] },
+  water: { p: 'slowzone', ic: '🌊', n: ['大瀑布', '大瀑布', 'Great Falls'], d: ['左右與中間同時射出 3 條粗大的水龍', '左右と中央に太い水龍を3本', '3 huge water dragons side by side'] },
+  mist: { p: 'lucky', ic: '🌫️', n: ['朧', '朧', 'Oboro'], d: ['毒霧纏在身上跟著移動，範圍加倍', '毒霧が体にまとわり、範囲が倍に', 'The mist clings to you at double size'] },
+  rock: { p: 'quake', ic: '⛰️', n: ['山崩', '山崩れ', 'Landslide'], d: ['一次落下 3 顆巨岩，貫穿整個畫面', '巨岩を3つ同時に落とし、画面を貫く', '3 giant boulders that crush through the screen'] },
+  sickle: { p: 'reach', ic: '🌀', n: ['旋風鐮', '旋風鎌', 'Whirlwind'], d: ['鎖鐮整圈旋轉，範圍大幅擴大', '鎖鎌が一回転し、範囲が大きく広がる', 'The sickle spins a full circle with huge reach'] },
 };
 // HP：基礎 100，體魄／鋼身每級 +20；各種攻擊的傷害
 const HP_BASE = 100, HP_STEP = 20;
@@ -148,6 +191,9 @@ const META = [
   { id: 'banish', n: ['封印', '封印', 'Seal'], d: ['三選一時可封印 +1 次（被封印的選項本局不再出現）', '三択で封印 +1回（その選択肢はもう出ない）', '+1 Seal: remove a choice for the rest of the run'], max: 3, cost: l => 300 * (l + 1), ic: '🈲' },
 ];
 const mt = id => (save.meta && save.meta[id]) || 0;   // 修行等級
+// 修行分三階段開放：一開始 6 項／開放第 2 關後再 6 項／任一關破台後最後 4 項
+const META_TIER = { armor: 1, power: 1, ki: 1, kireg: 1, xp: 1, luck: 1, revive: 2, cd: 2, reroll: 2, banish: 2 };
+const metaOpen = m => { const tr = META_TIER[m.id] || 0, s = save.lv || {}; return tr === 0 || (tr === 1 && (s.open || 1) >= 2) || (tr === 2 && (s.clear || []).some(x => x)); };
 const metaSpent = () => META.reduce((s, m) => { let n = 0; for (let l = 0; l < mt(m.id); l++) n += m.cost(l); return s + n; }, 0);
 // 成就：cat 0 關卡／1 戰鬥／2 成長／3 累計／4 挑戰與天候／5 收集（共 76 個）
 const ACH = [];
@@ -208,7 +254,7 @@ const ACH = [];
 
 // ===== 存檔 =====
 const defSave = () => ({
-  coins: 0, skin: 0, skins: [0],
+  coins: 0, skin: 0, skins: [0], outfits: [0], charOut: {},
   meta: Object.fromEntries(META.map(m => [m.id, 0])), ach: {}, lv: { open: 1, best: [0, 0, 0, 0], clear: [0, 0, 0, 0], sel: 0 }, opt: { snd: 1, vib: 1, lang: guessLang() }, seen: 0, intro: 0,
   best: { rogue: 0 }, rank: { rogue: [] },
   stats: { runs: 0, slashes: 0, bosses: 0, coins: 0, mids: 0 },
@@ -219,6 +265,9 @@ try {
   for (const k in s) save[k] = (typeof s[k] === 'object' && !Array.isArray(s[k]) && s[k]) ? Object.assign(save[k] || {}, s[k]) : s[k];
 } catch (e) { }
 LI = Math.max(0, LANGS.findIndex(l => l.id === save.opt.lang));
+// 舊存檔：以前買過的蒼／桜／影（當時只是換色）一併送對應的換裝顏色
+if (!save.outfits) save.outfits = [0];
+for (const i of save.skins || []) if (i >= 1 && i <= 3 && !save.outfits.includes(i)) save.outfits.push(i);
 function persist() { try { localStorage.setItem('tobi_save', JSON.stringify(save)); } catch (e) { } }
 
 // ===== 音效（WebAudio 合成） =====
@@ -285,7 +334,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v43';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v44';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -984,6 +1033,7 @@ function updateSkills(dt) {
       }
     }
   }
+  updateCharSkills(dt, vis, dist);   // 角色專屬技能（chars.js）
 }
 
 // ===== 掉落物：魂（經驗）與小判 =====
@@ -1052,6 +1102,7 @@ function land(pl) {
   if (pl.type === 'crumble') { pl.broken = true; pl.vy = 50; for (let i = 0; i < 6; i++) g.parts.push({ x: pl.x + rnd(-pl.w / 2, pl.w / 2), y: pl.y + 4, vx: rnd(-40, 40), vy: rnd(-60, 20), life: .6, max: .6, c: '#8a6232', s: rnd(2, 4) }); }
   p.vy = -v;
   if (sk('wind')) fireBlades();
+  if (sk('mist')) dropMist(p.x, pl.y);   // 毒霧（chars.js）
   for (let i = 0; i < 4; i++) g.parts.push({ x: p.x + rnd(-10, 10), y: pl.y, vx: rnd(-60, 60), vy: rnd(-40, -10), life: .35, max: .35, c: '#ffffffaa', s: rnd(2, 3) });
 }
 
@@ -1451,6 +1502,7 @@ function pickPool(why) {
     const l = sk(s.id);
     if (why === 'start' && s.cat !== 0) continue;          // 開局只給攻擊技能
     if (l >= SK_MAX || (!l && owned >= SK_SLOTS)) continue;
+    if (s.own && !l) continue;   // 角色專屬技能：只有自帶的角色會抽到
     if (g.banned['skill' + s.id]) continue;   // 被封印的選項不再出現
     out.push({ kind: 'skill', o: s, w: l ? 4 : 2.5 });   // 技能比被動更常出現
   }
@@ -1469,6 +1521,7 @@ function skillDesc(id, l) {
     case 'aura': return t('sk_aura', v.r, f(v.cd), t(v.all ? 'aura_all' : 'aura_weak'));
     case 'shiki': return t('sk_shiki', v.r, v.atk ? t('shiki_atk', f(v.atk)) : '');
     case 'swift': return t('sk_swift', f(v.regen), v.ki ? t('swift_ki', v.ki) : '');
+    default: return charSkillDesc(id, v, f);   // 角色專屬技能（chars.js）
   }
 }
 function openPerks(why) {
@@ -1633,6 +1686,16 @@ function heroThumb(i) {
   try { heroThumbs[i] = c.toDataURL(); } catch (e) { }
   return heroThumbs[i];
 }
+// 換裝預覽：某角色穿某顏色的小圖（快取）
+const outThumbs = {};
+function outThumb(ci, oi) {
+  const k = ci + '_' + oi; if (outThumbs[k]) return outThumbs[k];
+  const cnv = document.createElement('canvas'); cnv.width = cnv.height = 112; const c = cnv.getContext('2d'); c.scale(112 / 84, 112 / 84);
+  try { drawHeroNinja(42, 74, { face: 1, t: .35, vy: 0, skin: ci, pal: OUTFITS[oi] }, c); outThumbs[k] = cnv.toDataURL(); } catch (e) { outThumbs[k] = ''; }
+  return outThumbs[k];
+}
+// 換角色或換裝後：重畫這名角色的大圖、頭像與標題圖
+function refreshHero(i = save.skin) { heroSprites[i] = heroPortrait(i, 400); heroThumbs[i] = null; updateHeroArt(); }
 // 標題畫面的大圖跟著目前選的角色
 function updateHeroArt() {
   const s = heroSprites[save.skin || 0];
@@ -2110,18 +2173,26 @@ function tabs(id, names, sel, act) {
 }
 function renderShop() {
   $('sCoins').textContent = save.coins;
-  tabs('shopTabs', [t('tab_ninja'), t('tab_train')], shopTab, 'stab');
+  tabs('shopTabs', [t('tab_ninja'), t('tab_outfit'), t('tab_train')], shopTab, 'stab');
   let h = '';
-  if (shopTab === 0) {
+  if (shopTab === 0) {   // 角色：達成條件才上架，再用小判購買
     h = SKINS.map((s, i) => {
-      const own = save.skins.includes(i), sel = save.skin === i;
-      return `<div class="item"><span class="ic" style="background:${s.suit};color:${s.band}">${heroThumb(i) ? `<img src="${heroThumb(i)}" alt="" style="width:140%;margin-top:10%">` : s.n}</span><span class="nm"><b>${t('ninja_name', s.n)}</b><small>${t('start_skill', SKILLS.find(x => x.id === s.sk).ic + ' ' + L(SKILLS.find(x => x.id === s.sk).n))}・${own ? t('owned') : t('price', s.cost)}</small></span>` +
-        (sel ? `<button disabled>${t('equipped')}</button>` : own ? `<button data-act="skin" data-arg="${i}">${t('equip')}</button>` : `<button data-act="buyskin" data-arg="${i}" ${save.coins < s.cost ? 'disabled' : ''}>${t('buy')}</button>`) + '</div>';
+      const own = save.skins.includes(i), sel = save.skin === i, avail = own || !s.req || save.ach[s.req], sd = SKILLS.find(x => x.id === s.sk);
+      const req = s.req && !avail ? `<small class="req">🔒 ${t('char_req', L(ACH.find(a => a.id === s.req).d))}</small>` : '';
+      return `<div class="item ${avail ? '' : 'locked'}"><span class="ic char-ic">${avail && heroThumb(i) ? `<img src="${heroThumb(i)}" alt="">` : '？'}</span><span class="nm"><b>${avail ? L(s.n) : '？？？'}</b><small>${t('start_skill', sd.ic + ' ' + L(sd.n))}${avail ? '・' + (own ? t('owned') : t('price', s.cost)) : ''}</small>${req}</span>` +
+        (sel ? `<button disabled>${t('equipped')}</button>` : own ? `<button data-act="skin" data-arg="${i}">${t('equip')}</button>` : `<button data-act="buyskin" data-arg="${i}" ${!avail || save.coins < s.cost ? 'disabled' : ''}>${t('buy')}</button>`) + '</div>';
     }).join('');
+  } else if (shopTab === 1) {   // 換裝：目前角色穿上各種顏色的預覽
+    const ci = save.skin, cur = outOf(ci);
+    h = `<div class="meta-head">${t('outfit_for', L(SKINS[ci].n))}</div><div class="outfits">` + OUTFITS.map((o, i) => {
+      const own = outOwned(i, ci), sel = cur === i;
+      return `<button class="of ${sel ? 'sel' : ''} ${own ? '' : 'nown'}" data-act="${own ? 'outfit' : 'buyout'}" data-arg="${i}" ${!own && save.coins < o.cost ? 'disabled' : ''}><img src="${outThumb(ci, i)}" alt=""><b style="color:${o.suit}">${L(o.n)}</b><small>${sel ? t('equipped') : own ? t('equip') : t('price', o.cost)}</small></button>`;
+    }).join('') + '</div>';
   } else {
     const tot = META.reduce((s, m) => s + m.max, 0), now = META.reduce((s, m) => s + mt(m.id), 0), spent = metaSpent();
     h = `<div class="meta-head">${t('meta_total', now, tot)}</div>` + META.map(m => {
-      const l = mt(m.id), max = l >= m.max, c = m.cost(l);
+      const l = mt(m.id), max = l >= m.max, c = m.cost(l), op = metaOpen(m);
+      if (!op) return `<div class="item locked"><span class="ic" style="background:#ccc">🔒</span><span class="nm"><b>${L(m.n)}</b><small>${t(META_TIER[m.id] === 1 ? 'meta_t1' : 'meta_t2')}</small></span><button disabled>${t('train')}</button></div>`;
       return `<div class="item"><span class="ic" style="background:#fff3d0">${m.ic}</span><span class="nm"><b>${L(m.n)}　Lv ${l}/${m.max}</b><small>${L(m.d)}${max ? '' : '・' + t('price', c)}</small></span><button data-act="buymeta" data-arg="${m.id}" ${max || save.coins < c ? 'disabled' : ''}>${max ? 'MAX' : t('train')}</button></div>`;
     }).join('') + (spent ? `<button class="meta-refund" data-act="refund">${t('meta_refund', spent)}</button>` : '');
   }
@@ -2204,7 +2275,9 @@ document.addEventListener('click', e => {
     case 'stab': shopTab = +arg; renderShop(); break;
     case 'rtab': rankTab = +arg; renderRank(); break;
     case 'skin': save.skin = +arg; persist(); renderShop(); updateHeroArt(); break;
-    case 'buyskin': { const s = SKINS[+arg]; if (save.coins >= s.cost) { save.coins -= s.cost; save.skins.push(+arg); save.skin = +arg; persist(); SFX.item(); collAch(); } renderShop(); updateHeroArt(); break; }
+    case 'outfit': if (!save.charOut) save.charOut = {}; save.charOut[save.skin] = +arg; persist(); refreshHero(); renderShop(); break;
+    case 'buyout': { const o = OUTFITS[+arg]; if (save.coins >= o.cost && !outOwned(+arg)) { save.coins -= o.cost; save.outfits.push(+arg); if (!save.charOut) save.charOut = {}; save.charOut[save.skin] = +arg; persist(); SFX.item(); refreshHero(); collAch(); } renderShop(); break; }
+    case 'buyskin': { const s = SKINS[+arg]; if (s.req && !save.ach[s.req]) break; if (save.coins >= s.cost) { save.coins -= s.cost; save.skins.push(+arg); save.skin = +arg; persist(); SFX.item(); collAch(); } renderShop(); updateHeroArt(); break; }
     case 'buymeta': { const m = META.find(x => x.id === arg), c = m.cost(mt(arg)); if (save.coins >= c && mt(arg) < m.max) { save.coins -= c; save.meta[arg] = mt(arg) + 1; persist(); SFX.item(); collAch(); } renderShop(); break; }
     case 'refund':   // 修行全部歸零、退還小判（按兩次確認）
       if (b.dataset.armed) { save.coins += metaSpent(); for (const m of META) save.meta[m.id] = 0; persist(); SFX.coin(); renderShop(); }

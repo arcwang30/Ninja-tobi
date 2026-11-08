@@ -339,3 +339,16 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 /* 封印模式：卡片變灰紅、提示點選 */
 #perkCards.banishing .card:not(.evo) { outline: 3px dashed #e8403a; filter: saturate(.6); }
 #perkCards .banish-btn { background: #5a1a1a; color: #ffd0c8; }
+
+/* 商店：角色頭像、上架條件、換裝格子 */
+.item .char-ic { background: radial-gradient(circle at 50% 40%, #3a4260, #1a1e2c) !important; overflow: hidden; font-weight: 900; color: #888; }
+.item .char-ic img { width: 140%; margin-top: 10%; }
+.item small.req { display: block; color: #ff9a8a; font-weight: 700; }
+.outfits { display: grid; grid-template-columns: repeat(5, 1fr); gap: .4em; width: 100%; min-width: min(20em, 78vw); }
+.outfits .of { display: flex; flex-direction: column; align-items: center; padding: .2em .1em .3em; margin: 0; border-radius: .6em; background: #f4efe2; border: 2px solid transparent; min-width: 0; }
+.outfits .of::before { display: none; }
+.outfits .of img { width: 100%; aspect-ratio: 1; }
+.outfits .of b { font-size: .8em; text-shadow: 0 0 2px #000; }
+.outfits .of small { font-size: .6em; color: #555; white-space: nowrap; }
+.outfits .of.sel { border-color: #c0262d; background: #fff3d0; }
+.outfits .of.nown img { filter: brightness(.82) saturate(.8); opacity: .85; }
