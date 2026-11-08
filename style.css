@@ -65,7 +65,7 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 /* ===== 標題出場動畫（約 1.7 秒，加上 .play 時播放；接在開場過場的白光之後） =====
    ① 0～0.4s LOGO 像蓋章一樣砸下並震動　② 0.45～1.5s 忍術陣浮現 → 閃光煙霧 → 忍者放大現身，之後浮動　③ 1.2s 起選單淡入 */
 #title .logo { position: relative; z-index: 1; flex: 1; width: 100%; }
-.logo-box { position: absolute; left: 3%; width: 94%; aspect-ratio: 1180 / 447; top: 9%; }
+.logo-box { position: absolute; left: 3%; width: 94%; aspect-ratio: 1180 / 447; top: 15%; }   /* 左上角留給商店圖示 */
 .logo-img { position: absolute; width: 116.95%; left: -8.47%; top: -34%; max-width: none; filter: drop-shadow(0 calc(var(--u)*6) 0 rgba(0,0,0,.4)); }
 /* 忍術陣與現身後的大圖（畫面中央偏下） */
 .jutsu { position: absolute; left: 50%; top: 66%; width: 84%; aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; }
@@ -272,3 +272,24 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .cr-copy img { width: 2.6em; height: 2.6em; object-fit: contain; }
 .cr-thx { color: var(--gold-l); font-weight: 900; margin: .4em 0 .6em; }
 /* 底部選單有五個按鈕：卷軸圖示縮小一點 */
+
+/* ===== 主畫面左上角的商店圖示 ===== */
+.shop-corner { position: absolute; z-index: 2; left: 2.5%; top: calc(var(--sat) + .3em); width: 5em; height: 5em; padding: 0; margin: 0; border: 0; background: none; box-shadow: none; }
+.shop-corner::before { display: none; }
+.shop-corner img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 calc(var(--u)*3) 0 rgba(0,0,0,.45)); }
+.shop-corner:active img { transform: scale(.92); }
+#title.on .shop-corner img { animation: plate-pop .45s 1.25s cubic-bezier(.2, 1.5, .4, 1) both; }
+#title.attract .shop-corner { opacity: 0; pointer-events: none; }
+
+/* ===== 了解歷史（history.js）：分頁＋可捲動的內文 ===== */
+.panel.hist { max-height: 92%; display: flex; flex-direction: column; }
+.hs-tabs { display: flex; gap: .35em; width: 100%; margin-bottom: .5em; }
+.hs-tab { flex: 1; margin: 0; padding: .45em .2em; font-size: .78em; line-height: 1.2; }
+.hs-tab.on { background: linear-gradient(#ffd27a, #e8a83a); color: var(--ink); }
+.hs-body { flex: 1; min-height: 0; overflow-y: auto; width: 100%; padding: .2em .4em .6em; text-align: left; -webkit-overflow-scrolling: touch; }
+.hs-body p { margin: 0 0 .7em; font-size: .86em; font-weight: 700; line-height: 1.6; color: #dfe6e8; }
+.hs-body p.li { padding-left: 1em; text-indent: -1em; }
+.hs-body p.li::before { content: "• "; color: var(--gold); }
+.hs-body h3 { margin: 1em 0 .45em; font-size: .98em; color: var(--gold-l); text-shadow: 0 calc(var(--u)*2) 0 var(--ink); }
+.hs-body .arc-logo { display: block; width: 46%; margin: .2em auto .8em; }
+.hs-fb { display: block; margin: .5em auto 0; padding: .5em 1.2em; border-radius: 99em; background: #1877f2; color: #fff; font-weight: 900; font-size: .85em; text-decoration: none; border: calc(var(--u)*3) solid var(--ink); }

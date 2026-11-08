@@ -233,7 +233,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v37';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v38';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -1484,6 +1484,7 @@ function buildDockIcons() {
     try { im.src = dockPlate(el.dataset.ic, 220).toDataURL(); } catch (e) { }
     el.parentNode.setAttribute('aria-label', L(DOCK_LABEL[el.dataset.ic]));
   }
+  const sc = $('shopIc'); if (sc) { try { sc.src = shopIcon(SHOP_STYLE, 220).toDataURL(); } catch (e) { } sc.parentNode.setAttribute('aria-label', L(DOCK_LABEL.shop)); }   // 左上角的商店圖示
 }
 function buildHeroArt() {
   for (let i = 0; i < SKINS.length; i++) heroSprites[i] = heroPortrait(i, 400);
@@ -1908,7 +1909,7 @@ function frame(now) {
 requestAnimationFrame(frame);
 
 // ===== UI =====
-const SCRS = ['title', 'pause', 'perk', 'over', 'shop', 'rank', 'opt', 'help', 'clear', 'credit'];
+const SCRS = ['title', 'pause', 'perk', 'over', 'shop', 'rank', 'opt', 'help', 'clear', 'credit', 'hist'];
 let backTo = 'title';
 function show(id, keep) { if (!keep) hideAll(); $(id).classList.add('on'); }
 function hide(id) { $(id).classList.remove('on'); }
@@ -2022,6 +2023,8 @@ document.addEventListener('click', e => {
     case 'shop': case 'rank': case 'opt': openSub(a); break;
     case 'replay': INTRO.replay(); break;   // 設定頁：重看開場
     case 'credit': openSub('credit'); break;   // 製作名單（help.js）
+    case 'hist': openHist(); break;                                   // 了解歷史（history.js）
+    case 'hist-tab': histTab = +b.dataset.arg; SFX.click(); renderHist(); break;
     case 'hp-prev': helpPage(-1); break;       // 玩法說明：上一頁／下一頁
     case 'hp-next': helpPage(1); break;
     case 'help': openHelp(); break;

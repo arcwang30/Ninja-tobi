@@ -35,6 +35,8 @@ const STR = {
   zi_skip: ['點一下跳過', 'タップでスキップ', 'Tap to skip'],
   // ---- 製作名單 ----
   credit: ['製作名單', 'クレジット', 'Credits'],
+  hist: ['了解歷史', '歴史を知る', 'History'],
+  hist_fb: ['前往 Facebook 粉絲團', 'Facebook ファンページへ', 'Visit our Facebook page'],
   cr_r1: ['企劃・製作', '企画・制作', 'Planning & Production'],
   cr_r2: ['程式・美術', 'プログラム・アート', 'Code & Art'],
   cr_v2: ['全部以程式繪製（AI 協助製作）', 'すべてプログラムで描画（AI 協力）', 'Everything drawn in code (AI-assisted)'],

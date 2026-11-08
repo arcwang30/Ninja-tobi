@@ -1617,7 +1617,7 @@ function drawBoss2(b, x, y, s, c = ctx) {
 }
 
 // ===== 主畫面底部選單的圖示：「護額」風格（布帶綁著金屬板，板上刻著圖案和文字） =====
-const DOCK_LABEL = { shop: ['商店', 'ショップ', 'SHOP'], rank: ['戰績', '記録', 'RECORD'], help: ['說明', '遊び方', 'HELP'], opt: ['設定', '設定', 'SETTING'], credit: ['製作', '制作', 'CREDIT'] };
+const DOCK_LABEL = { shop: ['商店', 'ショップ', 'SHOP'], rank: ['成就', '実績', 'AWARDS'], hist: ['歷史', '歴史', 'HISTORY'], help: ['說明', '遊び方', 'HELP'], opt: ['設定', '設定', 'SETTING'], credit: ['製作', '制作', 'CREDIT'] };
 // 單色線條圖案（中心 (0,0)，約 ±16）
 function dockGlyph(c, k, col, lw = 3.6) {
   c.save(); c.strokeStyle = col; c.fillStyle = col; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round';
@@ -1625,6 +1625,7 @@ function dockGlyph(c, k, col, lw = 3.6) {
   else if (k === 'rank') { c.beginPath(); c.moveTo(-11, -12); c.lineTo(11, -12); c.quadraticCurveTo(11, 4, 0, 5); c.quadraticCurveTo(-11, 4, -11, -12); c.stroke(); c.beginPath(); c.moveTo(0, 5); c.lineTo(0, 11); c.moveTo(-7, 13); c.lineTo(7, 13); c.stroke(); c.beginPath(); c.arc(-12, -6, 4.5, Math.PI * .5, Math.PI * 1.5); c.stroke(); c.beginPath(); c.arc(12, -6, 4.5, -Math.PI * .5, Math.PI * .5); c.stroke(); }
   else if (k === 'help') { aRR(c, -12, -12, 24, 24, 4); c.stroke(); c.font = '900 20px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 0, 1); }
   else if (k === 'opt') { c.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; c.moveTo(Math.cos(a) * 8, Math.sin(a) * 8); c.lineTo(Math.cos(a) * 14, Math.sin(a) * 14); } c.stroke(); aCirc(c, 0, 0, 8.5); c.stroke(); aCirc(c, 0, 0, 3); c.fill(); }
+  else if (k === 'hist') { c.beginPath(); c.moveTo(0, -9); c.quadraticCurveTo(-7, -13, -14, -10); c.lineTo(-14, 11); c.quadraticCurveTo(-7, 8, 0, 12); c.quadraticCurveTo(7, 8, 14, 11); c.lineTo(14, -10); c.quadraticCurveTo(7, -13, 0, -9); c.closePath(); c.stroke(); c.beginPath(); c.moveTo(0, -9); c.lineTo(0, 12); c.stroke(); for (const sd of [-1, 1]) for (const y of [-4, 1]) { c.beginPath(); c.moveTo(sd * 4, y); c.lineTo(sd * 10, y - .5); c.stroke(); } }   // 了解歷史：攤開的書
   else { c.save(); c.rotate(.7); aRR(c, -2.6, -14, 5.2, 18, 2); c.stroke(); c.beginPath(); c.moveTo(-3.4, 4); c.quadraticCurveTo(0, 16, 3.4, 4); c.closePath(); c.fill(); c.restore(); c.beginPath(); c.moveTo(-12, 12); c.quadraticCurveTo(-4, 8, 2, 13); c.stroke(); }
   c.restore();
 }
@@ -1790,7 +1791,7 @@ function drawYamaTengu(t, e, look) {
 }
 
 // ===== 底部選單：手裡劍徽章＋框（B1 鋼框方牌／B2 金環圓徽／B3 朱漆八角框）；網址 ?dock=b1|b2|b3 可預覽 =====
-let DOCK_STYLE = new URLSearchParams(location.search).get('dock') || 'plate';
+let DOCK_STYLE = new URLSearchParams(location.search).get('dock') || 'b2';   // 遊戲使用 B2 金環圓徽
 function dkShuriken(c, x, y, R, r) {
   c.save(); c.translate(x, y); c.rotate(Math.PI / 4);
   c.beginPath(); for (let i = 0; i < 8; i++) { const rr = i % 2 ? r : R, a = i * Math.PI / 4; c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } c.closePath();
@@ -1830,3 +1831,51 @@ const DOCK_STYLES_LIST = [
   }],
 ];
 const DOCK_STYLES = { b1: DOCK_STYLES_LIST[0][2], b2: DOCK_STYLES_LIST[1][2], b3: DOCK_STYLES_LIST[2][2] };
+
+// ===== 主畫面左上角的商店圖示（三案；網址 ?shop=a|b|c 可預覽） =====
+let SHOP_STYLE = new URLSearchParams(location.search).get('shop') || 'a';
+function shopIcon(style = SHOP_STYLE, size = 200) {
+  const cnv = document.createElement('canvas'); cnv.width = cnv.height = size;
+  const c = cnv.getContext('2d'); c.scale(size / 100, size / 100);
+  const label = L(DOCK_LABEL.shop);
+  const fitText = (s, max, fs0) => { let fs = fs0; c.font = `900 ${fs}px ${FONT}`; while (c.measureText(s).width > max && fs > 8) { fs -= .5; c.font = `900 ${fs}px ${FONT}`; } };
+  if (style === 'b') {   // 暖簾：木桿上掛著深藍布簾，中間白色圓紋寫「商店」
+    c.fillStyle = 'rgba(0,0,0,.3)'; aEll(c, 50, 94, 36, 4); c.fill();
+    for (let i = 0; i < 3; i++) {
+      const x = 14 + i * 24.5, sw = Math.sin(i * 1.7) * 1.5;
+      c.beginPath(); c.moveTo(x, 18); c.lineTo(x + 22, 18); c.lineTo(x + 22 + sw, 86); c.quadraticCurveTo(x + 11 + sw, 90, x + sw, 86); c.closePath();
+      const ng = c.createLinearGradient(0, 18, 0, 88); ng.addColorStop(0, '#2c4a8a'); ng.addColorStop(1, '#1a2c5a'); c.fillStyle = ng; c.fill(); aInk(c, 2);
+    }
+    c.fillStyle = 'rgba(255,255,255,.12)'; c.fillRect(14, 22, 72, 3);
+    aRR(c, 6, 11, 88, 9, 4); const wg = c.createLinearGradient(0, 11, 0, 20); wg.addColorStop(0, '#b0743a'); wg.addColorStop(1, '#6a3e1a'); c.fillStyle = wg; c.fill(); aInk(c, 2);
+    for (const x of [6, 94]) { aCirc(c, x, 15.5, 5); aFI(c, '#e8b84a', 1.6); }
+    aCirc(c, 50, 54, 22); c.fillStyle = '#f4efe2'; c.fill(); aInk(c, 2); aCirc(c, 50, 54, 18.5); c.strokeStyle = '#2c4a8a'; c.lineWidth = 1.4; c.stroke();
+    c.save(); c.translate(50, 47); c.scale(.62, .62); dockGlyph(c, 'shop', '#1a2c5a', 4); c.restore();
+    fitText(label, 30, 10); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#1a2c5a'; c.fillText(label, 50, 63);
+  } else if (style === 'c') {   // 千兩箱：打開的木箱裝滿小判，閃閃發光，下方紅布條
+    c.fillStyle = 'rgba(0,0,0,.3)'; aEll(c, 50, 92, 38, 4); c.fill();
+    bossGlow(c, 50, 40, 42, 'rgba(255,220,120,.55)');
+    c.save(); c.translate(50, 34); c.rotate(-.18); aRR(c, -34, -16, 68, 16, 4); aFI(c, '#8a5428', 2.2); c.fillStyle = '#e8b84a'; c.fillRect(-34, -16, 6, 16); c.fillRect(28, -16, 6, 16); c.restore();   // 打開的蓋子
+    for (const [x, y, r] of [[34, 42, 1], [48, 38, 1.1], [62, 42, 1], [41, 47, .9], [56, 47, .9]]) drawKoban(c, x, y, 7 * r, 9.5 * r, 1, x);
+    aRR(c, 14, 46, 72, 34, 5); const bg = c.createLinearGradient(0, 46, 0, 80); bg.addColorStop(0, '#a8682e'); bg.addColorStop(1, '#6a3e1a'); c.fillStyle = bg; c.fill(); aInk(c, 2.4);
+    c.fillStyle = '#2a2a30'; for (const y of [52, 72]) c.fillRect(14, y, 72, 4);
+    for (const [x, y] of [[14, 46], [80, 46], [14, 74], [80, 74]]) { c.fillStyle = '#e8b84a'; c.fillRect(x, y, 6, 6); }
+    aRR(c, 44, 56, 12, 12, 2); aFI(c, '#e8b84a', 1.6); aCirc(c, 50, 61, 1.8); c.fillStyle = INK; c.fill();
+    for (const [x, y, r] of [[22, 22, 4], [80, 26, 3.4], [68, 14, 2.6]]) drawStar4(c, x, y, r, .4, '#fff6c8');
+    c.beginPath(); c.moveTo(10, 82); c.lineTo(90, 82); c.lineTo(84, 90); c.lineTo(90, 98); c.lineTo(10, 98); c.lineTo(16, 90); c.closePath(); c.fillStyle = '#c0262d'; c.fill(); aInk(c, 2);
+    fitText(label, 58, 13); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff'; c.fillText(label, 50, 90.5);
+  } else {   // 錢袋金環：和底部選單同款的金色圓環，裡面放紫色錢袋＋小判，紅布條寫字
+    aCirc(c, 50, 46, 44); const rg = c.createLinearGradient(0, 2, 0, 90); rg.addColorStop(0, '#fff0a8'); rg.addColorStop(.5, '#e8b84a'); rg.addColorStop(1, '#9a6a1a'); c.fillStyle = rg; c.fill(); aInk(c, 3);
+    aCirc(c, 50, 46, 36); c.fillStyle = '#3a1a4a'; c.fill(); aInk(c, 2);
+    c.strokeStyle = 'rgba(122,74,16,.7)'; c.lineWidth = 1.2; for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; c.beginPath(); c.moveTo(50 + Math.cos(a) * 38, 46 + Math.sin(a) * 38); c.lineTo(50 + Math.cos(a) * 42, 46 + Math.sin(a) * 42); c.stroke(); }
+    c.save(); c.translate(46, 46); c.scale(1.15, 1.15);
+    c.beginPath(); c.moveTo(-14, -6); c.quadraticCurveTo(-20, 16, -2, 18); c.quadraticCurveTo(14, 18, 12, -6); c.quadraticCurveTo(0, -10, -14, -6); c.closePath(); aFI(c, '#8a4ac0', 2);
+    c.beginPath(); c.moveTo(-14, -6); c.lineTo(-17, -14); c.lineTo(-8, -10); c.lineTo(-1, -16); c.lineTo(5, -10); c.lineTo(14, -14); c.lineTo(12, -6); c.closePath(); aFI(c, '#a86ad8', 1.8);
+    c.strokeStyle = '#f2c14e'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(-13, -6); c.quadraticCurveTo(-1, -2, 12, -6); c.stroke();
+    c.fillStyle = 'rgba(255,255,255,.25)'; aEll(c, -7, 4, 3, 5, -.3); c.fill();
+    drawKoban(c, 12, 8, 7, 9.5, 1, 0);
+    c.restore();
+    dkRibbon(c, 'shop', 82);
+  }
+  return cnv;
+}

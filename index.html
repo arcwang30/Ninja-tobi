@@ -23,6 +23,8 @@
 
   <!-- 標題 -->
   <div class="scr" id="title">
+    <!-- 商店：獨立放在畫面左上角 -->
+    <button class="shop-corner" data-act="shop" aria-label="shop"><img id="shopIc" alt=""></button>
     <!-- 出場動畫：① LOGO 出現、忍者從左邊在 LOGO 上連跳三下往右出畫面 → ② LOGO 上移 → ③ 忍術陣中忍者現身放大 -->
     <div class="logo" id="intro">
       <div class="logo-box">
@@ -44,9 +46,9 @@
     </div>
     <!-- 底部選單：鐵灰方塊＋金色字，橫向一列 -->
     <nav class="dock">
-      <button data-act="shop"><i class="scroll-ic" data-ic="shop"></i><span data-i18n="shop"></span></button>
       <button data-act="rank"><i class="scroll-ic" data-ic="rank"></i><span data-i18n="rank"></span></button>
       <button data-act="help"><i class="scroll-ic" data-ic="help"></i><span data-i18n="help"></span></button>
+      <button data-act="hist"><i class="scroll-ic" data-ic="hist"></i><span data-i18n="hist"></span></button>
       <button data-act="opt"><i class="scroll-ic" data-ic="opt"></i><span data-i18n="opt"></span></button>
       <button data-act="credit"><i class="scroll-ic" data-ic="credit"></i><span data-i18n="credit"></span></button>
     </nav>
@@ -143,6 +145,17 @@
   </div>
 
   <!-- 製作名單（照 yaki_mochi 的做法：一行一行淡入，下方是主角插圖與版權） -->
+  <!-- 了解歷史（照 mouse-hit 專案：三個分頁、可捲動；第三頁附團隊 LOGO 與粉絲團連結） -->
+  <div class="scr dim" id="hist">
+    <div class="panel wide hist">
+      <h2 data-i18n="hist"></h2>
+      <div class="hs-tabs" id="histTabs"></div>
+      <div class="hs-body" id="histBody"></div>
+      <a class="hs-fb" id="histFb" target="_blank" rel="noopener noreferrer" data-i18n="hist_fb"></a>
+      <button data-act="back" data-i18n="back"></button>
+    </div>
+  </div>
+
   <div class="scr dim" id="credit">
     <div class="panel credit">
       <h2>CREDIT <small data-i18n="credit"></small></h2>
@@ -174,5 +187,6 @@
 <script src="game.js"></script>
 <script src="stagefx.js"></script>
 <script src="help.js"></script>
+<script src="history.js"></script>
 </body>
 </html>
