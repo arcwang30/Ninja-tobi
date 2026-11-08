@@ -385,3 +385,8 @@ body.rotate #app { visibility: hidden; }
 @keyframes rt-turn { 0%, 25% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0); } }
 .outfits .of { position: relative; }
 .outfits .of .of-def { position: absolute; left: .15em; top: .15em; font-style: normal; font-size: .58em; font-weight: 900; color: #fff; background: #c0262d; border: 1.5px solid #fff; border-radius: .6em; padding: 0 .4em; line-height: 1.5; box-shadow: 0 1px 2px rgba(0,0,0,.4); }   /* 預設顏色的標籤 */
+/* 選關：畫面比較矮（例如 iPad 直向）時，四張圖卡跟著縮小，下方「新手教學」「返回」按鈕不會被壓扁 */
+#lvsel { container-type: size; }
+.lvsel > button { flex: none; }
+.lvsel .lv-list { justify-content: center; grid-template-columns: repeat(2, minmax(0, min(50%, calc((92cqh - 16em) / 2.5)))); }
+.lvsel .lv-card { width: 100%; }
