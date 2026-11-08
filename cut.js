@@ -18,6 +18,7 @@ const INTRO = {
     const bg0 = new URLSearchParams(location.search).get('bg'); if (bg0 !== null) TB.cur = +bg0;   // 開發用：?bg=0～3 固定標題背景的幕
     if (new URLSearchParams(location.search).has('skip')) this.toTitle();   // 開發用：網址加 ?skip 直接到標題
     if (new URLSearchParams(location.search).has('still')) this.flash = 0;
+    const lg = new URLSearchParams(location.search).get('lang'); if (lg) { LI = Math.max(0, LANGS.findIndex(l => l.id === lg)); applyLang(); buildDockIcons(); }   // 開發用：?lang=zh|ja|en
     const op = new URLSearchParams(location.search).get('open');   // 開發用：?open=help(,頁) ／ credit → 直接打開說明或製作名單
     if (op) { this.toTitle(); const [w, pg] = op.split(','); if (w === 'help') { helpPg = +pg || 0; openHelp(); } else if (w === 'hist') { openHist(); histTab = +pg || 0; renderHist(); } else openSub(w); const b = $('boot'); if (b) b.remove(); }
     // 開發用：?slashshot=敵人種類,第幾刀,這一刀經過秒數 → 停在斬擊特寫的那一刻（截圖檢查用）

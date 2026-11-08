@@ -233,7 +233,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v39';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v40';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -1479,12 +1479,15 @@ function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y
 // ===== 主角：全部用程式畫（art.js 的 drawHeroNinja）。標題大圖與商店頭像也用同一套畫法產生 =====
 const heroSprites = [];
 function buildDockIcons() {
+  const stb = document.querySelector('#title [data-act=start]');   // 「開始修行」按鈕：忍者風底圖（art.js startBg）
+  if (stb && START_STYLE && !stb.classList.contains('st')) { stb.classList.add('st', 'st-' + START_STYLE); try { stb.style.setProperty('--stbg', 'url(' + startBg(START_STYLE).toDataURL() + ')'); } catch (e) { } }
   for (const el of document.querySelectorAll('.scroll-ic')) {
-    let im = el.firstChild; if (!im) { im = new Image(); im.alt = ''; el.appendChild(im); }
-    try { im.src = dockPlate(el.dataset.ic, 220).toDataURL(); } catch (e) { }
+    // 每次都換一張新的圖片元素（iPhone 有時只改 src 不會重畫），文字依目前語言重畫
+    const im = new Image(); im.alt = ''; try { im.src = dockPlate(el.dataset.ic, 220).toDataURL(); } catch (e) { }
+    el.replaceChildren(im);
     el.parentNode.setAttribute('aria-label', L(DOCK_LABEL[el.dataset.ic]));
   }
-  const sc = $('shopIc'); if (sc) { try { sc.src = shopIcon(SHOP_STYLE, 220).toDataURL(); } catch (e) { } sc.parentNode.setAttribute('aria-label', L(DOCK_LABEL.shop)); }   // 左上角的商店圖示
+  const sc = $('shopIc'); if (sc) { const im = new Image(); im.id = 'shopIc'; im.alt = ''; try { im.src = shopIcon(SHOP_STYLE, 220).toDataURL(); } catch (e) { } sc.parentNode.setAttribute('aria-label', L(DOCK_LABEL.shop)); sc.replaceWith(im); }   // 左上角的商店圖示
 }
 function buildHeroArt() {
   for (let i = 0; i < SKINS.length; i++) heroSprites[i] = heroPortrait(i, 400);
@@ -1960,6 +1963,7 @@ function openHelp() {
 function applyLang() {
   document.documentElement.lang = ['zh-Hant', 'ja', 'en'][LI];
   for (const el of document.querySelectorAll('[data-i18n]')) el.innerHTML = t(el.dataset.i18n);
+  if (typeof dockPlate === 'function' && document.querySelector('.scroll-ic')) buildDockIcons();   // 圖示上的文字也跟著換語言
 }
 
 // 商店

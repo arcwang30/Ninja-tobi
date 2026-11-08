@@ -293,3 +293,11 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .hs-body h3 { margin: 1em 0 .45em; font-size: .98em; color: var(--gold-l); text-shadow: 0 calc(var(--u)*2) 0 var(--ink); }
 .hs-body .arc-logo { display: block; width: 46%; margin: .2em auto .8em; }
 .hs-fb { display: block; margin: .5em auto 0; padding: .5em 1.2em; border-radius: 99em; background: #1877f2; color: #fff; font-weight: 900; font-size: .85em; text-decoration: none; border: calc(var(--u)*3) solid var(--ink); }
+
+/* ===== 「開始修行」按鈕：縮小＋忍者風底圖（art.js startBg；A 卷軸／B 刀身／C 朱漆護符） ===== */
+#title .menu button.st { width: 66%; height: 3.4em; padding: 0 0 .2em; border: 0; border-radius: 0; background: var(--stbg) center / 100% 100% no-repeat; box-shadow: none; font-size: 1.1em; letter-spacing: .08em; }
+#title .menu button.st::before { display: none; }
+#title .menu button.st-a { color: #1a1a1a; text-shadow: 0 0 calc(var(--u)*4) #fff8e6, 0 0 calc(var(--u)*2) #fff8e6; }
+#title .menu button.st-b { color: #1a2a4a; padding-left: 16%; text-shadow: 0 calc(var(--u)*1) 0 #fff; }
+#title .menu button.st-c { color: #fff; text-shadow: 0 calc(var(--u)*2) 0 #3a0a08, 0 0 calc(var(--u)*6) rgba(0,0,0,.4); }
+#title .menu button[data-act=start]:not(.st) { width: 66%; font-size: 1.1em; padding: .5em .8em; }   /* 還沒選定忍者風底圖前，先縮小預設的紅色按鈕 */
