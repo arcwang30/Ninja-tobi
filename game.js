@@ -233,7 +233,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v41';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v42';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -406,7 +406,7 @@ function startRun() {
     eshots: [], booms: [], ghosts: [], corpses: [], puffs: [], hitstop: 0,
     drops: [], bolts: [], blades: [], skills: {}, sks: {}, xp: 0, lv: 1, lvQueue: 0, barrier: 0, barT: 0,
     genY: 40, lastX: W / 2, rowN: 0, ladderCD: 3,
-    zoneY: 360, boss: null, bossN: 0, stage: 0,
+    zoneY: 360, boss: null, bossN: 0, stage: 0, base: 0,
     combo: 0, comboT: 0, maxCombo: 0, kills: 0, vampN: 0, ki: 3, fever: 0,
     hp: 1, maxHp: 1, scrolls: 0, fly: 0, shake: 0,
     perks: {}, mod: null, wind: 0, windT: 0, spikeUsed: false, shurT: 2,
@@ -824,10 +824,10 @@ function updatePlay(dt) {
   // 波次與中 BOSS
   g.waveT = (g.waveT ?? 8) - dt;
   if (g.waveT <= 0 && !g.boss && g.top > 300) { spawnWave(); g.waveT = rnd(11, 16) * Math.max(.55, 1 - .07 * g.stage); }
-  if (!g.midDone && !g.boss && !g.mid && g.top >= g.bossN * STAGE_PX + STAGE_PX * .5) spawnMid();
+  if (!g.midDone && !g.boss && !g.mid && g.top >= g.base + STAGE_PX * .5) spawnMid();
 
   // BOSS
-  if (!g.boss && g.top >= (g.bossN + 1) * STAGE_PX) spawnBoss();
+  if (!g.boss && g.top >= g.base + STAGE_PX) spawnBoss();   // g.base：本舞台起點（上一隻魔王被打倒時的高度）
   if (g.boss) updateBoss(dt);
 
   checkLiveAch();
@@ -1283,7 +1283,7 @@ function updateBoss(dt) {
       SFX.boss(); vib(80);
     }
   }
-  if (b.life <= 0) finishBoss(false);
+  // 魔王不會逃走：一定要打倒才能進入下一個舞台
 }
 function qteHit(n) {
   const q = g.qte, b = g.boss; if (!q || !b) return;
@@ -1319,7 +1319,7 @@ function finishBoss(killed) {
     floatText(W / 2, g.camY + H * .4, t('boss_gone'), '#ccc', 22);
   }
   g.p.vy = -JUMP * 1.15; g.p.inv = 1.2; g.p.slow = 0; g.p.freeze = 0;
-  g.bossN++; g.stage = g.bossN; g.spikeUsed = false;
+  g.bossN++; g.stage = g.bossN; g.spikeUsed = false; g.base = g.top;
   g.midDone = false; if (g.mid) { g.mid.dead = true; g.mid = null; }
   if (g.stage > 4 && g.stage % 4 === 0) unlock('loop2');
   g.mod = pick(MODS); g.wind = 0; g.windT = 0;
@@ -1487,7 +1487,8 @@ function buildDockIcons() {
     el.replaceChildren(im);
     el.parentNode.setAttribute('aria-label', L(DOCK_LABEL[el.dataset.ic]));
   }
-  const sc = $('shopIc'); if (sc) { const im = new Image(); im.id = 'shopIc'; im.alt = ''; try { im.src = shopIcon(SHOP_STYLE, 220).toDataURL(); } catch (e) { } sc.parentNode.setAttribute('aria-label', L(DOCK_LABEL.shop)); sc.replaceWith(im); }   // 左上角的商店圖示
+  // 右上角的商店寶箱：平常是關著的，點下去先打開再進商店
+  const sc = $('shopIc'); if (sc) { const im = new Image(); im.id = 'shopIc'; im.alt = ''; try { im.src = shopIcon(SHOP_STYLE, 200, false).toDataURL(); im.dataset.open = shopIcon(SHOP_STYLE, 200, true).toDataURL(); im.dataset.shut = im.src; } catch (e) { } sc.parentNode.setAttribute('aria-label', L(DOCK_LABEL.shop)); sc.replaceWith(im); }
 }
 function buildHeroArt() {
   for (let i = 0; i < SKINS.length; i++) heroSprites[i] = heroPortrait(i, 400);
@@ -1602,7 +1603,7 @@ function drawHUD() {
   // 幕名（紅色落款方印）、高度＋本幕進度小條
   seal(283, cy, 18, THEMES[g.stage % 4].k);
   txt(Math.floor(g.top / 10) + 'm', 323, cy - 4, 11, '#fff', 'right', INK, 3);
-  const pr = clamp((g.top - g.bossN * STAGE_PX) / STAGE_PX, 0, 1);
+  const pr = g.boss ? 1 : clamp((g.top - g.base) / STAGE_PX, 0, 1);
   ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(296, cy + 6, 27, 3, 1.5); ctx.fill();
   ctx.fillStyle = '#ffe28a'; rr(296, cy + 6, 27 * pr, 3, 1.5); ctx.fill();
   // 暫停：金框圓形家紋
@@ -1650,7 +1651,7 @@ function drawHUD() {
   const b = g.boss;
   if (b) {
     bar(40, 110, W - 80, 16, b.hp / b.max, '#e5342a');
-    bar(40, 127, W - 80, 9, clamp(b.life / 22, 0, 1), '#e8b84a');
+    txt(t('boss_must'), W / 2, 136, 9, '#ffd27a', 'center', '#000', 2);
     txt(L(BOSS_KINDS[b.kind].n), W / 2, 119, 9, '#fff', 'center', '#000', 2);
   }
   // 中 BOSS
@@ -2024,7 +2025,16 @@ document.addEventListener('click', e => {
   const a = b.dataset.act, arg = b.dataset.arg;
   switch (a) {
     case 'start': case 'retry': startRun(); break;
-    case 'shop': case 'rank': case 'opt': openSub(a); break;
+    case 'shop':
+      if (b.classList.contains('shop-corner')) {   // 主畫面寶箱：打開蓋子、噴出金光，0.4 秒後才進商店
+        if (b.classList.contains('opening')) break;
+        const im = $('shopIc'); if (im && im.dataset.open) im.src = im.dataset.open;
+        b.classList.add('opening'); SFX.coin && SFX.coin(); vib(20);
+        setTimeout(() => { openSub('shop'); setTimeout(() => { b.classList.remove('opening'); const m = $('shopIc'); if (m && m.dataset.shut) m.src = m.dataset.shut; }, 500); }, 420);
+        break;
+      }
+      openSub(a); break;
+    case 'rank': case 'opt': openSub(a); break;
     case 'replay': INTRO.replay(); break;   // 設定頁：重看開場
     case 'credit': openSub('credit'); break;   // 製作名單（help.js）
     case 'hist': openHist(); break;                                   // 了解歷史（history.js）

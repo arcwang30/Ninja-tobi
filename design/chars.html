@@ -1,0 +1,52 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>新角色提案</title>
+<style>html, body { margin: 0; background: #14161e; } canvas { display: block; } #title { display: none; }</style>
+<canvas id="cv"></canvas><div id="title"></div><div id="intro"></div>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), $ = id => document.getElementById(id);
+const INK = '#0e1414', g = null, WALL = 14, FONT = '"Noto Sans TC","Microsoft JhengHei",sans-serif';
+let W = 960, H = 640, SAFE_T = 0;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SKINS = [{ n: '鳶', suit: '#c0262d', dark: '#7a1218', band: '#ffffff' }];
+const save = { skin: 0, opt: { lang: 'zh' } }, SFX = new Proxy({}, { get: () => () => {} }), tone = () => {}, noise = () => {};
+</script>
+<script src="../lang.js"></script>
+<script src="../art.js"></script>
+<script src="chars-lib.js"></script>
+<script>
+'use strict';
+const Q = new URLSearchParams(location.search), MODE = Q.get('m') || 'cards', T = +(Q.get('t') || .35);
+const CW = 1000;
+function wrap(s, x, y, maxW, lh) { let line = ''; for (const ch of s) { if (ctx.measureText(line + ch).width > maxW) { ctx.fillText(line, x, y); y += lh; line = ch; } else line += ch; } ctx.fillText(line, x, y); return y; }
+if (MODE === 'cards') {
+  cv.width = CW * 2; cv.height = 1180 * 2; ctx.scale(2, 2);
+  ctx.fillStyle = '#14161e'; ctx.fillRect(0, 0, CW, 1180);
+  ctx.font = `900 30px ${FONT}`; ctx.fillStyle = '#ffd27a'; ctx.textAlign = 'center'; ctx.fillText('新角色提案（6 名）— 商店「角色」分頁', CW / 2, 48);
+  ctx.font = `600 15px ${FONT}`; ctx.fillStyle = '#aab'; ctx.fillText('每名角色開局自帶一個專屬技能；外觀可再套用「換裝」的 10 種顏色（下方示範）', CW / 2, 76);
+  NEW_CHARS.forEach((ch, i) => {
+    const col = i % 3, row = (i / 3) | 0, x = 20 + col * 325, y = 100 + row * 535, w = 310, h = 500;
+    aRR(ctx, x, y, w, h, 16); const bg = ctx.createLinearGradient(0, y, 0, y + h); bg.addColorStop(0, '#2a3046'); bg.addColorStop(1, '#1a1e2c'); ctx.fillStyle = bg; ctx.fill(); ctx.strokeStyle = '#e8b84a'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; aEll(ctx, x + w / 2, y + 268, 70, 10); ctx.fill();
+    ctx.save(); ctx.translate(x + w / 2 - 6, y + 268); ctx.scale(3.5, 3.5); ch.draw(ctx, OUTFITS[ch.out], T); ctx.restore();
+    ctx.textAlign = 'center'; ctx.font = `900 30px ${FONT}`; ctx.fillStyle = '#fff'; ctx.fillText(`${ch.n[0]}`, x + w / 2, y + 318);
+    ctx.font = `600 13px ${FONT}`; ctx.fillStyle = '#9aa'; ctx.fillText(`${ch.n[1]} / ${ch.n[2]}`, x + w / 2, y + 338);
+    aRR(ctx, x + 20, y + 352, w - 40, 30, 15); ctx.fillStyle = '#c0262d'; ctx.fill();
+    ctx.font = `900 17px ${FONT}`; ctx.fillStyle = '#fff'; ctx.fillText('技能：' + ch.sk[0], x + w / 2, y + 373);
+    ctx.textAlign = 'left'; ctx.font = `500 14px ${FONT}`; ctx.fillStyle = '#e8e8f0';
+    let yy = wrap(ch.d[0], x + 22, y + 408, w - 44, 21);
+    ctx.font = `700 13px ${FONT}`; ctx.fillStyle = '#ffd27a'; wrap('進化 ▶ ' + ch.evo[0], x + 22, yy + 28, w - 44, 20);
+  });
+} else {   // 換裝示範：每名角色 × 10 色
+  const rows = NEW_CHARS.length, cell = 92;
+  cv.width = (120 + cell * 10) * 2; cv.height = (70 + rows * 110) * 2; ctx.scale(2, 2);
+  ctx.fillStyle = '#14161e'; ctx.fillRect(0, 0, 120 + cell * 10, 70 + rows * 110);
+  ctx.font = `900 22px ${FONT}`; ctx.fillStyle = '#ffd27a'; ctx.textAlign = 'center'; ctx.fillText('換裝 10 色 × 新角色（招牌特徵如髮色、面具、斗笠不變色）', (120 + cell * 10) / 2, 36);
+  OUTFITS.forEach((o, j) => { ctx.font = `700 14px ${FONT}`; ctx.fillStyle = o.suit; ctx.fillText(o.n[0], 120 + j * cell + cell / 2, 62); });
+  NEW_CHARS.forEach((ch, i) => {
+    const y = 70 + i * 110;
+    ctx.font = `900 22px ${FONT}`; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(ch.n[0], 60, y + 64);
+    OUTFITS.forEach((o, j) => { ctx.save(); ctx.translate(120 + j * cell + cell / 2 - 3, y + 98); ctx.scale(1.6, 1.6); ch.draw(ctx, o, T); ctx.restore(); });
+  });
+}
+</script>

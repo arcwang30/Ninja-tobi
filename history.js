@@ -12,7 +12,7 @@ const HIST = {
       '忍者會跳、會丟手裡劍、會施展忍術，天生就適合做成動作遊戲。\n' +
       '• 1984 年《忍者くん 魔城の冒険》：UPL 推出的街機，Q 版小忍者在城牆間跳上跳下打倒敵人，可愛的忍者主角從這裡開始。\n' +
       '• 1987 年《Shinobi 忍》：SEGA 的街機名作，丟手裡劍、施展忍術清場，奠定了「帥氣忍者」的形象。\n' +
-      '• 1988 年《忍者龍劍傳》：Tecmo 推出，紅白機版用電影般的過場來說故事，讓玩家看得熱血沸騰。本作開場「月下的狼煙」就是向它致敬。\n' +
+      '• 1988 年《忍者龍劍傳》：Tecmo 推出，紅白機版用電影般的過場來說故事，讓玩家看得熱血沸騰。\n' +
       '# 第二階段：一路往上爬（1980s – 2010s）\n' +
       '「越爬越高」是最直覺的目標，也最容易讓人一玩再玩。\n' +
       '• 1981 年《大金剛》：任天堂的街機，主角一路往上爬到頂端救人，「往上爬」的玩法從這裡開始流行。\n' +
@@ -73,7 +73,7 @@ const HIST = {
       '跳んで、手裏剣を投げて、忍術を使う。忍者はもともとアクションゲームにぴったりの存在です。\n' +
       '• 1984年『忍者くん 魔城の冒険』：UPL のアーケード作品。小さな忍者が城壁を跳び回って敵を倒す、かわいい忍者主人公の元祖です。\n' +
       '• 1987年『Shinobi 忍』：SEGA のアーケードの名作。手裏剣と忍術で敵を一掃する「かっこいい忍者」のイメージを決定づけました。\n' +
-      '• 1988年『忍者龍剣伝』：テクモの作品。ファミコン版は映画のようなカットシーンで物語を描き、プレイヤーを熱くさせました。本作のオープニング「月下の狼煙」はそのオマージュです。\n' +
+      '• 1988年『忍者龍剣伝』：テクモの作品。ファミコン版は映画のようなカットシーンで物語を描き、プレイヤーを熱くさせました。\n' +
       '# 第2段階：ひたすら上へ(1980年代 – 2010年代)\n' +
       '「どんどん高く登る」は一番わかりやすい目標で、何度も遊びたくなります。\n' +
       '• 1981年『ドンキーコング』：任天堂のアーケード作品。主人公が頂上まで登って助けに行く「上へ登る」遊びの始まりです。\n' +
@@ -133,7 +133,7 @@ const HIST = {
       'They jump, throw shuriken and cast ninjutsu — ninjas were made for action games.\n' +
       '• 1984 — Ninja-kun: Majou no Bouken: an arcade game by UPL where a tiny ninja hops along castle walls defeating foes. The origin of the cute ninja hero.\n' +
       '• 1987 — Shinobi: SEGA\'s arcade classic. Shuriken and ninjutsu clearing the screen defined the image of the "cool ninja".\n' +
-      '• 1988 — Ninja Gaiden: by Tecmo. The NES version told its story with movie-like cutscenes that got players fired up. NINJA TOBI\'s opening, "Smoke Under the Moon", is a tribute to it.\n' +
+      '• 1988 — Ninja Gaiden: by Tecmo. The NES version told its story with movie-like cutscenes that got players fired up.\n' +
       '# Stage 2: Always Climbing (1980s – 2010s)\n' +
       '"Get higher and higher" is the most intuitive goal, and it keeps you coming back.\n' +
       '• 1981 — Donkey Kong: Nintendo\'s arcade game, where the hero climbs to the top to save the day. The "climb up" style started here.\n' +

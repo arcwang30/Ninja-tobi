@@ -1834,7 +1834,7 @@ const DOCK_STYLES = { b1: DOCK_STYLES_LIST[0][2], b2: DOCK_STYLES_LIST[1][2], b3
 
 // ===== 主畫面左上角的商店圖示（三案；網址 ?shop=a|b|c 可預覽） =====
 let SHOP_STYLE = new URLSearchParams(location.search).get('shop') || 'c';   // 遊戲使用 C 千兩箱
-function shopIcon(style = SHOP_STYLE, size = 200) {
+function shopIcon(style = SHOP_STYLE, size = 200, open = true) {
   const cnv = document.createElement('canvas'); cnv.width = cnv.height = size;
   const c = cnv.getContext('2d'); c.scale(size / 100, size / 100);
   const label = L(DOCK_LABEL.shop);
@@ -1852,6 +1852,20 @@ function shopIcon(style = SHOP_STYLE, size = 200) {
     aCirc(c, 50, 54, 22); c.fillStyle = '#f4efe2'; c.fill(); aInk(c, 2); aCirc(c, 50, 54, 18.5); c.strokeStyle = '#2c4a8a'; c.lineWidth = 1.4; c.stroke();
     c.save(); c.translate(50, 47); c.scale(.62, .62); dockGlyph(c, 'shop', '#1a2c5a', 4); c.restore();
     fitText(label, 30, 10); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#1a2c5a'; c.fillText(label, 50, 63);
+  } else if (style === 'c' && !open) {   // 千兩箱（關著）：圓頂蓋子蓋好，縫隙透出金光；點下去才換成打開的樣子
+    c.fillStyle = 'rgba(0,0,0,.3)'; aEll(c, 50, 92, 38, 4); c.fill();
+    bossGlow(c, 50, 48, 34, 'rgba(255,220,120,.35)');
+    aRR(c, 14, 48, 72, 32, 5); const bg = c.createLinearGradient(0, 48, 0, 80); bg.addColorStop(0, '#a8682e'); bg.addColorStop(1, '#6a3e1a'); c.fillStyle = bg; c.fill(); aInk(c, 2.4);
+    c.beginPath(); c.moveTo(14, 50); c.lineTo(14, 38); c.quadraticCurveTo(14, 22, 50, 22); c.quadraticCurveTo(86, 22, 86, 38); c.lineTo(86, 50); c.closePath();   // 圓頂蓋
+    const lg = c.createLinearGradient(0, 22, 0, 50); lg.addColorStop(0, '#c07a38'); lg.addColorStop(1, '#7a4620'); c.fillStyle = lg; c.fill(); aInk(c, 2.4);
+    c.fillStyle = 'rgba(255,255,255,.18)'; aEll(c, 36, 30, 14, 3.4, -.1); c.fill();
+    c.fillStyle = '#2a2a30'; for (const x of [28, 68]) { c.fillRect(x, 23, 4, 57); }
+    c.fillStyle = '#ffe9a0'; c.fillRect(16, 48, 68, 2.6);   // 蓋縫的金光
+    c.fillStyle = 'rgba(255,233,160,.55)'; c.fillRect(16, 45.5, 68, 1.6);
+    for (const [x, y] of [[14, 74], [80, 74]]) { c.fillStyle = '#e8b84a'; c.fillRect(x, y, 6, 6); }
+    aRR(c, 42, 42, 16, 16, 3); aFI(c, '#e8b84a', 1.8); aCirc(c, 50, 48.5, 2.2); c.fillStyle = INK; c.fill(); c.fillRect(49, 49, 2, 5);   // 鎖
+    c.beginPath(); c.moveTo(10, 82); c.lineTo(90, 82); c.lineTo(84, 90); c.lineTo(90, 98); c.lineTo(10, 98); c.lineTo(16, 90); c.closePath(); c.fillStyle = '#c0262d'; c.fill(); aInk(c, 2);
+    fitText(label, 58, 13); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff'; c.fillText(label, 50, 90.5);
   } else if (style === 'c') {   // 千兩箱：打開的木箱裝滿小判，閃閃發光，下方紅布條
     c.fillStyle = 'rgba(0,0,0,.3)'; aEll(c, 50, 92, 38, 4); c.fill();
     bossGlow(c, 50, 40, 42, 'rgba(255,220,120,.55)');

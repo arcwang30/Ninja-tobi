@@ -273,12 +273,24 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .cr-thx { color: var(--gold-l); font-weight: 900; margin: .4em 0 .6em; }
 /* 底部選單有五個按鈕：卷軸圖示縮小一點 */
 
-/* ===== 主畫面左上角的商店圖示 ===== */
-.shop-corner { position: absolute; z-index: 2; left: 2.5%; top: calc(var(--sat) + .3em); width: 5em; height: 5em; padding: 0; margin: 0; border: 0; background: none; box-shadow: none; }
+/* ===== 主畫面右上角的商店寶箱：平常關著、會輕輕搖晃並冒出小閃光，點下去打開 ===== */
+.shop-corner { position: absolute; z-index: 2; right: 3%; left: auto; top: calc(var(--sat) + .5em); width: 3.7em; height: 3.7em; padding: 0; margin: 0; border: 0; background: none; box-shadow: none; overflow: visible; }
 .shop-corner::before { display: none; }
-.shop-corner img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 calc(var(--u)*3) 0 rgba(0,0,0,.45)); }
-.shop-corner:active img { transform: scale(.92); }
-#title.on .shop-corner img { animation: plate-pop .45s 1.25s cubic-bezier(.2, 1.5, .4, 1) both; }
+.shop-corner img { position: relative; width: 100%; height: 100%; display: block; filter: drop-shadow(0 calc(var(--u)*3) 0 rgba(0,0,0,.45)); transform-origin: 50% 85%; }
+#title.on .shop-corner img { animation: plate-pop .45s 1.25s cubic-bezier(.2, 1.5, .4, 1) both, chest-idle 3.2s 2s ease-in-out infinite; }
+#title.on .shop-corner.opening img { animation: chest-open .42s cubic-bezier(.2, 1.6, .4, 1) both; }
+@keyframes chest-idle { 0%, 70%, 100% { transform: none; } 76% { transform: translateY(-6%) rotate(-7deg); } 82% { transform: translateY(-6%) rotate(6deg); } 88% { transform: translateY(-3%) rotate(-3deg); } 94% { transform: none; } }
+@keyframes chest-open { 0% { transform: scale(.9); } 60% { transform: scale(1.25) translateY(-6%); } 100% { transform: scale(1.12) translateY(-4%); } }
+/* 背後的金色光暈（呼吸） */
+.shop-corner .sc-glow { position: absolute; inset: -12%; border-radius: 50%; background: radial-gradient(circle, rgba(255,226,140,.55), rgba(255,226,140,0) 65%); animation: chest-glow 2.2s ease-in-out infinite; pointer-events: none; }
+.shop-corner.opening .sc-glow { animation: chest-burst .42s ease-out both; }
+@keyframes chest-glow { 0%, 100% { opacity: .35; transform: scale(.85); } 50% { opacity: .9; transform: scale(1.05); } }
+@keyframes chest-burst { from { opacity: 1; transform: scale(.8); } to { opacity: 0; transform: scale(2.2); } }
+/* 四顆小閃光輪流亮起 */
+.shop-corner .sc-spk { position: absolute; left: var(--x); top: var(--y); width: .7em; height: .7em; pointer-events: none; animation: chest-spk 3s var(--d) ease-in-out infinite; opacity: 0; }
+.shop-corner .sc-spk::before, .shop-corner .sc-spk::after { content: ''; position: absolute; left: 50%; top: 50%; width: 100%; height: 22%; background: #fff6c8; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 .3em #ffd54a; }
+.shop-corner .sc-spk::after { transform: translate(-50%, -50%) rotate(90deg); }
+@keyframes chest-spk { 0%, 100% { opacity: 0; transform: scale(.3) rotate(0); } 12% { opacity: 1; transform: scale(1) rotate(45deg); } 26% { opacity: 0; transform: scale(.3) rotate(90deg); } }
 #title.attract .shop-corner { opacity: 0; pointer-events: none; }
 
 /* ===== 了解歷史（history.js）：分頁＋可捲動的內文 ===== */
