@@ -18,6 +18,7 @@ const INTRO = {
     const bg0 = new URLSearchParams(location.search).get('bg'); if (bg0 !== null) TB.cur = +bg0;   // 開發用：?bg=0～3 固定標題背景的幕
     if (new URLSearchParams(location.search).has('skip')) this.toTitle();   // 開發用：網址加 ?skip 直接到標題
     if (new URLSearchParams(location.search).has('still')) this.flash = 0;
+    const skq = new URLSearchParams(location.search).get('skin'); if (skq) save.skin = +skq;   // 開發用：?skin=角色編號
     const lg = new URLSearchParams(location.search).get('lang'); if (lg) { LI = Math.max(0, LANGS.findIndex(l => l.id === lg)); applyLang(); buildDockIcons(); }   // 開發用：?lang=zh|ja|en
     const op = new URLSearchParams(location.search).get('open');   // 開發用：?open=help(,頁) ／ credit → 直接打開說明或製作名單
     if (op) { this.toTitle(); const [w, pg] = op.split(','); if (w === 'help') { helpPg = +pg || 0; openHelp(); } else if (w === 'hist') { openHist(); histTab = +pg || 0; renderHist(); } else { if (w === 'shop') shopTab = +pg || 0; if (w === 'rank') rankTab = +pg || 0; openSub(w); } const b = $('boot'); if (b) b.remove(); }
@@ -31,7 +32,7 @@ const INTRO = {
       if (k === 'qte') { g.stage = 0; spawnBoss(); g.boss.y = g.camY + 200; g.qte = { t: .5, tl: 99, hits: +a1 ? [{ a: .6, t: +a2, x: 0, y: 0 }] : [], n: +a1, type: 'mash', q: QTE_TYPES[0] }; state = 'qte'; window.updateQte = () => {}; } }
     // 開發用：?play=關卡,舞台,模擬秒數 → 直接從某關某舞台開始，自動跑幾秒後停住（檢查時段色調與天候）
     const pl = new URLSearchParams(location.search).get('play');
-    if (pl) { const [lv, st, sec, ch, sl] = pl.split(',').map(Number); this.toTitle(); save.seen = 2; if (ch) save.skin = ch; startRun(lv || 0); if (sl) g.skills[SKINS[save.skin].sk] = sl;   // 第 4、5 個參數：角色、技能等級 hideAll(); const b = $('boot'); if (b) b.remove();
+    if (pl) { const [lv, st, sec, ch, sl] = pl.split(',').map(Number); this.toTitle(); save.seen = 2; if (ch) save.skin = ch; startRun(lv || 0); if (sl) g.skills[SKINS[save.skin].sk] = sl; hideAll();   /* 第 4、5 個參數：角色、技能等級 */ const b = $('boot'); if (b) b.remove();
       g.stage = st || 0; g.zi = null; state = 'play'; wxForStage(); if (g.wx) g.wx.cur = g.wx.lv; if (g.stage % 5 === 4) { spawnBoss(); g.wx.cur = g.wx.lv; }
       g.hp = g.maxHp = 9999; for (let i = 0; i < (sec || 2) * 60; i++) { g.lvQueue = 0; g.p.inv = 1; update(1 / 60); if (state === 'perk') { hide('perk'); state = 'play'; } } paused = true; }
     if (ss) { const [ty, n, lt] = ss.split(',').map(Number); this.toTitle(); save.seen = 2; startRun(); hideAll(); const e = mkEnemy(ty, W / 2, g.p.y - 120, 0); g.enemies.push(e); g.slash = { e, t: .5, dur: 9, lines: n ? [{ a: .6, t: lt, off: 0 }] : [], n, nextL: 9, frozen: true }; state = 'slash'; const b = $('boot'); if (b) b.remove(); }
@@ -137,13 +138,16 @@ function roofs(y, col, sc, t, lit = true) {
   }
 }
 // 卷軸（秘傳之卷）
-function scrollItem(c, x, y, s, rot) {
+function scrollItem(c, x, y, s, rot, ch, col = '#c0262d') {   // ch：卷上的字（風／林／火／山），col：綁繩顏色
   c.save(); c.translate(x, y); c.rotate(rot); c.scale(s, s);
   aRR(c, -12, -5, 24, 10, 3); aFI(c, '#f4ead2', 1.6);
-  c.fillStyle = '#c0262d'; c.fillRect(-2, -5, 4, 10);
+  c.fillStyle = col; c.fillRect(-2, -5, 4, 10);
   for (const sx of [-1, 1]) { aRR(c, sx * 12 - 2.5, -6.5, 5, 13, 2); aFI(c, '#6a3a1e', 1.4); }
+  if (ch) { c.rotate(-rot * .6); aCirc(c, 0, -11, 5.2); aFI(c, col, 1.2); c.fillStyle = '#fff'; c.font = '900 6.5px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(ch, 0, -10.6); }
   c.restore();
 }
+// 風林火山四卷：字與綁繩顏色
+const CUT_SCROLLS = [['風', '#3a8ad8'], ['林', '#2e9a5a'], ['火', '#d8402a'], ['山', '#7a4ac0']];
 // 鳶的剪影（展翅，wing = 拍翅角度）
 function kiteBird(c, x, y, s, wing, col) {
   c.save(); c.translate(x, y); c.scale(s, s); c.fillStyle = col;
@@ -263,14 +267,17 @@ function cutShot2(st, PY, PH) {
     c.strokeStyle = `rgba(255,250,200,${a})`; c.lineWidth = 4; c.beginPath(); let lx = W * .22, ly = PY; c.moveTo(lx, ly);
     const r = aRng(5); while (ly < PY + PH * .7) { lx += (r() - .45) * 40; ly += 20 + r() * 20; c.lineTo(lx, ly); } c.stroke();
   }
-  // 秘傳之卷：從村子被捲上天，飛進鬼的手裡
-  if (st > 2.2) {
-    const q = ez((st - 2.2) / 1.5), x0 = W * .1, y0 = PY + PH * .98, x1 = bx + 30 * s, y1 = by - 6 * s, cx = W * .12, cy = PY + PH * .05;
+  // 風林火山四卷秘傳之卷：從村子各處被捲上天，一卷接一卷飛到鬼的身邊，繞著它浮在空中
+  CUT_SCROLLS.forEach(([ch, col], i) => {
+    const t0 = 2.2 + i * .22; if (st <= t0) return;
+    const q = ez((st - t0) / 1.1), x0 = W * (.08 + i * .27), y0 = PY + PH * .98;
+    const ang = -Math.PI * (.85 - i * .233) + (q >= 1 ? Math.sin(st * 1.5 + i) * .08 : 0), x1 = bx + Math.cos(ang) * 62 * s, y1 = by - 10 * s + Math.sin(ang) * 46 * s;
+    const cx = W * (i < 2 ? .1 : .9), cy = PY + PH * .05;
     const x = (1 - q) * (1 - q) * x0 + 2 * (1 - q) * q * cx + q * q * x1, y = (1 - q) * (1 - q) * y0 + 2 * (1 - q) * q * cy + q * q * y1;
-    for (let i = 0; i < 6; i++) { c.fillStyle = `rgba(255,230,150,${.5 - i * .08})`; aCirc(c, x - (x1 - x0) * .02 * i, y + i * 4, 3 - i * .4); c.fill(); }
-    if (q >= 1) bossGlow(c, x, y, 26, 'rgba(255,220,120,.6)');
-    scrollItem(c, x, y, 1.2, q < 1 ? st * 9 : .3);
-  }
+    for (let k = 0; k < 6; k++) { c.fillStyle = `rgba(255,230,150,${.5 - k * .08})`; aCirc(c, x - (x1 - x0) * .02 * k, y + k * 4, 3 - k * .4); c.fill(); }
+    if (q >= 1) bossGlow(c, x, y, 20, col + '99');
+    scrollItem(c, x, y + (q >= 1 ? Math.sin(st * 3 + i) * 2 : 0), 1.5, q < 1 ? st * 9 + i : .15 * (i - 1.5), ch, col);
+  });
   c.restore();
 }
 // 鏡頭 3：主角眼睛的大特寫，閉眼 →「唰」地睜開，背景有速度線
@@ -384,7 +391,7 @@ function drawTitleBG(t) {
   if (h.vis) {
     const q = h.mode === 'hop' ? h.t / h.dur : 0, vy = h.mode === 'hop' ? (q < .5 ? -600 : 500) : 0;
     const spin = h.mode === 'hop' && h.spin ? .45 * (1 - q) : 0;
-    drawSil(h.x, h.y, 100, 100, 50, 84, 'rgba(6,18,16,.9)', g3 => drawHeroNinja(0, 0, { face: h.face, t, vy, skin: 0, spin }, g3));
+    drawSil(h.x, h.y, 100, 100, 50, 84, 'rgba(6,18,16,.9)', g3 => drawHeroNinja(0, 0, { face: h.face, t, vy, skin: save.skin, spin }, g3));
   }
   for (const p of h.puffs) { c.save(); c.translate(p.x, p.y - 4); c.scale(.7, .7); poofSmoke(c, p.t / .5); c.restore(); }   // 化煙瞬移：和前景同一種卡通煙霧
 }
@@ -397,7 +404,7 @@ function drawAttract(a) {
   c.fillStyle = '#04030a'; c.beginPath(); c.moveTo(-10, H * .76); for (let i = 0; i <= 8; i++) c.lineTo(i / 8 * W, H * (.72 + (i % 2) * .04)); c.lineTo(W + 10, H); c.lineTo(-10, H); c.closePath(); c.fill();
   if (a < 4.4) {   // 主角連跳三下橫越滿月
     const q = a / 4.4, hop = q * 3 % 1, x = lerp2(-40, W + 40, q), y = H * .72 - Math.sin(hop * Math.PI) * H * .2;
-    drawSil(x, y, 130, 130, 65, 110, '#04030a', g3 => { g3.scale(1.3, 1.3); drawHeroNinja(0, 0, { face: 1, t: a, vy: hop < .5 ? -700 : 500, skin: 0, spin: hop > .3 && hop < .7 ? .45 * (1 - (hop - .3) / .4) : 0 }, g3); });
+    drawSil(x, y, 130, 130, 65, 110, '#04030a', g3 => { g3.scale(1.3, 1.3); drawHeroNinja(0, 0, { face: 1, t: a, vy: hop < .5 ? -700 : 500, skin: save.skin, spin: hop > .3 && hop < .7 ? .45 * (1 - (hop - .3) / .4) : 0 }, g3); });
   } else {   // 四鬼的眼睛
     const e = ez((a - 4.4) / .5);
     [['#ffe24a', .2], ['#e0b8ff', .4], ['#8ae0ff', .6], ['#ff6a2a', .8]].forEach(([col, fx], i) => {

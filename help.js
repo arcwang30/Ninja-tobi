@@ -47,7 +47,7 @@ function buildHelpIcons() {
   }
 }
 function helpIconDraw(k) {
-  const c = ctx, hero = (x, y, s, o) => { c.save(); c.translate(x, y); c.scale(s, s); drawHeroNinja(0, 0, Object.assign({ face: 1, t: .4, vy: 0, skin: 0 }, o), c); c.restore(); };
+  const c = ctx, hero = (x, y, s, o) => { c.save(); c.translate(x, y); c.scale(s, s); drawHeroNinja(0, 0, Object.assign({ face: 1, t: .4, vy: 0, skin: save.skin }, o), c); c.restore(); };
   const arrow = (x, y, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = '#ffd27a'; c.beginPath(); c.moveTo(10, 0); c.lineTo(-4, -8); c.lineTo(-4, 8); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = 2; c.stroke(); c.restore(); };
   if (k === 'move') { hero(50, 84, 1.25, { vy: -700 }); arrow(14, 54, Math.PI); arrow(86, 54, 0); }
   else if (k === 'wall') { c.fillStyle = '#4f9c48'; c.fillRect(6, 0, 14, 100); c.fillStyle = '#2b6a30'; for (let y = 10; y < 100; y += 30) c.fillRect(4, y, 18, 4); hero(54, 80, 1.15, { face: 1, vy: -600, spin: .3 }); }

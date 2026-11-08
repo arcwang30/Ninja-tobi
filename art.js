@@ -1171,6 +1171,19 @@ function drawHeroBack(c, x, y, s, ang, t, skin = 0, from = null, trail = 0) {   
     c.restore();
   }
   const fw = Math.sin(t * 14) * 3;
+  // 其他角色：用 chars.js 的背影（髮型、兜帽、斗笠等），手、腳、身體共用
+  const CB = typeof CHAR_BACK !== "undefined" && CHAR_BACK[(SKINS[skin] || {}).id];
+  if (CB) {
+    const P = { suit: C.suit, dark: C.dk, band: C.band };
+    if (CB.pre) CB.pre(c, P, t);
+    heroSilhouette(c, [
+      { path: c => aCirc(c, -15, sy + 10, 4.6), fill: C.dk },
+      { path: c => aEll(c, -5, -1, 5, 3.4), fill: C.dk }, { path: c => aEll(c, 5, -1, 5, 3.4), fill: C.dk },
+      { path: c => { c.beginPath(); c.moveTo(-8, BT); c.quadraticCurveTo(0, BT - 4, 8, BT); c.quadraticCurveTo(10, BT + 6, 6, BB); c.quadraticCurveTo(0, BB + 2, -6, BB); c.quadraticCurveTo(-10, BT + 6, -8, BT); c.closePath(); }, fill: C.suit,
+        after: c => { c.save(); c.clip(); c.fillStyle = "#1e1e26"; c.fillRect(-12, BT + 4, 24, 3); c.restore(); } },
+    ], 1.8);
+    CB.head(c, P, t);
+  } else {
   heroSilhouette(c, [
     { path: c => { c.beginPath(); c.moveTo(-3, HY + 6); c.quadraticCurveTo(-14, HY + 22 + fw, -10, HY + 38 + fw); c.lineTo(-4, HY + 36 + fw); c.quadraticCurveTo(-6, HY + 22, 2, HY + 8); c.closePath(); }, fill: C.band },   // 圍巾尾
     { path: c => aCirc(c, -15, sy + 10, 4.6), fill: C.dk },                                                     // 左手套
@@ -1188,6 +1201,7 @@ function drawHeroBack(c, x, y, s, ang, t, skin = 0, from = null, trail = 0) {   
     c.beginPath(); c.moveTo(-1, HY - 7); c.quadraticCurveTo(ex * .5, HY - 10 + i * 4 + w, ex, ey); c.lineTo(ex + 2, ey + 4.5); c.quadraticCurveTo(ex * .45, HY - 4 + i * 4 + w, 0, HY - 3); c.closePath(); aFI(c, C.band, 1.4);
   }
   aCirc(c, 0, HY - 5, 3.4); aFI(c, C.band, 1.4);
+  }
   // 刀與握刀的手
   c.save(); c.translate(hx, hy); c.rotate(ang);
   c.beginPath(); c.moveTo(4, -2); c.quadraticCurveTo(26, -4, 46, -.5); c.lineTo(44, 2); c.quadraticCurveTo(24, 1, 4, 2); c.closePath();

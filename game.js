@@ -337,7 +337,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v45';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v46';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 是否從主畫面以 App 方式開啟（不同 iOS 版本回報方式不同，三種都看）
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
@@ -1698,7 +1698,9 @@ function outThumb(ci, oi) {
   return outThumbs[k];
 }
 // 換角色或換裝後：重畫這名角色的大圖、頭像與標題圖
-function refreshHero(i = save.skin) { heroSprites[i] = heroPortrait(i, 400); heroThumbs[i] = null; updateHeroArt(); }
+function refreshHero(i = save.skin) { heroSprites[i] = heroPortrait(i, 400); heroThumbs[i] = null; updateHeroArt(); resetHelpIcons(); }
+// 說明頁的插圖也是用目前角色畫的：換角色／換裝後清掉快取，下次打開說明時重畫
+function resetHelpIcons() { if (typeof HELP_IC !== 'undefined') for (const k in HELP_IC) delete HELP_IC[k]; }
 // 標題畫面的大圖跟著目前選的角色
 function updateHeroArt() {
   const s = heroSprites[save.skin || 0];
@@ -2277,10 +2279,10 @@ document.addEventListener('click', e => {
     case 'reroll': g.rerolls--; openPerks(perkWhy); break;
     case 'stab': shopTab = +arg; renderShop(); break;
     case 'rtab': rankTab = +arg; renderRank(); break;
-    case 'skin': save.skin = +arg; persist(); renderShop(); updateHeroArt(); break;
+    case 'skin': save.skin = +arg; persist(); renderShop(); updateHeroArt(); resetHelpIcons(); break;
     case 'outfit': if (!save.charOut) save.charOut = {}; save.charOut[save.skin] = +arg; persist(); refreshHero(); renderShop(); break;
     case 'buyout': { const o = OUTFITS[+arg]; if (save.coins >= o.cost && !outOwned(+arg)) { save.coins -= o.cost; save.outfits.push(+arg); if (!save.charOut) save.charOut = {}; save.charOut[save.skin] = +arg; persist(); SFX.item(); refreshHero(); collAch(); } renderShop(); break; }
-    case 'buyskin': { const s = SKINS[+arg]; if (s.req && !save.ach[s.req]) break; if (save.coins >= s.cost) { save.coins -= s.cost; save.skins.push(+arg); save.skin = +arg; persist(); SFX.item(); collAch(); } renderShop(); updateHeroArt(); break; }
+    case 'buyskin': { const s = SKINS[+arg]; if (s.req && !save.ach[s.req]) break; if (save.coins >= s.cost) { save.coins -= s.cost; save.skins.push(+arg); save.skin = +arg; persist(); SFX.item(); collAch(); } renderShop(); updateHeroArt(); resetHelpIcons(); break; }
     case 'buymeta': { const m = META.find(x => x.id === arg), c = metaCost(m, mt(arg)); if (save.coins >= c && mt(arg) < m.max) { save.coins -= c; save.meta[arg] = mt(arg) + 1; persist(); SFX.item(); collAch(); } renderShop(); break; }
     case 'refund':   // 修行全部歸零、退還小判（按兩次確認）
       if (b.dataset.armed) { save.coins += metaSpent(); for (const m of META) save.meta[m.id] = 0; persist(); SFX.coin(); renderShop(); }

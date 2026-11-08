@@ -22,7 +22,7 @@ const STR = {
   tap_start: ['點一下開始', 'タップしてスタート', 'TAP TO START'],
   cut_skip: ['點一下跳過', 'タップでスキップ', 'Tap to skip'],
   cut1: ['竹林之里，月圓之夜——', '竹林の里、満月の夜——', 'The Bamboo Village, on a night of the full moon—'],
-  cut2: ['鬼族奪走了守護村子的「秘傳之卷」……', '鬼の一族が、里を守る「秘伝の巻」を奪い去った……', 'The Oni clan stole the Secret Scroll that guarded the village...'],
+  cut2: ['鬼族奪走了守護村子的「風・林・火・山」四卷秘傳之卷……', '鬼の一族が、里を守る「風・林・火・山」四つの秘伝の巻を奪い去った……', 'The Oni clan stole the four Secret Scrolls of Wind, Forest, Fire and Mountain...'],
   cut3: ['「……交給我吧。」', '「……オレに任せろ。」', '"...Leave it to me."'],
   replay: ['重看開場', 'オープニングを見る', 'Watch Opening'],
   // ---- 每一幕的開場演出 ----

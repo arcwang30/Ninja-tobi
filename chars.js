@@ -432,3 +432,90 @@ function charSkillDesc(id, v, f) {
   };
   return D[id] ? L(D[id]()) : '';
 }
+
+// ===== 背影（斬擊特寫、魔王 QTE 用）：從背後看，看不到臉，只看到髮型、兜帽、斗笠等特徵 =====
+// pre：畫在身體後面；head：畫在身體前面（頭、從背後看得到的尾巴、披風等）。原點在腳底，HY＝頭的中心高度
+const BK_HY = -30, BK_R = 21;
+const bkBall = (c, col, r = BK_R) => heroSilhouette(c, [{ path: c => aCirc(c, 0, BK_HY, r), fill: col, after: c => { c.save(); aCirc(c, 0, BK_HY, r); c.clip(); const gr = c.createRadialGradient(-7, BK_HY - 10, 3, 0, BK_HY, r * 1.15); gr.addColorStop(0, 'rgba(255,255,255,.28)'); gr.addColorStop(.6, 'rgba(255,255,255,0)'); gr.addColorStop(1, 'rgba(0,0,0,.18)'); c.fillStyle = gr; c.fillRect(-r, BK_HY - r, r * 2, r * 2); c.restore(); } }], 1.8);
+// 綁在腦後的布結＋兩條飄動的布條
+function bkKnot(c, col, y, t, len = 1) {
+  for (const i of [0, 1]) {
+    const w = Math.sin(t * 13 + i * 1.7) * 3, ex = (-16 - i * 7) * len, ey = y + 2 + i * 9 + w;
+    c.beginPath(); c.moveTo(-1, y + 1); c.quadraticCurveTo(ex * .5, y - 2 + i * 4 + w, ex, ey); c.lineTo(ex + 2, ey + 4.5); c.quadraticCurveTo(ex * .45, y + 4 + i * 4 + w, 0, y + 5); c.closePath(); aFI(c, col, 1.4);
+  }
+  aCirc(c, 0, y + 3, 3.2); aFI(c, col, 1.4);
+}
+const bkBand = (c, col, y, h = 5) => { c.save(); aCirc(c, 0, BK_HY, BK_R); c.clip(); c.fillStyle = col; c.fillRect(-BK_R - 1, y, BK_R * 2 + 2, h); c.restore(); };
+const bkScarf = (c, col, t) => { const fw = Math.sin(t * 14) * 3; c.beginPath(); c.moveTo(-3, -12); c.quadraticCurveTo(-14, 4 + fw, -10, 12 + fw); c.lineTo(-4, 10 + fw); c.quadraticCurveTo(-6, 0, 2, -10); c.closePath(); aFI(c, col, 1.6); };
+const CHAR_BACK = {
+  ao: { pre: (c, P, t) => bkScarf(c, P.band, t), head: (c, P, t) => {
+    heroSilhouette(c, [{ path: c => { c.beginPath(); c.moveTo(-4, BK_HY - 19); c.quadraticCurveTo(-7, BK_HY - 34, 2, BK_HY - 38); c.quadraticCurveTo(0, BK_HY - 30, 4, BK_HY - 19); c.closePath(); }, fill: '#23315e' }], 1.8);
+    bkBall(c, '#23315e');
+    c.fillStyle = '#23315e'; c.strokeStyle = INK; c.lineWidth = 1.6; c.beginPath(); for (let i = 0; i <= 6; i++) { const x = -15 + i * 5; c.lineTo(x, BK_HY + 14 + (i % 2) * 5); } c.stroke();   // 後頸的刺刺髮尾
+    bkBand(c, '#3a4058', BK_HY - 12); bkKnot(c, '#3a4058', BK_HY - 12, t);
+  } },
+  sakura: { head: (c, P, t) => {
+    const sw = Math.sin(t * 6) * 2.5, hair = '#f08cb4';
+    for (const sd of [-1, 1]) heroSilhouette(c, [{ path: c => { c.beginPath(); c.moveTo(sd * 12, BK_HY - 14); c.quadraticCurveTo(sd * 30, BK_HY - 8 + sw, sd * 24, BK_HY + 20 + sw); c.quadraticCurveTo(sd * 20, BK_HY + 30 + sw, sd * 15, BK_HY + 26 + sw); c.quadraticCurveTo(sd * 20, BK_HY + 8, sd * 8, BK_HY - 4); c.closePath(); }, fill: hair }], 1.8);
+    bkBall(c, hair);
+    c.strokeStyle = 'rgba(255,255,255,.5)'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(0, BK_HY - 20); c.lineTo(0, BK_HY + 12); c.stroke();   // 分線
+    c.save(); c.translate(12, BK_HY - 14); for (let i = 0; i < 5; i++) { c.rotate(TAU / 5); aEll(c, 0, -3, 2.2, 3); aFI(c, '#ffe0ec', .9); } aCirc(c, 0, 0, 1.5); c.fillStyle = '#f2c14e'; c.fill(); c.restore();
+  } },
+  kage: { pre: (c, P, t) => bkScarf(c, '#f2c14e', t), head: (c, P, t) => {
+    heroSilhouette(c, [{ path: c => { c.beginPath(); c.moveTo(-13, BK_HY - 15); c.quadraticCurveTo(-15, BK_HY - 22, -11, BK_HY - 27); c.quadraticCurveTo(-8, BK_HY - 21, -5, BK_HY - 18); c.closePath(); c.moveTo(13, BK_HY - 15); c.quadraticCurveTo(15, BK_HY - 22, 11, BK_HY - 27); c.quadraticCurveTo(8, BK_HY - 21, 5, BK_HY - 18); c.closePath(); }, fill: '#f6d24a' }], 1.8);
+    bkBall(c, P.suit);
+    c.beginPath(); c.moveTo(-3, BK_HY - 8); c.lineTo(2, BK_HY - 3); c.lineTo(-1, BK_HY - 2); c.lineTo(5, BK_HY + 4); c.lineTo(-4, BK_HY - 2); c.lineTo(-1, BK_HY - 3); c.closePath(); aFI(c, '#f6d24a', 1);
+  } },
+  homura: { head: (c, P, t) => {
+    const sw = Math.sin(t * 7) * 3, hair = '#f0602e';
+    bkBall(c, hair);
+    c.fillStyle = hair; c.strokeStyle = INK; c.lineWidth = 1.6; c.beginPath(); for (let i = 0; i <= 8; i++) c.lineTo(-17 + i * 4.25, BK_HY + 13 + (i % 2) * 6); c.stroke();
+    bkBand(c, P.suit, BK_HY - 12);
+    heroSilhouette(c, [{ path: c => { c.beginPath(); c.moveTo(-5, BK_HY - 18); c.quadraticCurveTo(-10 + sw, BK_HY - 2, -6 + sw, BK_HY + 22); c.lineTo(-2 + sw, BK_HY + 14); c.lineTo(1 + sw, BK_HY + 26); c.lineTo(3 + sw * .6, BK_HY + 10); c.quadraticCurveTo(6, BK_HY - 4, 5, BK_HY - 18); c.closePath(); }, fill: hair }], 1.6);   // 高馬尾垂在背後
+    aCirc(c, 0, BK_HY - 18, 3.4); aFI(c, P.suit, 1.2);
+    bkKnot(c, P.suit, BK_HY - 12, t, .8);
+  } },
+  kon: { head: (c, P, t) => {
+    const wag = Math.sin(t * 4) * .2;
+    c.save(); c.translate(4, -8); c.rotate(.3 + wag);
+    heroSilhouette(c, [{ path: c => { c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(24, 6, 30, -16); c.quadraticCurveTo(24, -34, 13, -26); c.quadraticCurveTo(8, -12, -4, -6); c.closePath(); }, fill: P.suit, after: c => { c.save(); c.clip(); c.fillStyle = chLt(P.suit, .55); aEll(c, 24, -26, 9, 8, -.4); c.fill(); c.restore(); } }], 1.8);
+    c.restore();
+    heroSilhouette(c, [{ path: c => { c.beginPath(); c.moveTo(-15, BK_HY - 11); c.quadraticCurveTo(-21, BK_HY - 26, -16, BK_HY - 33); c.quadraticCurveTo(-7, BK_HY - 27, -3, BK_HY - 20); c.closePath(); c.moveTo(15, BK_HY - 11); c.quadraticCurveTo(21, BK_HY - 26, 16, BK_HY - 33); c.quadraticCurveTo(7, BK_HY - 27, 3, BK_HY - 20); c.closePath(); }, fill: P.suit }], 1.8);
+    bkBall(c, P.suit);
+    bkKnot(c, '#e03a3a', BK_HY - 4, t, .7);   // 狐面的紅繩綁在腦後
+  } },
+  kasa: { head: (c, P, t) => {
+    const sw = Math.sin(t * 5) * 2;
+    heroSilhouette(c, [{ path: c => { c.beginPath(); c.moveTo(-14, -20); c.quadraticCurveTo(0, -26, 14, -20); c.lineTo(17 + sw * .5, 0); c.quadraticCurveTo(0, 4, -17 - sw * .5, 0); c.closePath(); }, fill: P.dark }], 1.8);   // 披風蓋住背
+    bkBall(c, '#2a2c40', 18);
+    heroSilhouette(c, [{ path: c => { c.beginPath(); c.moveTo(-29, BK_HY - 2); c.quadraticCurveTo(0, BK_HY + 3, 29, BK_HY - 2); c.quadraticCurveTo(13, BK_HY - 18, 0, BK_HY - 29); c.quadraticCurveTo(-13, BK_HY - 18, -29, BK_HY - 2); c.closePath(); }, fill: '#e2c27a',
+      after: c => { c.save(); c.clip(); c.strokeStyle = 'rgba(150,100,40,.45)'; c.lineWidth = 1; for (let i = -5; i <= 5; i++) { c.beginPath(); c.moveTo(0, BK_HY - 29); c.lineTo(i * 6, BK_HY); c.stroke(); } c.restore(); } }], 1.8);
+    c.strokeStyle = '#c0262d'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(-26, BK_HY - 2); c.quadraticCurveTo(0, BK_HY + 2, 26, BK_HY - 2); c.stroke();
+    aCirc(c, 0, BK_HY - 29, 2.2); aFI(c, '#c0262d', 1);
+  } },
+  gan: { head: (c, P, t) => {
+    heroSilhouette(c, [{ path: c => { c.beginPath(); c.arc(-BK_R + 1, BK_HY + 3, 4.2, 0, TAU); c.moveTo(BK_R - 1 + 4.2, BK_HY + 3); c.arc(BK_R - 1, BK_HY + 3, 4.2, 0, TAU); }, fill: '#f8cfa4' }], 1.8);
+    bkBall(c, '#f8cfa4');
+    c.fillStyle = 'rgba(255,255,255,.4)'; aEll(c, -6, BK_HY - 12, 8, 4, -.3); c.fill();
+    bkBand(c, P.suit, BK_HY - 11); bkKnot(c, P.suit, BK_HY - 11, t);
+    for (let i = 0; i < 7; i++) { const a = Math.PI * (.2 + i / 6 * .6); aCirc(c, Math.cos(a) * 15, -14 - Math.sin(a) * 2, 2.6); aFI(c, '#8a5428', 1); }   // 背後的念珠
+  } },
+  kasumi: { head: (c, P, t) => {
+    const sw = Math.sin(t * 5) * 2, hair = '#2a2638';
+    heroSilhouette(c, [{ path: c => { c.beginPath(); c.moveTo(-17, BK_HY - 4); c.quadraticCurveTo(-20, BK_HY + 20 + sw, -12, BK_HY + 30 + sw); c.lineTo(12, BK_HY + 30 - sw); c.quadraticCurveTo(20, BK_HY + 20 - sw, 17, BK_HY - 4); c.closePath(); }, fill: hair }], 1.8);   // 長髮垂到背上
+    heroSilhouette(c, [{ path: c => aCirc(c, -12, BK_HY - 20, 7.5), fill: hair }, { path: c => aCirc(c, 12, BK_HY - 20, 7.5), fill: hair }], 1.8);
+    bkBall(c, hair);
+    c.strokeStyle = 'rgba(170,150,230,.5)'; c.lineWidth = 1.4; c.beginPath(); c.arc(0, BK_HY - 2, 15, Math.PI * 1.2, Math.PI * 1.5); c.stroke();
+    for (const [x, y] of [[-12, BK_HY - 13], [12, BK_HY - 13]]) { c.beginPath(); c.moveTo(x, y); c.lineTo(x - 4, y - 2.5); c.lineTo(x - 4, y + 2.5); c.closePath(); c.moveTo(x, y); c.lineTo(x + 4, y - 2.5); c.lineTo(x + 4, y + 2.5); c.closePath(); aFI(c, P.suit, .9); }
+    bkKnot(c, P.dark, BK_HY + 6, t, .8);   // 覆面在腦後的結
+  } },
+  shizuku: { head: (c, P, t) => {
+    const wag = Math.sin(t * 5) * .3;
+    c.save(); c.translate(3, -6); c.rotate(wag);
+    heroSilhouette(c, [{ path: c => { c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(18, 2, 20, -14); c.quadraticCurveTo(21, -22, 15, -24); c.quadraticCurveTo(13, -16, 14, -12); c.quadraticCurveTo(12, -4, -2, -4); c.closePath(); }, fill: TABBY, after: c => { c.save(); c.clip(); c.fillStyle = TABBY_D; for (const [x, y] of [[6, -2], [13, -6], [18, -13], [17, -20]]) { aEll(c, x, y, 1.6, 3.4, -.6); c.fill(); } c.restore(); } }], 1.8);
+    c.restore();
+    heroSilhouette(c, [{ path: c => { c.beginPath(); c.moveTo(-17, BK_HY - 9); c.quadraticCurveTo(-21, BK_HY - 27, -14, BK_HY - 31); c.quadraticCurveTo(-7, BK_HY - 25, -4, BK_HY - 19); c.closePath(); c.moveTo(17, BK_HY - 9); c.quadraticCurveTo(21, BK_HY - 27, 14, BK_HY - 31); c.quadraticCurveTo(7, BK_HY - 25, 4, BK_HY - 19); c.closePath(); }, fill: TABBY }], 1.8);
+    bkBall(c, TABBY);
+    c.save(); aCirc(c, 0, BK_HY, BK_R); c.clip(); c.fillStyle = TABBY_D; for (let i = 0; i < 5; i++) { const y = BK_HY - 15 + i * 7; c.beginPath(); c.moveTo(-14 + i, y); c.quadraticCurveTo(0, y + 3, 14 - i, y); c.lineTo(12 - i, y + 2.4); c.quadraticCurveTo(0, y + 5, -12 + i, y + 2.4); c.closePath(); c.fill(); } c.restore();
+  } },
+};
