@@ -122,7 +122,7 @@ let FOG_TILE = null;
 function fogTile() {
   if (FOG_TILE) return FOG_TILE;
   const cv2 = document.createElement('canvas'); cv2.width = 360; cv2.height = 320; const c = cv2.getContext('2d'), r = aRng(77);
-  for (let i = 0; i < 18; i++) { const x = r() * 360, y = r() * 320, rad = 50 + r() * 70; for (const dx of [-360, 0, 360]) { const gr = c.createRadialGradient(x + dx, y, 5, x + dx, y, rad); gr.addColorStop(0, 'rgba(235,240,245,.55)'); gr.addColorStop(1, 'rgba(235,240,245,0)'); c.fillStyle = gr; c.fillRect(x + dx - rad, y - rad, rad * 2, rad * 2); } }
+  for (let i = 0; i < 18; i++) { const x = r() * 360, y = r() * 320, rad = 50 + r() * 70; for (const dx of [-360, 0, 360]) for (const dy of [-320, 0, 320]) { const gr = c.createRadialGradient(x + dx, y + dy, 5, x + dx, y + dy, rad); gr.addColorStop(0, 'rgba(235,240,245,.55)'); gr.addColorStop(1, 'rgba(235,240,245,0)'); c.fillStyle = gr; c.fillRect(x + dx - rad, y + dy - rad, rad * 2, rad * 2); } }   // 上下左右都無縫接合（之前只接左右，上下會出現一條分割線）
   return FOG_TILE = cv2;
 }
 function drawWeather() {

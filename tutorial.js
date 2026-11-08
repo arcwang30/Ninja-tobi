@@ -18,11 +18,16 @@ const TUT_STEPS = [
   { k: 'wall', t: ['在空中往牆壁推：蹬牆跳', '空中で壁に向かって押す：壁蹴り', 'Push into a wall mid-air: Wall Kick'],
     start() { g.tut.w0 = g.walls; }, done: () => g.walls > g.tut.w0 },
   { k: 'soul', t: ['吸收藍色的魂，集滿就升級，從三個強化選一個', '青い魂を集めてレベルアップ、3つから1つ選ぶ', 'Collect blue souls to level up, then pick 1 of 3'],
-    start() { g.tut.lv0 = g.lv; const p = g.p; for (let i = 0; i < 6; i++) g.drops.push({ k: 'soul', x: p.x + (i - 2.5) * 22, y: p.y - 140, vx: rnd(-30, 30), vy: -rnd(40, 120), v: 2, ph: rnd(0, 6) }); },
+    start() { g.tut.lv0 = g.lv; tutSouls(); },
     done: () => g.lv > g.tut.lv0 && state === 'play' },
   { k: 'scroll', t: ['點左上的卷軸：忍法「豪天翔」，無敵並急速上升', '左上の巻物をタップ：忍法「豪天翔」で無敵の急上昇', 'Tap the scroll (top-left): soar up, invincible'],
     start() { g.scrolls = Math.max(g.scrolls, 1); g.tut.s0 = g.scrollN; }, done: () => g.scrollN > g.tut.s0 },
 ];
+// 在主角身邊放一圈魂：總量一定夠升一級（之前固定 12 點，等級高時不夠升級，教學就卡住）
+function tutSouls() {
+  const p = g.p, need = Math.max(1, xpNeed(g.lv) - g.xp) / (1 + .08 * mt('xp')), n = 6, v = Math.ceil(need / n) + 1;
+  for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; g.drops.push({ k: 'soul', x: clamp(p.x + Math.cos(a) * 50, WALL + 20, W - WALL - 20), y: p.y - 40 + Math.sin(a) * 40, vx: 0, vy: -60, v, ph: rnd(0, 6), pull: true }); }
+}
 // 在主角上方放幾個敵人（不會攻擊的一般忍者）
 function tutFoes(n, type) {
   const p = g.p;
@@ -48,13 +53,15 @@ function endTutorial(finished) {
 function updateTutorial(dt) {
   const T = g.tut, S = TUT_STEPS[T.i], p = g.p;
   if (T.fin) { T.finT += dt; if (T.finT > 2.2 && !T.ending) { T.ending = true; setTimeout(() => endTutorial(true), 0); } return; }   // 等這一幀跑完再結束   // 全部完成：顯示 2 秒後回選關
-  T.t += dt;
+  T.t += dt; g.ki = kiMax();   // 教學中「氣」永遠是滿的（急降斬、衝刺斬才不會因為沒氣而卡住）
   if (S.k === 'move') T.mx += Math.abs(p.x - (T.px ?? p.x)); T.px = p.x;
   // 掉出畫面就把主角救回來（教學裡沒有追兵）
   if (p.y > g.camY + H + 40) { p.y = g.camY + H * .5; p.vy = -JUMP; g.plats.push({ x: p.x, y: p.y + 4, w: 90, type: 'normal', bx: p.x, ph: 0, sp: 0, amp: 0 }); }
   // 敵人被斬光或跑出畫面了：再補
   if (S.refill && !T.ok && !g.enemies.some(e => e.tut && !e.dead && e.y > g.camY - 40 && e.y < g.camY + H)) tutFoes(S.refill, 0);
   if ((S.k === 'flick' || S.k === 'sling') && !T.ok) { g.ki = kiMax(); if (!g.enemies.some(e => e.tut && !e.dead && e.y > g.camY && e.y < g.camY + H)) tutFoes(S.k === 'sling' ? 2 : 1, 0); }
+  // 魂被吃完卻還沒升級（或掉出畫面）：再補一圈
+  if (S.k === 'soul' && !T.ok && state === 'play' && !g.drops.some(d => d.k === 'soul')) tutSouls();
   if (!T.ok && S.done()) { T.ok = T.t; SFX.item(); floatText(W / 2, 120, t('tut_good'), '#ffd27a', 22, true); }
   if (T.ok && T.t - T.ok > 1.1) {
     T.i++; T.ok = 0; T.t = 0;
