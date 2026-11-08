@@ -339,7 +339,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v61';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v62';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -347,6 +347,8 @@ const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.widt
 const isAppMode = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
 let DIAG = '';
 let APPFIX = { w: 0, full: 0, gap: 0 };   // iOS 主畫面模式的高度修正（只增不減，避免畫面來回跳）
+// iPad／電腦橫向時遊戲的邏輯高度（越小＝畫面越放大、上下看得越少）
+const PL_H = clamp(+new URLSearchParams(location.search).get('plh') || 640, 640, 760);
 function resize() {
   const app = $('app');
   let vw = innerWidth, vh = innerHeight, gap = 0;
@@ -372,11 +374,12 @@ function resize() {
   // 比 9:16 還寬的直向螢幕（iPad 直拿）：高度固定 640，把世界加寬到剛好填滿左右；橫向時固定 360 寬
   if (!W_LOCK) { W = pillar ? 360 : vh / vw >= 640 / 360 ? 360 : clamp(640 * vw / vh, 360, 960); PL_MAX = W - WALL - 11; }
   // 依螢幕比例調整邏輯高度（640～900），長螢幕手機也能上下滿版
-  H = pillar ? Math.max(760, Math.round(W * 760 / 360)) :   /* 橫向時用接近手機的直長比例 */ clamp(Math.round(W * vh / vw), 640, 900);
+  H = pillar ? PL_H :   /* 橫向時用接近手機的直長比例 */ clamp(Math.round(W * vh / vw), 640, 900);
   const w = Math.min(vw, vh * W / H), h = w * H / W;
   const sb = $('sideBg');
   if (pillar && sb && typeof SIDEBG !== 'undefined') { const key = `${vw}x${vh}x${Math.round(w)}x${save.skin}`; if (sb.dataset.k !== key) { sb.dataset.k = key; SIDEBG.draw(sb, vw, vh, w); } }
   app.style.width = w + 'px'; app.style.height = h + 'px';
+  document.body.style.setProperty('--gw', w + 'px');   // 側邊資訊欄用：遊戲畫面的寬度
   // 主畫面模式從畫面頂端開始排，其餘置中
   // iOS 這個模式下，最下面那段不屬於「可視範圍」，固定定位的元素畫不到。
   // 所以讓網頁本身長到全高，遊戲改用一般定位從頂端排下來，才會一路畫到螢幕底。
@@ -441,8 +444,9 @@ cv.addEventListener('pointerdown', e => {
   const p = toL(e);
   if (state === 'play' && !paused) {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
-    if (hy < HUD_Y1 + 6 && p.x > W - 40) { pauseGame(); return; }
-    if (hy > HUD_Y0 - 4 && hy < HUD_Y1 + 6 && p.x > 116 && p.x < 172) { castScroll(); return; }
+    const inG = p.x >= 0 && p.x <= W;   // iPad 橫向：點在兩側背景時只算移動，不判定 HUD 與按鈕
+    if (inG && hy < HUD_Y1 + 6 && p.x > W - 40) { pauseGame(); return; }
+    if (inG && hy > HUD_Y0 - 4 && hy < HUD_Y1 + 6 && p.x > 116 && p.x < 172) { castScroll(); return; }
     // 豪天翔按鈕（畫面中間偏下）：按鈕在操作區中間，所以只有「點一下就放開」才算按鈕；按住滑動仍是一般移動
     { const sb = scrollBtnPos(); inp.btn = g.scrolls > 0 && g.fly <= 0 && Math.hypot(p.x - sb.x, p.y - sb.y) < sb.r + 8 ? { t: performance.now(), x: p.x, y: p.y } : null; }   // 只有按鈕出現時才算
   }
@@ -500,6 +504,12 @@ const endPtr = e => {
 };
 cv.addEventListener('pointerup', endPtr);
 cv.addEventListener('pointercancel', endPtr);
+// iPad／電腦橫向：點住兩側的背景也能操控角色（把觸控轉給遊戲畫布，座標超出畫面也照樣用位移量移動）
+{ const sbg = $('sideBg');
+  ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach(ty => sbg.addEventListener(ty, e => {
+    if (ty === 'pointerdown' && state !== 'play' && state !== 'qte') return;
+    e.preventDefault(); cv.dispatchEvent(new PointerEvent(ty, e));
+  })); }
 addEventListener('keydown', e => {
   inp.keys[e.code] = true; A();
   if (state === 'menu') { INTRO.poke(); if (!e.repeat && INTRO.tap()) { e.preventDefault(); return; } }
@@ -2146,6 +2156,7 @@ function render() {
   else if (state === 'zintro') drawZIntro();
   else if (state === 'ascend') drawAscend();
   if (state !== 'slash' && state !== 'cast' && state !== 'qte' && state !== 'kill') { drawHUD(); if (state === 'play' || state === 'zintro') drawScrollBtn(); }
+  sideHudTick();
   if (state === 'play') drawBanner();
   if (g.tut && state !== 'slash' && state !== 'cast') drawTutorial();
   if (inp.mode === 'aim' && state === 'play') drawSling();
@@ -2179,8 +2190,8 @@ function goTitle() {
 function playIntro() { const it = $('intro'); it.classList.remove('play', 'hero-in', 'hero-out'); void it.offsetWidth; it.classList.add('play'); INTRO.heroFront(); }
 function pauseGame() { if (!g || paused || state === 'over' || state === 'perk' || state === 'menu' || state === 'clearq') return; paused = true; renderPauseSkills(); show('pause', true); }
 // 暫停畫面：列出目前的自動技能（等級／進化）與秘傳（被動）
-function renderPauseSkills() {
-  const el = $('pauseSk'); if (!el || !g) return;
+function renderPauseSkills(el = $('pauseSk')) {
+  if (!el || !g) return;
   const sks = SKILLS.filter(s => sk(s.id)).map(s => {
     const l = sk(s.id), evo = l > SK_MAX, nm = evo ? L(EVO[s.id].n) : L(s.n), ic = evo ? EVO[s.id].ic : s.ic;
     const pips = evo ? '<em class="ps-evo">EVO</em>' : `<span class="ps-pips">${'●'.repeat(l)}${'○'.repeat(SK_MAX - l)}</span>`;
@@ -2370,3 +2381,23 @@ goTitle();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
 window.__tobi = { get g() { return g; }, get state() { return state; }, startRun, spawnBoss: () => spawnBoss(), save: () => save, inp,
   step(sec, dt = 1 / 60, draw = true) { for (let t = 0; t < sec; t += dt) update(dt); if (draw) render(); } };
+// ===== iPad／電腦橫向：兩側的資訊欄（左：分數、關卡、技能與秘傳；右：豪天翔大按鈕） =====
+const SH = { t: 0, key: '' };
+function sideHudTick() {
+  const on = document.body.classList.contains('pillar') && g && !g.tut && (state === 'play' || state === 'zintro' || state === 'ascend' || state === 'slash' || state === 'cast' || state === 'qte' || state === 'kill');
+  document.body.classList.toggle('shud', !!on);
+  if (!on) return;
+  const now = performance.now(); if (now - SH.t < 250) return; SH.t = now;
+  $('shStats').innerHTML = `<div class="sh-lv"><b>${'林風火山'[g.th] || ''}</b><span>${L(LEVELS[g.lvl] ? LEVELS[g.lvl].motto : ['', '', ''])}</span><em>${g.stage + 1} / 10</em></div>` +
+    `<div class="sh-row"><span>✦</span><b>${score()}</b></div><div class="sh-row"><span class="sh-coin"></span><b>${Math.floor(g.coins)}</b><small>${Math.floor(g.top / 10)} m</small></div>`;
+  const key = JSON.stringify([g.skills, g.perks, g.lv]);
+  if (key !== SH.key) { SH.key = key; renderPauseSkills($('shSk')); }
+  const b = $('shScroll'), has = g.scrolls > 0 && g.fly <= 0;
+  b.classList.toggle('ready', has); b.querySelector('i').textContent = '×' + g.scrolls;
+}
+$('shScroll').addEventListener('pointerdown', e => {
+  e.preventDefault(); e.stopPropagation(); A();
+  if (state !== 'play' || paused || !g) return;
+  if (g.scrolls > 0 && g.fly <= 0) castScroll();
+  else floatText(W / 2, g.camY + H * .6, t('no_scroll'), '#ccc', 13);
+});

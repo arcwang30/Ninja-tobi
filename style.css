@@ -390,3 +390,28 @@ body.rotate #app { visibility: hidden; }
 .lvsel > button { flex: none; }
 .lvsel .lv-list { justify-content: center; grid-template-columns: repeat(2, minmax(0, min(50%, calc((92cqh - 16em) / 2.5)))); }
 .lvsel .lv-card { width: 100%; }
+/* iPad／電腦橫向：左側資訊欄（分數、關卡、技能、秘傳）＋右側豪天翔大按鈕。寬度＝兩側背景露出的寬度 */
+#sideHud, #shScroll { display: none; }
+body.pillar.shud #sideHud { display: flex; position: fixed; left: 0; top: 0; bottom: 0; width: calc((100vw - var(--gw)) / 2); z-index: 2; pointer-events: none; align-items: flex-start; justify-content: center; padding: 3vh 1.6vw 0; font-size: clamp(12px, 1.25vw, 17px); }
+.sh-box { width: 100%; max-width: 21em; background: linear-gradient(rgba(16,20,44,.82), rgba(10,12,30,.82)); border: 2px solid rgba(232,184,74,.75); border-radius: 1em; padding: .8em .9em; color: #fff; box-shadow: 0 .4em 1.2em rgba(0,0,0,.45); font-family: inherit; }
+.sh-lv { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: .6em; align-items: center; border-bottom: 2px solid rgba(232,184,74,.6); padding-bottom: .5em; margin-bottom: .5em; }
+.sh-lv b { grid-row: span 2; font-size: 2.6em; font-weight: 900; line-height: 1; color: #fff; text-shadow: 0 .06em 0 #c0262d, 0 0 .3em rgba(0,0,0,.8); }
+.sh-lv span { font-weight: 800; color: #ffe9a8; font-size: .95em; }
+.sh-lv em { font-style: normal; font-weight: 900; color: #cfd8ff; font-size: .9em; }
+.sh-row { display: flex; align-items: center; gap: .5em; font-size: 1.15em; margin: .15em 0; }
+.sh-row > span { width: 1.3em; text-align: center; color: #ffd27a; }
+.sh-row b { font-weight: 900; }
+.sh-row small { margin-left: auto; color: #cfd8ff; font-weight: 700; }
+.sh-coin { display: inline-block; width: .8em !important; height: 1em; margin: 0 .25em; border-radius: 50%; background: #e8b020; box-shadow: 0 0 0 .12em #1a1a22; }
+#sideHud .pause-sk { max-height: 52vh; margin: .4em 0 0; }
+body.pillar.shud #shScroll { display: flex; position: fixed; z-index: 2; right: calc((100vw - var(--gw)) / 4); bottom: 9vh; transform: translateX(50%); width: clamp(110px, 12vw, 170px); height: clamp(110px, 12vw, 170px); margin: 0; padding: 0; border-radius: 50%;
+  flex-direction: column; align-items: center; justify-content: center; gap: .1em; font-size: clamp(14px, 1.5vw, 20px);
+  background: radial-gradient(circle at 50% 40%, #4a4f60, #23262f 70%); border: .25em solid #6a6f80; color: #999; box-shadow: 0 .35em 0 #000; filter: grayscale(.7); opacity: .7; }
+#shScroll::before { display: none; }
+#shScroll .sh-roll { width: 2.6em; height: 1.5em; border-radius: .25em; background: linear-gradient(90deg, #8a6a3a 0 12%, #fff3d0 12% 88%, #8a6a3a 88%); position: relative; }
+#shScroll .sh-roll::after { content: ""; position: absolute; left: 42%; top: -.12em; bottom: -.12em; width: 16%; background: #c0262d; }
+#shScroll b { font-weight: 900; letter-spacing: .1em; }
+#shScroll i { font-style: normal; font-weight: 900; font-size: .9em; }
+body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%, #ff6a5a, #b81e22 70%); border-color: #ffd27a; color: #fff; filter: none; opacity: 1; animation: sh-glow 1.4s ease-in-out infinite; }
+#shScroll.ready:active { transform: translateX(50%) translateY(.2em) scale(.96); }
+@keyframes sh-glow { 0%,100% { box-shadow: 0 .35em 0 #000, 0 0 .6em rgba(255,210,90,.5); } 50% { box-shadow: 0 .35em 0 #000, 0 0 2em rgba(255,210,90,.95); } }

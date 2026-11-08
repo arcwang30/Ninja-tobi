@@ -39,6 +39,7 @@ const INTRO = {
     const tq = new URLSearchParams(location.search).get('tut');
     if (tq !== null) { this.toTitle(); startTutorial(); hideAll(); const b = $('boot'); if (b) b.remove(); g.tut.i = +tq; TUT_STEPS[g.tut.i].start(); for (let i = 0; i < 40; i++) update(1 / 60); paused = true; }
     if (pl && new URLSearchParams(location.search).has('pauseui')) { g.skills = { shuriken: 3, kunai: 6, thunder: 2, barrier: 1 }; g.perks = { bounce: 2, magnet: 1, hp: 3, vamp: 1 }; g.lv = 14; renderPauseSkills(); show('pause', true); }
+    if (pl && new URLSearchParams(location.search).has('shdemo')) { g.skills = { shuriken: 3, kunai: 6, thunder: 2, barrier: 1 }; g.perks = { bounce: 2, magnet: 1, hp: 3, vamp: 1 }; g.lv = 14; g.scrolls = 2; g.bonus += 4200; }   // 開發用：側邊資訊欄的展示資料
     if (ss) { const [ty, n, lt] = ss.split(',').map(Number); this.toTitle(); save.seen = 2; startRun(); hideAll(); const e = mkEnemy(ty, W / 2, g.p.y - 120, 0); g.enemies.push(e); g.slash = { e, t: .5, dur: 9, lines: n ? [{ a: .6, t: lt, off: 0 }] : [], n, nextL: 9, frozen: true }; state = 'slash'; const b = $('boot'); if (b) b.remove(); }
   },
   // 進入過場（重看開場也從這裡開始）
