@@ -350,12 +350,17 @@ function cutShot4(st, PY, PH) {
 
 // ===== 標題背景：遊戲關卡的捲動背景（四幕隨機輪播）＋左右竹牆；主角剪影在竹牆間蹬牆跳、化煙瞬移 =====
 // 換幕：下一幕從畫面上方往下蓋過來，交界處是一排雲（像往上爬進下一幕）
-const TB = { cur: Math.random() * 4 | 0, nxt: -1, t: 0, wipe: 0, cam: 0, spd: 1 };   // cam：背景捲動位置；spd：捲動速度（主角往上奔跑時加快）
+const TB = { cur: -1, nxt: -1, t: 0, wipe: 0, cam: 0, spd: 1 };   // cam：背景捲動位置；spd：捲動速度（主角往上奔跑時加快）
+// 標題背景只從「已開放的關卡」裡輪播（和選關畫面相同的開放規則；測試模式下四關全開）
+function titleThemes() { try { const n = TEST_FREE ? LEVELS.length : lvSave().open; return LEVELS.slice(0, Math.max(1, n)).map(l => l.th); } catch (e) { return [1]; } }
+function tbFix() { const a = titleThemes(); if (!a.includes(TB.cur)) TB.cur = a[Math.random() * a.length | 0]; if (TB.nxt >= 0 && !a.includes(TB.nxt)) TB.nxt = -1; }
 function titleBgUpdate(dt) {
   TB.t += dt;
   TB.spd += ((typeof FH !== 'undefined' && FH.mode === 'dash' && !FH.act && INTRO.cyc === 'front' && FH.vis ? 3.4 : 1) - TB.spd) * Math.min(1, dt * 3);
   TB.cam -= 40 * TB.spd * dt;
-  if (TB.nxt < 0 && TB.t >= 8) { do TB.nxt = Math.random() * 4 | 0; while (TB.nxt === TB.cur); TB.wipe = 0; }
+  tbFix();
+  const pool = titleThemes().filter(k => k !== TB.cur);   // 只輪播已開放的關卡
+  if (TB.nxt < 0 && TB.t >= 8 && pool.length) { TB.nxt = pool[Math.random() * pool.length | 0]; TB.wipe = 0; }
   if (TB.nxt >= 0) { TB.wipe += dt / 1.4; if (TB.wipe >= 1) { TB.cur = TB.nxt; TB.nxt = -1; TB.t = 0; } }
 }
 const TH = { mode: 'cling', t: 0, dur: 1, x: 0, y: 0, x0: 0, y0: 0, x1: 0, y1: 0, side: -1, face: 1, vis: 0, spin: 0, wait: 0, puffs: [] };
@@ -378,7 +383,7 @@ function titleHero(dt) {
   }
 }
 function drawTitleBG(t) {
-  const c = ctx, camY = TB.cam;
+  tbFix(); const c = ctx, camY = TB.cam;
   drawBG(camY, TB.cur, t); drawWalls(camY, TB.cur);
   if (TB.nxt >= 0) {   // 下一幕從上方蓋下來
     const ey = ez(TB.wipe) * (H + 40) - 20;
