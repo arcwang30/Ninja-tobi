@@ -1881,7 +1881,7 @@ function shopIcon(style = SHOP_STYLE, size = 200) {
 }
 
 // ===== 「開始修行」按鈕的底圖（三案；網址 ?start=a|b|c 預覽；文字仍是網頁文字，會跟著換語言） =====
-let START_STYLE = new URLSearchParams(location.search).get('start') || '';
+let START_STYLE = new URLSearchParams(location.search).get('start') || 'a';   // 遊戲使用 A 卷軸
 function startBg(style, w = 320, h = 96) {
   const cnv = document.createElement('canvas'); cnv.width = w * 2; cnv.height = h * 2;
   const c = cnv.getContext('2d'); c.scale(2, 2);
