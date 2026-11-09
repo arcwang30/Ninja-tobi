@@ -432,7 +432,7 @@ function drawPuff(o) {
   ctx.save(); ctx.globalAlpha = (1 - k) * .85;
   for (let i = 0; i < 6; i++) {
     const a = i / 6 * TAU + o.x * .1, dx = Math.cos(a) * r * .7, dy = Math.sin(a) * r * .5 - k * 10;
-    ctx.fillStyle = i % 2 ? '#e8ecef' : '#c7cdd3'; aCirc(ctx, o.x + dx, o.y + dy, r * (.42 + (i % 3) * .08)); ctx.fill();
+    ctx.fillStyle = o.c ? (i % 2 ? o.c : '#e6d8ff') : i % 2 ? '#e8ecef' : '#c7cdd3'; aCirc(ctx, o.x + dx, o.y + dy, r * (.42 + (i % 3) * .08)); ctx.fill();   // o.c：指定煙的顏色（夢幻術的紫煙）
   }
   ctx.restore();
 }

@@ -462,7 +462,7 @@ body.pillar.shud #shScroll { display: flex; position: fixed; z-index: 2; right: 
   background: radial-gradient(circle at 50% 40%, #4a4f60, #23262f 70%); border: .25em solid #6a6f80; color: #999; box-shadow: 0 .35em 0 #000; filter: grayscale(.7); opacity: .7; }
 #shScroll::before { display: none; }
 #shScroll .sh-roll { width: 2.6em; height: 1.5em; border-radius: .25em; background: linear-gradient(90deg, #8a6a3a 0 12%, #fff3d0 12% 88%, #8a6a3a 88%); position: relative; }
-#shScroll .sh-roll::after { content: ""; position: absolute; left: 42%; top: -.12em; bottom: -.12em; width: 16%; background: #c0262d; }
+#shScroll .sh-roll::after { content: ""; position: absolute; left: 42%; top: -.12em; bottom: -.12em; width: 16%; background: var(--band, #c0262d); }   /* 綁帶顏色＝目前忍法的卷軸色（game.js 設定 --band） */
 #shScroll b { font-weight: 900; letter-spacing: .1em; }
 #shScroll i { font-style: normal; font-weight: 900; font-size: .9em; }
 body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%, #ff6a5a, #b81e22 70%); border-color: #ffd27a; color: #fff; filter: none; opacity: 1; animation: sh-glow 1.4s ease-in-out infinite; }

@@ -346,7 +346,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v91';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v92';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -847,7 +847,8 @@ function updatePlay(dt) {
   p.inv =Math.max(0, p.inv - dt); p.spin = Math.max(0, (p.spin || 0) - dt); p.swing = Math.max(0, (p.swing || 0) - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt); p.slow = Math.max(0, p.slow - dt); p.freeze = Math.max(0, p.freeze - dt); p.sq = Math.max(0, p.sq - dt * 4);
   if (g.banner) { g.banner.t -= dt; if (g.banner.t <= 0) g.banner = null; }
   // 忍法的持續效果
-  if (g.kongo > 0) g.kongo -= dt;
+  if (g.kongo > 0) { g.kongo -= dt; if (((g.t * 60) | 0) % 3 === 0) g.ghosts.push({ x: p.x, y: p.y, face: p.face, t: 0, gold: 1 }); }   // 金剛身：金色殘影
+  if (g.jfxT) { g.jfxT.t -= dt; if (g.jfxT.t <= 0) g.jfxT = null; }
   if (g.kishinT > 0) g.kishinT -= dt;
   if (g.jfx) { g.jfx.t -= dt * 1.4; if (g.jfx.t <= 0) g.jfx = null; }
 
@@ -1302,6 +1303,10 @@ function touchEnemy(e) {
 function slay(e, auto) {
   if (e.dead) return;
   e.dead = true;
+  if (e.frozen > 0) {   // 雪華封凍住的敵人：冰塊碎裂、冰晶四散
+    for (let i = 0; i < 14; i++) { const a = i / 14 * TAU; g.parts.push({ x: e.x, y: e.y, vx: Math.cos(a) * rnd(80, 220), vy: Math.sin(a) * rnd(80, 220) - 60, life: .55, max: .55, c: i % 3 ? '#dff6ff' : '#ffffff', s: rnd(2, 4.5) }); }
+    tone(2600, .12, 'triangle', .04, -900); noise(.12, .05);
+  }
   const ed = ENEMY[e.type];
   // 斬成兩半的屍體（沿斬擊方向切開，往兩邊飛散）＋消失的煙
   const pp = g.p, ca = pp.dash > 0 ? Math.atan2(pp.dvy, pp.dvx) : pp.dive ? Math.PI / 2 : rnd(-.6, .6);
@@ -1452,9 +1457,11 @@ const JUTSU = [
   { id: 'kishin', n: '鬼神斬', th: 0, col: '#ff6a4a' },  // 林之卷軸（真妖鬼）：巨大金棒清場
   { id: 'yume', n: '夢幻術', th: 1, col: '#b88aff' },    // 風之卷軸（怠惰鬼）：畫面上的敵人睡著
   { id: 'sekka', n: '雪華封', th: 3, col: '#bfeaff' },   // 山之卷軸（雪女鬼）：冰封敵人與飛行道具
-  { id: 'kongo', n: '金剛身', th: 2, col: '#ffd25a' },   // 火之卷軸（鐵甲鬼）：無敵、撞到就斬
+  { id: 'kongo', n: '金剛身', th: 2, col: '#e8a040' },   // 火之卷軸（鐵甲鬼）：無敵、撞到就斬
 ];
 const MAKI_N = ['林之卷軸', '風之卷軸', '火之卷軸', '山之卷軸'];
+// 卷軸綁帶的顏色（和開場故事的風林火山四卷相同）：林＝綠、風＝藍、火＝紅、山＝紫；豪天翔維持原本的朱紅
+const MAKI_BAND = ['#2e9a5a', '#3a8ad8', '#d8402a', '#7a4ac0'], jutsuBand = j => j.th < 0 ? '#c0262d' : MAKI_BAND[j.th];
 const hasMaki = th => !!(save.maki && save.maki[th]);
 const jutsuOK = j => j.th < 0 || hasMaki(j.th);
 const curJutsu = () => { const j = JUTSU.find(x => x.id === save.jutsu); return j && jutsuOK(j) ? j : JUTSU[0]; };
@@ -1469,9 +1476,12 @@ function castScroll() {
 function jutsuGo(j) {
   const p = g.p, on = e => !e.dead && e.y > g.camY - 40 && e.y < g.camY + H + 40;   // 畫面上的敵人
   state = 'play'; g.jfx = { col: j.col, t: 1 };
+  const DUR = { kongo: 4.5, yume: 5, sekka: 6 }[j.id]; if (DUR) g.jfxT = { t: DUR, max: DUR, col: j.col };   // 主角頭上的剩餘時間圈
+  // 敵方子彈消失的特效：夢幻術＝紫煙、雪華封＝冰屑
+  const vanish = kind => { for (const s of g.eshots) { if (kind === 'smoke') g.puffs.push({ x: s.x, y: s.y, t: 0, r: 12, c: '#b88aff' }); else for (let i = 0; i < 5; i++) g.parts.push({ x: s.x, y: s.y, vx: rnd(-90, 90), vy: rnd(-90, 40), life: .5, max: .5, c: i % 2 ? '#ffffff' : '#bfeaff', s: rnd(1.5, 3) }); } };
   if (j.id === 'kongo') { g.kongo = 4.5; p.inv = Math.max(p.inv, 4.6); p.vy = -JUMP * 1.15; SFX.clank(); }
-  else if (j.id === 'yume') { for (const e of g.enemies) if (on(e)) e.sleep = 5; g.eshots = []; p.vy = -JUMP; p.inv = Math.max(p.inv, 1); SFX.scroll(); }
-  else if (j.id === 'sekka') { for (const e of g.enemies) if (on(e)) e.frozen = 6; g.eshots = []; g.fires = []; p.vy = -JUMP; p.inv = Math.max(p.inv, 1); noise(.4, .06); tone(1800, .5, 'triangle', .04, -900); }
+  else if (j.id === 'yume') { for (const e of g.enemies) if (on(e)) e.sleep = 5; vanish('smoke'); g.eshots = []; p.vy = -JUMP; p.inv = Math.max(p.inv, 1); SFX.scroll(); }
+  else if (j.id === 'sekka') { for (const e of g.enemies) if (on(e)) e.frozen = 6; vanish('ice'); g.eshots = []; g.fires = []; p.vy = -JUMP; p.inv = Math.max(p.inv, 1); noise(.4, .06); tone(1800, .5, 'triangle', .04, -900); }
   else if (j.id === 'kishin') {
     g.kishinT = .7; g.shake = 16; SFX.boom(); vib([60, 40, 120]); p.vy = -JUMP * 1.1; p.inv = Math.max(p.inv, 1);
     // 只清雜兵：一般敵人斬殺；菁英只打掉一層、大天狗扣 3 血；魔王只累積 2 點破綻（不會直接暈眩）
@@ -2287,7 +2297,7 @@ function drawScrollBtn() {
   // 卷軸圖示
   c.save(); c.translate(x, y - 3); c.rotate(-.35);
   rr(-16, -7, 32, 14, 3); c.fillStyle = has ? '#fff3d0' : '#999'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.4; c.stroke();
-  c.fillStyle = '#c0262d'; c.fillRect(-3, -7, 6, 14);
+  c.fillStyle = jutsuBand(curJutsu()); c.fillRect(-3, -7, 6, 14);   // 綁帶顏色＝目前忍法的卷軸色
   for (const sx of [-1, 1]) { rr(sx * 16 - 3, -9, 6, 18, 2); c.fillStyle = '#6a3a1e'; c.fill(); c.stroke(); }
   c.restore();
   txt(t('ju_' + curJutsu().id), x, y + 16, 9, has ? '#ffd27a' : '#aaa', 'center', INK, 3);
@@ -2532,15 +2542,96 @@ function castCue(e0, e1) {
   if (at(.75)) { SFX.impact(); vib(40); }                                     // 蓋印
   if (at(.85)) { noise(.5, .08); tone(220, .45, 'sawtooth', .04, 500); }     // 燒起來
 }
+const hexRgb = h => { const n = parseInt(h.slice(1), 16); return `${n >> 16 & 255},${n >> 8 & 255},${n & 255}`; };
+// ===== 忍法的神獸：大幅墨繪剪影（以 200×200 為單位畫，中心在原點） =====
+// 鳶（豪天翔）、鬼神（鬼神斬）、貘（夢幻術）、九尾白狐（雪華封）、金剛力士（金剛身）
+const BEAST_PATH = {
+  oni(c) {   // 鬼神：舉著金棒的赤鬼，弓步
+    c.moveTo(-14, -72); c.lineTo(-30, -104); c.lineTo(-4, -78); c.moveTo(14, -72); c.lineTo(30, -104); c.lineTo(4, -78);   // 角
+    c.moveTo(22, -55); c.arc(0, -55, 22, 0, TAU);                                                                        // 頭
+    for (let i = 0; i < 7; i++) { const a = Math.PI * (1.05 + i * .13); c.moveTo(Math.cos(a) * 20, -55 + Math.sin(a) * 20); c.lineTo(Math.cos(a) * 36, -58 + Math.sin(a) * 34); c.lineTo(Math.cos(a + .1) * 20, -55 + Math.sin(a + .1) * 20); }   // 亂髮
+    c.moveTo(-52, -32); c.lineTo(52, -32); c.lineTo(34, 40); c.lineTo(-34, 40); c.closePath();                        // 身體
+    c.moveTo(-34, 38); c.lineTo(-74, 100); c.lineTo(-50, 104); c.lineTo(-10, 46); c.closePath();                       // 左腳
+    c.moveTo(34, 38); c.lineTo(62, 100); c.lineTo(86, 98); c.lineTo(14, 46); c.closePath();                          // 右腳
+    c.moveTo(-52, -30); c.lineTo(-80, 14); c.lineTo(-62, 22); c.lineTo(-38, -12); c.closePath(); c.moveTo(-58, 26); c.arc(-72, 26, 14, 0, TAU);   // 左拳
+    c.moveTo(44, -32); c.lineTo(80, -78); c.lineTo(96, -66); c.lineTo(58, -16); c.closePath();                         // 舉起的右臂
+    c.moveTo(70, -70); c.lineTo(10, -160); c.lineTo(34, -172); c.lineTo(96, -84); c.closePath();                      // 金棒
+    for (let i = 0; i < 5; i++) { const x = 64 - i * 13, y = -88 - i * 18; c.moveTo(x + 12, y); c.arc(x, y, 12, 0, TAU); }   // 金棒上的突刺
+  },
+  baku(c) {   // 貘：象鼻、圓胖身體、雲朵
+    c.ellipse(10, 0, 72, 42, 0, 0, TAU);
+    c.moveTo(-34, -14); c.ellipse(-62, -18, 34, 27, -.2, 0, TAU);
+    c.moveTo(-90, -10); c.quadraticCurveTo(-128, 6, -118, 40); c.quadraticCurveTo(-112, 56, -98, 46); c.quadraticCurveTo(-108, 30, -100, 18); c.quadraticCurveTo(-90, 6, -78, 0); c.closePath();   // 象鼻
+    c.moveTo(-58, -42); c.ellipse(-50, -44, 14, 10, -.6, 0, TAU);   // 耳
+    for (const x of [-40, -12, 30, 58]) { c.moveTo(x - 10, 26); c.lineTo(x + 10, 26); c.lineTo(x + 9, 70); c.lineTo(x - 9, 70); c.closePath(); }   // 腳
+    c.moveTo(80, -10); c.quadraticCurveTo(104, -20, 100, 6); c.quadraticCurveTo(94, -4, 80, 6); c.closePath();   // 尾巴
+    for (const [x, y, r] of [[-70, 86, 22], [-38, 92, 26], [0, 90, 28], [38, 92, 24], [72, 86, 20]]) { c.moveTo(x + r, y); c.arc(x, y, r, 0, TAU); }   // 腳下的雲
+  },
+  fox(c) {   // 九尾白狐：坐姿，九條尾巴在身後展開
+    for (let i = 0; i < 9; i++) {
+      const a = -Math.PI * (.95 - i * .1), bx = 18, by = 52, ex = bx + Math.cos(a) * 125, ey = by + Math.sin(a) * 125, nx = -Math.sin(a) * 22, ny = Math.cos(a) * 22;
+      c.moveTo(bx, by); c.quadraticCurveTo((bx + ex) / 2 + nx, (by + ey) / 2 + ny, ex, ey); c.quadraticCurveTo((bx + ex) / 2 - nx, (by + ey) / 2 - ny, bx, by);
+    }
+    c.moveTo(34, 24); c.ellipse(0, 24, 34, 52, 0, 0, TAU);   // 身體
+    c.moveTo(24, -46); c.arc(0, -46, 24, 0, TAU);            // 頭
+    c.moveTo(-18, -54); c.lineTo(-48, -40); c.lineTo(-14, -32); c.closePath();   // 尖嘴
+    c.moveTo(-16, -62); c.lineTo(-12, -98); c.lineTo(2, -66); c.closePath(); c.moveTo(6, -66); c.lineTo(20, -98); c.lineTo(22, -60); c.closePath();   // 耳朵
+    c.moveTo(-24, 70); c.ellipse(-16, 72, 14, 8, 0, 0, TAU); c.moveTo(30, 70); c.ellipse(20, 72, 14, 8, 0, 0, TAU);   // 前腳
+  },
+  nio(c) {   // 金剛力士（仁王）：怒目、舉掌、弓步，背後飄著天衣
+    c.moveTo(18, -84); c.arc(0, -84, 18, 0, TAU); c.moveTo(8, -104); c.arc(0, -104, 8, 0, TAU);   // 頭與髮髻
+    c.moveTo(-58, -60); c.lineTo(58, -60); c.lineTo(30, 6); c.lineTo(-30, 6); c.closePath();      // 倒三角的胸膛
+    c.moveTo(-36, 4); c.lineTo(36, 4); c.lineTo(50, 58); c.lineTo(-50, 58); c.closePath();       // 腰布
+    c.moveTo(-40, 54); c.lineTo(-84, 104); c.lineTo(-58, 108); c.lineTo(-14, 60); c.closePath(); c.moveTo(40, 54); c.lineTo(76, 106); c.lineTo(100, 100); c.lineTo(16, 60); c.closePath();   // 弓步
+    c.moveTo(52, -58); c.lineTo(84, -112); c.lineTo(102, -102); c.lineTo(68, -46); c.closePath(); c.moveTo(108, -118); c.ellipse(94, -122, 16, 20, .4, 0, TAU);   // 舉起的手掌
+    c.moveTo(-52, -58); c.lineTo(-92, -24); c.lineTo(-78, -10); c.lineTo(-40, -40); c.closePath(); c.moveTo(-82, -16); c.arc(-96, -16, 14, 0, TAU);   // 握拳
+  },
+};
+const NIO_SCARF = c => { c.moveTo(-60, -50); c.bezierCurveTo(-140, -90, -150, 40, -110, 70); c.moveTo(60, -50); c.bezierCurveTo(140, -100, 150, 30, 120, 80); };   // 天衣（用粗線畫）
+// e：卷軸演出經過的秒數；burn：燒卷軸的進度（0～1）
+function drawBeast(id, x, y, e, burn, col, T) {
+  const c = ctx, rgb = hexRgb(col), s = Math.min(W * .85, (H * .44 - 105 - SAFE_T) * .95) / 220;   // 放在卷軸上方的空間
+  const rev = clamp((e - .15) / .65, 0, 1);   // 被毛筆一筆一筆畫出來（由下往上掃）
+  if (rev <= 0) return;
+  const fade = 1 - clamp((burn - .55) / .45, 0, 1), glow = burn > 0 ? Math.sin(Math.min(1, burn * 1.6) * Math.PI) : 0;
+  c.save(); c.translate(x, y); c.scale(s * (1 + glow * .08), s * (1 + glow * .08));
+  if (id === 'oni' || id === 'fox') c.translate(0, 8);
+  // 筆刷掃過的範圍：由下往上，邊緣是鋸齒狀的筆觸
+  c.beginPath(); const top = 130 - rev * 300; c.moveTo(-200, 200); c.lineTo(-200, top);
+  for (let xx = -200; xx <= 200; xx += 20) c.lineTo(xx, top + Math.sin(xx * .07 + 1.3) * 14 + ((xx / 20) % 2 ? 8 : -6));
+  c.lineTo(200, 200); c.closePath(); c.clip();
+  c.globalAlpha = fade * .92;
+  const path = () => { c.beginPath(); if (id === 'soar') return; BEAST_PATH[{ kishin: 'oni', yume: 'baku', sekka: 'fox', kongo: 'nio' }[id]](c); };
+  // 光暈（燒卷軸時變強）
+  c.shadowColor = `rgba(${rgb},.9)`; c.shadowBlur = 18 + glow * 40;
+  if (id === 'soar') kiteBird(c, 0, 0, 3.6, Math.sin(T * 3) * .5 + .2, `rgba(${rgb},.55)`);
+  else {
+    if (id === 'kongo') { c.lineWidth = 16; c.lineCap = 'round'; c.strokeStyle = `rgba(${rgb},.45)`; c.beginPath(); NIO_SCARF(c); c.stroke(); }
+    path(); const gr = c.createRadialGradient(0, -20, 10, 0, 0, 150); gr.addColorStop(0, `rgba(${rgb},.75)`); gr.addColorStop(1, `rgba(${rgb},.35)`);
+    c.fillStyle = gr; c.fill('nonzero');
+  }
+  c.shadowBlur = 0;
+  // 乾筆的飛白：幾道斜斜的淺色筆痕
+  c.strokeStyle = `rgba(255,250,235,${.18 * fade})`; c.lineWidth = 3;
+  for (let i = 0; i < 9; i++) { const yy = -110 + i * 26; c.beginPath(); c.moveTo(-120 + (i % 3) * 20, yy); c.lineTo(110 - (i % 2) * 30, yy - 18); c.stroke(); }
+  // 墨點飛濺
+  c.fillStyle = `rgba(${rgb},${.6 * fade})`;
+  for (let i = 0; i < 14; i++) { const a = i * 2.39, r = 110 + (i % 5) * 14; c.beginPath(); c.arc(Math.cos(a) * r, Math.sin(a) * r * .8, 2 + (i % 4), 0, TAU); c.fill(); }
+  c.restore();
+  // 燒卷軸時：神獸化成光點散開
+  if (burn > .4) for (let i = 0; i < 24; i++) { const u = clamp((burn - .4) / .6, 0, 1), a = i * 2.39, r = (40 + (i % 6) * 18) * s * (1 + u * 1.5); c.fillStyle = `rgba(${rgb},${1 - u})`; aCirc(c, x + Math.cos(a) * r, y + Math.sin(a) * r * .8 - u * 60, 2.5 + (i % 3)); c.fill(); }
+}
 function drawCast() {
   const e = CAST_T - g.castT, T = performance.now() / 1000, cx = W / 2;
   const burn = clamp((e - .85) / .35, 0, 1), SW = Math.min(W - 36, 330), SH = 150;
   ctx.fillStyle = `rgba(22,6,8,${Math.min(.95, e * 9)})`; ctx.fillRect(0, 0, W, H);
   speedLines(e * 8, `rgba(255,200,120,${.3 * (1 - burn) + .15})`);
-  // 光柱（燒起來之後）
+  const JC = (g.castJ || JUTSU[0]).col, rgb = hexRgb(JC);
+  drawBeast((g.castJ || JUTSU[0]).id, cx, (SAFE_T + H * .44 - 105) / 2 + 6, e, burn, JC, T);   // 忍法的神獸（大幅墨繪剪影）
+  // 光柱（燒起來之後，忍法的代表色）
   if (burn > 0) {
     const pw = 60 + burn * 90, gr = ctx.createLinearGradient(cx - pw / 2, 0, cx + pw / 2, 0);
-    gr.addColorStop(0, 'rgba(255,210,90,0)'); gr.addColorStop(.5, `rgba(255,240,180,${.75 * burn})`); gr.addColorStop(1, 'rgba(255,210,90,0)');
+    gr.addColorStop(0, `rgba(${rgb},0)`); gr.addColorStop(.5, `rgba(255,248,225,${.75 * burn})`); gr.addColorStop(1, `rgba(${rgb},0)`);
     ctx.fillStyle = gr; ctx.fillRect(cx - pw / 2, 0, pw, H);
   }
   // 卷軸位置與寬度
@@ -2583,7 +2674,7 @@ function drawCast() {
       const ey = top + ph;
       for (let i = 0; i <= 12; i++) {
         const x = -w / 2 + i * w / 12, fh = 14 + Math.sin(T * 30 + i * 2.1) * 6;
-        ctx.fillStyle = i % 2 ? '#ffd25a' : '#ff7a2a';
+        ctx.fillStyle = i % 2 ? '#ffd25a' : JC;   // 火舌混入忍法的代表色
         ctx.beginPath(); ctx.moveTo(x - 10, ey + 4); ctx.quadraticCurveTo(x - 4, ey - fh * .5, x, ey - fh); ctx.quadraticCurveTo(x + 4, ey - fh * .5, x + 10, ey + 4); ctx.closePath(); ctx.fill();
       }
       ctx.fillStyle = 'rgba(40,20,10,.6)'; ctx.fillRect(-w / 2, ey - 3, w, 3);   // 焦痕
@@ -2791,8 +2882,9 @@ function render() {
   for (const pl of g.plats) if (pl.y - camY > -20 && pl.y - camY < H + 20) drawPlat(pl);
   for (const it of g.items) drawItem(it);
   for (const o of g.corpses) drawCorpse(o);   // 斬成兩半的敵人
-  for (const e of g.enemies) if (!e.dead) drawEnemy(e.x, e.y, e.type, 1, e.ph, e);
+  for (const e of g.enemies) if (!e.dead) drawEnemy(e.x + (e.sleep > 0 ? Math.sin(g.t * 2.5 + e.ph) * 3 : 0), e.y, e.type, 1, e.ph, e);   // 睡著的敵人輕輕搖晃
   for (const e of g.enemies) if (!e.dead) {   // 夢幻術：飄出 Z；雪華封：冰塊
+    if (e.sleep > 0) { const ed = ENEMY[e.type], gl = ctx.createRadialGradient(e.x, e.y, 2, e.x, e.y, ed.w * .9); gl.addColorStop(0, 'rgba(184,138,255,.35)'); gl.addColorStop(1, 'rgba(184,138,255,0)'); ctx.fillStyle = gl; ctx.fillRect(e.x - ed.w, e.y - ed.w, ed.w * 2, ed.w * 2); }   // 睡著：淡紫色光暈
     if (e.sleep > 0) { const k = (g.t * 1.2 + e.ph) % 1; ctx.globalAlpha = 1 - k; txt('z', e.x + 10 + k * 10, e.y - 22 - k * 18, 12 + k * 6, '#d8c0ff', 'center', '#000', 2); ctx.globalAlpha = 1; }
     if (e.frozen > 0) { const ed = ENEMY[e.type]; ctx.fillStyle = 'rgba(190,234,255,.45)'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(e.x - ed.w / 2 - 4, e.y - ed.h / 2 - 4, ed.w + 8, ed.h + 8, 5); else ctx.rect(e.x - ed.w / 2 - 4, e.y - ed.h / 2 - 4, ed.w + 8, ed.h + 8); ctx.fill(); ctx.stroke(); }
   }
@@ -2806,7 +2898,8 @@ function render() {
   // 殘影
   for (const o of g.ghosts) {
     ctx.save(); ctx.globalAlpha = .45 * (1 - o.t / .25);
-    drawNinja(o.x, o.y, { face: o.face, t: g.t, vy: -500, skin: save.skin });
+    if (o.gold) drawSil(o.x, o.y, 120, 120, 60, 100, 'rgba(255,200,90,.9)', c2 => drawHeroNinja(0, 0, { face: o.face, t: g.t, vy: -500, skin: save.skin }, c2));   // 金剛身：金色殘影
+    else drawNinja(o.x, o.y, { face: o.face, t: g.t, vy: -500, skin: save.skin });
     ctx.restore();
   }
   if (p.dive) {
@@ -2815,6 +2908,12 @@ function render() {
   }
   if (state === 'dying') { ctx.save(); ctx.translate(p.x, p.y - 20); ctx.rotate(g.t * 10 + (1.1 - g.dieT) * 12); drawNinja(0, 20, { face: p.face, t: g.t, vy: 0, skin: save.skin }); ctx.restore(); }
   else if (!(g.zi && g.zi.hide)) drawNinja(p.x, p.y, { face: p.face, t: g.t, vy: p.vy, sq: p.sq, inv: p.inv, fly: g.fly > 0, slow: p.slow, freeze: p.freeze, skin: save.skin, dash: p.dash > 0, dvx: p.dvx, dvy: p.dvy, dive: p.dive, spin: p.spin, hurt: p.hurt, swing: p.swing > 0 ? 1 - p.swing / SWING_T : null });
+  if (g.kongo > 0 && state === 'play') drawSil(p.x, p.y, 120, 120, 60, 100, `rgba(255,205,110,${.28 + .12 * Math.sin(g.t * 14)})`, c2 => drawHeroNinja(0, 0, { face: p.face, t: g.t, vy: p.vy, sq: p.sq, skin: save.skin, dash: p.dash > 0, dvx: p.dvx, dvy: p.dvy, dive: p.dive, spin: p.spin }, c2));   // 金剛身：全身金屬光澤
+  if (g.jfxT && state === 'play') {   // 忍法剩餘時間：主角頭上的小圈
+    const f = g.jfxT.t / g.jfxT.max, hx = p.x, hy = p.y - 66;
+    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(hx, hy, 8, 0, TAU); ctx.stroke();
+    ctx.strokeStyle = g.jfxT.col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(hx, hy, 8, -Math.PI / 2, -Math.PI / 2 + TAU * f); ctx.stroke();
+  }
   for (const s of g.shots) drawPlayerShot(s);
   drawSkillFx();
   for (const f of g.fires) drawFireTrail(f); for (const m of g.mists) drawIceMist(m);   // 火關的火焰、山關的冰霧
@@ -3114,7 +3213,7 @@ function sideHudTick() {
   const key = JSON.stringify([g.skills, g.perks, g.lv]);
   if (key !== SH.key) { SH.key = key; renderPauseSkills($('shSk')); }
   const b = $('shScroll'), has = g.scrolls > 0 && g.fly <= 0;
-  b.classList.toggle('ready', has); b.querySelector('i').textContent = '×' + g.scrolls; b.querySelector('b').textContent = t('ju_' + curJutsu().id);
+  b.classList.toggle('ready', has); b.querySelector('i').textContent = '×' + g.scrolls; b.querySelector('b').textContent = t('ju_' + curJutsu().id); b.style.setProperty('--band', jutsuBand(curJutsu()));
 }
 $('shScroll').addEventListener('pointerdown', e => {
   e.preventDefault(); e.stopPropagation(); A();
