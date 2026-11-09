@@ -5,7 +5,7 @@
 const BGM = (() => {
   const MASTER = .5;   // 總音量（峰值約 0.9，不會破音）
   let ac = null, out = null, timer = null, nextT = 0, step = 0, waves = null, noiseBuf = null;
-  let song = null, key = '', tr = 1, STEP = .1, vol = 1;   // vol：設定頁的音樂音量（0～1.2）
+  let song = null, key = '', tr = 1, STEP = .1, vol = 1, jout = null;   // jout：正在播放的短樂句（離開結算時要能關掉）   // vol：設定頁的音樂音量（0～1.2）
 
   // ---- 音名 → 頻率 ----
   const SEMI = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
@@ -361,6 +361,7 @@ const BGM = (() => {
     // 短樂句（只播一次）：修行中斷「散華」——都節音階（E F A B C）的下行收尾、琴的刷弦、太鼓「咚咚」
     jingle(ctx, id = 'fail') {
       if (!ctx || !vol) return;
+      api.stopJingle();   // 前一段短樂句還在播就先關掉
       stopNow();
       if (ac !== ctx) { ac = ctx; makeVoices(); }
       const J = JINGLES[id]; if (!J) return;
@@ -375,8 +376,14 @@ const BGM = (() => {
       for (const [n, at] of J.bell || []) note(waves.p12, hz(n), t0 + at * st, 3 * st, .05, false);   // 鈴
       for (const [at, v] of J.taiko || []) kick(t0 + at * st, v);
       for (const [at, r, d, v] of J.hit || []) hit(t0 + at * st, r, d, v);
-      const o = out; out = prev;
-      setTimeout(() => o.disconnect(), (Math.max(s, J.len || 0) + 12) * st * 1000);
+      const o = out; out = prev; jout = o;
+      setTimeout(() => { o.disconnect(); if (jout === o) jout = null; }, (Math.max(s, J.len || 0) + 12) * st * 1000);
+    },
+    // 關掉正在播的短樂句（快速淡出）
+    stopJingle() {
+      if (!jout) return; const o = jout; jout = null;
+      try { o.gain.setTargetAtTime(0, ac.currentTime, .04); } catch (e) { }
+      setTimeout(() => { try { o.disconnect(); } catch (e) { } }, 300);
     },
     // 設定頁調整音樂音量：播放中的曲子立即套用
     setVol(v) { if (v === vol) return; vol = v; if (out && timer) out.gain.setTargetAtTime(MASTER * v, ac.currentTime, .03); },

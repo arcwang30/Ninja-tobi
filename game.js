@@ -333,6 +333,7 @@ const SFX = {
 // 標題＝鳶ノ影；關卡＝疾風ノ道（每一幕換調、無盡之塔每輪加快）；魔王登場＝鬼哭；暫停／死亡／結算＝停止
 const ACT_KEY = [0, 2, 5, 3];   // 林／風／火／山 的移調（半音）
 function musicFor() {
+  if (state !== 'over' && state !== 'fin') BGM.stopJingle();   // 離開結算／擊倒演出（回主畫面、再次挑戰、商店…）時，收尾短曲一起關掉
   if (!ac || !musV() || document.hidden) return BGM.stop();
   BGM.setVol(musV());
   if (state === 'menu') return INTRO.ph === 'cut' ? BGM.play(ac, 'boss', { sp: .85, tr: -3 }) : INTRO.ph === 'title' || (INTRO.ph === 'outro' && INTRO.t > OUT_OPEN) ? BGM.play(ac, 'title') : BGM.stop();
@@ -345,7 +346,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v89';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v90';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -1448,10 +1449,10 @@ function countKill() {
 // th＝需要哪一關的卷軸（THEMES 索引：林 0、風 1、火 2、山 3）
 const JUTSU = [
   { id: 'soar', n: '豪天翔', th: -1, col: '#ffd25a' },
-  { id: 'kongo', n: '金剛身', th: 0, col: '#ffd25a' },   // 林之卷軸（鐵甲鬼）：無敵、撞到就斬
+  { id: 'kishin', n: '鬼神斬', th: 0, col: '#ff6a4a' },  // 林之卷軸（真妖鬼）：巨大金棒清場
   { id: 'yume', n: '夢幻術', th: 1, col: '#b88aff' },    // 風之卷軸（怠惰鬼）：畫面上的敵人睡著
   { id: 'sekka', n: '雪華封', th: 3, col: '#bfeaff' },   // 山之卷軸（雪女鬼）：冰封敵人與飛行道具
-  { id: 'kishin', n: '鬼神斬', th: 2, col: '#ff6a4a' },  // 火之卷軸（真妖鬼）：巨大金棒清場
+  { id: 'kongo', n: '金剛身', th: 2, col: '#ffd25a' },   // 火之卷軸（鐵甲鬼）：無敵、撞到就斬
 ];
 const MAKI_N = ['林之卷軸', '風之卷軸', '火之卷軸', '山之卷軸'];
 const hasMaki = th => !!(save.maki && save.maki[th]);
@@ -1488,9 +1489,9 @@ function jutsuGo(j) {
 // 暈眩時碰到它進入「時機斬」（QTE）。魔王會輪流放有預兆的攻擊，放完會喘一下，那就是反擊的空檔。
 // 從下方直接跳上去撞（沒有衝刺）會被擋開，所以要留「氣」來打它。
 const BOSS_ATK = [['club', 'club', 'fan'], ['mist', 'mist', 'fan'], ['snow', 'snow', 'fan'], ['charge', 'charge', 'fan']];
-// 每一關的魔王（以 THEMES 索引）：林＝鐵甲鬼、風＝怠惰鬼、火＝真妖鬼、山＝雪女鬼。
+// 每一關的魔王（以 THEMES 索引）：林＝真妖鬼、風＝怠惰鬼、火＝鐵甲鬼、山＝雪女鬼。
 // 第 5 舞台是「初戰」（弱化版、招式較少，打完魔王會逃走），第 10 舞台是「決戰」（完整招式，打倒才破關）
-const BOSS_OF = [3, 1, 0, 2];
+const BOSS_OF = [0, 1, 3, 2];
 function spawnBoss() {
   const fin = g.stage >= 5, kind = BOSS_OF[g.th], lv = g.lvl;
   // 選關畫面：遇過這一關的魔王之後，圖卡上才顯示它的彩圖（之前是剪影）
