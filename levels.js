@@ -58,6 +58,8 @@ function lvSave() {
     if (s.sel >= 2) s.sel = 5 - s.sel;
     persist();
   }
+  // 遇過哪幾關的魔王（選關圖卡顯示彩圖或剪影）。舊存檔：到過第 6 舞台或破台就算遇過
+  if (!Array.isArray(s.boss)) { s.boss = s.best.map((b, i) => b >= 6 || s.clear[i] ? 1 : 0); persist(); }
   return s;
 }
 // 到達新舞台時呼叫：記錄最佳、檢查是否開放下一關
@@ -207,17 +209,27 @@ function buyFull() {
 // ===== 選關畫面（吸血鬼倖存者風：大張的關卡圖卡，未開放的顯示剪影與開放條件） =====
 const lvThumbs = {};
 function lvThumb(i) {
-  if (lvThumbs[i]) return lvThumbs[i];
+  const seen = !!lvSave().boss[i], key = i + (seen ? 'c' : 's');
+  if (lvThumbs[key]) return lvThumbs[key];
   const k = THEMES[LEVELS[i].th].k, B = BG_THEME[k], w = 240, h = 300;
   const cv2 = document.createElement('canvas'); cv2.width = w; cv2.height = h; const c = cv2.getContext('2d');
   try {
     B.sky(c, w, h); B.far(c, w, h); B.mid(c, w, h);
-    // 這一關的魔王剪影站在下方
-    const sv = { t: 1, hp: 1, max: 1, kind: LEVELS[i].th, n: 0, shield: false, warn: 0, skillT: 9 };
-    try { drawBoss2(sv, w * .5, h * .66, 1.45, c); } catch (e) { }
+    // 這一關的魔王站在下方：遇過才是彩圖，沒遇過是剪影
+    const sv = { t: 1, hp: 1, max: 1, kind: BOSS_OF[LEVELS[i].th], n: 0, shield: false, warn: 0, skillT: 9 };
+    try {
+      if (seen) drawBoss2(sv, w * .5, h * .66, 1.45, c);
+      else {
+        const sc = document.createElement('canvas'); sc.width = w; sc.height = h; const c3 = sc.getContext('2d');
+        drawBoss2(sv, w * .5, h * .66, 1.45, c3);
+        c3.globalCompositeOperation = 'source-in'; c3.fillStyle = '#0a0612'; c3.fillRect(0, 0, w, h);
+        c.drawImage(sc, 0, 0);
+        c.font = `bold 46px ${FONT}`; c.textAlign = 'center'; c.fillStyle = 'rgba(255,255,255,.55)'; c.fillText('?', w * .5, h * .66 + 16);
+      }
+    } catch (e) { }
     const gr = c.createLinearGradient(0, h * .55, 0, h); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.7)'); c.fillStyle = gr; c.fillRect(0, 0, w, h);
   } catch (e) { }
-  return lvThumbs[i] = cv2.toDataURL();
+  return lvThumbs[key] = cv2.toDataURL();
 }
 function openLvSel() {
   const s = lvSave();

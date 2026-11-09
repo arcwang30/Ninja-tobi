@@ -337,7 +337,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v66';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v67';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -1418,9 +1418,13 @@ function castScroll() {
 // 暈眩時碰到它進入「時機斬」（QTE）。魔王會輪流放有預兆的攻擊，放完會喘一下，那就是反擊的空檔。
 // 從下方直接跳上去撞（沒有衝刺）會被擋開，所以要留「氣」來打它。
 const BOSS_ATK = [['club', 'club', 'fan'], ['mist', 'mist', 'fan'], ['snow', 'snow', 'fan'], ['charge', 'charge', 'fan']];
+// 每一幕第 5 舞台的魔王（以 THEMES 索引）：林＝真妖鬼、風＝怠惰鬼、火＝鐵甲鬼、山＝雪女鬼；第 10 舞台是往後數兩隻的那一隻
+const BOSS_OF = [0, 1, 3, 2];
 function spawnBoss() {
   // 第 5 舞台：這一關的魔王；第 10 舞台：另一隻更強的魔王
-  const second = g.stage >= 5, kind = (g.th + (second ? 2 : 0)) % 4, n = g.lvl * 2 + (second ? 1 : 0);
+  const second = g.stage >= 5, kind = (BOSS_OF[g.th] + (second ? 2 : 0)) % 4, n = g.lvl * 2 + (second ? 1 : 0);
+  // 選關畫面：遇過這一關的魔王之後，圖卡上才顯示它的彩圖（之前是剪影）
+  if (!g.tut && !second) { const ls = lvSave(); if (!ls.boss[g.lvl]) { ls.boss[g.lvl] = 1; persist(); } }
   const hp = 10 + 3 * n;
   g.bossT0 = g.t; wxBoss(kind);   // 魔王登場時換成魔王的天候（levels.js）
   g.boss = {

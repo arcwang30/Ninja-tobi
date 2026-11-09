@@ -900,7 +900,7 @@ const BG_THEME = {
     },
     far: (c, w, h) => {
       const r = aRng(41);
-      for (let i = 0; i < 8; i++) { const x = r() * w, y = r() * h, s = .55 + r() * .35; wrapDraw(w, h, x, y, 30, (xx, yy) => paintPine(c, xx, yy, s, 'rgba(90,120,150,.55)', 'rgba(240,248,255,.75)')); }
+      for (let i = 0; i < 8; i++) { const x = r() * w, y = r() * h, s = .55 + r() * .35; if (i % 3 === 0) wrapDraw(w, h, x, y, 30, (xx, yy) => paintPine(c, xx, yy, s, 'rgba(90,120,150,.4)', 'rgba(240,248,255,.6)')); }   // 遠景松樹只畫 3 棵、更淡（太多會干擾遊玩）
       c.fillStyle = 'rgba(255,255,255,.35)'; for (let i = 0; i < 3; i++) { const x = r() * w, y = r() * h; wrapDraw(w, h, x, y, 70, (xx, yy) => { aEll(c, xx, yy, 60, 8); c.fill(); }); }   // 山嵐
     },
     mid: (c, w, h) => {
@@ -908,12 +908,12 @@ const BG_THEME = {
       // 積雪岩棚＋冰柱＋松樹
       for (let i = 0; i < 2; i++) { const x = w * (i ? .72 : .18) + r() * 30, y = h * (.12 + i * .45 + r() * .1); wrapDraw(w, h, x, y, 60, (xx, yy) => {
         c.fillStyle = '#6a7a90'; c.beginPath(); c.moveTo(xx - 40, yy); c.lineTo(xx + 40, yy); c.lineTo(xx + 26, yy + 18); c.lineTo(xx - 30, yy + 14); c.closePath(); c.fill();
-        paintIcicles(c, xx - 30, yy + 2, 58); paintPine(c, xx - 16, yy - 2, 1.1, '#2f5a48', '#ffffff', '#1e4034'); paintPine(c, xx + 18, yy - 2, .8, '#2f5a48', '#ffffff', '#1e4034'); }); }
+        paintIcicles(c, xx - 30, yy + 2, 58); if (i === 0) paintPine(c, xx - 16, yy - 2, 1.1, '#2f5a48', '#ffffff', '#1e4034'); }); }   // 綠松只留一棵（太密會干擾看站台）
       // 山寺
       { const x = w * (.35 + r() * .3), y = h * (.36 + r() * .08); wrapDraw(w, h, x, y, 80, (xx, yy) => { c.fillStyle = '#ffffff'; aRR(c, xx - 60, yy + 36, 120, 10, 5); c.fill(); paintTempleRoof(c, xx, yy, 1); paintLantern(c, xx - 44, yy + 38, .9); paintLantern(c, xx + 44, yy + 38, .9); }); }
       // 地藏與石燈籠
       { const x = w * (.1 + r() * .2), y = h * (.86 + r() * .06); wrapDraw(w, h, x, y, 30, (xx, yy) => { c.fillStyle = '#ffffff'; aRR(c, xx - 24, yy - 2, 48, 6, 3); c.fill(); paintJizo(c, xx - 10, yy, 1); paintJizo(c, xx + 10, yy, .9); }); }
-      for (let i = 0; i < 2; i++) { const x = r() * w, y = r() * h, s = .9 + r() * .4; wrapDraw(w, h, x, y, 50, (xx, yy) => paintPine(c, xx, yy, s, '#2f5a48', '#ffffff', '#1e4034')); }
+      { const x = r() * w, y = r() * h; wrapDraw(w, h, x, y, 50, (xx, yy) => paintPine(c, xx, yy, .9, '#2f5a48', '#ffffff', '#1e4034')); }
     },
     live: (camY, t) => { // 細細的飄雪＋山嵐
       for (let i = 0; i < 26; i++) { const x = ((i * 61 + Math.sin(t + i) * 14 + t * 10) % W + W) % W, y = ((i * 83 + t * 38 - camY * .3) % H + H) % H; ctx.fillStyle = 'rgba(255,255,255,.85)'; aCirc(ctx, x, y, 1 + (i % 3) * .6); ctx.fill(); }
