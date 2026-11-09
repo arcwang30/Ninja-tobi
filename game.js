@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v81';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v82';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -867,7 +867,7 @@ function updatePlay(dt) {
     if (p.vx * side > 0) p.vx = 0;
     if (!p.wallUsed && Math.sign(mv) === side && p.vy > -150 && p.dash <= 0 && !p.dive && g.fly <= 0) {
       p.wallUsed = true; g.walls++; p.vy = -JUMP * .85; p.vx = -side * 340; p.face = -side; p.sq = .6; p.spin = .45;   // 蹬牆跳：空翻一圈
-      floatText(p.x, p.y - 50, t('wall_kick'), '#fff', 15);
+      // （「蹬!」飄字已移除）
       for (let i = 0; i < 5; i++) g.parts.push({ x: p.x + side * 10, y: p.y - 20 + rnd(-10, 10), vx: -side * rnd(40, 120), vy: rnd(-60, 30), life: .35, max: .35, c: '#ffffffaa', s: rnd(2, 3) });
       SFX.wallJump();
     }
@@ -884,7 +884,7 @@ function updatePlay(dt) {
     // 衝刺撞牆會反射（彈射斬的軌跡預覽也照這個規則畫）
     if (p.x < PL_MIN || p.x > PL_MAX) {
       p.x = clamp(p.x, PL_MIN, PL_MAX); p.dvx = -p.dvx; p.face = p.dvx > 0 ? 1 : -1; p.banks++;
-      floatText(p.x, p.y - 40, t('bank'), '#9ad8ff', 14); SFX.clank(); g.shake = Math.max(g.shake, 4);
+      SFX.clank(); g.shake = Math.max(g.shake, 4);
     }
     if (p.dash <= 0) p.vy = p.dvy * .4;
     g.ghosts.push({ x: p.x, y: p.y, face: p.face, t: 0 });
@@ -1307,8 +1307,8 @@ function slay(e, auto) {
   g.maxCombo = Math.max(g.maxCombo, g.combo);
   const mult = Math.min(g.combo, 20) * (g.fever > 0 ? 2 : 1);
   addBonus(ed.pts * mult);
-  floatText(e.x, e.y - 10, `+${Math.round(ed.pts * mult * (1 + .2 * pk('score')))}`, g.fever > 0 ? '#ffd27a' : '#fff', 16);
-  if (g.combo >= 2) { floatText(W / 2, 0, t('chain', g.combo), '#ffd27a', 26, true); SFX.combo(g.combo); }
+  // （每斬一刀的得分飄字已移除：畫面太雜）
+  if (g.combo >= 2) SFX.combo(g.combo);   // 「N 連斬!」飄字已移除（HUD 已有連斬數）
   if (g.combo % 10 === 0) startFever();
   // 只有自己斬的才回氣；衝刺／急降斬連續斬殺時第一隻回 0.5、之後每隻只回 0.2，踩到地板才重置（避免一路衝到底）
   if (!auto) g.ki = Math.min(kiMax(), g.ki + (pp.dash > 0 || pp.dive ? (g.kiChain++ ? .2 : .5) : .5));
@@ -1978,7 +1978,7 @@ function nextStage() {
 }
 // 突破一個舞台時的成就檢查（天候、無傷）
 // 過舞台獎勵：舞台數 × 15 小判（前期收入比較不會太少）
-function stageCoins() { const n = (g.stage + 1) * 15; addCoins(n); floatText(W / 2, 96, '+' + n + ' ' + t('koban'), '#ffd27a', 18, true); }
+function stageCoins() { const n = (g.stage + 1) * 15; addCoins(n); }   // 過舞台小判照給，不再飄字
 function stageDone() {
   stageCoins();
   if (g.wx && g.wx.cur > .3) unlock('wx_' + g.wx.k);
@@ -2367,7 +2367,7 @@ function drawHUD() {
       if (g.grace) {
         ctx.fillStyle = '#000'; ctx.fillRect(W / 2 - 41, 103, 82, 6);
         ctx.fillStyle = Math.sin(g.t * 30) > 0 ? '#ff4a3a' : '#ff9a6a'; ctx.fillRect(W / 2 - 40, 104, 80 * clamp(g.comboT / comboGrace(), 0, 1), 4);
-        txt(t('chain_grace'), W / 2, 118, 10, '#ff8a7a', 'center', '#000', 3);
+        // （寬限的文字提示已移除，只留紅色計時條）
       } else {
         ctx.fillStyle = '#ffd27a'; ctx.fillRect(W / 2 - 40, 104, 80 * (g.comboT / comboMax()), 3);
         // （連斬下方的白色說明文字已移除：畫面太雜）
