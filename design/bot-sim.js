@@ -15,6 +15,7 @@ window.botRun = function (opt) {
     R.t += dt; stT += dt; dashT -= dt;
     if (state === 'perk') { choosePerk(perkChoices.length ? Math.floor(Math.random() * perkChoices.length) : -1); continue; }
     if (state === 'clearq') { R.cleared = true; break; }
+    if (state === 'cont') { R.adRevive = (R.adRevive || 0) + 1; contResult(o.adRevive !== false); continue; }   // 看廣告復活：預設會看
     if (state === 'over' || state === 'dying' && g.dieT < .05) { R.died = true; break; }
     if (state === 'qte' && g.qte && !g.qte.end) {
       const q = g.qte, cur = q.rings.find(r => !r.res);

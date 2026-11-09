@@ -427,3 +427,16 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 .full-lv b { font-size: 1.8em; font-weight: 900; color: #fff; text-shadow: 0 0 .12em #000, 0 .06em 0 #c0262d; margin-bottom: .15em; }
 .full-list { text-align: left; margin: 0 0 .6em; padding-left: 1.3em; font-size: .85em; line-height: 1.6; }
 .full-price { font-size: .85em; color: #cfd8ff; margin-bottom: .4em; }
+/* 獎勵型廣告：倒下時的接關畫面、結算的小判加倍按鈕、假廣告（測試用） */
+#cont { z-index: 6; }
+.panel.cont { text-align: center; }
+.cont-time { font-size: 3.2em; font-weight: 900; color: #ffd27a; line-height: 1.1; text-shadow: 0 .06em 0 #c0262d; }
+.cont-desc { margin: .2em 0 .7em; color: #e8ecf4; font-size: .9em; }
+.ad-btn { background: linear-gradient(#3a6ad0, #24408e); color: #fff; }
+#adFake { position: absolute; inset: 0; z-index: 30; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.88); }
+#adFake.on { display: flex; }
+#adFake .ad-box { position: relative; width: 82%; padding: 2.2em 1em 1em; border-radius: 1em; background: linear-gradient(135deg, #2a2e3a, #14161c); border: 2px dashed #8a90a0; color: #fff; text-align: center; display: flex; flex-direction: column; gap: .5em; }
+#adFake .ad-box b { font-size: 1.6em; }
+#adFake .ad-box small { color: #a8b0c0; }
+#adFake .ad-t { font-size: 1.1em; color: #ffd27a; font-weight: 900; margin: .4em 0; }
+#adFake .ad-x { position: absolute; top: .4em; right: .4em; width: 2.2em; height: 2.2em; padding: 0; margin: 0; border-radius: 50%; font-size: .9em; }

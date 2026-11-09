@@ -109,11 +109,23 @@
     </div>
   </div>
 
+  <!-- 倒下時：看廣告復活（ads.js，每局一次） -->
+  <div class="scr dim" id="cont">
+    <div class="panel cont">
+      <h2 data-i18n="cont_title"></h2>
+      <div class="cont-time" id="contTime">5</div>
+      <p class="cont-desc" data-i18n="cont_desc"></p>
+      <button data-act="contad" class="big red" data-i18n="cont_ad"></button>
+      <button data-act="contgive" data-i18n="cont_give"></button>
+    </div>
+  </div>
+
   <!-- 結算 -->
   <div class="scr dim" id="over">
     <div class="panel">
       <h2 id="overTitle"></h2>
       <div id="overBody"></div>
+      <button data-act="adcoins" id="adCoins" class="ad-btn"></button>   <!-- 看廣告，小判 ×2（ads.js） -->
       <button data-act="retry" class="big" data-i18n="retry"></button>
       <div class="row">
         <button data-act="shop" data-i18n="shop"></button>
@@ -151,6 +163,7 @@
       <button data-act="vib" id="bVib"></button>
       <button data-act="replay" data-i18n="replay"></button>
       <button data-act="fulltest" id="bFull"></button>   <!-- 測試模式：切換是否擁有完整版 -->
+      <button data-act="privacy" data-i18n="privacy"></button>   <!-- 隱私權政策（privacy.html） -->
       <button data-act="reset" class="red" id="bReset"></button>
       <button data-act="back" data-i18n="back"></button>
       <small id="diag" class="diag"></small>
@@ -206,6 +219,8 @@
 
   <button id="tutSkip" class="tut-skip" data-act="tutskip" data-i18n="tut_skip"></button>   <!-- 新手教學：跳過 -->
   <div id="toast"></div>
+  <!-- 假廣告（測試用，上架時換成 AdMob） -->
+  <div id="adFake"><div class="ad-box"><button class="ad-x" id="adFakeX">✕</button><b data-i18n="ad_test"></b><small data-i18n="ad_test2"></small><div class="ad-t" id="adFakeT"></div><button class="big red" id="adFakeOk" data-i18n="ad_claim"></button></div></div>
 </div>
 <!-- 開場遮罩：等畫面尺寸量穩了才拿掉，避免一開啟就看到版面跳動 -->
 <div id="boot" aria-hidden="true"><img src="assets/team_logo.webp" alt=""></div>
@@ -217,6 +232,7 @@
 <script src="sidebg.js"></script>
 <script src="cut.js"></script>
 <script src="game.js"></script>
+<script src="ads.js"></script>
 <script src="stagefx.js"></script>
 <script src="levels.js"></script>
 <script src="tutorial.js"></script>

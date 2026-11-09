@@ -337,7 +337,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v64';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v65';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -1178,13 +1178,16 @@ function heal(n, x = g.p.x, y = g.p.y - 60) {
   g.hp += v; floatText(x, y, 'HP +' + v, '#7aff9a', 16);
 }
 
+// 復活（修行「再起」或看廣告）：一半 HP、短暫無敵、震飛身邊的敵人
+function reviveNow(label) {
+  g.hp = Math.round(g.maxHp / 2); const p = g.p; p.inv = 2.5; p.vy = -JUMP * 1.2; p.hurt = 0; p.dash = 0; p.dive = false;
+  p.y = Math.min(p.y, g.camY + H * .5); g.zoneY = Math.max(g.zoneY, g.camY + H + 260);
+  g.booms.push({ x: p.x, y: p.y - 20, r: 120, t: 0, c: '#ffb04a' }); for (const e of g.enemies) if (!e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 120) slay(e, true);
+  floatText(p.x, p.y - 60, label, '#ffb04a', 24); SFX.fever(); vib([60, 40, 60]);
+}
 function die() {
-  if (g.revives > 0) {   // 修行「再起」：以一半 HP 復活
-    g.revives--; g.hp = Math.round(g.maxHp / 2); const p = g.p; p.inv = 2.5; p.vy = -JUMP * 1.2; p.hurt = 0; p.dash = 0; p.dive = false;
-    p.y = Math.min(p.y, g.camY + H * .5); g.zoneY = Math.max(g.zoneY, g.camY + H + 260);
-    g.booms.push({ x: p.x, y: p.y - 20, r: 120, t: 0, c: '#ffb04a' }); for (const e of g.enemies) if (!e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 120) slay(e, true);
-    floatText(p.x, p.y - 60, t('revive'), '#ffb04a', 24); SFX.fever(); vib([60, 40, 60]); return;
-  }
+  if (g.revives > 0) { g.revives--; reviveNow(t('revive')); return; }   // 修行「再起」：以一半 HP 復活
+  if (!g.adRevUsed && !g.tut && typeof ADS !== 'undefined' && ADS.ready()) { g.contPrev = state; offerContinue(); return; }   // 看廣告復活（ads.js，每局一次）
   state = 'dying'; g.dieT = 1.1; g.p.vy = -500; SFX.die(); vib([80, 60, 200]);
 }
 
@@ -2441,7 +2444,8 @@ function showOver() {
     `<div class="sc">${sc.toLocaleString()}</div>${nr ? `<span class="nr">${t('new_record')}</span><br>` : ''}` +
     t('over_stats', h, g.kills, g.maxCombo) + '<br>' +
     t('over_reach', THEMES[g.th].k, stageName(g.stage), g.bossN) + '<br>' +
-    t('over_coins', coins, save.coins) + '<br>' + t('over_best', save.best.rogue.toLocaleString());
+    `<span id="overCoins">${t('over_coins', coins, save.coins)}</span><br>` + t('over_best', save.best.rogue.toLocaleString());
+  if (typeof adCoinsBtn === 'function') adCoinsBtn(coins);   // 看廣告，小判 ×2（ads.js）
   show('over');
 }
 
@@ -2542,6 +2546,10 @@ document.addEventListener('click', e => {
     case 'fullinfo': openFull('lv'); break;   // 完整版（levels.js）
     case 'fullbuy': buyFull(); break;
     case 'fullclose': closeFull(); break;
+    case 'contad': contWatch(); break;   // 看廣告復活（ads.js）
+    case 'contgive': contResult(false); break;
+    case 'adcoins': adCoinsWatch(); break;
+    case 'privacy': window.open('privacy.html', '_blank', 'noopener'); break;   // 隱私權政策
     case 'fulltest': save.full = !hasFull(); persist(); renderOpt(); break;   // 測試模式：切換是否擁有完整版
     case 'lvlock': toast(t('lv_locked')); break;
     case 'shop':
