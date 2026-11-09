@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v72';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v73';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -831,7 +831,7 @@ function updatePlay(dt) {
   if (g.todF && g.todF.q < 1) g.todF.q = Math.min(1, g.todF.q + dt / 2.2);   // 換時段的淡入
   if (g.lvQueue > 0) { g.lvQueue--; openPerks('lv'); return; }   // 有待選的升級就先暫停選擇
   if (g.pendingChest) { g.pendingChest = false; openPerks('chest'); return; }   // 中 BOSS 的寶箱
-  p.inv =Math.max(0, p.inv - dt); p.spin = Math.max(0, (p.spin || 0) - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt); p.slow = Math.max(0, p.slow - dt); p.freeze = Math.max(0, p.freeze - dt); p.sq = Math.max(0, p.sq - dt * 4);
+  p.inv =Math.max(0, p.inv - dt); p.spin = Math.max(0, (p.spin || 0) - dt); p.swing = Math.max(0, (p.swing || 0) - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt); p.slow = Math.max(0, p.slow - dt); p.freeze = Math.max(0, p.freeze - dt); p.sq = Math.max(0, p.sq - dt * 4);
   if (g.banner) { g.banner.t -= dt; if (g.banner.t <= 0) g.banner = null; }
 
   // 移動
@@ -1247,14 +1247,14 @@ function touchEnemy(e) {
   }
   // 菁英：第一刀只會打退
   if (e.hp > 1) {
-    e.hp--; e.cool = .35; e.flash = .3; e.tough = 1;   // 要斬好幾刀的敵人（菁英、大天狗）：最後一刀播特寫
+    e.hp--; e.cool = .35; e.flash = .3; e.tough = 1; p.swing = SWING_T;   // 要斬好幾刀的敵人（菁英、大天狗）：最後一刀播特寫
     if (!p.dive) { p.dash = 0; p.vy = -JUMP; }
     g.hitstop = .1; g.shake = 6; SFX.slash();
     g.fx.push({ x: e.x, y: e.y, a: rnd(0, 3.14), t: 0 });
     floatText(e.x, e.y - 30, e.type === 13 ? 'HP ' + e.hp : t('one_more'), '#e0b0ff', 14);
     return false;
   }
-  slay(e);
+  slay(e); p.swing = SWING_T;   // 揮擊動作（art.js 的 heroSwing）
   // 全畫面特寫斬擊：連斬到 5、10、20、30…的那一刀，或菁英／大天狗的最後一刀。
   // 播過後 6 秒內不再播（10、20、30 連斬本來就隔很多刀，不受冷卻限制）、魔王戰和豪天翔中不播；其他時候只用短暫 HIT STOP
   const big = g.combo >= 10 && g.combo % 10 === 0;
@@ -1506,7 +1506,9 @@ function updateBoss(dt) {
   // 魔王不會逃走：一定要打倒才能進入下一個舞台
 }
 // 打到魔王身體：小傷害＋累積破綻（不會直接打死，最後一擊一定是時機斬）
+const SWING_T = .24;   // 揮擊動作的長度（秒）
 function bossHit(b) {
+  g.p.swing = SWING_T;
   const p = g.p, dv = p.dive, d = (dv ? 1.5 : 1) * (1 + .1 * mt('power'));
   b.hp = Math.max(1, b.hp - d); b.st += dv ? 2 : 1; b.cool = g.fly > 0 ? .8 : .45; b.flash = .15;
   g.fx.push({ x: b.x, y: b.y, a: rnd(0, 3.14), t: 0 }); burst(b.x, b.y, BOSS_KINDS[b.kind].col, 14);
@@ -1623,7 +1625,7 @@ function updateQte(dt) {
 function endQte() {
   const q = g.qte, b = g.boss;
   if (q.kill && !b.fin) { startFlee(); return; }   // 初戰：魔王被擊退、逃走
-  if (q.kill) { state = 'kill'; g.killT = 1.5; SFX.kill(); vib([60, 40, 160]); return; }
+  if (q.kill) { state = 'kill'; g.killT = 1.5; g.killWord = pick(KILL_WORDS); SFX.kill(); vib([60, 40, 160]); return; }
   state = 'play'; g.qte = null;
   b.stun = 0; b.cool = 1.2; b.atkT = 1.4; b.rest = 0;
   g.p.vy = -JUMP; g.p.inv = 1;
@@ -2368,9 +2370,11 @@ function drawKill() {
     ctx.save(); ctx.globalAlpha = Math.max(0, 1 - t); drawBoss(g.boss, W / 2 - t * 40, H / 2 - t * 40, 3); ctx.restore();
     ctx.globalAlpha = 1;
     const s = Math.min(1, (t - .1) * 5);
-    ['一', '擊', '必', '殺'].forEach((c, i) => txt(c, W * .78, H * .2 + i * 70, 62 * (1.6 - .6 * s), '#fff', 'center', '#c0262d', 8));
+    [...(g.killWord || KILL_WORDS[0])].forEach((c, i) => txt(c, W * .78, H * .2 + i * 70, 62 * (1.6 - .6 * s), '#fff', 'center', '#c0262d', 8));
   }
 }
+// 擊破魔王時的四字詞（每次隨機一個）
+const KILL_WORDS = ['橫掃千軍', '戰無不勝', '勢如破竹', '克敵制勝', '攻無不克', '銳不可當', '掃穴犁庭', '手刃強敵'];
 
 // 最外層背景色：iOS 狀態列下方的模糊帶會沾到這個顏色，所以用畫面頂端的顏色
 // （標題＝夜空深綠、遊戲中＝HUD 深藍），避免頂端出現紅色霧罩
@@ -2415,7 +2419,7 @@ function render() {
     for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(p.x + i * 9, p.y - 60); ctx.lineTo(p.x + i * 9, p.y - 110); ctx.stroke(); }
   }
   if (state === 'dying') { ctx.save(); ctx.translate(p.x, p.y - 20); ctx.rotate(g.t * 10 + (1.1 - g.dieT) * 12); drawNinja(0, 20, { face: p.face, t: g.t, vy: 0, skin: save.skin }); ctx.restore(); }
-  else if (!(g.zi && g.zi.hide)) drawNinja(p.x, p.y, { face: p.face, t: g.t, vy: p.vy, sq: p.sq, inv: p.inv, fly: g.fly > 0, slow: p.slow, freeze: p.freeze, skin: save.skin, dash: p.dash > 0, dvx: p.dvx, dvy: p.dvy, dive: p.dive, spin: p.spin, hurt: p.hurt });
+  else if (!(g.zi && g.zi.hide)) drawNinja(p.x, p.y, { face: p.face, t: g.t, vy: p.vy, sq: p.sq, inv: p.inv, fly: g.fly > 0, slow: p.slow, freeze: p.freeze, skin: save.skin, dash: p.dash > 0, dvx: p.dvx, dvy: p.dvy, dive: p.dive, spin: p.spin, hurt: p.hurt, swing: p.swing > 0 ? 1 - p.swing / SWING_T : null });
   for (const s of g.shots) drawPlayerShot(s);
   drawSkillFx();
   for (const f of g.fires) drawFireTrail(f); for (const m of g.mists) drawIceMist(m);   // 火關的火焰、山關的冰霧
@@ -2524,6 +2528,7 @@ function showOver() {
   $('overCoins').innerHTML = t('over_coins', coins, save.coins);
   $('overReach').innerHTML = t('over_reach2', THEMES[g.th].k, stageName(g.stage));
   if (typeof adCoinsBtn === 'function') adCoinsBtn(coins);   // 看廣告，小判 ×2（ads.js）
+  if (!g.cleared && ac && musV()) { BGM.setVol(musV()); BGM.jingle(ac, 'fail'); }   // 修行中斷的收尾短曲（music.js）
   show('over');
 }
 

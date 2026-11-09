@@ -207,6 +207,18 @@ const BGM = (() => {
     return bars;
   }
   for (const s of Object.values(SONGS)) s.bars = build(s.sections);
+  // 短樂句（BGM.jingle）。位置與長度以十六分音符為單位
+  const JINGLES = {
+    fail: {   // 修行中斷「散華」：上行到高音後一路落下，最後停在主音 E 上，太鼓兩聲收尾
+      bpm: 116,
+      mel: [['E5', 1], ['F5', 1], ['A5', 1], ['B5', 1], ['C6', 4], ['B5', 2], ['A5', 2], ['F5', 4],
+        ['E5', 2], ['F5', 2], ['B4', 4], ['E5', 12]],
+      bass: [['E2', 0, 8], ['F2', 8, 8], ['F2', 16, 4], ['B1', 20, 4], ['E2', 24, 12]],
+      koto: [['E4', 24], ['F4', 24.5], ['A4', 25], ['B4', 25.5], ['C5', 26], ['E5', 26.5]],   // 琴的刷弦
+      taiko: [[0, .2], [3, .12], [8, .18], [16, .2], [20, .14], [24, .26], [25, .22]],
+      hit: [[8, .35, .1, .05], [16, .35, .1, .05], [24, .45, .9, .05]],
+    },
+  };
 
   // ---- 波形 ----
   // 方波：依佔空比用傅立葉級數做 PeriodicWave（NES 方波有 12.5%／25%／50% 三種）
@@ -328,6 +340,23 @@ const BGM = (() => {
       timer = setInterval(tick, 25); tick();
     },
     stop: stopNow,
+    // 短樂句（只播一次）：修行中斷「散華」——都節音階（E F A B C）的下行收尾、琴的刷弦、太鼓「咚咚」
+    jingle(ctx, id = 'fail') {
+      if (!ctx || !vol) return;
+      stopNow();
+      if (ac !== ctx) { ac = ctx; makeVoices(); }
+      const J = JINGLES[id]; if (!J) return;
+      const st = 60 / J.bpm / 4, t0 = ac.currentTime + .06, prev = out;
+      out = ac.createGain(); out.gain.value = MASTER * vol; out.connect(ac.destination);
+      let s = 0;
+      for (const [n, len] of J.mel) { if (n !== '.') { note(waves.p25, hz(n), t0 + s * st, len * st, .08, len >= 6); note(waves.p12, hz(n), t0 + (s + 2) * st, len * st, .025, false); } s += len; }
+      for (const [n, at, len] of J.bass) note(waves.tri, hz(n), t0 + at * st, len * st, .11, false);
+      for (const [n, at] of J.koto) note(waves.p12, hz(n), t0 + at * st, 6 * st, .035, false);
+      for (const [at, v] of J.taiko) kick(t0 + at * st, v);
+      for (const [at, r, d, v] of J.hit) hit(t0 + at * st, r, d, v);
+      const o = out; out = prev;
+      setTimeout(() => o.disconnect(), (s + 12) * st * 1000);
+    },
     // 設定頁調整音樂音量：播放中的曲子立即套用
     setVol(v) { if (v === vol) return; vol = v; if (out && timer) out.gain.setTargetAtTime(MASTER * v, ac.currentTime, .03); },
     // 測試用：離線算出某首曲子前 sec 秒的音訊，回傳每秒音量（RMS）、峰值、一輪長度

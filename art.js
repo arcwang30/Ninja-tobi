@@ -1368,6 +1368,49 @@ function heroKatana(c, x, y, a) {
   c.fillStyle = '#d9a441'; c.fillRect(-1.5, -3.2, 2.6, 6.4); c.fillStyle = '#3a2a40'; c.fillRect(-9, -1.7, 8, 3.4);
   c.restore();
 }
+// ===== 碰到敵人時的揮擊動作（每名角色不同的武器與刀光） =====
+// w：武器（katana 刀／kunai 雙苦無／claw 狐爪／club 大槌／sickle 鎖鎌），c：刀光顏色，fx：刀光上的點綴
+const HERO_SWING = {
+  tobi: { w: 'katana', c: '#ffffff' },
+  ao: { w: 'kunai', c: '#7ae0ff' },
+  sakura: { w: 'katana', c: '#ffb0d0', fx: 'petal' },
+  kage: { w: 'katana', c: '#c08aff', fx: 'bolt' },
+  homura: { w: 'katana', c: '#ff8a3a', fx: 'fire' },
+  kon: { w: 'claw', c: '#ffd27a' },
+  shizuku: { w: 'katana', c: '#6ac8ff', fx: 'drop' },
+  kasumi: { w: 'katana', c: '#e0e6f0', fx: 'mist' },
+  gan: { w: 'club', c: '#e0a860', r: 1.25 },
+  kasa: { w: 'sickle', c: '#9aff8a' },
+};
+// u：揮擊進度 0→1（由上往前下方劈下）。x、y＝握柄位置（角色座標，面向右）
+function heroSwing(c, id, x, y, u) {
+  const S = HERO_SWING[id] || HERO_SWING.tobi, R = 28 * (S.r || 1), e = 1 - (1 - u) * (1 - u);
+  const a0 = -2.4, a = a0 + 3.2 * e, from = Math.max(a0, a - 1.7), fade = 1 - u * .75;
+  c.save(); c.translate(x, y); c.lineCap = 'round';
+  // 刀光：外圈亮、內圈寬而淡
+  c.globalAlpha = fade * .45; c.strokeStyle = S.c; c.lineWidth = 12 * (S.r || 1); c.beginPath(); c.arc(0, 0, R * .78, from, a); c.stroke();
+  c.globalAlpha = fade; c.lineWidth = 3.5; c.strokeStyle = '#ffffff'; c.beginPath(); c.arc(0, 0, R, from + .25, a); c.stroke();
+  c.lineWidth = 2; c.strokeStyle = S.c; c.beginPath(); c.arc(0, 0, R + 3, from + .5, a); c.stroke();
+  if (S.w === 'kunai' || S.w === 'claw') {   // 雙苦無／狐爪：第二、三道較小的刀光
+    for (let k = 1; k <= (S.w === 'claw' ? 2 : 1); k++) { c.globalAlpha = fade * .8; c.lineWidth = 2.5; c.strokeStyle = S.c; c.beginPath(); c.arc(0, 0, R - 7 * k, from + .2, a - .15 * k); c.stroke(); }
+  }
+  // 點綴
+  const pt = f => [Math.cos(from + (a - from) * f) * R, Math.sin(from + (a - from) * f) * R];
+  c.globalAlpha = fade;
+  if (S.fx === 'petal') for (let i = 0; i < 4; i++) { const [px, py] = pt(i / 4); c.fillStyle = i % 2 ? '#ffd0e4' : '#ff8ab8'; c.beginPath(); c.ellipse(px, py - 3, 2.6, 1.5, i, 0, TAU); c.fill(); }
+  if (S.fx === 'bolt') { c.strokeStyle = '#f0e0ff'; c.lineWidth = 1.6; c.beginPath(); for (let i = 0; i <= 6; i++) { const [px, py] = pt(i / 6), j = i % 2 ? 4 : -4; c.lineTo(px * (1 + j / R), py * (1 + j / R)); } c.stroke(); }
+  if (S.fx === 'fire') for (let i = 0; i < 5; i++) { const [px, py] = pt(i / 5); c.fillStyle = i % 2 ? '#ffd25a' : '#ff5a1a'; aCirc(c, px, py, 2.2 + (i % 3)); c.fill(); }
+  if (S.fx === 'drop') for (let i = 0; i < 4; i++) { const [px, py] = pt(i / 4); c.fillStyle = '#bfeaff'; aCirc(c, px * 1.12, py * 1.12, 1.8); c.fill(); }
+  if (S.fx === 'mist') { c.globalAlpha = fade * .35; c.fillStyle = '#ffffff'; for (let i = 0; i < 3; i++) { const [px, py] = pt(i / 3); aCirc(c, px, py, 7); c.fill(); } }
+  c.globalAlpha = 1;
+  // 武器
+  if (S.w === 'kunai') { for (const da of [0, -.4]) { c.save(); c.rotate(a + da); c.fillStyle = '#d8dee6'; c.beginPath(); c.moveTo(4, -2.4); c.lineTo(17, 0); c.lineTo(4, 2.4); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); c.fillStyle = '#2a2a3a'; c.fillRect(-4, -1.2, 8, 2.4); aCirc(c, -5.5, 0, 2); c.strokeStyle = INK; c.stroke(); c.restore(); } }
+  else if (S.w === 'claw') { c.save(); c.rotate(a); c.strokeStyle = INK; c.lineWidth = 1; for (const dy of [-3, 0, 3]) { c.fillStyle = '#fff6e0'; c.beginPath(); c.moveTo(4, dy - 1); c.quadraticCurveTo(12, dy - 2, 15, dy + 1); c.lineTo(4, dy + 1); c.closePath(); c.fill(); c.stroke(); } c.restore(); }
+  else if (S.w === 'club') { c.save(); c.rotate(a); c.fillStyle = '#5a3a20'; c.fillRect(0, -2, 18, 4); c.strokeStyle = INK; c.lineWidth = 1.2; c.strokeRect(0, -2, 18, 4); c.beginPath(); if (c.roundRect) c.roundRect(15, -7, 16, 14, 4); else c.rect(15, -7, 16, 14); c.fillStyle = '#8a6040'; c.fill(); c.stroke(); c.restore(); }
+  else if (S.w === 'sickle') { c.save(); c.rotate(a); c.fillStyle = '#6a4a2a'; c.fillRect(0, -1.8, 14, 3.6); c.strokeStyle = INK; c.lineWidth = 1.1; c.strokeRect(0, -1.8, 14, 3.6); c.beginPath(); c.moveTo(13, -1.5); c.quadraticCurveTo(24, -10, 15, -17); c.quadraticCurveTo(20, -9, 11, -2); c.closePath(); c.fillStyle = '#e8eef4'; c.fill(); c.stroke(); c.restore(); }
+  else heroKatana(c, 0, 0, a);
+  c.restore();
+}
 // 主角比例：頭的半徑與高度、身體上下緣與寬度、手腳的位置。改這組數字就能調整頭身比
 // （遊戲使用「大福」；now 是之前的比例，其餘為提案，可用 design/hero-proportions.html 比較）
 const HERO_PROPS = {
@@ -1410,7 +1453,8 @@ function drawHeroNinja(x, y, o, c = ctx, PR = HERO_PROP) {
   if (CD) {
     const mood = o.eye || (pn === 'apex' && ((t * .9) % 3.4) < .12 ? 'blink' : Q.eye);
     CD(c, { suit: C.suit, dark: C.dk, band: C.band }, t, { eye: mood });
-    if (Q.dash || Q.dive) heroKatana(c, 16, -18, Q.dash ? -.08 : .35);
+    if (o.swing != null) heroSwing(c, SKINS[o.skin || 0].id, 15, -14, o.swing);   // 斬到敵人：揮擊
+    else if (Q.dash || Q.dive) heroKatana(c, 16, -18, Q.dash ? -.08 : .35);
   } else {
   // 浮在身體旁的手腳：以身體附近的點為基準，依姿勢偏移，並隨呼吸上下浮動
   const bob = Math.sin(t * 6) * 1.5;
@@ -1447,7 +1491,8 @@ function drawHeroNinja(x, y, o, c = ctx, PR = HERO_PROP) {
   c.fillStyle = '#dfe4ec'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
   c.fillStyle = C.suit; c.font = `900 ${5 * k}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('鳶', 2 * k, HY - 13.8 * k);
   // 刀：衝刺斬／急降斬時握在手上，其餘背在背後
-  if (drawn) heroKatana(c, fa[0], fa[1], Q.dash ? -.08 : .35);
+  if (o.swing != null) heroSwing(c, 'tobi', fa[0], fa[1], o.swing);   // 斬到敵人：揮擊
+  else if (drawn) heroKatana(c, fa[0], fa[1], Q.dash ? -.08 : .35);
   else { c.save(); c.translate(-9 * BW, BT + 8); c.rotate(-2.3); c.fillStyle = '#2a1c18'; c.fillRect(-2, -6, 4, 18); c.strokeStyle = INK; c.lineWidth = 1.2; c.strokeRect(-2, -6, 4, 18); c.fillStyle = '#d9a441'; c.fillRect(-2.6, -7.5, 5.2, 2); c.restore(); }
   }
   c.restore();
