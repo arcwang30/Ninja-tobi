@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v78';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v79';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -815,7 +815,7 @@ function update(dt) {
     case 'qte': updateQte(dt); break;
     case 'zintro': updateZIntro(dt); break;
     case 'ascend': updateAscend(dt); break;
-    case 'kill': g.killT -= dt; if (g.killT <= 0) finishBoss(true); break;
+    case 'kill': g.killT -= dt; if (g.killT <= 0) startFin(); break;   // 連續斬擊特寫（不出字）→ 居合一閃＋封印演出
     case 'flee': updateFlee(dt); break;   // 初戰擊退：魔王逃走演出
     case 'fin': updateFin(dt); break;   // 決戰擊倒演出
     case 'dying': g.dieT -= dt; g.p.vy += GRAV * dt; g.p.y += g.p.vy * dt; if (g.dieT <= 0) showOver(); break;
@@ -1666,7 +1666,7 @@ function updateQte(dt) {
 function endQte() {
   const q = g.qte, b = g.boss;
   if (q.kill && !b.fin) { startFlee(); return; }   // 初戰：魔王被擊退、逃走
-  if (q.kill) { startFin(); return; }   // 決戰：居合一閃→封印成卷軸→任務達成
+  if (q.kill) { state = 'kill'; g.killT = 1.5; g.killWord = pick(KILL_WORDS); SFX.kill(); vib([60, 40, 160]); return; }   // 決戰：先播連續斬擊特寫，再接居合一閃（四字詞在居合時出現）→ 封印成卷軸 → 任務達成
   state = 'play'; g.qte = null;
   b.stun = 0; b.cool = 1.2; b.atkT = 1.4; b.rest = 0;
   g.p.vy = -JUMP; g.p.inv = 1;
@@ -1681,7 +1681,6 @@ const MAKI_COL = { 3: ['#3a3d46', '#d9a441'], 1: ['#5a2a8a', '#d8dce8'], 2: ['#5
 function startFin() {
   state = 'fin'; g.qte = null; g.finT = 0; g.finHoldT = 0;
   g.finInfo = { first: !hasMaki(g.th), th: g.th, kind: g.boss.kind, jutsu: JUTSU.find(j => j.th === g.th) };
-  SFX.kill(); vib([60, 40, 160]);
   if (ac && musV()) { BGM.setVol(musV()); BGM.jingle(ac, 'finish'); }
 }
 function updateFin(dt) {
@@ -1790,6 +1789,16 @@ function drawFin() {
     ctx.globalAlpha = Math.max(0, 1 - (e - .9) * 3); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, by + 60); ctx.lineTo(W, by - 60); ctx.stroke(); ctx.globalAlpha = 1;
     njSil(W * .86, H * .66, 1.5, '#0a0608', { face: -1 });
     if (e < 1.25) txt('喀', W * .86 - 26, H * .66 - 90, 26, '#ffe28a', 'center', '#000', 4);
+    // 居合一閃的四字詞（每次隨機）：左側直書、一字一字蓋上來
+    if (g.killWord) {
+      const cs = Math.min(58, H * .085); ctx.font = `${cs}px ${BRUSH}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      [...g.killWord].forEach((ch, i) => {
+        const p = clamp((e - .92 - i * .06) / .08, 0, 1); if (p <= 0) return;
+        const s = 1 + (1 - easeO(p)) * .8, x = W * .16, y = H * .14 + i * cs * 1.08;
+        ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.globalAlpha = p;
+        ctx.lineWidth = 6; ctx.strokeStyle = '#7a120c'; ctx.strokeText(ch, 0, 0); ctx.fillStyle = '#fff6e0'; ctx.fillText(ch, 0, 0); ctx.restore();
+      });
+    }
   } else if (e < 2.4) {   // ④ 封印
     ctx.fillStyle = '#120c1c'; ctx.fillRect(0, 0, W, H);
     const k = (e - 1.5) / .9, ccx = cx, ccy = H * .44, S = Math.min(W * .32, 120);
@@ -2694,7 +2703,7 @@ function drawKill() {
     ctx.save(); ctx.globalAlpha = Math.max(0, 1 - t); drawBoss(g.boss, W / 2 - t * 40, H / 2 - t * 40, 3); ctx.restore();
     ctx.globalAlpha = 1;
     const s = Math.min(1, (t - .1) * 5);
-    [...(g.killWord || KILL_WORDS[0])].forEach((c, i) => txt(c, W * .78, H * .2 + i * 70, 62 * (1.6 - .6 * s), '#fff', 'center', '#c0262d', 8));
+    // 四字詞改在之後的居合一閃出現（drawFin），這裡只播斬擊特寫
   }
 }
 // 擊破魔王時的四字詞（每次隨機一個）
@@ -3034,7 +3043,7 @@ document.addEventListener('click', e => {
 });
 
 applyLang();
-try { document.fonts.load('80px "Yuji Boku"', '豪天翔任務達成金剛身夢幻術雪華封鬼神斬風林火山之卷軸秘忍臨兵闘者皆陣烈在前'); } catch (e) { }   // 先載好豪天翔卷軸的毛筆字（canvas 不會自己等字型）
+try { document.fonts.load('80px "Yuji Boku"', '豪天翔任務達成金剛身夢幻術雪華封鬼神斬風林火山之卷軸秘忍臨兵闘者皆陣烈在前橫掃千軍戰無不勝勢如破竹克敵制攻銳可當穴犁庭手刃強'); } catch (e) { }   // 先載好豪天翔卷軸的毛筆字（canvas 不會自己等字型）
 buildHeroArt();   // 產生標題大圖與商店頭像（程式畫的主角）
 goTitle();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
