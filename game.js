@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v97';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v98';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -1996,7 +1996,7 @@ function nextStage() {
 function stageCoins() { const n = (g.stage + 1) * 15; addCoins(n); }   // 過舞台小判照給，不再飄字
 function stageDone() {
   stageCoins();
-  if (g.wx && g.wx.cur > .3) unlock('wx_' + g.wx.k);
+  if (g.wx && g.wx.cur > .3 && ACH.some(a => a.id === 'wx_' + g.wx.k)) unlock('wx_' + g.wx.k);   // 魔王專屬的天候沒有成就
   if (!g.stHit && g.stage >= 2) unlock('nohit');   // 第 3 舞台起才算
   g.stHit = false;
 }
@@ -2331,7 +2331,7 @@ function drawHUD() {
   // 幕名（紅色落款方印）＋舞台 N/10＋本幕進度小條
   const sx = W - 106;
   seal(sx, cy, 24, THEMES[g.th].k);
-  txt((g.stage + 1) + '/' + ST_N, sx + 52, cy - 4, 15, g.stage % 5 === 4 ? '#ff9a8a' : '#fff', 'right', INK, 3);   // 舞台 N/10（魔王舞台是紅字）
+  txt((g.stage + 1) + '/' + ST_N, sx + 17, cy - 4, 15, g.stage % 5 === 4 ? '#ff9a8a' : '#fff', 'left', INK, 3);   // 舞台 N/10（魔王舞台是紅字；靠左對齊，10/10 也不會壓到印章）
   const pr = g.boss ? 1 : clamp((g.top - g.base) / STAGE_PX, 0, 1);
   ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(sx + 17, cy + 8, 35, 4, 2); ctx.fill();
   ctx.fillStyle = '#ffe28a'; rr(sx + 17, cy + 8, 35 * pr, 4, 2); ctx.fill();

@@ -29,8 +29,14 @@ const WX = {
   fog: { n: ['濃霧', '濃霧', 'Thick Fog'], ic: '🌫️' },
   dark: { n: ['黑暗雷閃', '暗闇と雷', 'Dark Thunder'], ic: '⚡' },
   snow: { n: ['暴雪', '吹雪', 'Blizzard'], ic: '❄️' },
+  // 以下三種只在魔王登場時出現
+  leaf: { n: ['狂葉亂舞', '狂葉乱舞', 'Leaf Storm'], ic: '🍃' },     // 只有畫面效果，不影響操作（林關是第一關）
+  ember: { n: ['火雨', '火の雨', 'Fire Rain'], ic: '🔥' },            // 有預告落點的火球，碰到扣少量 HP
+  white: { n: ['吹雪白幕', '白い闇', 'Whiteout'], ic: '🌨️' },        // 暴雪升級：遠處一片白、視野縮小、一樣會打滑
 };
-const BOSS_WX = ['dark', 'fog', 'snow', 'rain'];   // 真妖鬼：黑暗／怠惰鬼：菸霧／雪女鬼：暴雪／鐵甲鬼：雷雨
+// 魔王登場時換成的天候（依魔王種類）：真妖鬼＝狂葉亂舞（林）／怠惰鬼＝濃霧（風）／雪女鬼＝吹雪白幕（山）／鐵甲鬼＝火雨（火）
+const BOSS_WX = ['leaf', 'fog', 'white', 'ember'];
+const EMBER_WARN = .9;   // 火雨：落點預告的秒數
 
 // ===== 存檔 =====
 function lvSave() {
@@ -97,12 +103,32 @@ function updateWx(dt) {
     if (w.boltT <= 0) { w.boltT = rnd(3.5, 6.5) * (w.k === 'dark' ? 1 : 1.6); w.flash = 1; w.boltX = rnd(W * .15, W * .85); SFX.thunder && SFX.thunder(); vib(30); }
   }
   if (w.k === 'rain') { w.gustT -= dt; if (w.gustT <= 0) { w.gustT = rnd(2.5, 4.5); w.gust = (Math.random() < .5 ? -1 : 1) * rnd(30, 60) * w.cur; } }
+  if (w.k === 'ember') updateEmber(w, dt);
+}
+// 火雨：每隔一段時間在主角附近預告一個落點（0.9 秒），之後火球從天而降；碰到扣 HP（和火關火星同樣 8 點）
+function updateEmber(w, dt) {
+  w.drops = w.drops || []; w.dropT = (w.dropT ?? 1.5) - dt;
+  if (w.dropT <= 0 && state === 'play' && w.cur > .3) {
+    w.dropT = rnd(1.5, 2.6) / (.6 + .4 * w.cur);
+    w.drops.push({ x: clamp(g.p.x + rnd(-90, 90), 24, W - 24), t: 0, y: -30 });
+  }
+  const p = g.p, py = p.y - g.camY - 20;
+  for (const d of w.drops) {
+    d.t += dt; if (d.t < EMBER_WARN) continue;
+    d.y += 560 * dt;
+    if (!d.hit && Math.abs(d.x - p.x) < 20 && Math.abs(d.y - py) < 26) {
+      d.hit = 1;
+      g.booms.push({ x: d.x, y: d.y + g.camY, r: 30, t: 0, c: '#ff8a3a' });
+      hurt('ember');
+    }
+  }
+  w.drops = w.drops.filter(d => d.y < H + 40 && !d.hit);
 }
 // 影響移動：暴風雨有陣風；暴雪會打滑（帶慣性）
 function wxMove(mv, dt) {
   const w = g.wx; if (!w || dt <= 0) return mv;
   if (w.k === 'rain') return mv + w.gust * dt;
-  if (w.k === 'snow') { const k = Math.min(1, dt * (14 - 5.5 * w.cur));   /* v64：打滑減輕（原本 14 - 9） */ w.v += (mv / dt - w.v) * k; return w.v * dt; }
+  if (w.k === 'snow' || w.k === 'white') { const k = Math.min(1, dt * (14 - 5.5 * w.cur));   /* v64：打滑減輕（原本 14 - 9） */ w.v += (mv / dt - w.v) * k; return w.v * dt; }
   return mv;
 }
 
@@ -170,6 +196,60 @@ function drawWeather() {
       c.fillStyle = gr; c.fillRect(0, 0, W, H);
       // 主角身邊的一盞燈：暖色光暈
       c.globalCompositeOperation = 'lighter'; const lg = c.createRadialGradient(px, py, 4, px, py, r0 + 10); lg.addColorStop(0, `rgba(255,200,120,${.18 * a})`); lg.addColorStop(1, 'rgba(255,200,120,0)'); c.fillStyle = lg; c.fillRect(px - r0 - 10, py - r0 - 10, (r0 + 10) * 2, (r0 + 10) * 2); c.globalCompositeOperation = 'source-over';
+    }
+  }
+  else if (w.k === 'leaf') {
+    // 狂葉亂舞：竹葉與紅葉隨陣陣狂風斜掃過畫面，再加幾道風痕（只有畫面效果）
+    const gust = .65 + .35 * Math.sin(tt * 1.6);
+    c.strokeStyle = `rgba(255,255,255,${.22 * a * gust})`; c.lineWidth = 1.5; c.lineCap = 'round';
+    for (let i = 0; i < 9; i++) { const x = ((i * 131 + tt * 520) % (W + 260)) - 130, y = ((i * 97.1 - camY * .2) % H + H) % H, l = 60 + (i % 3) * 30; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + l * .5, y - 6, x + l, y + 4); c.stroke(); }
+    const LC = ['#6fbf5a', '#3f8f3a', '#9ad06a', '#d8502a', '#e8a030'], n = Math.round(60 * a * WK());
+    for (let i = 0; i < n; i++) {
+      const sp = (150 + (i % 5) * 35) * gust, x = ((i * 57.7 + tt * sp) % (W + 60) + W + 60) % (W + 60) - 30;
+      const y = ((i * 97.3 + tt * (40 + (i % 4) * 15) + Math.sin(tt * 2 + i) * 22 - camY * .3) % (H + 40) + H + 40) % (H + 40) - 20;
+      const s = 1.2 + (i % 3) * .4;
+      c.save(); c.translate(x, y); c.rotate(tt * (2 + (i % 3)) + i); c.scale(s, s * (.4 + .6 * Math.abs(Math.sin(tt * 3 + i))));   // 翻轉
+      c.fillStyle = LC[i % LC.length]; c.beginPath(); c.ellipse(0, 0, 7, 2.8, 0, 0, TAU); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = .8; c.beginPath(); c.moveTo(-7, 0); c.lineTo(7, 0); c.stroke();
+      c.restore();
+    }
+  } else if (w.k === 'ember') {
+    // 火雨：上方泛橘紅熱浪＋飄落的火星與灰燼；預告落點與墜落的火球
+    const hg = c.createLinearGradient(0, 0, 0, H); hg.addColorStop(0, `rgba(255,110,30,${.22 * a})`); hg.addColorStop(.6, `rgba(200,40,10,${.08 * a})`); hg.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = hg; c.fillRect(0, 0, W, H);
+    for (let i = 0; i < 40 * a * WK(); i++) {
+      const x = ((i * 71.3 + Math.sin(tt + i) * 14 + tt * 10) % W + W) % W, y = ((i * 113.7 + tt * (40 + (i % 4) * 18) - camY * .3) % H + H) % H;
+      if (i % 3) { c.fillStyle = 'rgba(110,100,95,.55)'; c.fillRect(x, y, 1.8, 1.8); }
+      else { c.fillStyle = `rgba(255,${150 + (i % 5) * 20},60,${.55 + .4 * Math.sin(tt * 6 + i)})`; aCirc(c, x, y, 1.6); c.fill(); }
+    }
+    const y0 = SAFE_T + HUD_Y1 + 18;
+    for (const d of w.drops || []) {
+      if (d.t < EMBER_WARN) {
+        // 預告：落點的直線光柱＋上方閃爍的火焰記號
+        const k = d.t / EMBER_WARN, bl = .5 + .5 * Math.sin(d.t * 22);
+        const cg = c.createLinearGradient(0, y0, 0, H); cg.addColorStop(0, `rgba(255,90,30,${.28 * k})`); cg.addColorStop(1, 'rgba(255,90,30,0)');
+        c.fillStyle = cg; c.fillRect(d.x - 10, y0, 20, H - y0);
+        c.fillStyle = `rgba(255,${120 + 80 * bl},40,${.6 + .4 * bl})`; c.beginPath(); c.moveTo(d.x, y0 + 12); c.lineTo(d.x - 8, y0 - 2); c.lineTo(d.x + 8, y0 - 2); c.closePath(); c.fill();
+      } else {
+        // 火球：發光的核心＋往上拖的火尾
+        c.globalCompositeOperation = 'lighter';
+        const tg = c.createLinearGradient(0, d.y - 48, 0, d.y); tg.addColorStop(0, 'rgba(255,80,20,0)'); tg.addColorStop(1, 'rgba(255,150,40,.85)');
+        c.fillStyle = tg; c.beginPath(); c.moveTo(d.x - 8, d.y); c.quadraticCurveTo(d.x, d.y - 60, d.x + 8, d.y); c.closePath(); c.fill();
+        const fg = c.createRadialGradient(d.x, d.y, 2, d.x, d.y, 16); fg.addColorStop(0, 'rgba(255,250,210,1)'); fg.addColorStop(.4, 'rgba(255,160,50,.9)'); fg.addColorStop(1, 'rgba(255,60,10,0)');
+        c.fillStyle = fg; c.fillRect(d.x - 16, d.y - 16, 32, 32);
+        c.globalCompositeOperation = 'source-over';
+      }
+    }
+  } else if (w.k === 'white') {
+    // 吹雪白幕：主角周圍還看得到，遠處一片白；大雪橫向猛吹
+    const p = g.p, px = p.x, py = p.y - 20 - camY, r0 = 100 - 15 * a, r1 = 220 - 40 * a;
+    const gr = c.createRadialGradient(px, py, r0, px, py, r1); gr.addColorStop(0, 'rgba(238,244,252,0)'); gr.addColorStop(1, `rgba(238,244,252,${.5 + .3 * a})`);
+    c.fillStyle = gr; c.fillRect(0, 0, W, H);
+    const n = Math.round(130 * a * WK());
+    for (let i = 0; i < n; i++) {
+      const s = 1.2 + (i % 4) * .8, x = ((i * 61.1 + Math.sin(tt * 1.7 + i) * 14 + tt * (110 + s * 30)) % (W + 20) + W + 20) % (W + 20) - 10;
+      const y = ((i * 83.3 + tt * (70 + s * 25) - camY * .4) % (H + 20) + H + 20) % (H + 20) - 10;
+      c.fillStyle = 'rgba(255,255,255,.92)'; aCirc(c, x, y, s); c.fill();
     }
   }
   // 閃電：白光＋一道雷

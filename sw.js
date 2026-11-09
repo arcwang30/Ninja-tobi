@@ -1,5 +1,5 @@
 ﻿// 離線快取：網路優先（拿到新版就更新快取），離線時才用快取
-const CACHE = 'tobi-v97';
+const CACHE = 'tobi-v98';
 const FILES = ['./', 'index.html', 'style.css', 'lang.js', 'music.js', 'art.js', 'foes2.js', 'chars.js', 'sidebg.js', 'cut.js', 'game.js', 'ads.js', 'stagefx.js', 'levels.js', 'tutorial.js', 'help.js', 'history.js', 'manifest.webmanifest', 'assets/icon-64.png', 'assets/icon-512.png', 'assets/hero.png', 'assets/logo.webp', 'assets/team_logo.webp', 'assets/icon-180.png', 'assets/icon-192.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', e => {
