@@ -50,7 +50,7 @@ const INTRO = {
     if (ss) { const [ty, n, lt] = ss.split(',').map(Number); this.toTitle(); save.seen = 2; startRun(); hideAll(); const e = mkEnemy(ty, W / 2, g.p.y - 120, 0); g.enemies.push(e); g.slash = { e, t: .5, dur: 9, lines: n ? [{ a: .6, t: lt, off: 0 }] : [], n, nextL: 9, frozen: true }; state = 'slash'; const b = $('boot'); if (b) b.remove(); }
   },
   // 進入過場（重看開場也從這裡開始）
-  playCut() { hideAll(); this.ph = 'cut'; this.t = 0; this.said = -1; this.sfx = {}; },
+  playCut() { hideAll(); this.ph = 'cut'; this.t = 0; this.said = -1; this.sfx = {}; this.aw = 0; },
   // 故事結尾 →「竹簾開幕」：轉暗 → 竹簾 → 鳶從下往上飛出畫面 → LOGO 蓋章在竹簾上 → 竹簾左右拉開、標題背景亮起 → 主角現身
   startOutro() { this.ph = 'outro'; this.t = 0; this.logoOn = false; },
   outroLogo() {   // 標題畫面先出現，但選單藏起來，只播 LOGO 蓋章
@@ -76,7 +76,7 @@ const INTRO = {
   heroAnim(cls) { const it = $('intro'); it.classList.remove('play', 'hero-in', 'hero-out'); void it.offsetWidth; it.classList.add(cls); poofAt(cls === 'hero-in' ? .4 : .05); },
   // 畫布被點擊（只有開場階段會收到；回傳 true 表示已處理）
   tap() {
-    if (this.ph === 'tap') { if (this.t > .3) { if (TRANS_K) { this.ph = 'trans'; this.t = 0; this.sfx = {}; } else this.playCut(); } return true; }
+    if (this.ph === 'tap') { if (this.t > .3) { if (TRANS_K) { this.ph = 'trans'; this.t = 0; this.sfx = {}; this.aw = 0; } else this.playCut(); } return true; }
     if (this.ph === 'trans') { this.playCut(); return true; }   // 銜接演出：點一下直接進故事
     if (this.ph === 'cut') { if (this.t < CUT_FLASH) this.t = CUT_FLASH; return true; }
     if (this.ph === 'outro') { if (this.t > .3) this.endOutro(); return true; }   // 竹簾開幕：點一下直接到標題
@@ -87,6 +87,9 @@ const INTRO = {
   endAttract() { this.attract = -1; const el = $('title'); if (el) el.classList.remove('attract'); },
   update(dt) {
     if (this.frozen) return;
+    // 開場銜接與故事：等音訊真的開始播放才讓畫面往下走（最多等 1.5 秒），音樂和畫面才不會錯開
+    // （iOS 閒置一陣子會把音訊暫停，點下去後要花一點時間才恢復）
+    if ((this.ph === 'trans' || this.ph === 'cut') && typeof ac !== 'undefined' && ac && ac.state !== 'running' && (this.aw || 0) < 1.5) { this.aw = (this.aw || 0) + dt; A(); return; }
     this.t += dt;
     if (this.ph === 'trans') { transSfx(this.t); if (this.t >= TRANS_T[TRANS_K]) this.playCut(); return; }
     if (this.ph === 'outro') { outroCue(this.t - dt, this.t); if (this.t >= OUT_T) this.endOutro(); return; }

@@ -277,7 +277,8 @@ function persist() { try { localStorage.setItem('tobi_save', JSON.stringify(save
 let ac = null;
 function A() {
   if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } }
-  if (ac && ac.state === 'suspended') ac.resume();
+  // iOS 會把閒置一陣子的音訊暫停成 suspended 或 interrupted，兩種都要喚醒
+  if (ac && ac.state !== 'running') { try { const p = ac.resume(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
   // 瀏覽器要等使用者第一次操作後才能出聲，所以標題曲在這裡（第一次點擊時）開始
   musicFor();
   return ac;
@@ -344,7 +345,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v88';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v89';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -534,7 +535,10 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => { inp.keys[e.code] = false; });
 // 在畫面任何地方第一次點擊／按鍵就解鎖音訊（標題曲隨之開始）
-addEventListener('pointerdown', () => { A(); INTRO.poke(); }, true);   // 同時重算標題的閒置時間、結束待機展示
+addEventListener('pointerdown', () => { A(); INTRO.poke(); }, true);
+// iOS Safari 有時要在手指離開（touchend／click）時才肯開啟音訊，這兩個時機也再喚醒一次
+addEventListener('touchend', () => { if (ac && ac.state !== 'running') A(); }, true);
+addEventListener('click', () => { if (ac && ac.state !== 'running') A(); }, true);   // 同時重算標題的閒置時間、結束待機展示
 // 切到背景時停止音樂，回來時由 musicFor() 接著播
 document.addEventListener('visibilitychange', () => { if (document.hidden) BGM.stop(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && g && state !== 'over' && state !== 'menu' && state !== 'perk') pauseGame(); });
