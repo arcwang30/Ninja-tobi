@@ -288,15 +288,64 @@ function drawTrans(t) {
 }
 
 // ===== 故事結尾的「竹簾開幕」 =====
-const OUT_T = 3.7, OUT_KITE = .35, OUT_LOGO = 1.4, OUT_OPEN = 2.25;   // 總長、鳶起飛、LOGO 蓋章、竹簾拉開
+// 結尾的版本（比較中）：?outro=A 風捲揭幕、?outro=D 雲海尾跡（預設）、?outro=sudare 竹簾開幕
+const OUTRO_K = (q => (q === 'A' || q === 'SUDARE' ? q : 'D'))((new URLSearchParams(location.search).get('outro') || '').toUpperCase());
+const SUD = OUTRO_K === 'SUDARE';
+// 總長、鳶起飛、LOGO 蓋章、主畫面開始顯露（標題音樂從這裡淡入）
+const OUT_T = SUD ? 3.7 : 2.35, OUT_KITE = SUD ? .35 : .15, OUT_LOGO = SUD ? 1.4 : 1.5, OUT_OPEN = SUD ? 2.25 : .25, OUT_FLY = 1.3;
 function outroCue(e0, e1) {
   const at = x => e0 < x && e1 >= x;
   if (at(OUT_KITE + .15)) { tone(2100, .35, 'sine', .035, -500); tone(1650, .5, 'sine', .03, -350, .32); noise(.6, .02); }   // 鳶鳴「ピーヒョロ」＋翅膀帶起的風
-  if (at(OUT_LOGO)) { INTRO.outroLogo(); SFX.impact(); vib(40); }
-  if (at(OUT_OPEN)) {   // 「咔噠」＋琴的刷弦（都節音階往上）
+  if (at(OUT_LOGO)) { INTRO.outroLogo(); SFX.impact(); vib(40); if (!SUD) [329.6, 349.2, 440, 493.9, 523.3, 659.3].forEach((f, i) => koto(f, .06 + i * .05, .028)); }
+  if (SUD && at(OUT_OPEN)) {   // 「咔噠」＋琴的刷弦（都節音階往上）
     noise(.05, .1); tone(1100, .07, 'triangle', .06);
     [329.6, 349.2, 440, 493.9, 523.3, 659.3].forEach((f, i) => koto(f, .08 + i * .05, .03));
   }
+  if (!SUD && at(OUT_OPEN)) { noise(1.1, .035); tone(300, 1, 'sine', .02, 500); }   // 鳶劃開天空的風聲（往上揚）
+}
+// 鳶的位置（A／D 共用）：從畫面下方往上飛、由大變小、左右輕擺
+function outroKite(t) {
+  const kq = (t - OUT_KITE) / OUT_FLY, e = ez(Math.max(0, Math.min(1, kq)));
+  return { kq, x: W * (.5 + .14 * Math.sin(kq * 3.2)), y: H * 1.12 - e * H * 1.35, s: 2.6 - 1.5 * e };
+}
+// 夜晚的雲（D）：固定排列的雲團，鳶飛過時往兩側翻開
+const OUT_CLOUDS = []; for (let r = 0; r < 18; r++) for (let q = 0; q < 6; q++) OUT_CLOUDS.push({ fx: (q + (r % 2) * .5) / 5 - .05, fy: r / 16 - .05, rr: .55 + ((r * 7 + q * 13) % 10) / 22, ph: r * 1.7 + q });
+function drawOutroAD(t) {
+  const c = ctx, T = performance.now() / 1000, cl = x => Math.max(0, Math.min(1, x));
+  const k = outroKite(t), after = cl((t - OUT_KITE - OUT_FLY) / .5);   // 鳶飛出去之後，剩下的遮蔽一起散開
+  drawTitleBG(T);
+  if (OUTRO_K === 'A') {   // 風捲揭幕：鳶下方已顯露、上方還是暗的，交界是柔和的風之邊緣
+    const edge = k.kq <= 0 ? H + 80 : k.y + 46 - after * H * .6;
+    if (edge > -80) {
+      c.fillStyle = '#05060c'; c.fillRect(0, 0, W, Math.max(0, edge - 70));
+      const gr = c.createLinearGradient(0, edge - 70, 0, edge + 10); gr.addColorStop(0, '#05060c'); gr.addColorStop(1, 'rgba(5,6,12,0)'); c.fillStyle = gr; c.fillRect(0, edge - 70, W, 80);
+      // 交界上的風線與竹葉
+      c.strokeStyle = 'rgba(230,240,255,.55)'; c.lineWidth = 1.5;
+      for (let i = 0; i < 9; i++) { const y = edge - 30 + (i % 3) * 14, x = ((T * 420 + i * 97) % (W + 120)) - 60, l = 30 + (i % 4) * 14; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + l / 2, y - 4, x + l, y); c.stroke(); }
+      for (let i = 0; i < 8; i++) { const x = ((i * 53 + T * 160) % (W + 40)) - 20, y = edge - 10 + Math.sin(T * 4 + i) * 16; c.save(); c.translate(x, y); c.rotate(T * 5 + i); c.fillStyle = 'rgba(60,100,60,.85)'; c.beginPath(); c.ellipse(0, 0, 7, 2.4, 0, 0, TAU); c.fill(); c.restore(); }
+    }
+  } else {   // 雲海尾跡：雲蓋滿畫面，鳶在身後拉出 V 字開口，雲往兩側翻開散去
+    for (const cd of OUT_CLOUDS) {
+      let px = cd.fx * W, py = cd.fy * H + Math.sin(T * .6 + cd.ph) * 3, r = 46 + cd.rr * 40, a = 1;
+      if (k.kq > 0 && py > k.y - 20) {
+        const hw = (py - k.y) * .75 + 22, d = px - k.x, over = hw + r * .7 - Math.abs(d);
+        if (over > 0) { const push = over * (1.3 + .4 * Math.min(1, (py - k.y) / 200)); px += (d >= 0 ? 1 : -1) * push; a = Math.max(0, 1 - push / (r * 3.2)); }
+      }
+      if (after > 0) { px += (px < W / 2 ? -1 : 1) * after * W * .6; a *= 1 - after; }
+      if (a <= 0) continue;
+      c.globalAlpha = a;
+      const gr = c.createRadialGradient(px - r * .3, py - r * .4, r * .1, px, py, r); gr.addColorStop(0, '#465079'); gr.addColorStop(.6, '#2c3354'); gr.addColorStop(1, '#1d2238');
+      c.fillStyle = gr; c.beginPath(); c.arc(px, py, r, 0, TAU); c.fill();
+      c.strokeStyle = 'rgba(200,215,255,.18)'; c.lineWidth = 2; c.beginPath(); c.arc(px, py, r - 2, Math.PI * 1.1, Math.PI * 1.75); c.stroke();   // 月光照到的雲邊
+    }
+    c.globalAlpha = 1;
+  }
+  // 鳶
+  if (k.kq > 0 && k.kq < 1.05) {
+    kiteBird(c, k.x, k.y, k.s, Math.sin(T * 16), OUTRO_K === 'A' ? 'rgba(8,6,14,.92)' : '#0a0812');
+    if (OUTRO_K === 'D') { c.strokeStyle = 'rgba(220,230,255,.5)'; c.lineWidth = 1.4; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(k.x + sd * 30 * k.s / 2, k.y + 8); c.quadraticCurveTo(k.x + sd * 60, k.y + 90, k.x + sd * 120, k.y + 200); c.stroke(); } }   // 劃開雲層的氣流線
+  }
+  if (t < .25) { c.fillStyle = `rgba(0,0,0,${1 - t / .25})`; c.fillRect(0, 0, W, H); }   // 從轉暗接進來
 }
 // 一片竹簾（橫向細竹片＋縫隙透光＋綁繩＋上緣布邊＋內側的紅流蘇）。x0 = 這一片的左緣，side = -1 左片／+1 右片
 function sudare(c, x0, w, side, sway) {
@@ -320,6 +369,7 @@ function sudare(c, x0, w, side, sway) {
   c.beginPath(); c.moveTo(ex + sw * .5 - 6, ty + 3); c.lineTo(ex + sw - 5, ty + 34); c.lineTo(ex + sw + 5, ty + 34); c.lineTo(ex + sw * .5 + 6, ty + 3); c.closePath(); c.fill();
 }
 function drawOutro(t) {
+  if (!SUD) return drawOutroAD(t);   // A 風捲揭幕／D 雲海尾跡
   const c = ctx, T = performance.now() / 1000, cl = x => Math.max(0, Math.min(1, x));
   const open = ez(cl((t - OUT_OPEN) / 1.25)), half = W / 2;
   // 竹簾後面：開幕前是暗暗的月光，開幕時換成標題背景慢慢亮起
