@@ -91,7 +91,7 @@ const STR = {
   jd_kongo: ['4.5 秒無敵，碰到的敵人一律斬殺', '4.5秒無敵、触れた敵を全て斬る', '4.5s invincible; slay anything you touch'],
   jd_yume: ['畫面上的敵人睡著 5 秒，飛行道具消失', '画面の敵が5秒眠り、飛び道具が消える', 'Enemies on screen sleep 5s; projectiles vanish'],
   jd_sekka: ['冰封畫面上的敵人 6 秒，一碰就碎', '画面の敵を6秒凍らせ、触れると砕ける', 'Freeze enemies on screen 6s; touch to shatter'],
-  jd_kishin: ['巨大金棒清光畫面，魔王直接露出破綻', '巨大な金棒で画面の敵を一掃、魔王は隙を見せる', 'Giant club clears the screen; bosses are staggered'],
+  jd_kishin: ['巨大金棒斬光雜兵，菁英與魔王受到重擊', '巨大な金棒で雑兵を一掃、精鋭と魔王に痛打', 'Giant club wipes out minions; elites and bosses take a heavy hit'],
   ju_title: ['忍法', '忍法', 'Ninjutsu'], ju_locked: ['打倒{0}第 10 舞台魔王取得卷軸', '{0}第10舞台の魔王を倒して巻物を入手', 'Beat the Stage 10 boss of {0}'],
   maki_0: ['林之卷軸', '林之巻物', 'Forest Scroll'], maki_1: ['風之卷軸', '風之巻物', 'Wind Scroll'], maki_2: ['火之卷軸', '火之巻物', 'Fire Scroll'], maki_3: ['山之卷軸', '山之巻物', 'Mountain Scroll'],
   mission: ['任務達成', '任務達成', 'Mission Complete'],

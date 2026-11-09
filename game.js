@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v79';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v80';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -468,7 +468,7 @@ cv.addEventListener('pointerdown', e => {
   inp.mode = state === 'play' && !paused ? 'pending' : null;
   inp.hold = 0; inp.sx = inp.cx = p.x; inp.sy = inp.cy = p.y;
   try { cv.setPointerCapture(e.pointerId); } catch (er) { }
-  if (state === 'qte') qteTap();
+  if (state === 'qte') qteTap(p.x, p.y);
 });
 cv.addEventListener('pointermove', e => {
   if (!inp.down || e.pointerId !== inp.id) return;
@@ -1469,8 +1469,13 @@ function jutsuGo(j) {
   else if (j.id === 'sekka') { for (const e of g.enemies) if (on(e)) e.frozen = 6; g.eshots = []; g.fires = []; p.vy = -JUMP; p.inv = Math.max(p.inv, 1); noise(.4, .06); tone(1800, .5, 'triangle', .04, -900); }
   else if (j.id === 'kishin') {
     g.kishinT = .7; g.shake = 16; SFX.boom(); vib([60, 40, 120]); p.vy = -JUMP * 1.1; p.inv = Math.max(p.inv, 1);
-    for (const e of [...g.enemies]) if (on(e)) { if (e.type === 13) { e.hp -= 6; e.flash = .3; if (e.hp <= 0) { e.hp = 1; slay(e); } } else slay(e); }
-    const b = g.boss; if (b && !b.stun && state === 'play') { b.hp = Math.max(1, b.hp - 3); b.st = b.stN - 1; bossHit(b); }   // 魔王：大傷害＋直接打出破綻
+    // 只清雜兵：一般敵人斬殺；菁英只打掉一層、大天狗扣 3 血；魔王只累積 2 點破綻（不會直接暈眩）
+    for (const e of [...g.enemies]) if (on(e)) {
+      if (e.type === 13) { e.hp -= 3; e.flash = .3; e.tough = 1; floatText(e.x, e.y - 30, 'HP ' + Math.max(0, e.hp), '#e0b0ff', 14); if (e.hp <= 0) { e.hp = 1; slay(e); } }
+      else if (e.hp > 1) { e.hp--; e.flash = .3; e.tough = 1; floatText(e.x, e.y - 30, t('one_more'), '#e0b0ff', 14); }
+      else slay(e);
+    }
+    const b = g.boss; if (b && !b.stun) { b.st = Math.min(b.stN - 1, b.st + 2); b.flash = .3; b.hp = Math.max(1, b.hp - 1); floatText(b.x, b.y - 46, '-1', '#fff', 18); }
   } else { g.fly = 1.7 * (1 + .4 * pk('feather')); p.inv = Math.max(p.inv, g.fly + .6); }
 }
 
@@ -1622,25 +1627,34 @@ function startQte() {
   const b = g.boss, p = g.p;
   state = 'qte'; p.dash = 0; p.dive = false;
   g.qte = { t: 0, hits: [], n: 0, rings: [], log: [], i: 0, cnt: 3, perf: 0, next: .45, fl: 0, end: 0, kill: false,
-    dur: b.fin ? Math.max(.62, .9 - .05 * b.lv) : 1, R0: 120, RT: 34 };   // 初戰的圓圈縮得比較慢
-  SFX.boss(); vib(80);
+    dur: b.fin ? Math.max(.62, .9 - .05 * b.lv) : 1, R0: 120, RT: 34,   // 初戰的圓圈縮得比較慢
+    rip: [], sparks: [], shards: [], slow: 0, wf: 0 };   // 特效：點擊漣漪、火花、碎片、完美慢動作、閃白
+  SFX.boom(); vib(80);
 }
 const qteR = r => g.qte.R0 * (1 - (g.qte.t - r.t0) / g.qte.dur);
-function qteTap() {
+const QTE_TICKS = [.3, .48, .6, .68];   // 外圈縮小時越來越密的「滴」（最後一聲之後就是完美時機）
+function qteTap(x, y) {
   const q = g.qte; if (!q || q.end) return;
-  const cur = q.rings.find(r => !r.res); if (!cur) return;
+  const cur = q.rings.find(r => !r.res);
+  q.rip.push({ x: x ?? (cur ? cur.x : W / 2), y: y ?? (cur ? cur.y : H * .42), t: 0 });   // 點擊的位置冒出漣漪
+  if (!cur) return;
   const d = Math.abs(qteR(cur) - q.RT);
   qteRes(cur, d <= 8 ? 2 : d <= 18 ? 1 : 0);
 }
 function qteRes(r, lv) {
   const q = g.qte, b = g.boss, pw = 1 + .1 * mt('power');
-  r.res = ['miss', 'good', 'perf'][lv]; r.rt = 0; q.next = q.t + .28; q.log.push(r.res);
+  r.res = ['miss', 'good', 'perf'][lv]; r.rt = 0; r.endR = Math.max(10, qteR(r)); q.next = q.t + .28; q.log.push(r.res);
+  const burst = (n, col, sp) => { for (let i = 0; i < n; i++) { const a = rnd(0, TAU), v = rnd(sp * .4, sp); q.sparks.push({ x: r.x + Math.cos(a) * q.RT, y: r.y + Math.sin(a) * q.RT, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, life: rnd(.35, .6), c: col, s: rnd(2, 4) }); } };
   if (lv) {
     b.hp -= (lv === 2 ? 2.5 : 1.5) * pw;
     if (lv === 2 && ++q.perf === q.cnt) { b.hp -= 2 * pw; q.allP = 0; }   // 三連完美：追加傷害
     q.hits.push({ a: rnd(0, Math.PI), t: 0, x: r.x - W / 2, y: r.y - H * .42 }); q.n++;
     g.shake = lv === 2 ? 9 : 5; SFX.slash(); vib(lv === 2 ? 40 : 20);
-  } else {   // 失誤：魔王反擊
+    if (lv === 2) { q.slow = .08; q.wf = .12; burst(20, '#ffd25a', 420); tone(1760, .16, 'triangle', .05); tone(2640, .24, 'triangle', .03, 0, .05); }   // 完美：慢動作、閃白、金色碎光、清脆的鈴聲
+    else burst(9, '#ffffff', 260);   // 良：白色小火花
+  } else {   // 失誤：外圈碎裂、紅叉，魔王反擊
+    for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; q.shards.push({ a, r: r.endR, x: r.x, y: r.y, v: rnd(120, 220), rot: 0, vr: rnd(-8, 8), t: 0 }); }
+    noise(.25, .07); tone(320, .22, 'square', .04, -220);
     q.fl = .35; g.shake = 9; g.p.inv = 0;
     if (hurt(b.fin ? 'qte' : 'qte5')) return;
   }
@@ -1649,6 +1663,14 @@ function qteRes(r, lv) {
 }
 function updateQte(dt) {
   const q = g.qte;
+  // 特效（用真實時間）
+  q.wf = Math.max(0, q.wf - dt);
+  for (const o of q.rip) o.t += dt; q.rip = q.rip.filter(o => o.t < .4);
+  for (const o of q.sparks) { o.t += dt; o.x += o.vx * dt; o.y += o.vy * dt; o.vx *= .9; o.vy = o.vy * .9 + 300 * dt; } q.sparks = q.sparks.filter(o => o.t < o.life);
+  for (const o of q.shards) { o.t += dt; o.rot += o.vr * dt; } q.shards = q.shards.filter(o => o.t < .5);
+  if (q.slow > 0) { q.slow -= dt; dt *= .25; }   // 完美：一瞬間的慢動作
+  // 外圈縮小時的提示音
+  { const cur = q.rings.find(r => !r.res); if (cur) { const u = (q.t - cur.t0) / q.dur; cur.tk = cur.tk || 0; if (cur.tk < QTE_TICKS.length && u >= QTE_TICKS[cur.tk]) { tone(1300 + cur.tk * 180, .04, 'square', .022); cur.tk++; } } }
   q.t += dt; q.fl = Math.max(0, q.fl - dt);
   if (q.allP != null) q.allP += dt;
   for (const h of q.hits) h.t += dt;
@@ -2608,28 +2630,54 @@ function drawQte() {
   // 時機圈：外圈往內縮，縮到白圈上時點擊（淡金色帶＝「良」的範圍）
   for (const r of q.rings) {
     if (!r.res) {
-      const rr = Math.max(0, qteR(r));
-      ctx.lineWidth = 36; ctx.strokeStyle = 'rgba(255,210,122,.18)'; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT, 0, 7); ctx.stroke();
-      ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT, 0, 7); ctx.stroke();
+      const rr = Math.max(0, qteR(r)), diff = Math.abs(rr - q.RT), close = clamp(1 - diff / 50, 0, 1), perfect = diff <= 8;
+      // 「良」的範圍帶、白色目標圈（外圈越靠近越亮）
+      ctx.lineWidth = 36; ctx.strokeStyle = `rgba(255,210,122,${.14 + .2 * close})`; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT, 0, 7); ctx.stroke();
+      ctx.save(); ctx.shadowColor = '#ffd25a'; ctx.shadowBlur = 6 + 16 * close;
+      ctx.lineWidth = 4 + 2 * close; ctx.strokeStyle = perfect ? '#fffbe8' : '#fff'; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT, 0, 7); ctx.stroke(); ctx.restore();
       ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT - 3, 0, 7); ctx.fill();
-      txt(t('qte_mark'), r.x, r.y + 9, 26, '#fff', 'center', '#c0262d', 4);
-      const near = Math.abs(rr - q.RT) <= 8;
-      ctx.lineWidth = near ? 7 : 5; ctx.strokeStyle = near ? '#fff6c0' : '#ffd27a'; ctx.beginPath(); ctx.arc(r.x, r.y, rr, 0, 7); ctx.stroke();
+      txt(t('qte_mark'), r.x, r.y + 9, 26 + 4 * close, '#fff', 'center', '#c0262d', 4);
+      // 外圈：越接近時機，從白色轉成金色、越來越粗；完美時機的瞬間整圈閃亮
+      const cr = 255, cg = Math.round(255 - 45 * close), cb = Math.round(255 - 170 * close);
+      ctx.save(); ctx.shadowColor = `rgb(${cr},${cg},${cb})`; ctx.shadowBlur = perfect ? 24 : 8 * close;
+      ctx.lineWidth = perfect ? 9 : 4 + 3 * close; ctx.strokeStyle = perfect ? '#ffffff' : `rgb(${cr},${cg},${cb})`; ctx.beginPath(); ctx.arc(r.x, r.y, rr, 0, 7); ctx.stroke(); ctx.restore();
+      // 外圈上的四個刻記，跟著縮小一起轉
+      for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + (q.t - r.t0) * 3; ctx.fillStyle = `rgba(${cr},${cg},${cb},.9)`; aCirc(ctx, r.x + Math.cos(a) * rr, r.y + Math.sin(a) * rr, 3.5); ctx.fill(); }
     } else {
       const k = r.rt / .6, col = { perf: '#ffd27a', good: '#fff', miss: '#ff5050' }[r.res];
-      if (r.res !== 'miss') { ctx.globalAlpha = Math.max(0, 1 - k * 1.6); ctx.lineWidth = 6; ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT + k * 70, 0, 7); ctx.stroke(); }
+      if (r.res !== 'miss') { ctx.globalAlpha = Math.max(0, 1 - k * 1.6); ctx.lineWidth = r.res === 'perf' ? 9 : 6; ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT + k * (r.res === 'perf' ? 110 : 70), 0, 7); ctx.stroke(); }
+      else {   // 失誤：紅色叉叉
+        const s = 1 + (1 - Math.min(1, k * 5)) * .6; ctx.globalAlpha = Math.max(0, 1 - k); ctx.strokeStyle = '#ff3a3a'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(r.x - 18 * s, r.y - 18 * s); ctx.lineTo(r.x + 18 * s, r.y + 18 * s); ctx.moveTo(r.x + 18 * s, r.y - 18 * s); ctx.lineTo(r.x - 18 * s, r.y + 18 * s); ctx.stroke(); ctx.lineCap = 'butt';
+      }
       ctx.globalAlpha = Math.max(0, 1 - k);
-      txt(t('qte_' + r.res), r.x, r.y - 30 - k * 20, (r.res === 'perf' ? 30 : 24) * (LI === 2 ? .8 : 1), col, 'center', '#000', 5);
+      if (r.res === 'perf') {   // 完美：毛筆字放大彈出
+        const s = 1 + (1 - easeO(Math.min(1, k * 4))) * .9; ctx.save(); ctx.translate(r.x, r.y - 44 - k * 16); ctx.scale(s, s);
+        ctx.font = `${LI === 2 ? 30 : 38}px ${BRUSH}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 6; ctx.strokeStyle = '#6a120c'; ctx.strokeText(t('qte_perf'), 0, 0); ctx.fillStyle = '#ffe28a'; ctx.fillText(t('qte_perf'), 0, 0); ctx.restore();
+      } else txt(t('qte_' + r.res), r.x, r.y - 30 - k * 20, 24 * (LI === 2 ? .8 : 1), col, 'center', '#000', 5);
       ctx.globalAlpha = 1;
     }
   }
+  // 失誤：外圈碎成弧形碎片飛散
+  for (const o of q.shards) {
+    const d = o.r + o.v * o.t; ctx.save(); ctx.globalAlpha = Math.max(0, 1 - o.t / .5); ctx.translate(o.x + Math.cos(o.a) * d, o.y + Math.sin(o.a) * d); ctx.rotate(o.a + Math.PI / 2 + o.rot);
+    ctx.strokeStyle = '#ff7a6a'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, o.r, o.r, -Math.PI / 2 - .2, -Math.PI / 2 + .2); ctx.stroke(); ctx.restore();
+  }
+  // 火花（完美＝金色、良＝白色）
+  for (const o of q.sparks) { ctx.globalAlpha = Math.max(0, 1 - o.t / o.life); ctx.fillStyle = o.c; ctx.beginPath(); ctx.arc(o.x, o.y, o.s, 0, TAU); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  // 點擊漣漪
+  for (const o of q.rip) { const k = o.t / .4; ctx.strokeStyle = `rgba(255,255,255,${.8 * (1 - k)})`; ctx.lineWidth = 3 * (1 - k) + 1; ctx.beginPath(); ctx.arc(o.x, o.y, 8 + k * 46, 0, TAU); ctx.stroke(); }
+  if (q.wf > 0) { ctx.fillStyle = `rgba(255,255,255,${q.wf / .12 * .55})`; ctx.fillRect(0, 0, W, H); }   // 完美：閃白
   if (q.allP != null && q.allP < 1.2) txt(t('qte_allp'), W / 2, H * .25, 26 * (LI === 2 ? .8 : 1), '#ffd27a', 'center', '#c0262d', 6);
   // 標題與三次結果
   txt(t('qte_n'), W / 2, H * .76, 46 * (LI === 2 ? .8 : 1), '#fff', 'center', '#c0262d', 8);
   txt(t('qte_hint'), W / 2, H * .82, 14, '#ffd27a', 'center', '#000', 3);
   for (let i = 0; i < q.cnt; i++) {
-    ctx.fillStyle = { perf: '#ffd27a', good: '#fff', miss: '#ff5050' }[q.log[i]] || 'rgba(255,255,255,.25)';
-    ctx.beginPath(); ctx.arc(W / 2 + (i - 1) * 30, H * .87, 7, 0, 7); ctx.fill();
+    const res = q.log[i], x = W / 2 + (i - 1) * 30, y = H * .87;
+    if (res === 'perf') { const pu = .5 + .5 * Math.sin(q.t * 9 + i); ctx.fillStyle = `rgba(255,210,90,${.25 + .25 * pu})`; ctx.beginPath(); ctx.arc(x, y, 12 + 3 * pu, 0, 7); ctx.fill(); }   // 完美：脈動的光暈
+    ctx.fillStyle = { perf: '#ffd27a', good: '#fff', miss: '#ff5050' }[res] || 'rgba(255,255,255,.25)';
+    ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.fill();
   }
   if (q.fl > 0) { ctx.fillStyle = `rgba(255,30,30,${q.fl})`; ctx.fillRect(0, 0, W, H); }
 }
@@ -3043,7 +3091,7 @@ document.addEventListener('click', e => {
 });
 
 applyLang();
-try { document.fonts.load('80px "Yuji Boku"', '豪天翔任務達成金剛身夢幻術雪華封鬼神斬風林火山之卷軸秘忍臨兵闘者皆陣烈在前橫掃千軍戰無不勝勢如破竹克敵制攻銳可當穴犁庭手刃強'); } catch (e) { }   // 先載好豪天翔卷軸的毛筆字（canvas 不會自己等字型）
+try { document.fonts.load('80px "Yuji Boku"', '豪天翔任務達成金剛身夢幻術雪華封鬼神斬風林火山之卷軸秘忍臨兵闘者皆陣烈在前橫掃千軍戰無不勝勢如破竹克敵制攻銳可當穴犁庭手刃強完美璧'); } catch (e) { }   // 先載好豪天翔卷軸的毛筆字（canvas 不會自己等字型）
 buildHeroArt();   // 產生標題大圖與商店頭像（程式畫的主角）
 goTitle();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });

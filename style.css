@@ -1,7 +1,7 @@
 /* NINJA 鳶 — 介面風格「竹林夜襲」：月夜竹林、鐵灰金屬面板、金色鉚釘、紅色緞帶，全部粗黑描邊＋上緣高光 */
 @import url("https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Sans+TC:wght@700;900&display=swap");
 /* 毛筆字（Yuji Boku，卷軸用）：只下載用到的字——豪天翔任務達成金剛身夢幻術雪華封鬼神斬風林火山之卷軸秘忍臨兵闘者皆陣烈在前＋四字詞 */
-@import url("https://fonts.googleapis.com/css2?family=Yuji+Boku&display=swap&text=%E8%B1%AA%E5%A4%A9%E7%BF%94%E4%BB%BB%E5%8B%99%E9%81%94%E6%88%90%E9%87%91%E5%89%9B%E8%BA%AB%E5%A4%A2%E5%B9%BB%E8%A1%93%E9%9B%AA%E8%8F%AF%E5%B0%81%E9%AC%BC%E7%A5%9E%E6%96%AC%E9%A2%A8%E6%9E%97%E7%81%AB%E5%B1%B1%E4%B9%8B%E5%8D%B7%E8%BB%B8%E7%A7%98%E5%BF%8D%E8%87%A8%E5%85%B5%E9%97%98%E8%80%85%E7%9A%86%E9%99%A3%E7%83%88%E5%9C%A8%E5%89%8D%E6%A9%AB%E6%8E%83%E5%8D%83%E8%BB%8D%E6%88%B0%E7%84%A1%E4%B8%8D%E5%8B%9D%E5%8B%A2%E5%A6%82%E7%A0%B4%E7%AB%B9%E5%85%8B%E6%95%B5%E5%88%B6%E6%94%BB%E9%8A%B3%E5%8F%AF%E7%95%B6%E7%A9%B4%E7%8A%81%E5%BA%AD%E6%89%8B%E5%88%83%E5%BC%B7");
+@import url("https://fonts.googleapis.com/css2?family=Yuji+Boku&display=swap&text=%E8%B1%AA%E5%A4%A9%E7%BF%94%E4%BB%BB%E5%8B%99%E9%81%94%E6%88%90%E9%87%91%E5%89%9B%E8%BA%AB%E5%A4%A2%E5%B9%BB%E8%A1%93%E9%9B%AA%E8%8F%AF%E5%B0%81%E9%AC%BC%E7%A5%9E%E6%96%AC%E9%A2%A8%E6%9E%97%E7%81%AB%E5%B1%B1%E4%B9%8B%E5%8D%B7%E8%BB%B8%E7%A7%98%E5%BF%8D%E8%87%A8%E5%85%B5%E9%97%98%E8%80%85%E7%9A%86%E9%99%A3%E7%83%88%E5%9C%A8%E5%89%8D%E6%A9%AB%E6%8E%83%E5%8D%83%E8%BB%8D%E6%88%B0%E7%84%A1%E4%B8%8D%E5%8B%9D%E5%8B%A2%E5%A6%82%E7%A0%B4%E7%AB%B9%E5%85%8B%E6%95%B5%E5%88%B6%E6%94%BB%E9%8A%B3%E5%8F%AF%E7%95%B6%E7%A9%B4%E7%8A%81%E5%BA%AD%E6%89%8B%E5%88%83%E5%BC%B7%E5%AE%8C%E7%BE%8E%E7%92%A7");
 
 :root {
   --ink: #0e1414;       /* 描邊 */
