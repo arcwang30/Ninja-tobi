@@ -194,14 +194,27 @@ function drawTapScreen(t) {
 const t_ = k => (typeof t === 'function' ? t(k) : k);
 
 // ===== 「點一下開始」→ 故事的銜接演出（原型：?trans=A 推進月亮／?trans=D 拍子木＋墨染；未指定時維持原本直接切換） =====
-const TRANS_K = (q => (q === 'A' || q === 'D' ? q : null))((new URLSearchParams(location.search).get('trans') || '').toUpperCase());
+// 正式採用 A；?trans=D 可再看 D，?trans=0 回到直接切換
+const TRANS_K = (q => (q === 'D' ? 'D' : q === '0' ? null : 'A'))((new URLSearchParams(location.search).get('trans') || '').toUpperCase());
+// 柔和的長音（慢慢浮現、慢慢消失），開場銜接的和聲墊底用
+function softPad(f, dur, vol, delay = 0, type = 'sine') {
+  if (!sfxV() || !ac) return;
+  const t0 = ac.currentTime + delay, o = ac.createOscillator(), gn = ac.createGain(), v = vol * sfxV();
+  o.type = type; o.frequency.setValueAtTime(f, t0);
+  gn.gain.setValueAtTime(0, t0); gn.gain.linearRampToValueAtTime(v, t0 + dur * .45); gn.gain.linearRampToValueAtTime(0, t0 + dur);
+  o.connect(gn).connect(ac.destination); o.start(t0); o.stop(t0 + dur + .05);
+}
+// 琴的撥弦：三角波＋高八度的正弦泛音，快速起音、自然衰減
+function koto(f, delay, vol = .04) { tone(f, .9, 'triangle', vol, 0, delay); tone(f * 2, .5, 'sine', vol * .3, 0, delay + .005); }
 const TRANS_T = { A: 1.5, D: 1.8 };
 // 音效：一開始就把整段排好（錄影時也能直接離線算出來）
 function transSound(k) {
-  if (k === 'A') {   // 風聲→琴音往上爬→鈴
-    SFX.wind();
-    ['E5', 'F5', 'A5', 'B5', 'E6', 'F6'].forEach((n, i) => { const f = 440 * Math.pow(2, ({ E: -5, F: -4, A: 0, B: 2 }[n[0]] + (+n[1] - 4) * 12) / 12); tone(f, .5, 'triangle', .035, 0, .35 + i * .13); });
-    tone(1318.5, 1, 'sine', .05, 0, 1.15); tone(1975.5, .8, 'sine', .025, 0, 1.2);
+  if (k === 'A') {   // 輕柔的夜風 → 和聲慢慢浮現 → 琴的五聲音階（E G A B D）往上撥 → 月光亮起時的風鈴
+    noise(1.1, .012);                                             // 很輕的夜風
+    for (const [f, v] of [[82.4, .05], [123.5, .03], [164.8, .025], [246.9, .015]]) softPad(f, 1.6, v, 0);   // 和聲墊底（E、B）
+    [329.6, 392, 440, 493.9, 587.3, 659.3, 784].forEach((f, i) => koto(f, .28 + i * .1, .032 + i * .002));   // 琴音往上爬
+    // 風鈴：主音＋五度＋八度，長長的餘韻
+    for (const [f, v, d] of [[1318.5, .035, 0], [1975.5, .018, .02], [2637, .01, .04], [1318.5 * 1.006, .015, .06]]) tone(f, 1.6, 'sine', v, 0, 1.12 + d);
   } else {   // 拍子木「咔、咔！」→ 低沉的鼓聲＋墨暈開 →「序」
     for (const d of [.05, .4]) { noise(.04, .14, d); tone(2400, .06, 'square', .05, -900, d); tone(1150, .09, 'triangle', .07, 0, d); }
     tone(90, .7, 'sine', .14, -40, .6); noise(.6, .05, .6);
