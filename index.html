@@ -122,11 +122,13 @@
 
   <!-- 結算 -->
   <div class="scr dim" id="over">
-    <div class="panel">
+    <!-- 結算（成績卡片）：分數＋新紀錄、六格成績、小判列（含看廣告 ×2）、到達舞台 -->
+    <div class="panel ovp">
       <h2 id="overTitle"></h2>
       <div id="overBody"></div>
-      <button data-act="adcoins" id="adCoins" class="ad-btn"></button>   <!-- 看廣告，小判 ×2（ads.js） -->
-      <button data-act="retry" class="big" data-i18n="retry"></button>
+      <div class="ov-koban"><span id="overCoins"></span><button data-act="adcoins" id="adCoins" class="ad-btn"></button></div>   <!-- 看廣告，小判 ×2（ads.js） -->
+      <div class="ov-reach" id="overReach"></div>
+      <button data-act="retry" class="big red" data-i18n="retry"></button>
       <div class="row">
         <button data-act="shop" data-i18n="shop"></button>
         <button data-act="title" data-i18n="to_title"></button>

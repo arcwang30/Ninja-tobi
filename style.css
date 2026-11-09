@@ -211,6 +211,20 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 #overBody b { color: var(--gold-l); }
 #overBody .sc { font-family: var(--en); font-weight: 400; font-size: 2.4em; color: #fff; -webkit-text-stroke: calc(var(--u)*5) var(--ink); paint-order: stroke fill; text-shadow: 0 0 calc(var(--u)*14) rgba(229,52,42,.8); }
 #overBody .nr { color: #fff; background: var(--red); border: calc(var(--u)*2) solid var(--ink); border-radius: 1em; padding: 0 .7em; }
+/* 結算（成績卡片） */
+.ovp #overBody { line-height: 1.3; margin-bottom: .5em; }
+.ovp #overBody .sc { display: block; line-height: 1.15; }
+.ovp .ov-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4em; margin-top: .6em; }
+.ovp .ov-st { background: rgba(0,0,0,.28); border: calc(var(--u)*2) solid rgba(0,0,0,.45); border-radius: calc(var(--u)*10); padding: .4em .15em .35em; display: flex; flex-direction: column; align-items: center; gap: .1em; min-width: 0; }
+.ovp .ov-st em { font-style: normal; font-size: 1.1em; line-height: 1; }
+.ovp .ov-st b { font-size: 1.05em; white-space: nowrap; }
+.ovp .ov-st small { font-size: .62em; color: var(--muted); }
+.ovp .ov-koban { display: flex; align-items: center; justify-content: space-between; gap: .5em; background: rgba(0,0,0,.28); border: calc(var(--u)*2) solid rgba(0,0,0,.45); border-radius: calc(var(--u)*10); padding: .35em .5em .35em .7em; font-size: .9em; font-weight: 700; }
+.ovp .ov-koban b { color: var(--gold-l); font-size: 1.2em; }
+.ovp .ov-koban small { color: var(--muted); font-size: .8em; }
+.ovp .ov-koban .ad-btn { width: auto; margin: 0; padding: .35em .7em; font-size: .78em; white-space: nowrap; flex-shrink: 0; }
+.ovp .ov-reach { text-align: center; font-size: .78em; color: var(--muted); font-weight: 700; margin: .5em 0 .2em; }
+.ovp .ov-reach b { color: #fff; }
 .clear-body { line-height: 1.6; margin-bottom: .8em; text-align: center; font-size: .95em; font-weight: 700; }
 .clear-body b { color: var(--gold-l); }
 

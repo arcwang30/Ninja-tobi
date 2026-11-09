@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v70';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v71';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -2500,11 +2500,16 @@ function showOver() {
   collAch();
   persist();
   $('overTitle').textContent = g.cleared ? t('over_clear') : t('over_fail');
+  // 成績卡片：分數＋新紀錄，下面六格（高度、斬殺、最大連斬、到達舞台、魔王、最佳紀錄）
+  const card = (ic, v, k) => `<div class="ov-st"><em>${ic}</em><b>${v}</b><small>${t(k)}</small></div>`;
   $('overBody').innerHTML =
-    `<div class="sc">${sc.toLocaleString()}</div>${nr ? `<span class="nr">${t('new_record')}</span><br>` : ''}` +
-    t('over_stats', h, g.kills, g.maxCombo) + '<br>' +
-    t('over_reach', THEMES[g.th].k, stageName(g.stage), g.bossN) + '<br>' +
-    `<span id="overCoins">${t('over_coins', coins, save.coins)}</span><br>` + t('over_best', save.best.rogue.toLocaleString());
+    `<div class="sc">${sc.toLocaleString()}</div>${nr ? `<span class="nr">${t('new_record')}</span>` : ''}` +
+    `<div class="ov-grid">` +
+    card('⛰️', h + 'm', 'st_h') + card('⚔️', g.kills, 'st_kill') + card('⚡', g.maxCombo, 'st_combo') +
+    card('🏯', THEMES[g.th].k + ' ' + (g.stage + 1) + '/' + ST_N, 'st_reach') + card('👹', g.bossN, 'st_boss') + card('🏆', save.best.rogue.toLocaleString(), 'st_best') +
+    `</div>`;
+  $('overCoins').innerHTML = t('over_coins', coins, save.coins);
+  $('overReach').innerHTML = t('over_reach2', THEMES[g.th].k, stageName(g.stage));
   if (typeof adCoinsBtn === 'function') adCoinsBtn(coins);   // 看廣告，小判 ×2（ads.js）
   show('over');
 }

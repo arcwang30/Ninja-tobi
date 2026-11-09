@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>結算畫面版型提案</title>
+<style>
+:root { --gold: #e8b84a; --gold-l: #ffe28a; --ink: #0e1414; --red: #e5342a; --red-d: #b01e18; --steel: #3a4448; --steel-d: #232a2d; --steel-l: #4f5a5f; --muted: #b8c4c8; --jade: #2a9a6a; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 20px 12px 40px; background: #0b0f1c; color: #f4f1e8; font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; font-weight: 900; }
+h1 { text-align: center; color: var(--gold-l); font-size: 20px; margin: 0 0 4px; }
+.sub { text-align: center; color: #aab; font-size: 13px; margin: 0 0 18px; font-weight: 400; }
+.row { display: flex; flex-wrap: wrap; gap: 22px; justify-content: center; }
+.col { width: 300px; }
+.tag { text-align: center; margin-bottom: 8px; }
+.tag b { color: var(--gold-l); font-size: 17px; }
+.tag small { display: block; color: #aab; font-size: 12px; margin-top: 2px; font-weight: 400; }
+.phone { position: relative; width: 300px; height: 600px; border-radius: 22px; overflow: hidden; background: linear-gradient(#1a2a44, #0c1426); border: 3px solid #222; }
+.panel { position: absolute; left: 14px; right: 14px; top: 40px; bottom: 40px; border-radius: 14px; background: linear-gradient(var(--steel), var(--steel-d)); border: 3px solid var(--ink); box-shadow: inset 0 2px 0 rgba(255,255,255,.12), 0 5px 0 #000; padding: 12px; display: flex; flex-direction: column; }
+.panel::before, .panel::after { content: ""; position: absolute; top: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px var(--ink); }
+.panel::before { left: 8px; } .panel::after { right: 8px; }
+.ttl { text-align: center; font-size: 17px; letter-spacing: .1em; text-shadow: 0 2px 0 var(--ink); }
+.score { text-align: center; font-family: "Arial Black", sans-serif; font-size: 40px; line-height: 1.1; text-shadow: 0 3px 0 var(--ink), 0 0 16px rgba(229,52,42,.7); margin: 4px 0; }
+.nr { display: inline-block; background: var(--red); border: 2px solid var(--ink); border-radius: 12px; padding: 1px 10px; font-size: 12px; }
+.btn { border: 3px solid var(--ink); border-radius: 10px; background: linear-gradient(var(--steel-l), var(--steel)); box-shadow: inset 0 2px 0 rgba(255,255,255,.16), 0 3px 0 #000; display: grid; place-items: center; height: 40px; font-size: 14px; margin-top: 7px; }
+.btn.red { background: linear-gradient(#ff5a4a, var(--red-d)); font-size: 16px; height: 46px; }
+.btn.ad { background: linear-gradient(#3d6ad8, #20408a); font-size: 12px; height: 34px; }
+.btns2 { display: flex; gap: 7px; } .btns2 .btn { flex: 1; }
+.mt-auto { margin-top: auto; }
+
+/* === A：成績卡片 === */
+.A .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+.A .st { background: rgba(0,0,0,.28); border: 2px solid rgba(0,0,0,.45); border-radius: 9px; padding: 6px 2px 5px; text-align: center; }
+.A .st em { font-style: normal; font-size: 15px; display: block; }
+.A .st b { display: block; font-size: 15px; color: var(--gold-l); line-height: 1.2; }
+.A .st small { font-size: 9px; color: var(--muted); }
+.A .koban { margin-top: 8px; background: rgba(0,0,0,.28); border: 2px solid rgba(0,0,0,.45); border-radius: 9px; padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+.A .koban b { color: var(--gold-l); font-size: 16px; }
+.A .koban .adm { background: linear-gradient(#3d6ad8, #20408a); border: 2px solid var(--ink); border-radius: 8px; padding: 3px 7px; font-size: 10px; }
+.A .reach { margin-top: 8px; text-align: center; font-size: 12px; color: var(--muted); }
+.A .reach b { color: #fff; }
+
+/* === B：和風成績單 === */
+.B .panel { background: linear-gradient(#efe3c2, #e0cfa2); border-color: #6b4a22; color: #3a2510; }
+.B .panel::before, .B .panel::after { background: #6b4a22; box-shadow: none; }
+.B .ttl { color: #8a1c1c; text-shadow: none; font-family: serif; font-size: 20px; border-bottom: 2px solid #8a1c1c; padding-bottom: 4px; }
+.B .score { color: #2a1508; text-shadow: none; font-size: 38px; position: relative; }
+.B .stamp { position: absolute; right: 6px; top: 6px; transform: rotate(14deg); border: 3px solid #b01e18; color: #b01e18; border-radius: 6px; font-size: 13px; padding: 2px 4px; line-height: 1.05; font-family: serif; }
+.B .ld { display: flex; align-items: baseline; font-size: 13px; padding: 4px 2px; }
+.B .ld span { flex: 1; border-bottom: 2px dotted rgba(90,50,20,.35); margin: 0 6px; transform: translateY(-3px); }
+.B .ld b { color: #8a1c1c; }
+.B .trip { display: flex; justify-content: space-between; align-items: center; margin: 8px 2px 4px; position: relative; }
+.B .trip::before { content: ""; position: absolute; left: 6px; right: 6px; top: 50%; height: 2px; background: rgba(90,50,20,.35); }
+.B .trip i { position: relative; width: 14px; height: 14px; border-radius: 50%; background: #e8dcb8; border: 2px solid #8a6a40; font-style: normal; font-size: 8px; display: grid; place-items: center; }
+.B .trip i.done { background: #8a1c1c; border-color: #4a0e0e; color: #fff; }
+.B .trip i.boss { width: 18px; height: 18px; font-size: 9px; }
+.B .trip i.now { box-shadow: 0 0 0 3px #ffd27a; }
+.B .tripcap { display: flex; justify-content: space-between; font-size: 9px; color: #8a6a40; }
+.B .btn { background: linear-gradient(#f6ecd2, #d8c69a); border-color: #6b4a22; color: #3a2510; box-shadow: 0 3px 0 #6b4a22; }
+.B .btn.red { background: linear-gradient(#b01e18, #7a1010); color: #fff; }
+.B .btn.ad { background: linear-gradient(#3d6ad8, #20408a); color: #fff; }
+
+/* === C：旅程地圖 === */
+.C .top { display: flex; align-items: center; justify-content: space-between; }
+.C .top .score { font-size: 32px; margin: 0; }
+.C .map { margin: 10px 0 6px; background: rgba(0,0,0,.28); border: 2px solid rgba(0,0,0,.45); border-radius: 10px; padding: 8px 8px 6px; }
+.C .map .cap { font-size: 11px; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.C .map .cap b { color: #fff; }
+.C .track { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
+.C .track i { height: 22px; border-radius: 4px; background: #15191b; border: 2px solid var(--ink); font-style: normal; font-size: 9px; display: grid; place-items: center; color: #666; }
+.C .track i.done { background: linear-gradient(var(--gold-l), var(--gold)); color: #3a2a08; }
+.C .track i.now { background: var(--red); color: #fff; box-shadow: 0 0 0 2px #fff; }
+.C .track i.boss { color: #c33; }
+.C .chips { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin: 4px 0 8px; }
+.C .chip { background: rgba(0,0,0,.3); border-radius: 12px; padding: 3px 9px; font-size: 11px; }
+.C .chip b { color: var(--gold-l); }
+.C .coin { display: flex; align-items: center; gap: 10px; background: linear-gradient(#5a4a1a, #3a2e0e); border: 2px solid var(--ink); border-radius: 10px; padding: 8px 10px; }
+.C .coin .o { width: 26px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff3b0, #e8b84a 60%, #a07818); border: 2px solid var(--ink); }
+.C .coin div { flex: 1; font-size: 11px; color: var(--muted); }
+.C .coin div b { display: block; color: var(--gold-l); font-size: 20px; }
+.C .coin .adm { background: linear-gradient(#3d6ad8, #20408a); border: 2px solid var(--ink); border-radius: 8px; padding: 6px 8px; font-size: 11px; text-align: center; color: #fff; }
+.C .icons { display: grid; grid-template-columns: 1fr 1fr 2.2fr; gap: 7px; }
+.C .icons .btn { height: 50px; font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+.C .icons .btn em { font-style: normal; font-size: 18px; }
+.C .icons .btn.red { font-size: 15px; flex-direction: row; gap: 6px; }
+.notes { max-width: 960px; margin: 26px auto 0; font-size: 13px; color: #ccd; line-height: 1.7; font-weight: 400; }
+.notes b { color: var(--gold-l); }
+</style></head><body>
+<h1>結算畫面版型提案</h1>
+<p class="sub">內容相同：分數、新紀錄、高度、斬殺、最大連斬、到達舞台、擊破魔王、小判（含看廣告 ×2）、最佳紀錄、再次挑戰／商店／回標題</p>
+<div class="row">
+
+<div class="col A">
+  <div class="tag"><b>A．成績卡片</b><small>和新的設定頁同一套：數字放進小卡片，一眼看完</small></div>
+  <div class="phone"><div class="panel">
+    <div class="ttl">修行中斷</div>
+    <div class="score">40,566</div>
+    <div style="text-align:center"><span class="nr">新紀錄!</span></div>
+    <div class="stats">
+      <div class="st"><em>⛰️</em><b>1330m</b><small>高度</small></div>
+      <div class="st"><em>⚔️</em><b>69</b><small>斬殺</small></div>
+      <div class="st"><em>⚡</em><b>7</b><small>最大連斬</small></div>
+      <div class="st"><em>🏯</em><b>山 3/10</b><small>到達舞台</small></div>
+      <div class="st"><em>👹</em><b>0</b><small>擊破魔王</small></div>
+      <div class="st"><em>🏆</em><b>40,566</b><small>最佳紀錄</small></div>
+    </div>
+    <div class="koban"><span>小判 <b>+258</b> <small style="color:var(--muted)">（持有 258）</small></span><span class="adm">▶ 廣告 ×2</span></div>
+    <div class="reach">到達 <b>山「第 3 舞台・夜晚」</b></div>
+    <div class="btn red mt-auto">再次挑戰</div>
+    <div class="btns2"><div class="btn">整備商店</div><div class="btn">回標題</div></div>
+  </div></div>
+</div>
+
+<div class="col B">
+  <div class="tag"><b>B．和風成績單</b><small>和紙帳簿＋「新紀錄」紅印章，加上 10 舞台的旅程線</small></div>
+  <div class="phone"><div class="panel">
+    <div class="ttl">修 行 中 斷</div>
+    <div class="score">40,566<span class="stamp">新<br>紀錄</span></div>
+    <div class="trip"><i class="done">1</i><i class="done">2</i><i class="done now">3</i><i>4</i><i class="boss">鬼</i><i>6</i><i>7</i><i>8</i><i>9</i><i class="boss">鬼</i></div>
+    <div class="tripcap"><span>山・第 3 舞台（夜晚）</span><span>擊破魔王 0</span></div>
+    <div class="ld">高度<span></span><b>1330m</b></div>
+    <div class="ld">斬殺<span></span><b>69</b></div>
+    <div class="ld">最大連斬<span></span><b>7</b></div>
+    <div class="ld">獲得小判<span></span><b>+258</b></div>
+    <div class="ld">最佳紀錄<span></span><b>40,566</b></div>
+    <div class="btn ad">▶ 看廣告，小判 ×2</div>
+    <div class="btn red mt-auto">再次挑戰</div>
+    <div class="btns2"><div class="btn">整備商店</div><div class="btn">回標題</div></div>
+  </div></div>
+</div>
+
+<div class="col C">
+  <div class="tag"><b>C．旅程地圖</b><small>強調「走到哪一步」：10 格舞台進度＋小判大方框</small></div>
+  <div class="phone"><div class="panel">
+    <div class="ttl">修行中斷</div>
+    <div class="top" style="justify-content:center;gap:8px"><div class="score">40,566</div><span class="nr">新紀錄!</span></div>
+    <div class="map">
+      <div class="cap"><span>到達 <b>山・第 3 舞台</b>（夜晚）</span><span>最佳 40,566</span></div>
+      <div class="track"><i class="done">1</i><i class="done">2</i><i class="now">3</i><i>4</i><i class="boss">鬼</i><i>6</i><i>7</i><i>8</i><i>9</i><i class="boss">鬼</i></div>
+    </div>
+    <div class="chips"><span class="chip">⛰️ <b>1330m</b></span><span class="chip">⚔️ 斬殺 <b>69</b></span><span class="chip">⚡ 連斬 <b>7</b></span><span class="chip">👹 魔王 <b>0</b></span></div>
+    <div class="coin"><span class="o"></span><div>獲得小判<b>+258</b>持有 258</div><span class="adm">▶ 廣告<br>×2</span></div>
+    <div class="icons mt-auto"><div class="btn"><em>🏪</em>商店</div><div class="btn"><em>🏠</em>標題</div><div class="btn red"><em>🔁</em>再次挑戰</div></div>
+  </div></div>
+</div>
+
+</div>
+<div class="notes">
+<p><b>A．成績卡片</b>：和剛改好的設定頁同一套設計語言（深色分組框、金色數字），整體最統一；六個數字各一格，最好讀。小判和看廣告放在同一列。</p>
+<p><b>B．和風成績單</b>：最有氣氛——和紙、帳簿式虛線對齊、「新紀錄」蓋紅印；上方的旅程線一眼看出走到第幾舞台、魔王在哪。缺點是和其他鐵灰色畫面風格不同。</p>
+<p><b>C．旅程地圖</b>：把「進度」當主角，10 格舞台條最醒目，激勵「下次再前進一點」；數據縮成小標籤，小判用大方框強調；按鈕改成圖示，再次挑戰最大。</p>
+<p>三種的「看廣告 ×2」領取後都會變成灰色的「已領取 +129 小判」。</p>
+</div>
+</body></html>
