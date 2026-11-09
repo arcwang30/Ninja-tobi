@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>設定頁版型提案</title>
+<style>
+:root { --gold: #ffd27a; --ink: #0e1414; --iron: #3a3f45; --iron2: #2a2e33; --red: #c0262d; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 20px 12px 40px; background: #0b0f1c; color: #fff; font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+h1 { text-align: center; color: var(--gold); font-size: 20px; margin: 0 0 4px; }
+.sub { text-align: center; color: #aab; font-size: 13px; margin: 0 0 18px; }
+.row { display: flex; flex-wrap: wrap; gap: 22px; justify-content: center; }
+.col { width: 300px; }
+.tag { text-align: center; margin-bottom: 8px; }
+.tag b { color: var(--gold); font-size: 17px; }
+.tag small { display: block; color: #aab; font-size: 12px; margin-top: 2px; }
+.phone { position: relative; width: 300px; height: 580px; border-radius: 22px; overflow: hidden; background: linear-gradient(#1a2440, #0c1226); border: 3px solid #222; }
+.phone::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 75% 18%, rgba(255,240,180,.25), transparent 30%); }
+.panel { position: absolute; left: 16px; right: 16px; top: 24px; bottom: 24px; border-radius: 12px; background: linear-gradient(#3a3f45, #2a2e33); border: 2px solid #15181b; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 24px rgba(0,0,0,.6); padding: 14px 14px 10px; display: flex; flex-direction: column; }
+.panel::before, .panel::after { content: ""; position: absolute; top: 8px; width: 7px; height: 7px; border-radius: 50%; background: #c9a14a; box-shadow: 0 0 0 1px #5a4318; }
+.panel::before { left: 8px; } .panel::after { right: 8px; }
+.ttl { text-align: center; font-weight: 900; font-size: 18px; margin-bottom: 10px; letter-spacing: .1em; }
+.back { margin-top: auto; height: 38px; border-radius: 8px; background: linear-gradient(#4a5058, #33383e); border: 2px solid #15181b; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+.diag { text-align: center; font-size: 8px; color: #778; margin-top: 6px; }
+/* --- 共用控制 --- */
+.seg { display: flex; gap: 3px; }
+.seg i { width: 18px; height: 14px; border-radius: 3px; background: #1a1d21; border: 1px solid #000; }
+.seg i.on { background: linear-gradient(#ffe39a, #e0a93a); border-color: #6a4a10; }
+.pm { width: 22px; height: 22px; border-radius: 50%; background: #1a1d21; border: 1px solid #000; display: grid; place-items: center; font-size: 13px; color: var(--gold); font-weight: 900; }
+.sw { width: 40px; height: 22px; border-radius: 11px; background: #1a1d21; border: 1px solid #000; position: relative; }
+.sw.on { background: #3a8a4a; }
+.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #eee; }
+.sw.on::after { left: 20px; }
+.pills { display: flex; gap: 2px; background: #1a1d21; border-radius: 8px; padding: 2px; border: 1px solid #000; }
+.pills span { font-size: 11px; padding: 3px 7px; border-radius: 6px; color: #aaa; }
+.pills span.on { background: var(--gold); color: #3a2a08; font-weight: 900; }
+
+/* === A：分組卡片 === */
+.A .grp { background: rgba(0,0,0,.25); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,.06); }
+.A .gh { font-size: 11px; color: var(--gold); letter-spacing: .15em; margin-bottom: 6px; }
+.A .it { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; font-size: 13px; font-weight: 700; }
+.A .it + .it { border-top: 1px solid rgba(255,255,255,.07); }
+.A .vol { display: flex; align-items: center; gap: 5px; }
+.A .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.A .tile { background: linear-gradient(#4a5058, #33383e); border: 2px solid #15181b; border-radius: 8px; height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; gap: 3px; }
+.A .tile em { font-style: normal; font-size: 20px; }
+.A .tile.red { background: linear-gradient(#d33a3f, #8e1a1f); }
+
+/* === B：和風卷軸 === */
+.B .panel { background: linear-gradient(#efe3c2, #e0cfa2); border-color: #6b4a22; color: #3a2510; }
+.B .panel::before, .B .panel::after { background: #6b4a22; box-shadow: none; }
+.B .ttl { color: #8a1c1c; font-family: serif; font-size: 22px; border-bottom: 2px solid #8a1c1c; padding-bottom: 6px; }
+.B .rod { position: absolute; left: -6px; right: -6px; height: 12px; border-radius: 6px; background: linear-gradient(#8a5a2a, #4a2a10); }
+.B .rod.t { top: -6px; } .B .rod.b { bottom: -6px; }
+.B .it { display: flex; align-items: center; justify-content: space-between; padding: 9px 2px; border-bottom: 1px dashed rgba(90,50,20,.35); font-size: 14px; font-weight: 900; }
+.B .it small { display: block; font-size: 9px; color: #8a6a40; font-weight: 400; }
+.B .dots { display: flex; gap: 5px; }
+.B .dots i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #8a1c1c; }
+.B .dots i.on { background: radial-gradient(circle at 35% 35%, #ff6a5a, #a01818); }
+.B .hanko { display: flex; gap: 6px; }
+.B .hanko span { font-size: 12px; border: 2px solid #8a1c1c; color: #8a1c1c; border-radius: 6px; padding: 1px 6px; font-weight: 900; }
+.B .hanko span.on { background: #8a1c1c; color: #fff; }
+.B .links { display: flex; justify-content: space-around; margin-top: 10px; font-size: 11px; }
+.B .links span { text-decoration: underline; color: #6b4a22; }
+.B .links span.red { color: #a01818; }
+.B .back { background: #8a1c1c; border-color: #4a0e0e; color: #fff; }
+.B .diag { color: #8a6a40; }
+
+/* === C：音量計＋圖示格 === */
+.C .meters { display: flex; gap: 10px; margin-bottom: 10px; }
+.C .meter { flex: 1; background: rgba(0,0,0,.3); border-radius: 10px; padding: 8px 6px; text-align: center; border: 1px solid rgba(255,255,255,.06); }
+.C .meter b { font-size: 12px; display: block; margin-bottom: 6px; }
+.C .bars { display: flex; justify-content: center; align-items: flex-end; gap: 4px; height: 70px; }
+.C .bars i { width: 14px; border-radius: 3px; background: #1a1d21; border: 1px solid #000; }
+.C .bars i.on { background: linear-gradient(#ffe39a, #e0a93a); }
+.C .meter .pmrow { display: flex; justify-content: center; gap: 18px; margin-top: 6px; }
+.C .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.C .card { background: linear-gradient(#4a5058, #33383e); border: 2px solid #15181b; border-radius: 10px; padding: 8px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; min-height: 52px; }
+.C .card em { font-style: normal; font-size: 20px; }
+.C .card small { display: block; color: var(--gold); font-size: 10px; font-weight: 400; }
+.C .card.red { background: linear-gradient(#d33a3f, #8e1a1f); }
+.notes { max-width: 960px; margin: 26px auto 0; font-size: 13px; color: #ccd; line-height: 1.7; }
+.notes b { color: var(--gold); }
+</style></head><body>
+<h1>設定頁版型提案</h1>
+<p class="sub">三種都含：音樂／音效各 5 格音量、震動、語言、重看開場、隱私權政策、重置存檔、返回</p>
+<div class="row">
+
+<!-- A -->
+<div class="col A">
+  <div class="tag"><b>A．分組卡片</b><small>像手機系統設定：分組、左標題右控制</small></div>
+  <div class="phone"><div class="panel">
+    <div class="ttl">設定</div>
+    <div class="grp"><div class="gh">聲音</div>
+      <div class="it">🎵 音樂<span class="vol"><span class="pm">−</span><span class="seg"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="pm">＋</span></span></div>
+      <div class="it">🔊 音效<span class="vol"><span class="pm">−</span><span class="seg"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="pm">＋</span></span></div>
+    </div>
+    <div class="grp"><div class="gh">遊戲</div>
+      <div class="it">📳 震動<span class="sw on"></span></div>
+      <div class="it">🌐 語言<span class="pills"><span class="on">中</span><span>日</span><span>EN</span></span></div>
+    </div>
+    <div class="tiles">
+      <div class="tile"><em>🎬</em>重看開場</div>
+      <div class="tile"><em>📄</em>隱私權</div>
+      <div class="tile red"><em>🗑️</em>重置存檔</div>
+    </div>
+    <div class="back">返回</div>
+    <div class="diag">v69 • 1024×768 • Web</div>
+  </div></div>
+</div>
+
+<!-- B -->
+<div class="col B">
+  <div class="tag"><b>B．和風卷軸</b><small>米色和紙＋紅印章，與遊戲的忍者主題最搭</small></div>
+  <div class="phone"><div class="panel">
+    <span class="rod t"></span><span class="rod b"></span>
+    <div class="ttl">設 定</div>
+    <div class="it"><div>音樂<small>BGM</small></div><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+    <div class="it"><div>音效<small>SE</small></div><span class="dots"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></div>
+    <div class="it"><div>震動<small>Vibration</small></div><span class="hanko"><span class="on">開</span><span>關</span></span></div>
+    <div class="it"><div>語言<small>Language</small></div><span class="hanko"><span class="on">中</span><span>日</span><span>EN</span></span></div>
+    <div class="it"><div>開場動畫</div><span class="hanko"><span>重看</span></span></div>
+    <div class="links"><span>隱私權政策</span><span class="red">重置存檔</span></div>
+    <div class="back">返回</div>
+    <div class="diag">v69 • 1024×768 • Web</div>
+  </div></div>
+</div>
+
+<!-- C -->
+<div class="col C">
+  <div class="tag"><b>C．音量計＋圖示格</b><small>像遊戲機台：大音量計在上，功能做成 2×2 卡片</small></div>
+  <div class="phone"><div class="panel">
+    <div class="ttl">設定</div>
+    <div class="meters">
+      <div class="meter"><b>🎵 音樂</b><div class="bars"><i class="on" style="height:30%"></i><i class="on" style="height:45%"></i><i class="on" style="height:60%"></i><i class="on" style="height:78%"></i><i style="height:100%"></i></div><div class="pmrow"><span class="pm">−</span><span class="pm">＋</span></div></div>
+      <div class="meter"><b>🔊 音效</b><div class="bars"><i class="on" style="height:30%"></i><i class="on" style="height:45%"></i><i style="height:60%"></i><i style="height:78%"></i><i style="height:100%"></i></div><div class="pmrow"><span class="pm">−</span><span class="pm">＋</span></div></div>
+    </div>
+    <div class="grid">
+      <div class="card"><em>📳</em><div>震動<small>ON</small></div></div>
+      <div class="card"><em>🌐</em><div>語言<small>中文</small></div></div>
+      <div class="card"><em>🎬</em><div>重看開場</div></div>
+      <div class="card"><em>📄</em><div>隱私權政策</div></div>
+    </div>
+    <div class="card red" style="margin-top:8px;justify-content:center"><em>🗑️</em>重置存檔</div>
+    <div class="back">返回</div>
+    <div class="diag">v69 • 1024×768 • Web</div>
+  </div></div>
+</div>
+
+</div>
+<div class="notes">
+<p><b>A．分組卡片</b>：最清楚、最好擴充（之後加新選項只要多一列）。音量是「−／5 格／＋」，也可以直接點格子。語言三選一直接點，不用一直按切換。</p>
+<p><b>B．和風卷軸</b>：最有個性，和遊戲的和風、忍者主題最一致；音量用 5 顆紅色印點，開關用「印章」。不常用的隱私權、重置縮成底部文字連結（重置仍會要求按兩次確認）。</p>
+<p><b>C．音量計＋圖示格</b>：最像遊戲機台，音量最醒目、最好操作（大的直條，手指好按）；其他功能做成圖示卡片，一眼看完。</p>
+<p>三種的「重置存檔」都維持按兩次才執行；測試用的「完整版（測試）」按鈕在測試模式才出現，會放在同一區。</p>
+</div>
+</body></html>

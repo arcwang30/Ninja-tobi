@@ -156,15 +156,25 @@
 
   <!-- 設定 -->
   <div class="scr dim" id="opt">
-    <div class="panel">
+    <!-- 設定（分組卡片）：聲音（音樂／音效各 0～5 格）、遊戲（震動、語言），下方三個圖示方塊 -->
+    <div class="panel opt">
       <h2 data-i18n="opt"></h2>
-      <button data-act="lang" id="bLang"></button>
-      <button data-act="snd" id="bSnd"></button>
-      <button data-act="vib" id="bVib"></button>
-      <button data-act="replay" data-i18n="replay"></button>
-      <button data-act="fulltest" id="bFull"></button>   <!-- 測試模式：切換是否擁有完整版 -->
-      <button data-act="privacy" data-i18n="privacy"></button>   <!-- 隱私權政策（privacy.html） -->
-      <button data-act="reset" class="red" id="bReset"></button>
+      <div class="og">
+        <div class="og-h" data-i18n="opt_sound"></div>
+        <div class="og-it"><span class="og-l">🎵 <b data-i18n="mus"></b></span><span class="vol"><button class="pm" data-act="vol" data-arg="mus:-1">−</button><span class="seg" id="segMus"></span><button class="pm" data-act="vol" data-arg="mus:1">＋</button></span></div>
+        <div class="og-it"><span class="og-l">🔊 <b data-i18n="sfx"></b></span><span class="vol"><button class="pm" data-act="vol" data-arg="sfx:-1">−</button><span class="seg" id="segSfx"></span><button class="pm" data-act="vol" data-arg="sfx:1">＋</button></span></div>
+      </div>
+      <div class="og">
+        <div class="og-h" data-i18n="opt_game"></div>
+        <div class="og-it"><span class="og-l">📳 <b data-i18n="vib_n"></b></span><button class="sw" id="bVib" data-act="vib" aria-label="vibration"></button></div>
+        <div class="og-it"><span class="og-l">🌐 <b data-i18n="lang_n"></b></span><span class="pills" id="langPills"></span></div>
+      </div>
+      <button data-act="fulltest" id="bFull" class="opt-test"></button>   <!-- 測試模式：切換是否擁有完整版 -->
+      <div class="tiles">
+        <button class="tile" data-act="replay"><em>🎬</em><span data-i18n="replay"></span></button>
+        <button class="tile" data-act="privacy"><em>📄</em><span data-i18n="privacy"></span></button>
+        <button class="tile red" data-act="reset" id="bReset"><em>🗑️</em><span id="bResetT"></span></button>
+      </div>
       <button data-act="back" data-i18n="back"></button>
       <small id="diag" class="diag"></small>
     </div>

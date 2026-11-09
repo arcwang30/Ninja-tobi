@@ -254,7 +254,7 @@ const ACH = [];
 // ===== 存檔 =====
 const defSave = () => ({
   coins: 0, skin: 0, skins: [0], outfits: [0], charOut: {},
-  meta: Object.fromEntries(META.map(m => [m.id, 0])), ach: {}, lv: { open: 1, best: [0, 0, 0, 0], clear: [0, 0, 0, 0], sel: 0 }, opt: { snd: 1, vib: 1, lang: guessLang() }, seen: 0, intro: 0,
+  meta: Object.fromEntries(META.map(m => [m.id, 0])), ach: {}, lv: { open: 1, best: [0, 0, 0, 0], clear: [0, 0, 0, 0], sel: 0 }, opt: { mus: 4, sfx: 4, vib: 1, lang: guessLang() }, seen: 0, intro: 0,
   best: { rogue: 0 }, rank: { rogue: [] },
   stats: { runs: 0, slashes: 0, bosses: 0, coins: 0, mids: 0 },
 });
@@ -264,6 +264,10 @@ try {
   for (const k in s) save[k] = (typeof s[k] === 'object' && !Array.isArray(s[k]) && s[k]) ? Object.assign(save[k] || {}, s[k]) : s[k];
 } catch (e) { }
 LI = Math.max(0, LANGS.findIndex(l => l.id === save.opt.lang));
+// 音量：音樂與音效分開，各 0（靜音）～5 格；4 格＝原本的音量。舊存檔的「音效 OFF」兩者都設為 0
+const VOLS = [0, .2, .4, .65, 1, 1.25];
+if ('snd' in save.opt) { if (!save.opt.snd) save.opt.mus = save.opt.sfx = 0; delete save.opt.snd; }
+const sfxV = () => VOLS[save.opt.sfx] || 0, musV = () => VOLS[save.opt.mus] || 0;
 // 舊存檔：以前買過的蒼／桜／影（當時只是換色）一併送對應的換裝顏色
 if (!save.outfits) save.outfits = [0];
 for (const i of save.skins || []) if (i >= 1 && i <= 3 && !save.outfits.includes(i)) save.outfits.push(i);
@@ -279,7 +283,8 @@ function A() {
   return ac;
 }
 function tone(f, d = .1, type = 'square', vol = .05, slide = 0, delay = 0) {
-  if (!save.opt.snd || !ac) return;
+  if (!sfxV() || !ac) return;
+  vol *= sfxV();
   const t = ac.currentTime + delay, o = ac.createOscillator(), gn = ac.createGain();
   o.type = type; o.frequency.setValueAtTime(f, t);
   if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
@@ -287,7 +292,8 @@ function tone(f, d = .1, type = 'square', vol = .05, slide = 0, delay = 0) {
   o.connect(gn).connect(ac.destination); o.start(t); o.stop(t + d + .03);
 }
 function noise(d = .2, vol = .08, delay = 0) {
-  if (!save.opt.snd || !ac) return;
+  if (!sfxV() || !ac) return;
+  vol *= sfxV();
   const len = ac.sampleRate * d, buf = ac.createBuffer(1, len, ac.sampleRate), ch = buf.getChannelData(0);
   for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len);
   const s = ac.createBufferSource(), gn = ac.createGain(); s.buffer = buf; gn.gain.value = vol;
@@ -326,7 +332,8 @@ const SFX = {
 // 標題＝鳶ノ影；關卡＝疾風ノ道（每一幕換調、無盡之塔每輪加快）；魔王登場＝鬼哭；暫停／死亡／結算＝停止
 const ACT_KEY = [0, 2, 5, 3];   // 林／風／火／山 的移調（半音）
 function musicFor() {
-  if (!ac || !save.opt.snd || document.hidden) return BGM.stop();
+  if (!ac || !musV() || document.hidden) return BGM.stop();
+  BGM.setVol(musV());
   if (state === 'menu') return INTRO.ph === 'cut' ? BGM.play(ac, 'boss', { sp: .85, tr: -3 }) : INTRO.ph === 'title' ? BGM.play(ac, 'title') : BGM.stop();
   if (!g || paused || state === 'over' || state === 'dying') return BGM.stop();
   BGM.hot = g.fever > 0;
@@ -337,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v69';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v70';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -2569,11 +2576,13 @@ function renderRank() {
   $('rankBody').innerHTML = h;
 }
 function renderOpt() {
-  $('bSnd').textContent = t('snd', save.opt.snd ? 'ON' : 'OFF');
-  $('bVib').textContent = t('vib', save.opt.vib ? 'ON' : 'OFF');
+  // 音量：5 格，點格子直接設定（再點同一格＝靜音到那格以下）
+  for (const [k, id] of [['mus', 'segMus'], ['sfx', 'segSfx']])
+    $(id).innerHTML = [1, 2, 3, 4, 5].map(i => `<button class="${save.opt[k] >= i ? 'on' : ''}" data-act="vol" data-arg="${k}=${i}" aria-label="${i}"></button>`).join('');
+  $('bVib').classList.toggle('on', !!save.opt.vib);
+  $('langPills').innerHTML = LANGS.map((l, i) => `<button class="${i === LI ? 'on' : ''}" data-act="setlang" data-arg="${i}">${['中', '日', 'EN'][i] || l.name}</button>`).join('');
   const bf = $('bFull'); bf.style.display = TEST_FREE ? '' : 'none'; bf.textContent = t('full_test', hasFull() ? t('full_own') : t('full_none'));   // 測試模式才顯示
-  $('bLang').textContent = t('lang', LANGS[LI].name);
-  const r = $('bReset'); delete r.dataset.armed; r.textContent = t('reset');
+  const r = $('bReset'); delete r.dataset.armed; $('bResetT').textContent = t('reset');
 }
 
 let menuFrom = 'title';
@@ -2646,12 +2655,18 @@ document.addEventListener('click', e => {
       else { b.dataset.armed = '1'; b.textContent = t('meta_refund_ok'); }
       break;
     case 'banish': g.banishMode = !g.banishMode; $('perkCards').classList.toggle('banishing', g.banishMode); break;
-    case 'snd': save.opt.snd ^= 1; persist(); renderOpt(); A(); musicFor(); break;
-    case 'vib': save.opt.vib ^= 1; persist(); renderOpt(); break;
-    case 'lang': LI = (LI + 1) % LANGS.length; save.opt.lang = LANGS[LI].id; persist(); applyLang(); renderOpt(); buildDockIcons(); break;
+    case 'vol': {   // 音量：「mus:-1」＝減一格、「sfx=3」＝設成第 3 格（點已亮的最上面那格＝往下一格，可以點到靜音）
+      const [k, v] = arg.split(/[:=]/), cur = save.opt[k];
+      let n = arg.includes(':') ? cur + +v : (+v === cur ? cur - 1 : +v);
+      save.opt[k] = clamp(n, 0, 5); persist(); renderOpt(); A(); musicFor();
+      if (k === 'sfx') SFX.coin();   // 試聽
+      break;
+    }
+    case 'vib': save.opt.vib ^= 1; persist(); renderOpt(); vib(60); break;
+    case 'setlang': LI = +arg; save.opt.lang = LANGS[LI].id; persist(); applyLang(); renderOpt(); buildDockIcons(); break;
     case 'reset': // 按兩次才重置（不用 confirm()，部分嵌入環境不會顯示對話框）
       if (b.dataset.armed) { const lang = save.opt.lang; save = defSave(); save.opt.lang = lang; persist(); renderOpt(); toast(t('reset_done')); }
-      else { b.dataset.armed = '1'; b.textContent = t('reset_confirm'); setTimeout(renderOpt, 3000); }
+      else { b.dataset.armed = '1'; $('bResetT').textContent = t('reset_confirm'); setTimeout(renderOpt, 3000); }
       break;
   }
 });

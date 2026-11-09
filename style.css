@@ -223,6 +223,30 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 #toast.on { transform: translate(-50%, 0); opacity: 1; visibility: visible; }
 /* 量 100vh 用的隱形元素；設定頁底部的診斷資訊 */
 #vhProbe { position: fixed; top: 0; left: 0; width: 0; height: 100vh; pointer-events: none; visibility: hidden; }
+/* ===== 設定（分組卡片） ===== */
+.opt .og { background: rgba(0,0,0,.28); border: calc(var(--u)*2) solid rgba(0,0,0,.45); border-radius: calc(var(--u)*10); padding: .45em .7em .3em; margin-bottom: .55em; }
+.opt .og-h { font-size: .7em; color: var(--gold); letter-spacing: .25em; margin-bottom: .2em; }
+.opt .og-it { display: flex; align-items: center; justify-content: space-between; gap: .5em; padding: .35em 0; }
+.opt .og-it + .og-it { border-top: calc(var(--u)*1) solid rgba(255,255,255,.08); }
+.opt .og-l { white-space: nowrap; font-size: .92em; }
+.opt .vol { display: flex; align-items: center; gap: .3em; }
+.opt button.pm, .opt .seg button, .opt button.sw, .opt .pills button { width: auto; margin: 0; padding: 0; box-shadow: none; text-shadow: none; letter-spacing: 0; }
+.opt button.pm::before, .opt .seg button::before, .opt button.sw::before, .opt .pills button::before { display: none; }
+.opt button.pm { width: 1.6em; height: 1.6em; border-radius: 50%; background: #15191b; border: calc(var(--u)*2) solid var(--ink); color: var(--gold-l); font-size: .95em; line-height: 1; }
+.opt .seg { display: flex; gap: calc(var(--u)*3); }
+.opt .seg button { width: 1.25em; height: 1.05em; border-radius: calc(var(--u)*4); background: #15191b; border: calc(var(--u)*2) solid var(--ink); }
+.opt .seg button.on { background: linear-gradient(var(--gold-l), var(--gold)); border-color: #6a4a10; }
+.opt button.sw { width: 2.8em; height: 1.55em; border-radius: 1em; background: #15191b; border: calc(var(--u)*2) solid var(--ink); }
+.opt button.sw::after { content: ""; position: absolute; top: calc(var(--u)*2); left: calc(var(--u)*2); width: 1.1em; height: 1.1em; border-radius: 50%; background: #ddd; transition: left .15s; }
+.opt button.sw.on { background: var(--jade); }
+.opt button.sw.on::after { left: calc(100% - 1.1em - var(--u)*2); }
+.opt .pills { display: flex; gap: calc(var(--u)*2); background: #15191b; border: calc(var(--u)*2) solid var(--ink); border-radius: .6em; padding: calc(var(--u)*2); }
+.opt .pills button { background: none; border: 0; border-radius: .45em; padding: .2em .55em; font-size: .8em; color: var(--muted); }
+.opt .pills button.on { background: var(--gold); color: #3a2a08; }
+.opt .opt-test { font-size: .8em; padding: .35em .6em; margin: 0 0 .5em; }
+.opt .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: .45em; margin-bottom: .3em; }
+.opt .tile { margin: 0; padding: .55em .2em .45em; display: flex; flex-direction: column; align-items: center; gap: .25em; font-size: .72em; letter-spacing: 0; line-height: 1.2; }
+.opt .tile em { font-style: normal; font-size: 1.8em; line-height: 1; }
 .diag { display: block; margin-top: .6em; text-align: center; font-size: .62em; font-weight: 700; color: var(--muted); opacity: .75; word-break: break-all; }
 
 /* 開機遮罩兼團隊 LOGO：蓋住整個螢幕（不受遊戲畫面尺寸影響），等畫面尺寸量穩、LOGO 播完才淡出 */
