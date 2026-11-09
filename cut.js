@@ -92,7 +92,7 @@ const INTRO = {
     if (this.ph === 'outro') { outroCue(this.t - dt, this.t); if (this.t >= OUT_T) this.endOutro(); return; }
     if (this.ph === 'cut') {
       cutSfx(this.t);
-      if (this.t >= CUT_END) this.startOutro();   // 接「竹簾開幕」再到標題
+      if (this.t >= CUT_END) { if (OUTRO_K === 'ORIG') this.toTitle(); else this.startOutro(); }   // 預設：原本的白光 → 標題（其他結尾版本只在網址參數時使用）
     } else if (this.ph === 'title') {
       if (this.flash > 0) this.flash = Math.max(0, this.flash - dt / .7);
       titleBgUpdate(dt); frontHeroUpdate(dt);
@@ -289,7 +289,8 @@ function drawTrans(t) {
 
 // ===== 故事結尾的「竹簾開幕」 =====
 // 結尾的版本（比較中）：?outro=A 風捲揭幕、?outro=D 雲海尾跡（預設）、?outro=sudare 竹簾開幕
-const OUTRO_K = (q => (q === 'A' || q === 'SUDARE' ? q : 'D'))((new URLSearchParams(location.search).get('outro') || '').toUpperCase());
+// 結尾版本：預設＝原本（白光 → 標題）；?outro=A 風捲揭幕、?outro=D 雲海尾跡、?outro=sudare 竹簾開幕（保留比較用）
+const OUTRO_K = (q => (q === 'A' || q === 'D' || q === 'SUDARE' ? q : 'ORIG'))((new URLSearchParams(location.search).get('outro') || '').toUpperCase());
 const SUD = OUTRO_K === 'SUDARE';
 // 總長、鳶起飛、LOGO 蓋章、主畫面開始顯露（標題音樂從這裡淡入）
 const OUT_T = SUD ? 3.7 : 2.35, OUT_KITE = SUD ? .35 : .15, OUT_LOGO = SUD ? 1.4 : 1.5, OUT_OPEN = SUD ? 2.25 : .25, OUT_FLY = 1.3;
@@ -424,8 +425,8 @@ function drawCut(t) {
   }
   txt(t_('cut_skip'), W - 12, H - 18, 11, 'rgba(255,255,255,.4)', 'right', null);
   // 最後的白光
-  // 結尾轉暗（接竹簾開幕）
-  if (t >= CUT_FLASH) { c.fillStyle = `rgba(0,0,0,${ez((t - CUT_FLASH) / (CUT_END - CUT_FLASH))})`; c.fillRect(0, 0, W, H); }
+  // 結尾：原本是白光（其他結尾版本改成轉暗）
+  if (t >= CUT_FLASH) { c.fillStyle = `rgba(${OUTRO_K === "ORIG" ? "255,255,255" : "0,0,0"},${ez((t - CUT_FLASH) / (CUT_END - CUT_FLASH))})`; c.fillRect(0, 0, W, H); }
 }
 function wrapCut(s, w) {
   const c = ctx, out = []; let line = '';
