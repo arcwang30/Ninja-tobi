@@ -183,8 +183,7 @@ function drawTapScreen(t) {
   roofs(H * .86, '#05060f', 1, t);
   c.fillStyle = '#05060f'; c.fillRect(0, H * .86, W, H * .14);
   c.globalAlpha = ez(t / .6);
-  txt('NINJA 鳶 TOBI', W / 2, H * .58, 30, '#ffe28a', 'center', '#000', 6);
-  c.globalAlpha *= .55 + .45 * Math.sin(t * 4);
+  c.globalAlpha *= .55 + .45 * Math.sin(t * 4);   // （「NINJA 鳶 TOBI」字樣已移除，只留「點一下開始」）
   txt(t_('tap_start'), W / 2, H * .68, 17, '#ffffff', 'center', '#000', 4);
   c.globalAlpha = 1;
   if (t < .6) { c.fillStyle = `rgba(0,0,0,${1 - ez(t / .6)})`; c.fillRect(0, 0, W, H); }   // 從開機遮罩的全黑淡入
