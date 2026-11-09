@@ -388,7 +388,8 @@ const BGM = (() => {
       out = ac.createGain(); out.gain.value = MASTER; out.connect(ac.destination);
       const total = song.bars.length * 16;
       for (let i = 0, t = .05; t < sec - .3; i++, t += STEP) schedule(song, i < total ? i : song.loopFrom * 16 + (i - total) % (total - song.loopFrom * 16), t, !!opt.hot);
-      const d = (await ac.startRendering()).getChannelData(0), rms = [];
+      const rb = await ac.startRendering(); if (opt.raw) { [ac, out, waves, noiseBuf, song, tr, STEP] = prev; return rb; }   // opt.raw：直接回傳音訊（錄影用）
+      const d = rb.getChannelData(0), rms = [];
       for (let s = 0; s < sec; s++) { let a = 0; for (let k = s * 44100; k < (s + 1) * 44100; k++) a += d[k] * d[k]; rms.push(+Math.sqrt(a / 44100).toFixed(3)); }
       let peak = 0; for (const v of d) peak = Math.max(peak, Math.abs(v));
       const loopSec = +(total * STEP).toFixed(1);

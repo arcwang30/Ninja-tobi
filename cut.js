@@ -62,7 +62,8 @@ const INTRO = {
   heroAnim(cls) { const it = $('intro'); it.classList.remove('play', 'hero-in', 'hero-out'); void it.offsetWidth; it.classList.add(cls); poofAt(cls === 'hero-in' ? .4 : .05); },
   // 畫布被點擊（只有開場階段會收到；回傳 true 表示已處理）
   tap() {
-    if (this.ph === 'tap') { if (this.t > .3) this.playCut(); return true; }
+    if (this.ph === 'tap') { if (this.t > .3) { if (TRANS_K) { this.ph = 'trans'; this.t = 0; this.sfx = {}; } else this.playCut(); } return true; }
+    if (this.ph === 'trans') { this.playCut(); return true; }   // 銜接演出：點一下直接進故事
     if (this.ph === 'cut') { if (this.t < CUT_FLASH) this.t = CUT_FLASH; return true; }
     return false;
   },
@@ -72,6 +73,7 @@ const INTRO = {
   update(dt) {
     if (this.frozen) return;
     this.t += dt;
+    if (this.ph === 'trans') { transSfx(this.t); if (this.t >= TRANS_T[TRANS_K]) this.playCut(); return; }
     if (this.ph === 'cut') {
       cutSfx(this.t);
       if (this.t >= CUT_END) this.toTitle();
@@ -97,6 +99,7 @@ const INTRO = {
     const c = ctx;
     if (this.ph === 'boot') { c.fillStyle = '#000'; c.fillRect(0, 0, W, H); return; }
     if (this.ph === 'tap') return drawTapScreen(this.t);
+    if (this.ph === 'trans') return drawTrans(this.t);
     if (this.ph === 'cut') return drawCut(this.t);
     drawTitleBG(performance.now() / 1000); drawFrontHero(performance.now() / 1000); drawPoofs();
     if (this.attract >= 0) drawAttract(this.attract);
@@ -189,6 +192,63 @@ function drawTapScreen(t) {
   if (t < .6) { c.fillStyle = `rgba(0,0,0,${1 - ez(t / .6)})`; c.fillRect(0, 0, W, H); }   // 從開機遮罩的全黑淡入
 }
 const t_ = k => (typeof t === 'function' ? t(k) : k);
+
+// ===== 「點一下開始」→ 故事的銜接演出（原型：?trans=A 推進月亮／?trans=D 拍子木＋墨染；未指定時維持原本直接切換） =====
+const TRANS_K = (q => (q === 'A' || q === 'D' ? q : null))((new URLSearchParams(location.search).get('trans') || '').toUpperCase());
+const TRANS_T = { A: 1.5, D: 1.8 };
+// 音效：一開始就把整段排好（錄影時也能直接離線算出來）
+function transSound(k) {
+  if (k === 'A') {   // 風聲→琴音往上爬→鈴
+    SFX.wind();
+    ['E5', 'F5', 'A5', 'B5', 'E6', 'F6'].forEach((n, i) => { const f = 440 * Math.pow(2, ({ E: -5, F: -4, A: 0, B: 2 }[n[0]] + (+n[1] - 4) * 12) / 12); tone(f, .5, 'triangle', .035, 0, .35 + i * .13); });
+    tone(1318.5, 1, 'sine', .05, 0, 1.15); tone(1975.5, .8, 'sine', .025, 0, 1.2);
+  } else {   // 拍子木「咔、咔！」→ 低沉的鼓聲＋墨暈開 →「序」
+    for (const d of [.05, .4]) { noise(.04, .14, d); tone(2400, .06, 'square', .05, -900, d); tone(1150, .09, 'triangle', .07, 0, d); }
+    tone(90, .7, 'sine', .14, -40, .6); noise(.6, .05, .6);
+    tone(659.3, .9, 'triangle', .035, 0, 1.0); tone(329.6, .9, 'triangle', .03, 0, 1.0);
+  }
+}
+function transSfx(tt) { if (!INTRO.sfx.trans) { INTRO.sfx.trans = 1; transSound(TRANS_K); } }
+function drawTrans(t) {
+  const c = ctx, T = performance.now() / 1000, cl = x => Math.max(0, Math.min(1, x));
+  if (TRANS_K === 'A') {   // 推進月亮：竹子往兩側滑開、屋頂下沉、月亮放大成白光、上下黑邊滑入
+    const k = ez(cl(t / 1.25)), kb = ez(cl((t - .3) / .9));
+    nightSky(0, H, T);
+    bigMoon(W * (.7 - .2 * k), H * (.3 + .1 * k), W * .2 * (1 + 3.2 * k));
+    for (const [fx, w] of [[.06, 16], [.18, 10], [.84, 14], [.95, 18]]) bambooSil(fx * W + Math.sign(fx - .5) * W * .7 * k, 0, H, w * (1 + 1.5 * k), '#05060f', 3, T);
+    roofs(H * (.86 + .35 * k), '#05060f', 1, T); c.fillStyle = '#05060f'; c.fillRect(0, H * (.86 + .35 * k), W, H);
+    const wa = ez(cl((t - .85) / .45)); if (wa > 0) { c.fillStyle = `rgba(255,252,236,${wa})`; c.fillRect(0, 0, W, H); }
+    const { PY, PH } = cutBox(); c.fillStyle = '#000'; c.fillRect(0, 0, W, PY * kb); c.fillRect(0, H - (H - PY - PH) * kb, W, (H - PY - PH) * kb);
+    if (t > 1.3) { c.fillStyle = `rgba(0,0,0,${cl((t - 1.3) / .2)})`; c.fillRect(0, 0, W, H); }   // 白光→黑場，接故事第一個鏡頭
+  } else {   // 拍子木＋墨染
+    const sk = (t < .15 ? 1 - t / .15 : t > .4 && t < .55 ? 1 - (t - .4) / .15 : 0) * 4;
+    c.save(); c.translate((Math.random() - .5) * sk, (Math.random() - .5) * sk);
+    nightSky(0, H, T); bigMoon(W * .7, H * .3, W * .2);
+    for (const [fx, w] of [[.06, 16], [.18, 10], [.84, 14], [.95, 18]]) bambooSil(fx * W, 0, H, w, '#05060f', 3, T);
+    roofs(H * .86, '#05060f', 1, T); c.fillStyle = '#05060f'; c.fillRect(0, H * .86, W, H * .14);
+    c.restore();
+    for (const d of [.05, .4]) if (t >= d && t < d + .12) { c.fillStyle = `rgba(255,255,255,${.5 * (1 - (t - d) / .12)})`; c.fillRect(0, 0, W, H); }   // 拍子木的閃光
+    // 墨從中央暈開（邊緣不規則，外圍有墨滴）
+    const ik = ez(cl((t - .6) / .55));
+    if (ik > 0) {
+      const R = ik * Math.hypot(W, H) * .62, cx = W / 2, cy = H * .48;
+      c.fillStyle = '#060508'; c.beginPath();
+      for (let i = 0; i <= 64; i++) { const a = i / 64 * TAU, r = R * (1 + .1 * Math.sin(a * 5 + 1.3) + .06 * Math.sin(a * 11 + .4) + .04 * Math.sin(a * 17)); c.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); }
+      c.closePath(); c.fill();
+      for (let i = 0; i < 14; i++) { const a = i * 2.39, r = R * (1.08 + (i % 4) * .05); aCirc(c, cx + Math.cos(a) * r, cy + Math.sin(a) * r, 3 + (i % 5) * 2.2 * ik); c.fill(); }
+    }
+    // 「序」
+    const sa = cl((t - 1.0) / .25) * (1 - cl((t - 1.55) / .25));
+    if (sa > 0) {
+      const s = 1 + (1 - ez(cl((t - 1.0) / .25))) * .25;
+      c.save(); c.globalAlpha = sa; c.translate(W / 2, H * .46); c.scale(s, s);
+      c.font = `${Math.round(Math.min(W * .42, 150))}px "Yuji Boku","Yu Mincho",serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillStyle = '#f2e6c8'; c.fillText('序', 0, 0);
+      c.fillStyle = '#c0262d'; c.beginPath(); c.rect(W * .12, W * .1, 24, 24); c.fill(); c.fillStyle = '#fff'; c.font = '16px "Yuji Boku",serif'; c.fillText('忍', W * .12 + 12, W * .1 + 13);
+      c.restore();
+    }
+  }
+}
 
 // ===== 過場「月下的狼煙」 =====
 // 畫面上下有黑邊；圖在中間（PY～PY+PH），下面的黑色區域放逐字出現的文字（致敬紅白機的過場）
