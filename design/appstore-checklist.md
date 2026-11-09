@@ -6,16 +6,19 @@
 - [x] 遊戲內「看廣告復活」（倒下時，每局一次，倒數 5 秒）與結算「看廣告，小判 ×2」（每局一次）— `ads.js`
 - [x] 目前是**假廣告**（倒數 3 秒），換真廣告時只要改 `ads.js` 的 `ADS.ready()`／`ADS.show()`
 - [x] 新手教學中不出現廣告；離線時按鈕隱藏；中途關掉廣告不給獎勵
-- [x] 隱私權政策頁面 `privacy.html`（繁中／日文／英文），設定頁有連結
-  - 上架後網址：https://arcwang30.github.io/Ninja-tobi/privacy.html
-  - ⚠️ 聯絡信箱還沒填（頁面上標示「聯絡信箱待補」）
+- [x] 隱私權政策與支援頁（繁中／日文／英文，版型同節奏大王燒）：原始檔在 `site/ninjatobi/`，用 `bash tools/deploy-site.sh "說明"` 發佈到官網，設定頁有連結
+  - 隱私權政策網址：https://arcconceptgames.github.io/ninjatobi/privacy/ （日文、英文加 `?lang=ja`、`?lang=en`）
+  - 支援網址：https://arcconceptgames.github.io/ninjatobi/support/
+  - 官網首頁已加忍者鳶的作品卡片（在 yaki_mochi 專案的 site/index.html，用那邊的 deploy-site.sh 發佈）
+  - 聯絡信箱：arcconceptgames@gmail.com
+  - ⚠️ 支援頁寫了「設定 → 恢復購買」，接 App Store 內購時要記得做這顆按鈕
 - [x] 完整版鎖（林關免費，風／山／火要購買；購買目前是測試按鈕）
 
 ## 🧑 需要你本人處理的（之後再做）
 - [ ] **申請 Apple Developer Program**（每年 US$99）
 - [ ] **申請 Google AdMob 帳號**、建立 iOS App 與「獎勵型廣告」廣告單元，取得 App ID 與廣告單元 ID
 - [ ] 填寫收款資料（AdMob、App Store Connect 的稅務與銀行資料）
-- [ ] 提供隱私權政策要放的**聯絡信箱**
+- [x] 聯絡信箱：沿用 arcconceptgames@gmail.com
 - [ ] App Store Connect：
   - [ ] 建立 App、填寫名稱、副標題、描述、關鍵字、分類（遊戲 › 動作／街機）
   - [ ] 上傳截圖（6.7 吋與 6.5 吋 iPhone，必要時 iPad）與宣傳影片（可選）

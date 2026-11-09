@@ -337,7 +337,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v65';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v66';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -2549,7 +2549,7 @@ document.addEventListener('click', e => {
     case 'contad': contWatch(); break;   // 看廣告復活（ads.js）
     case 'contgive': contResult(false); break;
     case 'adcoins': adCoinsWatch(); break;
-    case 'privacy': window.open('privacy.html', '_blank', 'noopener'); break;   // 隱私權政策
+    case 'privacy': window.open('https://arcconceptgames.github.io/ninjatobi/privacy/?lang=' + ['zh', 'ja', 'en'][LI], '_blank', 'noopener'); break;   // 隱私權政策（官網，原始檔在 site/ninjatobi，用 tools/deploy-site.sh 發佈）
     case 'fulltest': save.full = !hasFull(); persist(); renderOpt(); break;   // 測試模式：切換是否擁有完整版
     case 'lvlock': toast(t('lv_locked')); break;
     case 'shop':
