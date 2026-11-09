@@ -51,6 +51,20 @@ const INTRO = {
   },
   // 進入過場（重看開場也從這裡開始）
   playCut() { hideAll(); this.ph = 'cut'; this.t = 0; this.said = -1; this.sfx = {}; },
+  // 故事結尾 →「竹簾開幕」：轉暗 → 竹簾 → 鳶從下往上飛出畫面 → LOGO 蓋章在竹簾上 → 竹簾左右拉開、標題背景亮起 → 主角現身
+  startOutro() { this.ph = 'outro'; this.t = 0; this.logoOn = false; },
+  outroLogo() {   // 標題畫面先出現，但選單藏起來，只播 LOGO 蓋章
+    if (this.logoOn) return; this.logoOn = true;
+    if (state === 'menu') show('title');
+    $('title').classList.add('curtain');
+    const it = $('intro'); it.classList.remove('play', 'hero-in', 'hero-out'); void it.offsetWidth; it.classList.add('logo-only');
+  },
+  endOutro() {
+    this.outroLogo();
+    this.ph = 'title'; this.flash = 0; this.idle = 0; this.endAttract();
+    $('title').classList.remove('curtain'); $('intro').classList.remove('logo-only');
+    this.cyc = 'front'; this.ct = 0; TH.vis = 0; this.heroAnim('hero-in');   // 主角從忍術陣現身、選單淡入
+  },
   replay() { this.playCut(); },
   // 接到標題：顯示標題選單並播放 LOGO 蓋章＋忍術陣現身
   toTitle() {
@@ -65,6 +79,7 @@ const INTRO = {
     if (this.ph === 'tap') { if (this.t > .3) { if (TRANS_K) { this.ph = 'trans'; this.t = 0; this.sfx = {}; } else this.playCut(); } return true; }
     if (this.ph === 'trans') { this.playCut(); return true; }   // 銜接演出：點一下直接進故事
     if (this.ph === 'cut') { if (this.t < CUT_FLASH) this.t = CUT_FLASH; return true; }
+    if (this.ph === 'outro') { if (this.t > .3) this.endOutro(); return true; }   // 竹簾開幕：點一下直接到標題
     return false;
   },
   // 任何點擊或按鍵：重新計算閒置時間、結束待機展示
@@ -74,9 +89,10 @@ const INTRO = {
     if (this.frozen) return;
     this.t += dt;
     if (this.ph === 'trans') { transSfx(this.t); if (this.t >= TRANS_T[TRANS_K]) this.playCut(); return; }
+    if (this.ph === 'outro') { outroCue(this.t - dt, this.t); if (this.t >= OUT_T) this.endOutro(); return; }
     if (this.ph === 'cut') {
       cutSfx(this.t);
-      if (this.t >= CUT_END) this.toTitle();
+      if (this.t >= CUT_END) this.startOutro();   // 接「竹簾開幕」再到標題
     } else if (this.ph === 'title') {
       if (this.flash > 0) this.flash = Math.max(0, this.flash - dt / .7);
       titleBgUpdate(dt); frontHeroUpdate(dt);
@@ -100,6 +116,7 @@ const INTRO = {
     if (this.ph === 'boot') { c.fillStyle = '#000'; c.fillRect(0, 0, W, H); return; }
     if (this.ph === 'tap') return drawTapScreen(this.t);
     if (this.ph === 'trans') return drawTrans(this.t);
+    if (this.ph === 'outro') return drawOutro(this.t);
     if (this.ph === 'cut') return drawCut(this.t);
     drawTitleBG(performance.now() / 1000); drawFrontHero(performance.now() / 1000); drawPoofs();
     if (this.attract >= 0) drawAttract(this.attract);
@@ -209,12 +226,19 @@ function koto(f, delay, vol = .04) { tone(f, .9, 'triangle', vol, 0, delay); ton
 const TRANS_T = { A: 1.5, D: 1.8 };
 // 音效：一開始就把整段排好（錄影時也能直接離線算出來）
 function transSound(k) {
-  if (k === 'A') {   // 輕柔的夜風 → 和聲慢慢浮現 → 琴的五聲音階（E G A B D）往上撥 → 月光亮起時的風鈴
-    noise(1.1, .012);                                             // 很輕的夜風
-    for (const [f, v] of [[82.4, .05], [123.5, .03], [164.8, .025], [246.9, .015]]) softPad(f, 1.6, v, 0);   // 和聲墊底（E、B）
-    [329.6, 392, 440, 493.9, 587.3, 659.3, 784].forEach((f, i) => koto(f, .28 + i * .1, .032 + i * .002));   // 琴音往上爬
-    // 風鈴：主音＋五度＋八度，長長的餘韻
-    for (const [f, v, d] of [[1318.5, .035, 0], [1975.5, .018, .02], [2637, .01, .04], [1318.5 * 1.006, .015, .06]]) tone(f, 1.6, 'sine', v, 0, 1.12 + d);
+  if (k === 'A') {   // 夜風 → 都節音階（E F A B C）的琴音往上撥，主旋律下面加一聲四度和音、裝飾音 → 最高音「押し手」滑下來 → 風鈴
+    noise(1.1, .01);                                              // 很輕的夜風
+    const N = { B4: 493.9, E5: 659.3, F5: 698.5, A5: 880, B5: 987.8, C6: 1046.5, E6: 1318.5, F6: 1396.9 };
+    // 主旋律：B4（拾音）→ E5 F5 A5 B5 C6 → E6
+    [['B4', .26], ['E5', .36], ['F5', .45], ['A5', .54], ['B5', .63], ['C6', .72], ['E6', .84]].forEach(([n, d], i) => koto(N[n], d, .03 + i * .002));
+    // 和音：在 E5、A5、E6 底下各加一聲四度／五度，聽起來更飽滿
+    [[N.B4, .36], [N.E5, .54], [N.B5, .84]].forEach(([f, d]) => koto(f, d + .01, .016));
+    // 裝飾音：C6 前面一個快速的 B5→C6 倚音
+    koto(N.B5, .69, .014);
+    // 最高音「押し手」：F6 輕輕滑落到 E6（琴特有的推弦）
+    tone(N.F6, .8, 'triangle', .022, N.E6 - N.F6, .98);
+    // 風鈴：主音＋五度＋八度，長長的餘韻（略帶走音的第二顆鈴讓聲音有光澤）
+    for (const [f, v, d] of [[1318.5, .032, 0], [1975.5, .016, .02], [2637, .009, .04], [1318.5 * 1.006, .014, .06]]) tone(f, 1.6, 'sine', v, 0, 1.14 + d);
   } else {   // 拍子木「咔、咔！」→ 低沉的鼓聲＋墨暈開 →「序」
     for (const d of [.05, .4]) { noise(.04, .14, d); tone(2400, .06, 'square', .05, -900, d); tone(1150, .09, 'triangle', .07, 0, d); }
     tone(90, .7, 'sine', .14, -40, .6); noise(.6, .05, .6);
@@ -263,6 +287,62 @@ function drawTrans(t) {
   }
 }
 
+// ===== 故事結尾的「竹簾開幕」 =====
+const OUT_T = 3.7, OUT_KITE = .35, OUT_LOGO = 1.4, OUT_OPEN = 2.25;   // 總長、鳶起飛、LOGO 蓋章、竹簾拉開
+function outroCue(e0, e1) {
+  const at = x => e0 < x && e1 >= x;
+  if (at(OUT_KITE + .15)) { tone(2100, .35, 'sine', .035, -500); tone(1650, .5, 'sine', .03, -350, .32); noise(.6, .02); }   // 鳶鳴「ピーヒョロ」＋翅膀帶起的風
+  if (at(OUT_LOGO)) { INTRO.outroLogo(); SFX.impact(); vib(40); }
+  if (at(OUT_OPEN)) {   // 「咔噠」＋琴的刷弦（都節音階往上）
+    noise(.05, .1); tone(1100, .07, 'triangle', .06);
+    [329.6, 349.2, 440, 493.9, 523.3, 659.3].forEach((f, i) => koto(f, .08 + i * .05, .03));
+  }
+}
+// 一片竹簾（橫向細竹片＋縫隙透光＋綁繩＋上緣布邊＋內側的紅流蘇）。x0 = 這一片的左緣，side = -1 左片／+1 右片
+function sudare(c, x0, w, side, sway) {
+  const top = SAFE_T, slat = 7, gap = 1.6;
+  for (let y = top + 22, i = 0; y < H; y += slat + gap, i++) {
+    const sx = x0 + Math.sin(i * .9) * .6 + (y / H) * sway;   // 下緣跟著晃
+    const gr = c.createLinearGradient(0, y, 0, y + slat); gr.addColorStop(0, '#d9b97e'); gr.addColorStop(.5, '#c29a5c'); gr.addColorStop(1, '#9c7640');
+    c.globalAlpha *= .9; c.fillStyle = gr; c.fillRect(sx, y, w, slat); c.globalAlpha /= .9;   // 竹片微透，後面的月光透得過來
+    c.fillStyle = 'rgba(90,60,25,.55)'; for (let k = 0; k < 3; k++) { const nx = sx + ((i * 47 + k * 83) % Math.max(20, w)); c.fillRect(nx, y, 2, slat); }   // 竹節
+  }
+  // 綁繩（三條直的深色繩）
+  c.strokeStyle = '#3a2614'; c.lineWidth = 2;
+  for (const f of [.2, .5, .8]) { const x = x0 + w * f; c.beginPath(); c.moveTo(x, top + 22); c.lineTo(x + sway, H); c.stroke(); }
+  // 上緣布邊（深綠＋金紋）
+  c.fillStyle = '#1e3a2c'; c.fillRect(x0, top, w, 22); c.fillStyle = '#c9a14a'; for (let x = x0 + 6; x < x0 + w; x += 18) { c.beginPath(); c.arc(x, top + 11, 3, 0, TAU); c.fill(); }
+  c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(x0, top + 22, w, 3);
+  // 內側邊緣的紅流蘇
+  const ex = side < 0 ? x0 + w - 10 : x0 + 10, ty = H * .62, sw = sway * .7;
+  c.strokeStyle = '#7a1a10'; c.lineWidth = 2; c.beginPath(); c.moveTo(ex, top + 22); c.lineTo(ex + sw * .5, ty); c.stroke();
+  c.fillStyle = '#c0262d'; c.beginPath(); c.arc(ex + sw * .5, ty, 6, 0, TAU); c.fill();
+  c.beginPath(); c.moveTo(ex + sw * .5 - 6, ty + 3); c.lineTo(ex + sw - 5, ty + 34); c.lineTo(ex + sw + 5, ty + 34); c.lineTo(ex + sw * .5 + 6, ty + 3); c.closePath(); c.fill();
+}
+function drawOutro(t) {
+  const c = ctx, T = performance.now() / 1000, cl = x => Math.max(0, Math.min(1, x));
+  const open = ez(cl((t - OUT_OPEN) / 1.25)), half = W / 2;
+  // 竹簾後面：開幕前是暗暗的月光，開幕時換成標題背景慢慢亮起
+  c.fillStyle = '#06060c'; c.fillRect(0, 0, W, H);
+  if (open > 0) { drawTitleBG(T); c.fillStyle = `rgba(0,0,0,${1 - open})`; c.fillRect(0, 0, W, H); }
+  else { const g2 = c.createRadialGradient(W * .7, H * .3, 10, W * .7, H * .3, W * .9); g2.addColorStop(0, 'rgba(255,236,180,.35)'); g2.addColorStop(1, 'rgba(255,236,180,0)'); c.fillStyle = g2; c.fillRect(0, 0, W, H); }
+  // 竹簾（淡入、拉開時往兩側滑出並晃動）
+  const fade = cl(t / .35), sway = open > 0 && open < 1 ? Math.sin(open * Math.PI) * 14 : Math.sin(T * 1.6) * 1.5;
+  c.save(); c.globalAlpha = fade;
+  sudare(c, -open * half * 1.06, half + 1, -1, -sway);
+  sudare(c, half + open * half * 1.06, half, 1, sway);
+  c.restore();
+  if (t < .35) { c.fillStyle = `rgba(0,0,0,${1 - fade})`; c.fillRect(0, 0, W, H); }
+  // 鳶的黑影：從畫面下方往上飛、由大變小，飛出上緣；後面帶著幾片竹葉
+  const kq = (t - OUT_KITE) / 1.0;
+  if (kq > 0 && kq < 1.05) {
+    const e = ez(cl(kq)), x = W * (.42 + .16 * Math.sin(kq * 3)), y = H * 1.1 - e * H * 1.3, s = 2.6 - 1.6 * e;
+    kiteBird(c, x, y, s, Math.sin(T * 16), 'rgba(8,6,14,.92)');
+    for (let i = 0; i < 6; i++) { const lq = cl(kq - .08 - i * .05); if (lq <= 0) continue; const lx = x + Math.sin(i * 2.1 + kq * 5) * 40 * s / 2, ly = y + 60 + i * 22 + lq * 30;
+      c.save(); c.translate(lx, ly); c.rotate(i + kq * 6); c.fillStyle = `rgba(40,70,40,${.8 * (1 - lq)})`; c.beginPath(); c.ellipse(0, 0, 7, 2.4, 0, 0, TAU); c.fill(); c.restore(); }
+  }
+}
+
 // ===== 過場「月下的狼煙」 =====
 // 畫面上下有黑邊；圖在中間（PY～PY+PH），下面的黑色區域放逐字出現的文字（致敬紅白機的過場）
 function cutBox() { const PY = Math.max(H * .1, SAFE_T + 10); return { PY, PH: H * .62, TY: PY + H * .62 }; }
@@ -294,7 +374,8 @@ function drawCut(t) {
   }
   txt(t_('cut_skip'), W - 12, H - 18, 11, 'rgba(255,255,255,.4)', 'right', null);
   // 最後的白光
-  if (t >= CUT_FLASH) { c.fillStyle = `rgba(255,255,255,${ez((t - CUT_FLASH) / (CUT_END - CUT_FLASH))})`; c.fillRect(0, 0, W, H); }
+  // 結尾轉暗（接竹簾開幕）
+  if (t >= CUT_FLASH) { c.fillStyle = `rgba(0,0,0,${ez((t - CUT_FLASH) / (CUT_END - CUT_FLASH))})`; c.fillRect(0, 0, W, H); }
 }
 function wrapCut(s, w) {
   const c = ctx, out = []; let line = '';

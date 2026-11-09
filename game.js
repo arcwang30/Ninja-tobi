@@ -334,7 +334,7 @@ const ACT_KEY = [0, 2, 5, 3];   // 林／風／火／山 的移調（半音）
 function musicFor() {
   if (!ac || !musV() || document.hidden) return BGM.stop();
   BGM.setVol(musV());
-  if (state === 'menu') return INTRO.ph === 'cut' ? BGM.play(ac, 'boss', { sp: .85, tr: -3 }) : INTRO.ph === 'title' ? BGM.play(ac, 'title') : BGM.stop();
+  if (state === 'menu') return INTRO.ph === 'cut' ? BGM.play(ac, 'boss', { sp: .85, tr: -3 }) : INTRO.ph === 'title' || (INTRO.ph === 'outro' && INTRO.t > OUT_OPEN) ? BGM.play(ac, 'title') : BGM.stop();
   if (!g || paused || state === 'over' || state === 'dying' || state === 'fin' || state === 'clearq') return BGM.stop();
   BGM.hot = g.fever > 0;
   // 每關的樂曲：林「疾風ノ道」、風「天翔」、火「紅蓮」、山「雪嶺」；魔王戰共用「鬼哭」並依關卡移調
@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v85';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v86';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;

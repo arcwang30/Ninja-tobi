@@ -93,6 +93,9 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 #intro.play .puff { animation: puff .7s .9s ease-out both; }
 #intro.play .hero-art { animation: hero-appear .55s .95s cubic-bezier(.2, 1.6, .4, 1) both, hero-bob 2.6s 1.55s ease-in-out infinite; }
 #title.on .menu, #title.on .dock { animation: fade-in .5s 1.2s both; }
+/* 故事結尾的竹簾開幕（cut.js drawOutro）：竹簾拉開前只蓋 LOGO，選單、商店都先藏起來 */
+#title.curtain .menu, #title.curtain .dock, #title.curtain .shop-corner { visibility: hidden; animation: none; }
+#intro.logo-only .logo-box { animation: logo-stamp .42s cubic-bezier(.5, 0, .7, .4) both, logo-shake .3s .42s linear both; }
 /* 標題主角輪播：hero-in＝從忍術陣傳送出來；hero-out＝化煙消失（換背景的剪影出場） */
 #intro.hero-in .jutsu-ring { animation: ring-in .45s cubic-bezier(.2, 1.4, .4, 1) both, ring-out .4s .65s ease-in forwards; }
 #intro.hero-in .jutsu-lines { animation: lines 1s .1s ease-out both; }
