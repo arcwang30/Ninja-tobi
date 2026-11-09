@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v76';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v77';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -1688,6 +1688,74 @@ function updateFin(dt) {
   if (at(3.9)) { SFX.impact(); vib(40); }
   if (g.finT >= FIN_T) { if (g.preview) { g.finT = 0; if (ac && musV()) BGM.jingle(ac, 'finish'); } else finishBoss(true); }   // ?finshow 預覽：重播、不寫存檔
 }
+// 封印陣：外圈雙環＋九字環（臨兵闘者皆陣烈在前）＋反向旋轉的刻度環＋五芒星＋內圈「封」，依進度 L 依序浮現；k＝整段進度（最後放光）
+function drawSeal(x, y, R, L, k, T) {
+  const G = '255,214,90', ph = f => clamp((L - f[0]) / (f[1] - f[0]), 0, 1);   // 每一層的出現進度
+  ctx.save(); ctx.translate(x, y);
+  // 底光
+  const bg = ctx.createRadialGradient(0, 0, R * .1, 0, 0, R * 1.35); bg.addColorStop(0, `rgba(${G},${.28 * L})`); bg.addColorStop(.7, `rgba(${G},${.08 * L})`); bg.addColorStop(1, `rgba(${G},0)`);
+  ctx.fillStyle = bg; ctx.fillRect(-R * 1.4, -R * 1.4, R * 2.8, R * 2.8);
+  ctx.globalCompositeOperation = 'lighter'; ctx.shadowColor = `rgb(${G})`; ctx.lineCap = 'round';
+  const ring = (r, w, p, a = 1) => { if (p <= 0) return; ctx.strokeStyle = `rgba(${G},${a})`; ctx.lineWidth = w; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(0, 0, r, -Math.PI / 2, -Math.PI / 2 + TAU * p); ctx.stroke(); };
+  // ① 外圈雙環
+  const p1 = ph([0, .3]); ring(R, 3, p1); ring(R * .93, 1.5, p1, .8);
+  // ② 九字環：在兩圈之間繞著轉
+  const p2 = ph([.15, .55]), rot = T * .35;
+  if (p2 > 0) {
+    const W9 = [...'臨兵闘者皆陣烈在前'];
+    ctx.font = `${Math.round(R * .14)}px ${BRUSH}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.shadowBlur = 8;
+    W9.forEach((ch, i) => {
+      const a = rot + i / W9.length * TAU, v = clamp(p2 * W9.length - i, 0, 1); if (v <= 0) return;
+      ctx.save(); ctx.rotate(a); ctx.translate(0, -R * .865); ctx.globalCompositeOperation = 'source-over';   // 字用一般疊色，才不會被光暈吃掉
+      ctx.fillStyle = `rgba(255,244,205,${v})`; ctx.fillText(ch, 0, 0); ctx.restore();
+      ctx.save(); ctx.rotate(a + TAU / W9.length / 2); ctx.fillStyle = `rgba(${G},${v * .9})`; ctx.beginPath(); ctx.moveTo(0, -R * .89); ctx.lineTo(3, -R * .865); ctx.lineTo(0, -R * .84); ctx.lineTo(-3, -R * .865); ctx.closePath(); ctx.fill(); ctx.restore();   // 字與字之間的菱形
+    });
+  }
+  // ③ 刻度環（反向旋轉）
+  const p3 = ph([.3, .6]);
+  if (p3 > 0) {
+    ring(R * .79, 1.2, p3, .9);
+    ctx.save(); ctx.rotate(-T * .6); ctx.strokeStyle = `rgba(${G},${.85 * p3})`; ctx.shadowBlur = 4;
+    for (let i = 0; i < 48; i++) { const a = i / 48 * TAU, l = i % 4 ? 5 : 10; ctx.lineWidth = i % 4 ? 1 : 2; ctx.beginPath(); ctx.moveTo(Math.cos(a) * R * .79, Math.sin(a) * R * .79); ctx.lineTo(Math.cos(a) * (R * .79 - l), Math.sin(a) * (R * .79 - l)); ctx.stroke(); }
+    ctx.restore();
+  }
+  // ④ 五芒星＋外接圓（跟著九字環慢慢轉），頂點有光珠
+  const p4 = ph([.45, .8]);
+  if (p4 > 0) {
+    const r5 = R * .66; ring(r5, 2, p4, .9);
+    ctx.save(); ctx.rotate(rot * .6); ctx.strokeStyle = `rgba(${G},.95)`; ctx.lineWidth = 2.4; ctx.shadowBlur = 12;
+    const pts = [0, 2, 4, 1, 3, 0].map(i => [Math.cos(-Math.PI / 2 + i * TAU / 5) * r5, Math.sin(-Math.PI / 2 + i * TAU / 5) * r5]);
+    ctx.beginPath(); let len = 0; const seg = 5 * p4;
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) { const f = clamp(seg - (i - 1), 0, 1); if (f <= 0) break; ctx.lineTo(pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * f, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * f); len++; }
+    ctx.stroke();
+    for (let i = 0; i < 5; i++) if (seg > i) { const a = -Math.PI / 2 + i * TAU / 5, px = Math.cos(a) * r5, py = Math.sin(a) * r5; ctx.fillStyle = 'rgba(255,248,210,.95)'; ctx.beginPath(); ctx.arc(px, py, 3.5 + Math.sin(T * 8 + i) * 1, 0, TAU); ctx.fill(); }
+    ctx.restore();
+  }
+  // ⑤ 內圈＋「封」
+  const p5 = ph([.7, 1]);
+  if (p5 > 0) {
+    ring(R * .3, 2, p5); ring(R * .25, 1, p5, .7);
+  }
+  // 最後：光柱般的放射光
+  if (k > .78) {
+    const f = (k - .78) / .22; ctx.shadowBlur = 0;
+    for (let i = 0; i < 12; i++) { const a = i / 12 * TAU + T * .5, gl = ctx.createLinearGradient(0, 0, Math.cos(a) * R * 1.6, Math.sin(a) * R * 1.6); gl.addColorStop(0, `rgba(255,240,190,${.5 * f})`); gl.addColorStop(1, 'rgba(255,240,190,0)');
+      ctx.strokeStyle = gl; ctx.lineWidth = 6 + (i % 3) * 4; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * R * 1.6, Math.sin(a) * R * 1.6); ctx.stroke(); }
+  }
+  // 往上飄的金色光點
+  ctx.shadowBlur = 6;
+  for (let i = 0; i < 26; i++) { const u = (T * .5 + i * .137) % 1, a = i * 2.39, r = R * (.2 + (i * .31) % .9); ctx.fillStyle = `rgba(255,230,150,${(1 - u) * L * .9})`; ctx.beginPath(); ctx.arc(Math.cos(a) * r, Math.sin(a) * r * .9 - u * 40, 1.6 + (i % 3) * .6, 0, TAU); ctx.fill(); }
+  // 中央的「封」：深紅描邊＋金字，蓋在所有光的上面
+  const p5b = ph([.7, 1]);
+  if (p5b > 0) {
+    ctx.globalCompositeOperation = 'source-over'; ctx.shadowBlur = 14; ctx.shadowColor = 'rgba(255,214,90,.9)';
+    const s = 1 + .6 * (1 - easeO(p5b)); ctx.scale(s, s);
+    ctx.font = `${Math.round(R * .34)}px ${BRUSH}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = p5b;
+    ctx.lineWidth = 5; ctx.strokeStyle = '#6a120c'; ctx.strokeText('封', 0, 2); ctx.fillStyle = '#ffe9a0'; ctx.fillText('封', 0, 2);
+  }
+  ctx.restore();
+}
 function drawFin() {
   const e = g.finT, b = g.boss, fi = g.finInfo || {}, cx = W / 2, T = performance.now() / 1000;
   const bossSil = (x, y, s, col) => drawSil(x, y, 150 * s, 150 * s, 75 * s, 80 * s, col, c2 => drawBoss(b, 0, 0, s, c2));
@@ -1725,22 +1793,17 @@ function drawFin() {
     ctx.save(); ctx.translate(ccx, ccy); ctx.rotate(k * 3); ctx.globalAlpha = .85 - k * .5;
     drawSil(0, 0, 150 * 1.6, 150 * 1.6, 75 * 1.6, 80 * 1.6, '#3a2a4a', c2 => drawBoss(b, 0, 0, 1.6 * (1 - k * .85), c2)); ctx.restore(); ctx.globalAlpha = 1;
     for (let i = 0; i < 16; i++) { const a = i / 16 * TAU + T * 3, r = S * 1.3 * (1 - ((T * .9 + i * .13) % 1)); ctx.fillStyle = 'rgba(80,50,110,.8)'; aCirc(ctx, ccx + Math.cos(a) * r, ccy + Math.sin(a) * r, 4); ctx.fill(); }
-    // 符咒飛到四角
-    const fly = easeO(clamp(k / .35, 0, 1));
+    // 金色封印陣（先畫，符咒蓋在上面）
+    const L = clamp((k - .3) / .5, 0, 1);
+    if (L > 0) drawSeal(ccx, ccy, S * 1.25, L, k, T);
+    // 符咒從主角手中飛到陣的四個斜角
+    const fly = easeO(clamp(k / .3, 0, 1)), FR = S * 1.25 * 1.12;
     corners.forEach(([sx, sy]) => {
-      const x = cx + (sx * S) * fly, y = H * .86 - 40 + (ccy + sy * S - (H * .86 - 40)) * fly;
-      ctx.save(); ctx.translate(x, y); ctx.rotate(sx * .15); ctx.fillStyle = '#f4e8c0'; ctx.fillRect(-9, -16, 18, 32); ctx.strokeStyle = '#c0262d'; ctx.lineWidth = 2; ctx.strokeRect(-9, -16, 18, 32);
+      const tx = ccx + sx * FR * .7071, ty = ccy + sy * FR * .7071, x = cx + (tx - cx) * fly, y = H * .86 - 40 + (ty - (H * .86 - 40)) * fly;
+      if (fly >= 1) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const gl = ctx.createRadialGradient(x, y, 2, x, y, 28); gl.addColorStop(0, 'rgba(255,214,90,.7)'); gl.addColorStop(1, 'rgba(255,214,90,0)'); ctx.fillStyle = gl; ctx.fillRect(x - 30, y - 30, 60, 60); ctx.restore(); }
+      ctx.save(); ctx.translate(x, y); ctx.rotate(sx * .15 + Math.sin(T * 6 + sx) * .05); ctx.fillStyle = '#f4e8c0'; ctx.fillRect(-9, -16, 18, 32); ctx.strokeStyle = '#c0262d'; ctx.lineWidth = 2; ctx.strokeRect(-9, -16, 18, 32);
       ctx.beginPath(); ctx.moveTo(-4, -9); ctx.lineTo(4, -9); ctx.moveTo(0, -9); ctx.lineTo(0, 10); ctx.moveTo(-5, 2); ctx.lineTo(5, 2); ctx.stroke(); ctx.restore();
     });
-    // 金色封印陣：四方形＋對角線＋圓，依序畫出來
-    const L = clamp((k - .35) / .4, 0, 1);
-    if (L > 0) {
-      ctx.strokeStyle = `rgba(255,214,90,${.9})`; ctx.lineWidth = 3; ctx.shadowColor = '#ffd25a'; ctx.shadowBlur = 12;
-      ctx.beginPath(); ctx.rect(ccx - S, ccy - S, S * 2, S * 2); ctx.globalAlpha = L; ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(ccx - S, ccy - S); ctx.lineTo(ccx + S, ccy + S); ctx.moveTo(ccx + S, ccy - S); ctx.lineTo(ccx - S, ccy + S); ctx.stroke();
-      ctx.beginPath(); ctx.arc(ccx, ccy, S * 1.2, -Math.PI / 2, -Math.PI / 2 + TAU * L); ctx.stroke();
-      ctx.shadowBlur = 0; ctx.globalAlpha = 1;
-    }
     drawNinja(cx, H * .86, { face: 1, t: T, vy: 0, skin: save.skin, pose: 'apex' });
   } else {   // ⑤ 化為卷軸 → ⑥ 展開
     const [rc, ec] = MAKI_COL[fi.kind] || MAKI_COL[3];
@@ -2964,7 +3027,7 @@ document.addEventListener('click', e => {
 });
 
 applyLang();
-try { document.fonts.load('80px "Yuji Boku"', '豪天翔任務達成金剛身夢幻術雪華封鬼神斬風林火山之卷軸秘忍'); } catch (e) { }   // 先載好豪天翔卷軸的毛筆字（canvas 不會自己等字型）
+try { document.fonts.load('80px "Yuji Boku"', '豪天翔任務達成金剛身夢幻術雪華封鬼神斬風林火山之卷軸秘忍臨兵闘者皆陣烈在前'); } catch (e) { }   // 先載好豪天翔卷軸的毛筆字（canvas 不會自己等字型）
 buildHeroArt();   // 產生標題大圖與商店頭像（程式畫的主角）
 goTitle();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
