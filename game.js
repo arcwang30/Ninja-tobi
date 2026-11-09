@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v94';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v95';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -460,7 +460,7 @@ cv.addEventListener('pointerdown', e => {
   if (state === 'play' && !paused) {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
     const inG = p.x >= 0 && p.x <= W;   // iPad 橫向：點在兩側背景時只算移動，不判定 HUD 與按鈕
-    if (inG && Math.hypot(p.x - (W - 26), hy - HUD_Y1) < 30) { pauseGame(); return; }   // 暫停鈕：右邊、HUD 和遊戲畫面的交界上
+    if (inG && Math.hypot(p.x - (W - 26), hy - (HUD_Y0 + HUD_Y1) / 2) < 28) { pauseGame(); return; }   // 暫停鈕：HUD 右邊、兩列中間
     // 豪天翔按鈕（畫面中間偏下）：按鈕在操作區中間，所以只有「點一下就放開」才算按鈕；按住滑動仍是一般移動
     { const sb = scrollBtnPos(); inp.btn = g.scrolls > 0 && g.fly <= 0 && Math.hypot(p.x - sb.x, p.y - sb.y) < sb.r + 8 ? { t: performance.now(), x: p.x, y: p.y } : null; }   // 只有按鈕出現時才算
   }
@@ -2329,7 +2329,7 @@ function drawHUD() {
     ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(4, -5.5); ctx.lineTo(2, -2); ctx.lineTo(6, -2); ctx.closePath(); ctx.fill(); ctx.restore();   // 山頂積雪
     txt(Math.floor(g.top / 10) + 'm', hx + 19, cy, 17, '#cfeeff', 'left', INK, 4); }
   // 幕名（紅色落款方印）＋舞台 N/10＋本幕進度小條
-  const sx = W - 86;
+  const sx = W - 106;
   seal(sx, cy, 24, THEMES[g.th].k);
   txt((g.stage + 1) + '/' + ST_N, sx + 52, cy - 4, 15, g.stage % 5 === 4 ? '#ff9a8a' : '#fff', 'right', INK, 3);   // 舞台 N/10（魔王舞台是紅字）
   const pr = g.boss ? 1 : clamp((g.top - g.base) / STAGE_PX, 0, 1);
@@ -2337,23 +2337,22 @@ function drawHUD() {
   ctx.fillStyle = '#ffe28a'; rr(sx + 17, cy + 8, 35 * pr, 4, 2); ctx.fill();
   // ── 第二列 ──
   // HP：「命」字印章＋血條（低於 30% 會閃爍），拉長到小判前面
-  const hr = g.hp / g.maxHp, low = hr < .3 && Math.sin(g.t * 10) > 0, bw = W - 38 - 126;
+  const hr = g.hp / g.maxHp, low = hr < .3 && Math.sin(g.t * 10) > 0, bw = W - 38 - 136;
   seal(21, cy2, 20, '命');
   bar(36, cy2 - 9, bw, 18, hr, low ? '#ff9a9a' : hr < .3 ? '#ff3a3a' : '#e5342a');
   txt(`${Math.ceil(g.hp)}/${g.maxHp}`, 36 + bw / 2, cy2, 12, '#fff', 'center', INK, 3);
   // 小判
-  const kx = W - 112;
+  const kx = W - 122;
   ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(kx, cy2, 9, 11.5, 0, 0, 7); ctx.fill();
   ctx.fillStyle = '#e8b020'; ctx.beginPath(); ctx.ellipse(kx, cy2, 7, 9.5, 0, 0, 7); ctx.fill();
   ctx.strokeStyle = 'rgba(120,70,0,.7)'; ctx.lineWidth = 1; for (const d of [-3, 0, 3]) { ctx.beginPath(); ctx.moveTo(kx - 3.5, cy2 + d); ctx.lineTo(kx + 3.5, cy2 + d); ctx.stroke(); }
   txt(String(Math.floor(g.coins)), kx + 14, cy2, 17, '#ffd27a', 'left', INK, 4);
-  // 暫停：金框圓形家紋，放在右邊、HUD 和遊戲畫面的交界上（一半在 HUD、一半在畫面）
-  const px = W - 26, py = HB;
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(px, py + 2, 22, 0, 7); ctx.fill();   // 落在遊戲畫面上的淡影
-  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px, py, 21, 0, 7); ctx.fill();
-  ctx.fillStyle = '#141a28'; ctx.beginPath(); ctx.arc(px, py, 18, 0, 7); ctx.fill();
-  ctx.strokeStyle = '#e8b84a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(px, py, 18, 0, 7); ctx.stroke();
-  ctx.fillStyle = '#e8b84a'; rr(px - 8, py - 9, 5.5, 18, 1.5); ctx.fill(); rr(px + 2.5, py - 9, 5.5, 18, 1.5); ctx.fill();
+  // 暫停：金框圓形家紋，放在 HUD 右邊、跨兩列的正中間
+  const px = W - 26, py = (BY + HB) / 2;
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px, py, 19, 0, 7); ctx.fill();
+  ctx.fillStyle = '#141a28'; ctx.beginPath(); ctx.arc(px, py, 16.5, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#e8b84a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(px, py, 16.5, 0, 7); ctx.stroke();
+  ctx.fillStyle = '#e8b84a'; rr(px - 7, py - 8, 5, 16, 1.5); ctx.fill(); rr(px + 2, py - 8, 5, 16, 1.5); ctx.fill();
   // 以下（氣、技能、連斬、魔王血量…）原本以 HUD 高 64 排版，依新的 HUD 高度整體平移
   ctx.translate(0, HB - 64);
   // 氣（衝刺斬／急降斬的次數）
@@ -2366,10 +2365,10 @@ function drawHUD() {
     ctx.beginPath(); ctx.moveTo(x, 80); ctx.arc(x, 80, 5, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); ctx.fill();
   }
   // 經驗條（魂）、等級、已持有的技能
-  txt(`Lv ${g.lv}`, W - 56, 78, 12, '#9ad8ff', 'right', '#000', 3);
+  txt(`Lv ${g.lv}`, W - 12, 78, 12, '#9ad8ff', 'right', '#000', 3);
   // 經驗條：Lv 下方的小條
-  ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(W - 100, 87, 44, 4, 2); ctx.fill();
-  ctx.fillStyle = '#5ad1ff'; rr(W - 100, 87, 44 * clamp(g.xp / xpNeed(g.lv), 0, 1), 4, 2); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(W - 56, 87, 44, 4, 2); ctx.fill();
+  ctx.fillStyle = '#5ad1ff'; rr(W - 56, 87, 44 * clamp(g.xp / xpNeed(g.lv), 0, 1), 4, 2); ctx.fill();
   let ix = 40 + km * 16;
   ctx.font = `12px ${FONT}`;
   for (const s of SKILLS) {
