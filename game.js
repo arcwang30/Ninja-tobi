@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v95';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v96';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -460,7 +460,7 @@ cv.addEventListener('pointerdown', e => {
   if (state === 'play' && !paused) {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
     const inG = p.x >= 0 && p.x <= W;   // iPad 橫向：點在兩側背景時只算移動，不判定 HUD 與按鈕
-    if (inG && Math.hypot(p.x - (W - 26), hy - (HUD_Y0 + HUD_Y1) / 2) < 28) { pauseGame(); return; }   // 暫停鈕：HUD 右邊、兩列中間
+    if (inG && Math.hypot(p.x - (W - 26), hy - (HUD_Y1 - 21)) < 28) { pauseGame(); return; }   // 暫停鈕：HUD 右下角，貼齊 HUD 底邊
     // 豪天翔按鈕（畫面中間偏下）：按鈕在操作區中間，所以只有「點一下就放開」才算按鈕；按住滑動仍是一般移動
     { const sb = scrollBtnPos(); inp.btn = g.scrolls > 0 && g.fly <= 0 && Math.hypot(p.x - sb.x, p.y - sb.y) < sb.r + 8 ? { t: performance.now(), x: p.x, y: p.y } : null; }   // 只有按鈕出現時才算
   }
@@ -2347,8 +2347,8 @@ function drawHUD() {
   ctx.fillStyle = '#e8b020'; ctx.beginPath(); ctx.ellipse(kx, cy2, 7, 9.5, 0, 0, 7); ctx.fill();
   ctx.strokeStyle = 'rgba(120,70,0,.7)'; ctx.lineWidth = 1; for (const d of [-3, 0, 3]) { ctx.beginPath(); ctx.moveTo(kx - 3.5, cy2 + d); ctx.lineTo(kx + 3.5, cy2 + d); ctx.stroke(); }
   txt(String(Math.floor(g.coins)), kx + 14, cy2, 17, '#ffd27a', 'left', INK, 4);
-  // 暫停：金框圓形家紋，放在 HUD 右邊、跨兩列的正中間
-  const px = W - 26, py = (BY + HB) / 2;
+  // 暫停：金框圓形家紋，放在 HUD 右下角，底部貼齊 HUD 的底邊
+  const px = W - 26, py = HB - 21;
   ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px, py, 19, 0, 7); ctx.fill();
   ctx.fillStyle = '#141a28'; ctx.beginPath(); ctx.arc(px, py, 16.5, 0, 7); ctx.fill();
   ctx.strokeStyle = '#e8b84a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(px, py, 16.5, 0, 7); ctx.stroke();
