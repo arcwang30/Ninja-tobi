@@ -90,7 +90,7 @@ const PERKS = [
   { id: 'bounce', n: ['強腳', '強脚', 'Strong Legs'], d: ['跳躍高度 +8%', 'ジャンプ力 +8%', 'Jump height +8%'], max: 3, ic: '🦶' },
   { id: 'slowzone', n: ['退潮', '引き潮', 'Ebb Tide'], d: ['死亡區域上升速度 -15%', '死の領域の上昇 -15%', 'Death zone rises 15% slower'], max: 3, ic: '🌊' },
   { id: 'magnet', n: ['吸魂', '吸魂', 'Soul Magnet'], d: ['擴大魂、小判與道具的吸收範圍', '魂・小判・道具を吸い寄せる範囲が広がる', 'Larger pickup range for souls, koban and items'], max: 3, ic: '🧲' },
-  { id: 'combo', n: ['連斬之心', '連斬の心', 'Chain Heart'], d: ['連斬持續時間 +1.2 秒', '連斬の持続 +1.2秒', 'Chains last 1.2s longer'], max: 3, ic: '⚡' },
+  { id: 'combo', n: ['連斬之心', '連斬の心', 'Chain Heart'], d: ['連斬持續時間 +1.2 秒、落地寬限 +0.2 秒', '連斬の持続 +1.2秒、着地猶予 +0.2秒', 'Chains last 1.2s longer, +0.2s landing grace'], max: 3, ic: '⚡' },
   { id: 'kimax', n: ['丹田', '丹田', 'Inner Core'], d: ['「氣」上限 +1（可多衝刺一次）', '「気」の上限 +1', 'Max Ki +1 (one more dash)'], max: 2, ic: '🔷' },
   { id: 'quake', n: ['震地', '震地', 'Earthshaker'], d: ['急降斬衝擊波範圍 +50%', '急降斬の衝撃波範囲 +50%', 'Dive Slash shockwave +50% size'], max: 2, ic: '💥' },
   { id: 'reach', n: ['長刀', '長刀', 'Long Blade'], d: ['斬擊接觸範圍擴大', '斬撃の当たり判定が広がる', 'Larger slash reach'], max: 3, ic: '🗡️' },
@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v71';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v72';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -1144,7 +1144,10 @@ function land(pl) {
     if (pl.type === 'spike') { pl.type = 'normal'; floatText(p.x, p.y - 50, '破!', '#fff', 22); }
     g.shake = 9; SFX.impact(); vib(50);
     v = Math.max(v * 1.3, pl.type === 'spring' ? SPRING * 1.1 : 0);
-  } else if (g.fever <= 0) settleCombo();
+  } else if (g.fever <= 0 && g.combo >= 1 && g.comboT > 0) {
+    // 落地寬限：不立刻結算，剩下的連斬時間縮成寬限（0.8 秒＋連斬之心每級 0.2 秒），這段時間內再斬到就接上
+    g.comboT = Math.min(g.comboT, comboGrace()); g.grace = true;
+  }
   if (pl.type === 'spring') { v = Math.max(v, SPRING * (1 + .05 * pk('bounce'))); pl.comp = .25; SFX.spring(); p.spin = .55; }   // 彈簧：空翻
   else if (pl.type === 'spike') {
     if (p.inv <= 0) {
@@ -1285,7 +1288,7 @@ function slay(e, auto) {
   if (e.type !== 13) g.corpses.push({ type: e.type, x: e.x, y: e.y, a: ca, t: 0, ph: e.ph, vx: e.vx || 0, affix: e.affix, look: Math.sign(pp.x - e.x) || 1 });
   g.puffs.push({ x: e.x, y: e.y, t: 0, r: ed.w * .6 });
   g.combo = (g.comboT > 0 || g.fever > 0) ? g.combo + 1 : 1;
-  g.comboT = 3 + 1.2 * pk('combo');
+  g.comboT = comboMax(); g.grace = false;
   g.maxCombo = Math.max(g.maxCombo, g.combo);
   const mult = Math.min(g.combo, 20) * (g.fever > 0 ? 2 : 1);
   addBonus(ed.pts * mult);
@@ -1325,8 +1328,11 @@ function settleCombo() {
     addBonus(b);
     floatText(W / 2, 34, t('chain_bonus', g.combo, Math.round(b * (1 + .2 * pk('score')))), '#fff', 16, true);
   }
-  g.combo = 0; g.comboT = 0;
+  g.combo = 0; g.comboT = 0; g.grace = false;
 }
+// 連斬時間：3.5 秒（連斬之心每級 +1.2）；落地寬限：0.8 秒（每級 +0.2）
+const comboMax = () => 3.5 + 1.2 * pk('combo');
+const comboGrace = () => .8 + .2 * pk('combo');
 
 function startFever() {
   g.fever = 6;
@@ -2092,8 +2098,15 @@ function drawHUD() {
     if (g.fever > 0) {
       txt(t('fever_hud', g.fever.toFixed(1)), W / 2, 112, 13, '#ffd27a', 'center', '#000', 3);
     } else {
-      ctx.fillStyle = '#ffd27a'; ctx.fillRect(W / 2 - 40, 104, 80 * (g.comboT / (3 + 1.2 * pk('combo'))), 3);
-      if (g.combo < 10) txt(t('chain_hint', 10 - g.combo), W / 2, 116, 9, '#fff', 'center', '#000', 2);
+      // 落地寬限中：計時條變紅、變粗並閃爍「快接上！」
+      if (g.grace) {
+        ctx.fillStyle = '#000'; ctx.fillRect(W / 2 - 41, 103, 82, 6);
+        ctx.fillStyle = Math.sin(g.t * 30) > 0 ? '#ff4a3a' : '#ff9a6a'; ctx.fillRect(W / 2 - 40, 104, 80 * clamp(g.comboT / comboGrace(), 0, 1), 4);
+        txt(t('chain_grace'), W / 2, 118, 10, '#ff8a7a', 'center', '#000', 3);
+      } else {
+        ctx.fillStyle = '#ffd27a'; ctx.fillRect(W / 2 - 40, 104, 80 * (g.comboT / comboMax()), 3);
+        if (g.combo < 10) txt(t('chain_hint', 10 - g.combo), W / 2, 116, 9, '#fff', 'center', '#000', 2);
+      }
     }
   }
   // BOSS
