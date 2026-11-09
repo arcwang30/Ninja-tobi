@@ -638,7 +638,6 @@ function drawAttract(a) {
     });
   }
   const bar = H * .1 * fin * fout; c.fillStyle = '#000'; c.fillRect(0, 0, W, bar + SAFE_T * k); c.fillRect(0, H - bar, W, bar);
-  txt('NINJA 鳶 TOBI', W / 2, H - bar / 2 - 2, 15, '#ffe28a', 'center', null);
   c.globalAlpha = 1;
 }
 

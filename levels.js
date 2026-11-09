@@ -254,6 +254,6 @@ function renderJutsuPick() {
   const cur = curJutsu().id;
   $('lvJutsu').innerHTML = `<div class="lj-h">${t('ju_title')}<small>${t('jd_' + cur)}</small></div><div class="lj-row">` +
     JUTSU.map(j => jutsuOK(j)
-      ? `<button class="lj ${j.id === cur ? 'on' : ''}" data-act="jutsu" data-arg="${j.id}">${t('ju_' + j.id)}</button>`
-      : `<button class="lj lock" data-act="jutsulock" data-arg="${j.th}">🔒</button>`).join('') + `</div>`;
+      ? `<button class="lj ${j.id === cur ? 'on' : ''}" data-act="jutsu" data-arg="${j.id}"><img class="lj-ic" src="${emblemIcon(j)}" alt=""><span>${t('ju_' + j.id)}</span></button>`
+      : `<button class="lj lock" data-act="jutsulock" data-arg="${j.th}"><img class="lj-ic" src="${emblemIcon(j, true)}" alt=""><span>🔒</span></button>`).join('') + `</div>`;   // 每顆按鈕上方是該忍法的毛筆墨標誌
 }

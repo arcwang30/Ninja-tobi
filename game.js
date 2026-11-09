@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v96';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v97';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -2644,6 +2644,17 @@ function drawBeast(id, x, y, e, burn, col, T, sc) {
   c.restore();
   // 燒卷軸時：墨標誌化成光點散開
   if (burn > .4) for (let i = 0; i < 24; i++) { const u = clamp((burn - .4) / .6, 0, 1), a = i * 2.39, r = (40 + (i % 6) * 18) * s * (1 + u * 1.5); c.fillStyle = `rgba(${rgb},${1 - u})`; aCirc(c, x + Math.cos(a) * r, y + Math.sin(a) * r * .8 - u * 60, 2.5 + (i % 3)); c.fill(); }
+}
+// 忍法按鈕上的小圖示：同一套毛筆墨標誌，畫成小圖（依風林火山卷軸配色；未解鎖＝灰）
+const EMB_ICON = {};
+function emblemIcon(j, lock) {
+  const key = j.id + (lock ? '_l' : ''); if (EMB_ICON[key]) return EMB_ICON[key];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 120;
+  const c = cv.getContext('2d'), col = lock ? '#8a8478' : j.th < 0 ? '#e8b84a' : jutsuBand(j);
+  const n = parseInt(col.slice(1), 16), lt = [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => Math.round(v + (255 - v) * .12)).join(',');
+  c.translate(60, 60); c.scale(.5, .5);
+  for (const [f, w] of [ENSO, ...EMBLEM[j.id]]) inkStroke(c, f, w * (f === ENSO[0] ? .85 : 1.3), 1, `rgb(${lt})`, null);
+  return (EMB_ICON[key] = cv.toDataURL());
 }
 function drawCast() {
   const e = CAST_T - g.castT, T = performance.now() / 1000, cx = W / 2;

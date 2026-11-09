@@ -420,7 +420,11 @@ body.tut .tut-skip { display: block; }
 .lvsel .lj-h { font-size: .72em; color: var(--gold); letter-spacing: .15em; display: flex; justify-content: space-between; gap: .6em; align-items: baseline; margin-bottom: .3em; }
 .lvsel .lj-h small { color: var(--muted); letter-spacing: 0; font-size: .92em; text-align: right; }
 .lvsel .lj-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: .3em; }
-.lvsel .lj { margin: 0; padding: .4em .1em; font-size: .72em; letter-spacing: 0; white-space: nowrap; overflow: hidden; }
+.lvsel .lj { margin: 0; padding: .35em .1em .4em; font-size: .72em; letter-spacing: 0; white-space: nowrap; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: .15em; }
+/* 忍法的毛筆墨標誌：放在深色圓底上，金色按鈕上也看得清楚 */
+.lvsel .lj-ic { width: 3.8em; height: 3.8em; border-radius: 50%; background: radial-gradient(circle, #241a1c 55%, #120c0e 100%); box-shadow: inset 0 0 0 calc(var(--u)*1.5) rgba(0,0,0,.5); pointer-events: none; }
+.lvsel .lj span { line-height: 1.2; }
+.lvsel .lj.lock .lj-ic { opacity: .55; }
 .lvsel .lj.on { background: linear-gradient(var(--gold-l), var(--gold)); color: #3a2a08; text-shadow: none; }
 .lvsel .lj.lock { opacity: .5; }
 body.tut .scr.on ~ .tut-skip { display: none; }   /* 暫停、三選一時先藏起來 */
