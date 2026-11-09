@@ -328,6 +328,7 @@ const SFX = {
   soul: () => tone(1100 + Math.random() * 300, .05, 'sine', .025),
   thunder: () => { noise(.3, .12); tone(80, .3, 'sawtooth', .06, -30); },
   wind: () => tone(500, .12, 'triangle', .025, 500),
+  beat: () => { tone(62, .11, 'sine', .11, -20); tone(55, .1, 'sine', .08, -15, .2); },   // 低 HP 的心跳（很輕）
 };
 // 依遊戲狀態決定要放哪首曲子（每一幀呼叫；同一首不會重播）
 // 標題＝鳶ノ影；關卡＝疾風ノ道（每一幕換調、無盡之塔每輪加快）；魔王登場＝鬼哭；暫停／死亡／結算＝停止
@@ -346,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v93';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v94';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -410,7 +411,7 @@ function resize() {
   const dg = $('diag'); if (dg) dg.textContent = DIAG;
 }
 let SAFE_T = 0, BLUR_T = 0;
-const HUD_R1 = 30, HUD_R2 = 26;   // HUD 兩列的高度（遊戲座標）：第一列分數／高度／舞台、第二列 HP／小判
+const HUD_R1 = 38, HUD_R2 = 32;   // HUD 兩列的高度（遊戲座標）：第一列分數／高度／舞台、第二列 HP／小判
 let HUD_Y0 = 0, HUD_Y1 = 64, HUD_P = 30;   // HUD 的上下緣與第一列的下緣（扣掉瀏海後），點擊判定用
 addEventListener('resize', resize);
 addEventListener('orientationchange', () => setTimeout(resize, 300));
@@ -459,7 +460,7 @@ cv.addEventListener('pointerdown', e => {
   if (state === 'play' && !paused) {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
     const inG = p.x >= 0 && p.x <= W;   // iPad 橫向：點在兩側背景時只算移動，不判定 HUD 與按鈕
-    if (inG && hy < HUD_P + 6 && p.x > W - 40) { pauseGame(); return; }   // 暫停鈕在第一列右邊
+    if (inG && Math.hypot(p.x - (W - 26), hy - HUD_Y1) < 30) { pauseGame(); return; }   // 暫停鈕：右邊、HUD 和遊戲畫面的交界上
     // 豪天翔按鈕（畫面中間偏下）：按鈕在操作區中間，所以只有「點一下就放開」才算按鈕；按住滑動仍是一般移動
     { const sb = scrollBtnPos(); inp.btn = g.scrolls > 0 && g.fly <= 0 && Math.hypot(p.x - sb.x, p.y - sb.y) < sb.r + 8 ? { t: performance.now(), x: p.x, y: p.y } : null; }   // 只有按鈕出現時才算
   }
@@ -2310,7 +2311,7 @@ function drawHUD() {
   // 上方資訊列（忍術風）：夜行衣的深藍黑底＋淡金青海波紋。
   // iOS 會在瀏海下方疊一段模糊帶（BLUR_T），那段只放紋樣，所有文字和按鈕排成一列放在它下面
   // 兩列：第一列＝分數、高度、幕與舞台、暫停；第二列＝HP、小判
-  const BY = BLUR_T, HB = BY + HUD_R1 + HUD_R2, cy = BY + HUD_R1 / 2, cy2 = BY + HUD_R1 + HUD_R2 / 2 - 2, y0 = -SAFE_T;
+  const BY = BLUR_T, HB = BY + HUD_R1 + HUD_R2, cy = BY + HUD_R1 / 2, cy2 = BY + HUD_R1 + HUD_R2 / 2 - 3, y0 = -SAFE_T;
   HUD_Y0 = BY; HUD_Y1 = HB; HUD_P = BY + HUD_R1;
   const hg = ctx.createLinearGradient(0, y0, 0, HB); hg.addColorStop(0, '#0a0d14'); hg.addColorStop(1, '#1a2236');
   ctx.fillStyle = hg; ctx.fillRect(0, y0, W, HB - y0);
@@ -2319,38 +2320,40 @@ function drawHUD() {
   const fade = ctx.createLinearGradient(0, HB, 0, HB + 12); fade.addColorStop(0, 'rgba(10,13,20,.55)'); fade.addColorStop(1, 'rgba(10,13,20,0)');
   ctx.fillStyle = fade; ctx.fillRect(0, HB, W, 12);
   // ── 第一列 ──
-  // 分數：手裡劍＋數字
-  drawShuriken(14, cy, 9, g.t * 2);
-  txt(String(score()), 27, cy, 15, '#fff', 'left', INK, 4);
+  drawShuriken(17, cy, 11, g.t * 2);
+  txt(String(score()), 33, cy, 19, '#fff', 'left', INK, 4);
   // 高度：小山圖示＋公尺
-  { const hx = Math.max(118, W * .33); ctx.fillStyle = INK; ctx.beginPath(); ctx.moveTo(hx - 9, cy + 7); ctx.lineTo(hx - 3, cy - 6); ctx.lineTo(hx, cy - 1); ctx.lineTo(hx + 4, cy - 8); ctx.lineTo(hx + 11, cy + 7); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#9ad8ff'; ctx.beginPath(); ctx.moveTo(hx - 7, cy + 5.5); ctx.lineTo(hx - 3, cy - 3.5); ctx.lineTo(hx, cy + 1); ctx.lineTo(hx + 4, cy - 5.5); ctx.lineTo(hx + 9, cy + 5.5); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(hx + 4, cy - 5.5); ctx.lineTo(hx + 2, cy - 2); ctx.lineTo(hx + 6, cy - 2); ctx.closePath(); ctx.fill();   // 山頂積雪
-    txt(Math.floor(g.top / 10) + 'm', hx + 15, cy, 13, '#cfeeff', 'left', INK, 3); }
+  { const hx = Math.max(140, W * .38); ctx.save(); ctx.translate(hx, cy); ctx.scale(1.35, 1.35);
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.moveTo(-9, 7); ctx.lineTo(-3, -6); ctx.lineTo(0, -1); ctx.lineTo(4, -8); ctx.lineTo(11, 7); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#9ad8ff'; ctx.beginPath(); ctx.moveTo(-7, 5.5); ctx.lineTo(-3, -3.5); ctx.lineTo(0, 1); ctx.lineTo(4, -5.5); ctx.lineTo(9, 5.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(4, -5.5); ctx.lineTo(2, -2); ctx.lineTo(6, -2); ctx.closePath(); ctx.fill(); ctx.restore();   // 山頂積雪
+    txt(Math.floor(g.top / 10) + 'm', hx + 19, cy, 17, '#cfeeff', 'left', INK, 4); }
   // 幕名（紅色落款方印）＋舞台 N/10＋本幕進度小條
-  const sx = W - 96;
-  seal(sx, cy, 18, THEMES[g.th].k);
-  txt((g.stage + 1) + '/' + ST_N, sx + 40, cy - 4, 11, g.stage % 5 === 4 ? '#ff9a8a' : '#fff', 'right', INK, 3);   // 舞台 N/10（魔王舞台是紅字）
+  const sx = W - 86;
+  seal(sx, cy, 24, THEMES[g.th].k);
+  txt((g.stage + 1) + '/' + ST_N, sx + 52, cy - 4, 15, g.stage % 5 === 4 ? '#ff9a8a' : '#fff', 'right', INK, 3);   // 舞台 N/10（魔王舞台是紅字）
   const pr = g.boss ? 1 : clamp((g.top - g.base) / STAGE_PX, 0, 1);
-  ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(sx + 13, cy + 6, 27, 3, 1.5); ctx.fill();
-  ctx.fillStyle = '#ffe28a'; rr(sx + 13, cy + 6, 27 * pr, 3, 1.5); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(sx + 17, cy + 8, 35, 4, 2); ctx.fill();
+  ctx.fillStyle = '#ffe28a'; rr(sx + 17, cy + 8, 35 * pr, 4, 2); ctx.fill();
   // ── 第二列 ──
   // HP：「命」字印章＋血條（低於 30% 會閃爍），拉長到小判前面
-  const hr = g.hp / g.maxHp, low = hr < .3 && Math.sin(g.t * 10) > 0, bw = W - 31 - 96;
-  seal(18, cy2, 15, '命');
-  bar(30, cy2 - 7, bw, 14, hr, low ? '#ff9a9a' : hr < .3 ? '#ff3a3a' : '#e5342a');
-  txt(`${Math.ceil(g.hp)}/${g.maxHp}`, 30 + bw / 2, cy2, 9, '#fff', 'center', INK, 3);
+  const hr = g.hp / g.maxHp, low = hr < .3 && Math.sin(g.t * 10) > 0, bw = W - 38 - 126;
+  seal(21, cy2, 20, '命');
+  bar(36, cy2 - 9, bw, 18, hr, low ? '#ff9a9a' : hr < .3 ? '#ff3a3a' : '#e5342a');
+  txt(`${Math.ceil(g.hp)}/${g.maxHp}`, 36 + bw / 2, cy2, 12, '#fff', 'center', INK, 3);
   // 小判
-  const kx = W - 80;
-  ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(kx, cy2, 7, 9, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = '#e8b020'; ctx.beginPath(); ctx.ellipse(kx, cy2, 5.5, 7.5, 0, 0, 7); ctx.fill();
-  txt(String(Math.floor(g.coins)), kx + 10, cy2, 13, '#ffd27a', 'left', INK, 3);
-  // 暫停：金框圓形家紋
-  const px = W - 18, py = cy;
-  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px, py, 14, 0, 7); ctx.fill();
-  ctx.fillStyle = '#141a28'; ctx.beginPath(); ctx.arc(px, py, 12, 0, 7); ctx.fill();
-  ctx.strokeStyle = '#e8b84a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, 12, 0, 7); ctx.stroke();
-  ctx.fillStyle = '#e8b84a'; ctx.fillRect(px - 5, py - 6, 3.5, 12); ctx.fillRect(px + 1.5, py - 6, 3.5, 12);
+  const kx = W - 112;
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(kx, cy2, 9, 11.5, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#e8b020'; ctx.beginPath(); ctx.ellipse(kx, cy2, 7, 9.5, 0, 0, 7); ctx.fill();
+  ctx.strokeStyle = 'rgba(120,70,0,.7)'; ctx.lineWidth = 1; for (const d of [-3, 0, 3]) { ctx.beginPath(); ctx.moveTo(kx - 3.5, cy2 + d); ctx.lineTo(kx + 3.5, cy2 + d); ctx.stroke(); }
+  txt(String(Math.floor(g.coins)), kx + 14, cy2, 17, '#ffd27a', 'left', INK, 4);
+  // 暫停：金框圓形家紋，放在右邊、HUD 和遊戲畫面的交界上（一半在 HUD、一半在畫面）
+  const px = W - 26, py = HB;
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(px, py + 2, 22, 0, 7); ctx.fill();   // 落在遊戲畫面上的淡影
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px, py, 21, 0, 7); ctx.fill();
+  ctx.fillStyle = '#141a28'; ctx.beginPath(); ctx.arc(px, py, 18, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#e8b84a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(px, py, 18, 0, 7); ctx.stroke();
+  ctx.fillStyle = '#e8b84a'; rr(px - 8, py - 9, 5.5, 18, 1.5); ctx.fill(); rr(px + 2.5, py - 9, 5.5, 18, 1.5); ctx.fill();
   // 以下（氣、技能、連斬、魔王血量…）原本以 HUD 高 64 排版，依新的 HUD 高度整體平移
   ctx.translate(0, HB - 64);
   // 氣（衝刺斬／急降斬的次數）
@@ -2363,10 +2366,10 @@ function drawHUD() {
     ctx.beginPath(); ctx.moveTo(x, 80); ctx.arc(x, 80, 5, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); ctx.fill();
   }
   // 經驗條（魂）、等級、已持有的技能
-  txt(`Lv ${g.lv}`, W - 12, 78, 12, '#9ad8ff', 'right', '#000', 3);
+  txt(`Lv ${g.lv}`, W - 56, 78, 12, '#9ad8ff', 'right', '#000', 3);
   // 經驗條：Lv 下方的小條
-  ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(W - 56, 87, 44, 4, 2); ctx.fill();
-  ctx.fillStyle = '#5ad1ff'; rr(W - 56, 87, 44 * clamp(g.xp / xpNeed(g.lv), 0, 1), 4, 2); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(W - 100, 87, 44, 4, 2); ctx.fill();
+  ctx.fillStyle = '#5ad1ff'; rr(W - 100, 87, 44 * clamp(g.xp / xpNeed(g.lv), 0, 1), 4, 2); ctx.fill();
   let ix = 40 + km * 16;
   ctx.font = `12px ${FONT}`;
   for (const s of SKILLS) {
@@ -2440,6 +2443,20 @@ function drawShuriken(x, y, r, rot) {
   ctx.closePath(); ctx.fillStyle = '#eef2f4'; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke();
   ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(0, 0, r * .22, 0, 7); ctx.fill();
   ctx.restore();
+}
+// HP 低於 30%：畫面四周的紅色暈影隨心跳（咚、咚）脈動，中央完全不遮；HP 越低越紅、心跳越快，並配上很輕的心跳聲
+let lowBeat = -1;
+function drawLowHp() {
+  const hr = g.hp / g.maxHp; if (hr >= .3 || g.hp <= 0) { lowBeat = -1; return; }
+  const k = 1 - hr / .3, per = 1.15 - .4 * k, ph = (g.t % per) / per, n = Math.floor(g.t / per);
+  if (n !== lowBeat && !paused) { lowBeat = n; SFX.beat(); }
+  const p = Math.max(Math.exp(-Math.pow((ph - .04) / .07, 2)), .7 * Math.exp(-Math.pow((ph - .26) / .07, 2)));   // 咚、咚
+  const a = (.16 + .2 * k) + (.14 + .16 * k) * p;
+  // 橢圓形的暈影（貼合直式畫面的四邊）：中央 6 成完全透明，只有邊緣泛紅
+  ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(W / 2, H / 2);
+  const gr = ctx.createRadialGradient(0, 0, .62, 0, 0, 1.3);
+  gr.addColorStop(0, 'rgba(200,0,10,0)'); gr.addColorStop(.45, `rgba(190,0,10,${a * .55})`); gr.addColorStop(1, `rgba(140,0,0,${a})`);
+  ctx.fillStyle = gr; ctx.fillRect(-1, -1, 2, 2); ctx.restore();
 }
 // 紅色落款印章（方形、粗黑框、白字）
 function seal(x, y, s, ch) {
@@ -2547,82 +2564,86 @@ function castCue(e0, e1) {
   if (at(.85)) { noise(.5, .08); tone(220, .45, 'sawtooth', .04, 500); }     // 燒起來
 }
 const hexRgb = h => { const n = parseInt(h.slice(1), 16); return `${n >> 16 & 255},${n >> 8 & 255},${n & 255}`; };
-// ===== 忍法的神獸：大幅墨繪剪影（以 200×200 為單位畫，中心在原點） =====
-// 鳶（豪天翔）、鬼神（鬼神斬）、貘（夢幻術）、九尾白狐（雪華封）、金剛力士（金剛身）
-const BEAST_PATH = {
-  oni(c) {   // 鬼神：舉著金棒的赤鬼，弓步
-    c.moveTo(-14, -72); c.lineTo(-30, -104); c.lineTo(-4, -78); c.moveTo(14, -72); c.lineTo(30, -104); c.lineTo(4, -78);   // 角
-    c.moveTo(22, -55); c.arc(0, -55, 22, 0, TAU);                                                                        // 頭
-    for (let i = 0; i < 7; i++) { const a = Math.PI * (1.05 + i * .13); c.moveTo(Math.cos(a) * 20, -55 + Math.sin(a) * 20); c.lineTo(Math.cos(a) * 36, -58 + Math.sin(a) * 34); c.lineTo(Math.cos(a + .1) * 20, -55 + Math.sin(a + .1) * 20); }   // 亂髮
-    c.moveTo(-52, -32); c.lineTo(52, -32); c.lineTo(34, 40); c.lineTo(-34, 40); c.closePath();                        // 身體
-    c.moveTo(-34, 38); c.lineTo(-74, 100); c.lineTo(-50, 104); c.lineTo(-10, 46); c.closePath();                       // 左腳
-    c.moveTo(34, 38); c.lineTo(62, 100); c.lineTo(86, 98); c.lineTo(14, 46); c.closePath();                          // 右腳
-    c.moveTo(-52, -30); c.lineTo(-80, 14); c.lineTo(-62, 22); c.lineTo(-38, -12); c.closePath(); c.moveTo(-58, 26); c.arc(-72, 26, 14, 0, TAU);   // 左拳
-    c.moveTo(44, -32); c.lineTo(80, -78); c.lineTo(96, -66); c.lineTo(58, -16); c.closePath();                         // 舉起的右臂
-    c.moveTo(70, -70); c.lineTo(10, -160); c.lineTo(34, -172); c.lineTo(96, -84); c.closePath();                      // 金棒
-    for (let i = 0; i < 5; i++) { const x = 64 - i * 13, y = -88 - i * 18; c.moveTo(x + 12, y); c.arc(x, y, 12, 0, TAU); }   // 金棒上的突刺
-  },
-  baku(c) {   // 貘：象鼻、圓胖身體、雲朵
-    c.ellipse(10, 0, 72, 42, 0, 0, TAU);
-    c.moveTo(-34, -14); c.ellipse(-62, -18, 34, 27, -.2, 0, TAU);
-    c.moveTo(-90, -10); c.quadraticCurveTo(-128, 6, -118, 40); c.quadraticCurveTo(-112, 56, -98, 46); c.quadraticCurveTo(-108, 30, -100, 18); c.quadraticCurveTo(-90, 6, -78, 0); c.closePath();   // 象鼻
-    c.moveTo(-58, -42); c.ellipse(-50, -44, 14, 10, -.6, 0, TAU);   // 耳
-    for (const x of [-40, -12, 30, 58]) { c.moveTo(x - 10, 26); c.lineTo(x + 10, 26); c.lineTo(x + 9, 70); c.lineTo(x - 9, 70); c.closePath(); }   // 腳
-    c.moveTo(80, -10); c.quadraticCurveTo(104, -20, 100, 6); c.quadraticCurveTo(94, -4, 80, 6); c.closePath();   // 尾巴
-    for (const [x, y, r] of [[-70, 86, 22], [-38, 92, 26], [0, 90, 28], [38, 92, 24], [72, 86, 20]]) { c.moveTo(x + r, y); c.arc(x, y, r, 0, TAU); }   // 腳下的雲
-  },
-  fox(c) {   // 九尾白狐：坐姿，九條尾巴在身後展開
-    for (let i = 0; i < 9; i++) {
-      const a = -Math.PI * (.95 - i * .1), bx = 18, by = 52, ex = bx + Math.cos(a) * 125, ey = by + Math.sin(a) * 125, nx = -Math.sin(a) * 22, ny = Math.cos(a) * 22;
-      c.moveTo(bx, by); c.quadraticCurveTo((bx + ex) / 2 + nx, (by + ey) / 2 + ny, ex, ey); c.quadraticCurveTo((bx + ex) / 2 - nx, (by + ey) / 2 - ny, bx, by);
-    }
-    c.moveTo(34, 24); c.ellipse(0, 24, 34, 52, 0, 0, TAU);   // 身體
-    c.moveTo(24, -46); c.arc(0, -46, 24, 0, TAU);            // 頭
-    c.moveTo(-18, -54); c.lineTo(-48, -40); c.lineTo(-14, -32); c.closePath();   // 尖嘴
-    c.moveTo(-16, -62); c.lineTo(-12, -98); c.lineTo(2, -66); c.closePath(); c.moveTo(6, -66); c.lineTo(20, -98); c.lineTo(22, -60); c.closePath();   // 耳朵
-    c.moveTo(-24, 70); c.ellipse(-16, 72, 14, 8, 0, 0, TAU); c.moveTo(30, 70); c.ellipse(20, 72, 14, 8, 0, 0, TAU);   // 前腳
-  },
-  nio(c) {   // 金剛力士（仁王）：怒目、舉掌、弓步，背後飄著天衣
-    c.moveTo(18, -84); c.arc(0, -84, 18, 0, TAU); c.moveTo(8, -104); c.arc(0, -104, 8, 0, TAU);   // 頭與髮髻
-    c.moveTo(-58, -60); c.lineTo(58, -60); c.lineTo(30, 6); c.lineTo(-30, 6); c.closePath();      // 倒三角的胸膛
-    c.moveTo(-36, 4); c.lineTo(36, 4); c.lineTo(50, 58); c.lineTo(-50, 58); c.closePath();       // 腰布
-    c.moveTo(-40, 54); c.lineTo(-84, 104); c.lineTo(-58, 108); c.lineTo(-14, 60); c.closePath(); c.moveTo(40, 54); c.lineTo(76, 106); c.lineTo(100, 100); c.lineTo(16, 60); c.closePath();   // 弓步
-    c.moveTo(52, -58); c.lineTo(84, -112); c.lineTo(102, -102); c.lineTo(68, -46); c.closePath(); c.moveTo(108, -118); c.ellipse(94, -122, 16, 20, .4, 0, TAU);   // 舉起的手掌
-    c.moveTo(-52, -58); c.lineTo(-92, -24); c.lineTo(-78, -10); c.lineTo(-40, -40); c.closePath(); c.moveTo(-82, -16); c.arc(-96, -16, 14, 0, TAU);   // 握拳
-  },
+// ===== 忍法的神獸：毛筆墨標誌（圓相＋幾筆粗獷的筆畫，以 200×200 為單位，中心在原點） =====
+// 鳶（豪天翔）、鬼面（鬼神斬）、貘的夢之渦（夢幻術）、狐面（雪華封）、金剛杵（金剛身）
+const bzF = (a, b, c2, d, e, f, g2, h) => t => { const u = 1 - t; return [u * u * u * a + 3 * u * u * t * c2 + 3 * u * t * t * e + t * t * t * g2, u * u * u * b + 3 * u * u * t * d + 3 * u * t * t * f + t * t * t * h]; };
+const arcF = (cx, cy, r, a0, a1) => t => { const a = a0 + (a1 - a0) * t; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; };
+const mirF = f => t => { const p = f(t); return [-p[0], p[1]]; };
+const mir = (w, ...a) => [[bzF(...a), w], [mirF(bzF(...a)), w]];
+const EMBLEM = {
+  soar: [   // 鳶：雙翼大展、翼尖上揚，燕尾般分岔的尾羽
+    ...mir(22, -6, -14, -30, -36, -62, -40, -88, -62),
+    ...mir(12, -10, -4, -30, -12, -50, -10, -68, -28),
+    [bzF(0, -46, 2, -20, -2, 6, 0, 26), 20],
+    ...mir(12, -2, 22, -8, 38, -14, 50, -24, 64),
+  ],
+  kishin: [   // 鬼面：雙角、怒眉、獠牙
+    ...mir(22, -22, -26, -44, -42, -52, -66, -38, -86),
+    ...mir(15, -52, -14, -38, -2, -24, 4, -8, 8),
+    [bzF(-44, 30, -20, 46, 20, 46, 44, 30), 17],
+    ...mir(10, -22, 40, -21, 48, -20, 56, -16, 66),
+  ],
+  yume: [   // 貘的夢之渦：象鼻般的漩渦＋新月
+    [t => { const r = 5 + t * 60, a = -1.2 + t * TAU * 2.1; return [-8 + Math.cos(a) * r, 10 + Math.sin(a) * r * .9]; }, 19],
+    [arcF(40, -50, 22, 1.1, 1.1 + TAU * .6), 13],
+  ],
+  sekka: [   // 狐面：尖耳、細長上揚的眼
+    ...mir(17, -46, -74, -60, -30, -40, 22, 0, 52),
+    ...mir(12, -46, -74, -36, -58, -24, -46, -12, -38),
+    ...mir(11, -8, 2, -18, -2, -28, -8, -42, -20),
+  ],
+  kongo: [   // 金剛杵
+    [bzF(0, -84, 0, -30, 0, 30, 0, 84), 15],
+    ...mir(12, -4, -24, -34, -34, -38, -62, -6, -82),
+    ...mir(12, -4, 24, -34, 34, -38, 62, -6, 82),
+    [bzF(-24, 0, -8, -5, 8, -5, 24, 0), 20],
+    [bzF(-15, -22, -6, -26, 6, -26, 15, -22), 10], [bzF(-15, 22, -6, 26, 6, 26, 15, 22), 10],
+  ],
 };
-const NIO_SCARF = c => { c.moveTo(-60, -50); c.bezierCurveTo(-140, -90, -150, 40, -110, 70); c.moveTo(60, -50); c.bezierCurveTo(140, -100, 150, 30, 120, 80); };   // 天衣（用粗線畫）
-// e：卷軸演出經過的秒數；burn：燒卷軸的進度（0～1）
-function drawBeast(id, x, y, e, burn, col, T) {
-  const c = ctx, rgb = hexRgb(col), s = Math.min(W * .85, (H * .44 - 105 - SAFE_T) * .95) / 220;   // 放在卷軸上方的空間
-  const rev = clamp((e - .15) / .65, 0, 1);   // 被毛筆一筆一筆畫出來（由下往上掃）
+const ENSO = [arcF(0, 0, 94, -2.1, -2.1 + TAU * .88), 28];
+// 一筆毛筆筆畫：起筆重壓、收筆拉細；p＝已畫出的比例（一筆一筆揮出來）
+function inkStroke(c, f, w, p, fill, dry) {
+  if (p <= 0) return;
+  const N = 64, n = Math.max(2, Math.ceil(N * p)), L = [], R = [];
+  for (let i = 0; i <= n; i++) {
+    const t = Math.min(p, i / N), q = f(t), q2 = f(Math.min(1, t + .01)), q1 = f(Math.max(0, t - .01));
+    let dx = q2[0] - q1[0], dy = q2[1] - q1[1]; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+    // 筆壓起伏＋左右兩側各自的毛邊
+    const ww = w * (t < .1 ? .6 + .4 * t / .1 : .08 + .92 * Math.pow(1 - (t - .1) / .9, .55)) * (1 + .08 * Math.sin(t * 13 + w) + .04 * Math.sin(t * 29 + w * 3)) / 2;
+    const j1 = 1 + .06 * Math.sin(t * 23 + w), j2 = 1 + .06 * Math.sin(t * 17 + w * 2);
+    L.push([q[0] - dy * ww * j1, q[1] + dx * ww * j1]); R.push([q[0] + dy * ww * j2, q[1] - dx * ww * j2]);
+  }
+  const s0 = f(0);
+  c.fillStyle = fill; c.beginPath(); c.arc(s0[0], s0[1], w * .3, 0, TAU); c.fill();
+  c.beginPath(); c.moveTo(L[0][0], L[0][1]); for (const q of L) c.lineTo(q[0], q[1]); for (let i = R.length - 1; i >= 0; i--) c.lineTo(R[i][0], R[i][1]); c.closePath(); c.fill();
+  // 飛白：收筆處幾道乾筆的細縫
+  if (dry) {
+    c.strokeStyle = dry; c.lineWidth = Math.max(1, w * .05); c.lineCap = 'round';
+    for (const [k, s0] of [[-.28, .62], [-.05, .74], [.22, .68]]) { const i0 = Math.floor(N * s0); if (i0 >= n) continue; c.beginPath(); for (let i = i0; i <= n; i++) { const a = L[i], b = R[i], m = .5 + k; i === i0 ? c.moveTo(a[0] + (b[0] - a[0]) * m, a[1] + (b[1] - a[1]) * m) : c.lineTo(a[0] + (b[0] - a[0]) * m, a[1] + (b[1] - a[1]) * m); } c.stroke(); }
+    c.setLineDash([]);
+  }
+}
+// e：卷軸演出經過的秒數；burn：燒卷軸的進度（0～1）；sc：另外指定大小（預覽用）
+function drawBeast(id, x, y, e, burn, col, T, sc) {
+  const c = ctx, rgb = hexRgb(col), s = sc || Math.min(W * .85, (H * .44 - 105 - SAFE_T) * .95) / 220;
+  const rev = clamp((e - .15) / .65, 0, 1);
   if (rev <= 0) return;
   const fade = 1 - clamp((burn - .55) / .45, 0, 1), glow = burn > 0 ? Math.sin(Math.min(1, burn * 1.6) * Math.PI) : 0;
-  c.save(); c.translate(x, y); c.scale(s * (1 + glow * .08), s * (1 + glow * .08));
-  if (id === 'oni' || id === 'fox') c.translate(0, 8);
-  // 筆刷掃過的範圍：由下往上，邊緣是鋸齒狀的筆觸
-  c.beginPath(); const top = 130 - rev * 300; c.moveTo(-200, 200); c.lineTo(-200, top);
-  for (let xx = -200; xx <= 200; xx += 20) c.lineTo(xx, top + Math.sin(xx * .07 + 1.3) * 14 + ((xx / 20) % 2 ? 8 : -6));
-  c.lineTo(200, 200); c.closePath(); c.clip();
-  c.globalAlpha = fade * .92;
-  const path = () => { c.beginPath(); if (id === 'soar') return; BEAST_PATH[{ kishin: 'oni', yume: 'baku', sekka: 'fox', kongo: 'nio' }[id]](c); };
-  // 光暈（燒卷軸時變強）
-  c.shadowColor = `rgba(${rgb},.9)`; c.shadowBlur = 18 + glow * 40;
-  if (id === 'soar') kiteBird(c, 0, 0, 3.6, Math.sin(T * 3) * .5 + .2, `rgba(${rgb},.55)`);
-  else {
-    if (id === 'kongo') { c.lineWidth = 16; c.lineCap = 'round'; c.strokeStyle = `rgba(${rgb},.45)`; c.beginPath(); NIO_SCARF(c); c.stroke(); }
-    path(); const gr = c.createRadialGradient(0, -20, 10, 0, 0, 150); gr.addColorStop(0, `rgba(${rgb},.75)`); gr.addColorStop(1, `rgba(${rgb},.35)`);
-    c.fillStyle = gr; c.fill('nonzero');
-  }
-  c.shadowBlur = 0;
-  // 乾筆的飛白：幾道斜斜的淺色筆痕
-  c.strokeStyle = `rgba(255,250,235,${.18 * fade})`; c.lineWidth = 3;
-  for (let i = 0; i < 9; i++) { const yy = -110 + i * 26; c.beginPath(); c.moveTo(-120 + (i % 3) * 20, yy); c.lineTo(110 - (i % 2) * 30, yy - 18); c.stroke(); }
-  // 墨點飛濺
-  c.fillStyle = `rgba(${rgb},${.6 * fade})`;
-  for (let i = 0; i < 14; i++) { const a = i * 2.39, r = 110 + (i % 5) * 14; c.beginPath(); c.arc(Math.cos(a) * r, Math.sin(a) * r * .8, 2 + (i % 4), 0, TAU); c.fill(); }
+  const n = parseInt(col.slice(1), 16), lt = k => [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => Math.round(v + (255 - v) * k)).join(',');
+  const strokes = [ENSO, ...EMBLEM[id]], per = 1 / (strokes.length + .6);
+  c.save(); c.translate(x, y); c.scale(s * (1 + glow * .08), s * (1 + glow * .08)); c.globalAlpha = fade;
+  // 一筆一筆揮出來：先畫圓相，再依序畫出圖案（粗筆＋飛白，淡淡的光暈）
+  strokes.forEach(([f, w], i) => {
+    const p = clamp((rev - i * per * .8) / (i ? per * 1.4 : per * 2), 0, 1); if (p <= 0) return;
+    c.shadowColor = `rgba(${rgb},.55)`; c.shadowBlur = 8 + glow * 40;
+    inkStroke(c, f, w * (i ? 1.2 : .85), p, `rgb(${lt(.1)})`, 'rgba(22,6,8,.85)');
+    c.shadowBlur = 0;
+  });
+  // 墨點飛濺（圓相外圍）
+  c.fillStyle = `rgba(${lt(.1)},${.75 * Math.min(1, rev * 2)})`;
+  for (let i = 0; i < 12; i++) { const a = -2.1 + i * .53 + (i % 3) * .1, r = 104 + (i % 4) * 9; c.beginPath(); c.arc(Math.cos(a) * r, Math.sin(a) * r, 1.5 + (i * 7 % 4), 0, TAU); c.fill(); }
   c.restore();
-  // 燒卷軸時：神獸化成光點散開
+  // 燒卷軸時：墨標誌化成光點散開
   if (burn > .4) for (let i = 0; i < 24; i++) { const u = clamp((burn - .4) / .6, 0, 1), a = i * 2.39, r = (40 + (i % 6) * 18) * s * (1 + u * 1.5); c.fillStyle = `rgba(${rgb},${1 - u})`; aCirc(c, x + Math.cos(a) * r, y + Math.sin(a) * r * .8 - u * 60, 2.5 + (i % 3)); c.fill(); }
 }
 function drawCast() {
@@ -2631,7 +2652,7 @@ function drawCast() {
   ctx.fillStyle = `rgba(22,6,8,${Math.min(.95, e * 9)})`; ctx.fillRect(0, 0, W, H);
   speedLines(e * 8, `rgba(255,200,120,${.3 * (1 - burn) + .15})`);
   const JC = (g.castJ || JUTSU[0]).col, rgb = hexRgb(JC);
-  drawBeast((g.castJ || JUTSU[0]).id, cx, (SAFE_T + H * .44 - 105) / 2 + 6, e, burn, JC, T);   // 忍法的神獸（大幅墨繪剪影）
+  drawBeast((g.castJ || JUTSU[0]).id, cx, (SAFE_T + H * .44 - 105) / 2 + 6, e, burn, (g.castJ || JUTSU[0]).th < 0 ? '#e8b84a' : jutsuBand(g.castJ || JUTSU[0]), T);   // 忍法的神獸（毛筆墨標誌，風林火山卷軸的配色）
   // 光柱（燒起來之後，忍法的代表色）
   if (burn > 0) {
     const pw = 60 + burn * 90, gr = ctx.createLinearGradient(cx - pw / 2, 0, cx + pw / 2, 0);
@@ -2943,6 +2964,7 @@ function render() {
     ctx.strokeStyle = `rgba(255,200,60,${.5 + .3 * Math.sin(g.t * 12)})`; ctx.lineWidth = 10; ctx.strokeRect(0, 0, W, H);
     ctx.fillStyle = 'rgba(255,200,60,.08)'; ctx.fillRect(0, 0, W, H);
   }
+  if (state === 'play' || state === 'flee') drawLowHp();   // HP 快沒了：畫面四周的紅色心跳暈影
   if (state === 'slash') drawSlash();
   else if (state === 'cast') drawCast();
   else if (state === 'qte') drawQte();
