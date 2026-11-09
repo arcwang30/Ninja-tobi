@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v74';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v75';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -2240,7 +2240,7 @@ function drawSlash() {
 
 // ===== 豪天翔：卷軸展開・揮毫 =====
 // 0～0.15 秒卷軸飛入 → 0.35 秒攤開 → 0.35～0.75 毛筆逐字寫出「豪天翔」→ 0.75 蓋「忍」印 → 0.85～1.2 卷軸燒成金焰、主角衝天
-const CAST_T = 1.2, BRUSH = '"Yu Mincho","Hiragino Mincho ProN","Noto Serif TC","Noto Serif JP","PMingLiU","MS Mincho",serif';
+const CAST_T = 1.2, BRUSH = '"Ma Shan Zheng","Yu Mincho","Hiragino Mincho ProN","Noto Serif TC","Noto Serif JP","PMingLiU","MS Mincho",serif';
 const easeO = x => 1 - (1 - x) * (1 - x);
 // 時間軸上的音效（e0→e1 這一幀跨過的時間點）
 function castCue(e0, e1) {
@@ -2275,13 +2275,15 @@ function drawCast() {
     ctx.save(); ctx.beginPath(); ctx.rect(-w / 2, top, w, ph); ctx.clip();
     // 揮毫：每個字由上往下顯現（毛筆）
     if (w > SW * .9) {
-      const cs = Math.min(80, (SW - 60) / 3);
-      ctx.font = `900 ${cs}px ${BRUSH}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const cs = Math.min(100, (SW - 40) / 3);
+      ctx.font = `${cs}px ${BRUSH}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ['豪', '天', '翔'].forEach((ch, i) => {
         const p = clamp((e - .35 - i * .13) / .12, 0, 1); if (p <= 0) return;
-        const x = (i - 1) * cs * 1.05 - 14;
-        ctx.save(); ctx.beginPath(); ctx.rect(x - cs * .6, -cs * .6, cs * 1.2, cs * 1.2 * p); ctx.clip();
-        ctx.fillStyle = '#1a1010'; ctx.fillText(ch, x, 4); ctx.restore();
+        const x = (i - 1) * cs * .98 - 12, yy = [6, -4, 8][i];   // 毛筆字：每個字高低錯落、微微傾斜
+        ctx.save(); ctx.beginPath(); ctx.rect(x - cs * .7, -cs * .7, cs * 1.4, cs * 1.4 * p); ctx.clip();
+        ctx.translate(x, yy); ctx.rotate([-.06, .04, -.03][i]);
+        ctx.shadowColor = 'rgba(26,16,16,.35)'; ctx.shadowBlur = 3;   // 墨暈
+        ctx.fillStyle = '#140c0c'; ctx.fillText(ch, 0, 0); ctx.restore();
         if (p < 1) { ctx.fillStyle = 'rgba(26,16,16,.85)'; aCirc(ctx, x + Math.sin(p * 9) * cs * .2, -cs * .5 + cs * 1.1 * p, 4); ctx.fill(); }   // 筆尖
       });
       // 「忍」印
@@ -2771,6 +2773,7 @@ document.addEventListener('click', e => {
 });
 
 applyLang();
+try { document.fonts.load('80px "Ma Shan Zheng"', '豪天翔'); } catch (e) { }   // 先載好豪天翔卷軸的毛筆字（canvas 不會自己等字型）
 buildHeroArt();   // 產生標題大圖與商店頭像（程式畫的主角）
 goTitle();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });

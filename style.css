@@ -1,5 +1,7 @@
 /* NINJA 鳶 — 介面風格「竹林夜襲」：月夜竹林、鐵灰金屬面板、金色鉚釘、紅色緞帶，全部粗黑描邊＋上緣高光 */
 @import url("https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Sans+TC:wght@700;900&display=swap");
+/* 毛筆字（豪天翔卷軸用）：只下載用到的三個字 */
+@import url("https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap&text=%E8%B1%AA%E5%A4%A9%E7%BF%94");
 
 :root {
   --ink: #0e1414;       /* 描邊 */
