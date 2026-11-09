@@ -30,6 +30,12 @@ const INTRO = {
       if (k === 'zintro') { startZIntro(); g.zi.t = +a2; window.updateZIntro = () => {}; }
       if (k === 'ascend') { startAscend(); g.asc.t = +a2; window.updateAscend = () => {}; }
       if (k === 'qte') { g.stage = 0; spawnBoss(); g.boss.y = g.camY + 200; g.qte = { t: .5, hits: +a1 ? [{ a: .6, t: +a2, x: 0, y: 0 }] : [], n: +a1, rings: [{ x: W / 2 + 40, y: H * .45, t0: 0, res: null, rt: 0 }], log: ['perf'], i: 2, cnt: 3, perf: 1, next: 99, fl: 0, end: 0, dur: .95, R0: 120, RT: 34 }; state = 'qte'; window.updateQte = () => {}; } }
+    // 預覽用：?finshow=關卡 → 直接看那一關第 10 舞台的擊倒演出（點一下開始，有音樂；播完自動重播，不會改到存檔）
+    const fs = new URLSearchParams(location.search).get('finshow');
+    if (fs !== null) { this.toTitle(); save.seen = 2; startRun(+fs || 0); hideAll(); const bt = $('boot'); if (bt) bt.remove();
+      g.zi = null; state = 'play'; g.stage = 9; g.hp = g.maxHp = 9999; spawnBoss(); g.banner = null; g.preview = true;
+      for (let i = 0; i < 90; i++) { g.p.inv = 1; update(1 / 60); } paused = true; toast('點一下開始播放 / Tap to play');
+      addEventListener('pointerdown', () => { paused = false; g.qte = { kill: true }; endQte(); }, { once: true, capture: true }); }
     // 開發用：?play=關卡,舞台,模擬秒數 → 直接從某關某舞台開始，自動跑幾秒後停住（檢查時段色調與天候）
     const pl = new URLSearchParams(location.search).get('play');
     if (pl) { const [lv, st, sec, ch, sl] = pl.split(',').map(Number); this.toTitle(); save.seen = 2; if (ch) save.skin = ch; startRun(lv || 0); if (sl) g.skills[SKINS[save.skin].sk] = sl; hideAll();   /* 第 4、5 個參數：角色、技能等級 */ const b = $('boot'); if (b) b.remove();

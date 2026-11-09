@@ -254,7 +254,7 @@ const ACH = [];
 // ===== 存檔 =====
 const defSave = () => ({
   coins: 0, skin: 0, skins: [0], outfits: [0], charOut: {},
-  meta: Object.fromEntries(META.map(m => [m.id, 0])), ach: {}, lv: { open: 1, best: [0, 0, 0, 0], clear: [0, 0, 0, 0], sel: 0 }, opt: { mus: 4, sfx: 4, vib: 1, lang: guessLang() }, seen: 0, intro: 0,
+  meta: Object.fromEntries(META.map(m => [m.id, 0])), ach: {}, lv: { open: 1, best: [0, 0, 0, 0], clear: [0, 0, 0, 0], sel: 0 }, opt: { mus: 4, sfx: 4, vib: 1, lang: guessLang() }, seen: 0, intro: 0, maki: [0, 0, 0, 0], jutsu: 'soar',
   best: { rogue: 0 }, rank: { rogue: [] },
   stats: { runs: 0, slashes: 0, bosses: 0, coins: 0, mids: 0 },
 });
@@ -335,7 +335,7 @@ function musicFor() {
   if (!ac || !musV() || document.hidden) return BGM.stop();
   BGM.setVol(musV());
   if (state === 'menu') return INTRO.ph === 'cut' ? BGM.play(ac, 'boss', { sp: .85, tr: -3 }) : INTRO.ph === 'title' ? BGM.play(ac, 'title') : BGM.stop();
-  if (!g || paused || state === 'over' || state === 'dying') return BGM.stop();
+  if (!g || paused || state === 'over' || state === 'dying' || state === 'fin' || state === 'clearq') return BGM.stop();
   BGM.hot = g.fever > 0;
   // 每關的樂曲：林「疾風ノ道」、風「天翔」、火「紅蓮」、山「雪嶺」；魔王戰共用「鬼哭」並依關卡移調
   const song = g.boss ? 'boss' : ['stage', 'wind', 'fire', 'mountain'][g.th];
@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v75';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v76';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -447,6 +447,7 @@ cv.addEventListener('pointerdown', e => {
   if (state === 'zintro') { skipZIntro(); return; }   // 每一幕的開場演出：點一下跳過
   if (state === 'ascend') { skipAscend(); return; }
   if (state === 'cast') { g.castT = Math.min(g.castT, CAST_T - .85); return; }   // 豪天翔：點一下直接跳到燒卷軸、衝天
+  if (state === 'fin') { if (g.finT < .4) return; if (g.finT < 3) g.finT = 3; else g.finT = FIN_T; return; }   // 決戰擊倒演出：點一下跳到卷軸展開，再點一下進結算
   const p = toL(e);
   if (state === 'play' && !paused) {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
@@ -805,12 +806,13 @@ function update(dt) {
       else updatePlay(dt);
       break;
     case 'slash': updateSlash(dt); break;
-    case 'cast': { const e0 = CAST_T - g.castT; g.castT -= dt; castCue(e0, CAST_T - g.castT); } if (g.castT <= 0) { state = 'play'; g.fly = 1.7 * (1 + .4 * pk('feather')); g.p.inv = Math.max(g.p.inv, g.fly + .6); } break;
+    case 'cast': { const e0 = CAST_T - g.castT; g.castT -= dt; castCue(e0, CAST_T - g.castT); } if (g.castT <= 0) jutsuGo(g.castJ || JUTSU[0]); break;
     case 'qte': updateQte(dt); break;
     case 'zintro': updateZIntro(dt); break;
     case 'ascend': updateAscend(dt); break;
     case 'kill': g.killT -= dt; if (g.killT <= 0) finishBoss(true); break;
     case 'flee': updateFlee(dt); break;   // 初戰擊退：魔王逃走演出
+    case 'fin': updateFin(dt); break;   // 決戰擊倒演出
     case 'dying': g.dieT -= dt; g.p.vy += GRAV * dt; g.p.y += g.p.vy * dt; if (g.dieT <= 0) showOver(); break;
   }
   if (g && state !== 'perk') updateFx(dt);
@@ -834,6 +836,10 @@ function updatePlay(dt) {
   if (g.pendingChest) { g.pendingChest = false; openPerks('chest'); return; }   // 中 BOSS 的寶箱
   p.inv =Math.max(0, p.inv - dt); p.spin = Math.max(0, (p.spin || 0) - dt); p.swing = Math.max(0, (p.swing || 0) - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt); p.slow = Math.max(0, p.slow - dt); p.freeze = Math.max(0, p.freeze - dt); p.sq = Math.max(0, p.sq - dt * 4);
   if (g.banner) { g.banner.t -= dt; if (g.banner.t <= 0) g.banner = null; }
+  // 忍法的持續效果
+  if (g.kongo > 0) g.kongo -= dt;
+  if (g.kishinT > 0) g.kishinT -= dt;
+  if (g.jfx) { g.jfx.t -= dt * 1.4; if (g.jfx.t <= 0) g.jfx = null; }
 
   // 移動
   let mv = inp.dx * SENS; inp.dx = 0;
@@ -942,7 +948,8 @@ function updatePlay(dt) {
     if (e.dead) continue;
     e.ph += dt; e.cool = Math.max(0, e.cool - dt); e.flash = Math.max(0, e.flash - dt); e.atk = Math.max(0, (e.atk || 0) - dt);
     const ed = ENEMY[e.type];
-    enemyAI(e, ed, dt);
+    if (e.sleep > 0 || e.frozen > 0) { e.sleep = Math.max(0, (e.sleep || 0) - dt); e.frozen = Math.max(0, (e.frozen || 0) - dt); }   // 夢幻術／雪華封：不動、不攻擊
+    else enemyAI(e, ed, dt);
     if (e.dead) continue;
     if (e.hidden) continue;   // 土遁忍者藏在地板裡時碰不到
     if (e.cool <= 0 && Math.abs(p.x - e.x) < ed.w / 2 + 10 + reach && Math.abs((p.y - 20) - e.y) < ed.h / 2 + 18 + reach) {
@@ -956,7 +963,7 @@ function updatePlay(dt) {
     s.x += s.vx * dt; s.y += s.vy * dt;
     if (Math.hypot(s.x - p.x, s.y - (p.y - 20)) < (s.kind === 'web' || s.kind === 'frost' ? 18 : 14)) {
       s.dead = true;
-      if (p.dash > 0 || p.dive || g.fly > 0) { sparkle(s.x, s.y, '#fff'); SFX.clank(); }   // 衝刺中可以彈開
+      if (p.dash > 0 || p.dive || g.fly > 0 || g.kongo > 0) { sparkle(s.x, s.y, '#fff'); SFX.clank(); }   // 衝刺中可以彈開
       else if (s.kind === 'web') { p.slow = Math.max(p.slow, 1.6); floatText(p.x, p.y - 50, t(s.skin === 1 ? 'webbed_1' : 'webbed'), '#ddd', 15); }
       else if (s.kind === 'frost') { p.freeze = Math.max(p.freeze, .5); floatText(p.x, p.y - 50, t('frozen'), '#bfefff', 15); }
       else if (hurt(s.kind || 'shot')) return;
@@ -964,7 +971,7 @@ function updatePlay(dt) {
   }
   g.eshots = g.eshots.filter(s => !s.dead && s.t < 4);
   // 火關：火車留下的火焰（1.5 秒，碰到會受傷）；山關：雪崩球爆開後的冰霧（2 秒，在裡面會變慢）
-  for (const f of g.fires) { f.t += dt; if (f.t < 1.5 && !(p.dash > 0 || p.dive || g.fly > 0) && Math.hypot(f.x - p.x, f.y - (p.y - 10)) < 13) { f.t = 1.5; if (hurt('fire')) return; } }
+  for (const f of g.fires) { f.t += dt; if (f.t < 1.5 && !(p.dash > 0 || p.dive || g.fly > 0 || g.kongo > 0) && Math.hypot(f.x - p.x, f.y - (p.y - 10)) < 13) { f.t = 1.5; if (hurt('fire')) return; } }
   g.fires = g.fires.filter(f => f.t < 1.5);
   for (const m of g.mists) { m.t += dt; if (Math.hypot(m.x - p.x, m.y - (p.y - 20)) < m.r) p.slow = Math.max(p.slow, .25); }
   g.mists = g.mists.filter(m => m.t < 2);
@@ -1232,7 +1239,9 @@ const kiMax = () => 3 + pk('kimax') + mt('ki') + (sk('swift') ? SKV.swift(sk('sw
 
 // 碰到敵人。回傳 true 表示進入了全畫面斬擊演出
 function touchEnemy(e) {
-  const p = g.p, fast = p.dash > 0 || p.dive || g.fly > 0;
+  // 金剛身中、或被雪華封凍住的敵人：一碰就碎（大天狗除外）
+  const thaw = (e.frozen > 0 || g.kongo > 0) && e.type !== 13;
+  const p = g.p, fast = p.dash > 0 || p.dive || g.fly > 0 || thaw;
   // 鬼火：不是衝刺／急降／豪天翔時碰到會受傷（鬼火也跟著消散）
   if (e.type === 10 && !fast) {
     e.dead = true; burst(e.x, e.y, '#b07aff', 10);
@@ -1247,7 +1256,7 @@ function touchEnemy(e) {
     return false;
   }
   // 菁英：第一刀只會打退
-  if (e.hp > 1) {
+  if (e.hp > 1 && !thaw) {
     e.hp--; e.cool = .35; e.flash = .3; e.tough = 1; p.swing = SWING_T;   // 要斬好幾刀的敵人（菁英、大天狗）：最後一刀播特寫
     if (!p.dive) { p.dash = 0; p.vy = -JUMP; }
     g.hitstop = .1; g.shake = 6; SFX.slash();
@@ -1426,12 +1435,38 @@ function countKill() {
 }
 
 // ===== 忍法 =====
+// 卷軸按鈕施展的忍法：豪天翔＋打倒各關第 10 舞台魔王拿到的卷軸所解鎖的新忍法（出發前在選關畫面選一個）
+// th＝需要哪一關的卷軸（THEMES 索引：林 0、風 1、火 2、山 3）
+const JUTSU = [
+  { id: 'soar', n: '豪天翔', th: -1, col: '#ffd25a' },
+  { id: 'kongo', n: '金剛身', th: 0, col: '#ffd25a' },   // 林之卷軸（鐵甲鬼）：無敵、撞到就斬
+  { id: 'yume', n: '夢幻術', th: 1, col: '#b88aff' },    // 風之卷軸（怠惰鬼）：畫面上的敵人睡著
+  { id: 'sekka', n: '雪華封', th: 3, col: '#bfeaff' },   // 山之卷軸（雪女鬼）：冰封敵人與飛行道具
+  { id: 'kishin', n: '鬼神斬', th: 2, col: '#ff6a4a' },  // 火之卷軸（真妖鬼）：巨大金棒清場
+];
+const MAKI_N = ['林之卷軸', '風之卷軸', '火之卷軸', '山之卷軸'];
+const hasMaki = th => !!(save.maki && save.maki[th]);
+const jutsuOK = j => j.th < 0 || hasMaki(j.th);
+const curJutsu = () => { const j = JUTSU.find(x => x.id === save.jutsu); return j && jutsuOK(j) ? j : JUTSU[0]; };
 function castScroll() {
   if (!g || state !== 'play' || paused || g.scrolls <= 0 || g.fly > 0) return;
-  g.scrolls--; state = 'cast'; g.castT = CAST_T; SFX.scroll(); vib(60);
+  g.scrolls--; state = 'cast'; g.castT = CAST_T; g.castJ = curJutsu(); SFX.scroll(); vib(60);
   g.p.dash = 0; g.p.dive = false;
   if (!g.usedScroll) { g.usedScroll = true; unlock('scroll1'); }
   if (++g.scrollN >= 5) unlock('scroll5');
+}
+// 卷軸演出結束：發動忍法
+function jutsuGo(j) {
+  const p = g.p, on = e => !e.dead && e.y > g.camY - 40 && e.y < g.camY + H + 40;   // 畫面上的敵人
+  state = 'play'; g.jfx = { col: j.col, t: 1 };
+  if (j.id === 'kongo') { g.kongo = 4.5; p.inv = Math.max(p.inv, 4.6); p.vy = -JUMP * 1.15; SFX.clank(); }
+  else if (j.id === 'yume') { for (const e of g.enemies) if (on(e)) e.sleep = 5; g.eshots = []; p.vy = -JUMP; p.inv = Math.max(p.inv, 1); SFX.scroll(); }
+  else if (j.id === 'sekka') { for (const e of g.enemies) if (on(e)) e.frozen = 6; g.eshots = []; g.fires = []; p.vy = -JUMP; p.inv = Math.max(p.inv, 1); noise(.4, .06); tone(1800, .5, 'triangle', .04, -900); }
+  else if (j.id === 'kishin') {
+    g.kishinT = .7; g.shake = 16; SFX.boom(); vib([60, 40, 120]); p.vy = -JUMP * 1.1; p.inv = Math.max(p.inv, 1);
+    for (const e of [...g.enemies]) if (on(e)) { if (e.type === 13) { e.hp -= 6; e.flash = .3; if (e.hp <= 0) { e.hp = 1; slay(e); } } else slay(e); }
+    const b = g.boss; if (b && !b.stun && state === 'play') { b.hp = Math.max(1, b.hp - 3); b.st = b.stN - 1; bossHit(b); }   // 魔王：大傷害＋直接打出破綻
+  } else { g.fly = 1.7 * (1 + .4 * pk('feather')); p.inv = Math.max(p.inv, g.fly + .6); }
 }
 
 // ===== BOSS =====
@@ -1626,13 +1661,136 @@ function updateQte(dt) {
 function endQte() {
   const q = g.qte, b = g.boss;
   if (q.kill && !b.fin) { startFlee(); return; }   // 初戰：魔王被擊退、逃走
-  if (q.kill) { state = 'kill'; g.killT = 1.5; g.killWord = pick(KILL_WORDS); SFX.kill(); vib([60, 40, 160]); return; }
+  if (q.kill) { startFin(); return; }   // 決戰：居合一閃→封印成卷軸→任務達成
   state = 'play'; g.qte = null;
   b.stun = 0; b.cool = 1.2; b.atkT = 1.4; b.rest = 0;
   g.p.vy = -JUMP; g.p.inv = 1;
   floatText(W / 2, g.camY + H * .45, t('boss_flee'), '#ffd27a', 20);
 }
 // ===== 初戰擊退：魔王踉蹌冒煙 → 往上跳走（殘影）→ 字幕「逃走了…第 10 舞台再決勝負」 =====
+// ===== 決戰擊倒：居合一閃（A）＋封印之卷（C） =====
+// 0～0.7 夕陽剪影對峙 → 0.7 白閃一刀 → 0.9 收刀「喀」、魔王斜斷 → 1.5 符咒封印陣、墨氣被吸入 → 2.4 化為卷軸落入手中
+// → 3.0 卷軸展開：卷軸名、「任務達成」、獲得的忍法 → 4.4 結算。點一下可跳到卷軸展開
+const FIN_T = 4.4, MAKI_COIN = 100;
+const MAKI_COL = { 3: ['#3a3d46', '#d9a441'], 1: ['#5a2a8a', '#d8dce8'], 2: ['#5aa8d8', '#ffffff'], 0: ['#b01e18', '#1a1010'] };   // 卷軸顏色（依魔王）：[軸身, 邊]
+function startFin() {
+  state = 'fin'; g.qte = null; g.finT = 0;
+  g.finInfo = { first: !hasMaki(g.th), th: g.th, kind: g.boss.kind, jutsu: JUTSU.find(j => j.th === g.th) };
+  SFX.kill(); vib([60, 40, 160]);
+  if (ac && musV()) { BGM.setVol(musV()); BGM.jingle(ac, 'finish'); }
+}
+function updateFin(dt) {
+  const e0 = g.finT; g.finT += dt; const e1 = g.finT, at = x => e0 < x && e1 >= x;
+  if (g.boss) g.boss.t += dt;
+  if (at(.7)) { vib(80); g.shake = 0; }
+  if (at(.95)) SFX.clank();
+  if (at(2.4)) vib([30, 30, 60]);
+  if (at(3.9)) { SFX.impact(); vib(40); }
+  if (g.finT >= FIN_T) { if (g.preview) { g.finT = 0; if (ac && musV()) BGM.jingle(ac, 'finish'); } else finishBoss(true); }   // ?finshow 預覽：重播、不寫存檔
+}
+function drawFin() {
+  const e = g.finT, b = g.boss, fi = g.finInfo || {}, cx = W / 2, T = performance.now() / 1000;
+  const bossSil = (x, y, s, col) => drawSil(x, y, 150 * s, 150 * s, 75 * s, 80 * s, col, c2 => drawBoss(b, 0, 0, s, c2));
+  const njSil = (x, y, s, col, o = {}) => drawSil(x, y, 100 * s, 110 * s, 50 * s, 95 * s, col, c2 => { c2.scale(s, s); drawHeroNinja(0, 0, Object.assign({ face: -1, t: 1, vy: 0, skin: save.skin }, o), c2); });
+  const sunset = () => {
+    const gr = ctx.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#1a0406'); gr.addColorStop(.6, '#5a1210'); gr.addColorStop(1, '#2a0606'); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+    const sg = ctx.createRadialGradient(cx, H * .42, 10, cx, H * .42, 150); sg.addColorStop(0, '#ffd67a'); sg.addColorStop(.55, '#e5342a'); sg.addColorStop(1, 'rgba(229,52,42,0)'); ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#120406'; ctx.fillRect(0, H * .66, W, H * .34);
+    for (let i = 0; i < 4; i++) { ctx.fillStyle = `rgba(255,190,140,${.06})`; ctx.fillRect(0, H * (.2 + i * .07), W, 3); }   // 雲的細線
+  };
+  if (e < .7) {   // ① 對峙
+    sunset(); bossSil(W * .7, H * .66 - 52, 1.45, '#0a0608'); njSil(W * .2, H * .66, 1.5, '#0a0608', { face: 1 });
+    ctx.fillStyle = 'rgba(255,220,180,.5)'; for (let i = 0; i < 6; i++) { const lx = (T * 260 + i * 97) % (W + 60) - 30; ctx.fillRect(lx, H * (.3 + i * .08), 22, 1.5); }   // 風
+  } else if (e < .9) {   // ② 一閃
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#0e1414'; ctx.fillRect(0, H * .55 - 4, W, 8);
+    bossSil(W * .5, H * .66 - 52, 1.45, '#0a0608'); njSil(W * .86, H * .66, 1.5, '#0a0608', { face: -1, pose: 'dash' });
+  } else if (e < 1.5) {   // ③ 收刀・斷
+    sunset();
+    const d = easeO(clamp((e - .9) / .6, 0, 1)) * 22, bx = W * .5, by = H * .66 - 52;
+    for (const sd of [-1, 1]) {   // 沿斜線切成兩半，往兩邊滑開
+      ctx.save(); ctx.translate(sd * d * .6, sd * d); ctx.beginPath();
+      if (sd < 0) { ctx.moveTo(0, 0); ctx.lineTo(W, 0); ctx.lineTo(W, by - 60); ctx.lineTo(0, by + 60); }
+      else { ctx.moveTo(0, by + 60); ctx.lineTo(W, by - 60); ctx.lineTo(W, H); ctx.lineTo(0, H); }
+      ctx.closePath(); ctx.clip(); bossSil(bx, by, 1.45, '#0a0608'); ctx.restore();
+    }
+    ctx.globalAlpha = Math.max(0, 1 - (e - .9) * 3); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, by + 60); ctx.lineTo(W, by - 60); ctx.stroke(); ctx.globalAlpha = 1;
+    njSil(W * .86, H * .66, 1.5, '#0a0608', { face: -1 });
+    if (e < 1.25) txt('喀', W * .86 - 26, H * .66 - 90, 26, '#ffe28a', 'center', '#000', 4);
+  } else if (e < 2.4) {   // ④ 封印
+    ctx.fillStyle = '#120c1c'; ctx.fillRect(0, 0, W, H);
+    const k = (e - 1.5) / .9, ccx = cx, ccy = H * .44, S = Math.min(W * .32, 120);
+    const corners = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
+    // 墨氣（魔王）被吸進陣中、越縮越小
+    ctx.save(); ctx.translate(ccx, ccy); ctx.rotate(k * 3); ctx.globalAlpha = .85 - k * .5;
+    drawSil(0, 0, 150 * 1.6, 150 * 1.6, 75 * 1.6, 80 * 1.6, '#3a2a4a', c2 => drawBoss(b, 0, 0, 1.6 * (1 - k * .85), c2)); ctx.restore(); ctx.globalAlpha = 1;
+    for (let i = 0; i < 16; i++) { const a = i / 16 * TAU + T * 3, r = S * 1.3 * (1 - ((T * .9 + i * .13) % 1)); ctx.fillStyle = 'rgba(80,50,110,.8)'; aCirc(ctx, ccx + Math.cos(a) * r, ccy + Math.sin(a) * r, 4); ctx.fill(); }
+    // 符咒飛到四角
+    const fly = easeO(clamp(k / .35, 0, 1));
+    corners.forEach(([sx, sy]) => {
+      const x = cx + (sx * S) * fly, y = H * .86 - 40 + (ccy + sy * S - (H * .86 - 40)) * fly;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(sx * .15); ctx.fillStyle = '#f4e8c0'; ctx.fillRect(-9, -16, 18, 32); ctx.strokeStyle = '#c0262d'; ctx.lineWidth = 2; ctx.strokeRect(-9, -16, 18, 32);
+      ctx.beginPath(); ctx.moveTo(-4, -9); ctx.lineTo(4, -9); ctx.moveTo(0, -9); ctx.lineTo(0, 10); ctx.moveTo(-5, 2); ctx.lineTo(5, 2); ctx.stroke(); ctx.restore();
+    });
+    // 金色封印陣：四方形＋對角線＋圓，依序畫出來
+    const L = clamp((k - .35) / .4, 0, 1);
+    if (L > 0) {
+      ctx.strokeStyle = `rgba(255,214,90,${.9})`; ctx.lineWidth = 3; ctx.shadowColor = '#ffd25a'; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.rect(ccx - S, ccy - S, S * 2, S * 2); ctx.globalAlpha = L; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ccx - S, ccy - S); ctx.lineTo(ccx + S, ccy + S); ctx.moveTo(ccx + S, ccy - S); ctx.lineTo(ccx - S, ccy + S); ctx.stroke();
+      ctx.beginPath(); ctx.arc(ccx, ccy, S * 1.2, -Math.PI / 2, -Math.PI / 2 + TAU * L); ctx.stroke();
+      ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    }
+    drawNinja(cx, H * .86, { face: 1, t: T, vy: 0, skin: save.skin, pose: 'apex' });
+  } else {   // ⑤ 化為卷軸 → ⑥ 展開
+    const [rc, ec] = MAKI_COL[fi.kind] || MAKI_COL[3];
+    const sr = clamp((e - 3.0) / 1.4, 0, 1);
+    const gr = ctx.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, sr > 0 ? '#3a2a40' : '#120c1c'); gr.addColorStop(1, sr > 0 ? '#c86a3a' : '#2a1c3a'); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+    if (sr > 0) { const sg = ctx.createRadialGradient(cx, H * 1.05, 10, cx, H * 1.05, H * .6); sg.addColorStop(0, `rgba(255,200,110,${.8 * sr})`); sg.addColorStop(1, 'rgba(255,200,110,0)'); ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H); }   // 日出
+    if (e < 3.0) {   // 捲起來的卷軸落進手中
+      const k = (e - 2.4) / .6, y = H * .44 + (H * .7 - H * .44) * easeO(k);
+      if (k < .25) { ctx.fillStyle = `rgba(255,255,255,${1 - k * 4})`; ctx.fillRect(0, 0, W, H); }
+      const glow = ctx.createRadialGradient(cx, y, 4, cx, y, 70); glow.addColorStop(0, 'rgba(255,214,90,.6)'); glow.addColorStop(1, 'rgba(255,214,90,0)'); ctx.fillStyle = glow; ctx.fillRect(cx - 80, y - 80, 160, 160);
+      ctx.fillStyle = rc; ctx.fillRect(cx - 14, y - 34, 28, 68); ctx.strokeStyle = ec; ctx.lineWidth = 2.5; ctx.strokeRect(cx - 14, y - 34, 28, 68);
+      ctx.fillStyle = ec; ctx.fillRect(cx - 18, y - 38, 36, 7); ctx.fillRect(cx - 18, y + 31, 36, 7);
+      drawNinja(cx, H * .86, { face: 1, t: T, vy: 0, skin: save.skin, pose: 'apex' });
+    } else {   // 卷軸展開
+      const SW = Math.min(W - 30, 340), SH = 230, w = 30 + (SW - 30) * easeO(clamp((e - 3.0) / .3, 0, 1)), y = H * .42;
+      ctx.save(); ctx.translate(cx, y);
+      ctx.fillStyle = '#efe3c2'; ctx.fillRect(-w / 2, -SH / 2, w, SH);
+      ctx.strokeStyle = '#c9b07a'; ctx.lineWidth = 2; ctx.strokeRect(-w / 2 + 8, -SH / 2 + 8, w - 16, SH - 16);
+      ctx.save(); ctx.beginPath(); ctx.rect(-w / 2, -SH / 2, w, SH); ctx.clip();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (e > 3.2) { ctx.globalAlpha = Math.min(1, (e - 3.2) * 5); ctx.fillStyle = '#6b4a22'; ctx.font = `26px ${BRUSH}`; ctx.fillText(t('maki_' + fi.th), 0, -SH / 2 + 34); ctx.globalAlpha = 1; }
+      const word = [...'任務達成'], cs = Math.min(70, (SW - 50) / 4);
+      ctx.font = `${cs}px ${BRUSH}`;
+      word.forEach((ch, i) => {
+        const p = clamp((e - 3.3 - i * .11) / .1, 0, 1); if (p <= 0) return;
+        const x = (i - 1.5) * cs * .98;
+        ctx.save(); ctx.beginPath(); ctx.rect(x - cs * .7, -cs * .7 + 4, cs * 1.4, cs * 1.4 * p); ctx.clip();
+        ctx.translate(x, 4 + [3, -3, 4, -2][i]); ctx.rotate([-.04, .03, -.02, .04][i]); ctx.shadowColor = 'rgba(26,16,16,.35)'; ctx.shadowBlur = 3;
+        ctx.fillStyle = '#140c0c'; ctx.fillText(ch, 0, 0); ctx.restore();
+      });
+      if (e > 3.8) {
+        ctx.globalAlpha = Math.min(1, (e - 3.8) * 5); ctx.font = `700 16px ${FONT}`; ctx.fillStyle = '#6b4a22';
+        ctx.fillText(fi.first && fi.jutsu ? t('fin_new', t('ju_' + fi.jutsu.id)) : t('fin_have', MAKI_COIN), 0, SH / 2 - 34); ctx.globalAlpha = 1;
+      }
+      if (e >= 3.9) {   // 紅印
+        const s = 1 + 1.5 * (1 - easeO(clamp((e - 3.9) / .08, 0, 1)));
+        ctx.save(); ctx.translate(SW / 2 - 40, SH / 2 - 52); ctx.rotate(.12); ctx.scale(s, s); ctx.fillStyle = '#c0262d';
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-16, -16, 32, 32, 4); else ctx.rect(-16, -16, 32, 32); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = `22px ${BRUSH}`; ctx.fillText('忍', 0, 2); ctx.restore();
+      }
+      ctx.restore();
+      for (const sx of [-1, 1]) {   // 兩端的軸（魔王的顏色）
+        const rx = sx * w / 2; ctx.fillStyle = rc; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(rx - 7, -SH / 2 - 10, 14, SH + 20, 7); else ctx.rect(rx - 7, -SH / 2 - 10, 14, SH + 20); ctx.fill();
+        ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = ec; ctx.fillRect(rx - 8, -SH / 2 - 13, 16, 6); ctx.fillRect(rx - 8, SH / 2 + 7, 16, 6);
+      }
+      ctx.restore();
+      drawNinja(cx, H * .9, { face: 1, t: T, vy: 0, skin: save.skin });
+    }
+  }
+}
 const FLEE_T = 2.2;
 function startFlee() {
   const b = g.boss;
@@ -1699,8 +1857,11 @@ function finishBoss(killed) {
     unlock('lv' + g.lvl + 'c');
     if (s.clear.every(x => x)) unlock('clear');
     if (!g.scrollN) unlock('noscroll');
-    $('clearBody').innerHTML = t('clear_body', THEMES[g.th].k);
-    state = 'clearq'; show('clear', true);
+    // 這一關的卷軸：第一次取得解鎖新忍法；已經有了就改給小判
+    const fi = g.finInfo || { first: !hasMaki(g.th) };
+    if (fi.first) { save.maki[g.th] = 1; g.makiGot = g.th; } else addCoins(MAKI_COIN);
+    persist();
+    showOver();   // 擊倒演出最後已經寫了「任務達成」，直接進結算（標題也是任務達成）
     return;
   }
   g.todF = null; wxForStage(); lvReach(); stageAch();
@@ -2023,7 +2184,7 @@ function drawScrollBtn() {
   c.fillStyle = '#c0262d'; c.fillRect(-3, -7, 6, 14);
   for (const sx of [-1, 1]) { rr(sx * 16 - 3, -9, 6, 18, 2); c.fillStyle = '#6a3a1e'; c.fill(); c.stroke(); }
   c.restore();
-  txt(t('soar_btn'), x, y + 16, 9, has ? '#ffd27a' : '#aaa', 'center', INK, 3);
+  txt(t('ju_' + curJutsu().id), x, y + 16, 9, has ? '#ffd27a' : '#aaa', 'center', INK, 3);
   if (g.scrolls > 0) { aCirc(c, x + r * .72, y - r * .72, 10); c.fillStyle = '#c0262d'; c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 1.6; c.stroke(); txt(String(g.scrolls), x + r * .72, y - r * .72, 11, '#fff', 'center', null); }
   c.restore();
 }
@@ -2238,9 +2399,24 @@ function drawSlash() {
   if (g.combo >= 2) txt(t('chain_hud', g.combo), W / 2, H * .8, 22, '#ffd27a', 'center', '#000', 4);
 }
 
+// 鬼神斬：巨大金棒從天而降，砸在畫面中央（k：0→1）
+function drawKishin(k) {
+  const fall = Math.min(1, k / .3), cx = W / 2, y = -260 + (H * .62 + 260) * fall * fall;
+  ctx.save(); ctx.globalAlpha = k < .75 ? 1 : 1 - (k - .75) / .25;
+  ctx.translate(cx, y); ctx.rotate(-.12);
+  ctx.fillStyle = '#4a2a20'; ctx.fillRect(-9, -320, 18, 200); ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.strokeRect(-9, -320, 18, 200);
+  ctx.fillStyle = '#7a1a14'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-34, -130, 68, 140, 16); else ctx.rect(-34, -130, 68, 140); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#d9a441'; for (let r = 0; r < 4; r++) for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sx * 34, -110 + r * 34); ctx.lineTo(sx * 48, -100 + r * 34); ctx.lineTo(sx * 34, -90 + r * 34); ctx.fill(); }
+  ctx.restore();
+  if (fall >= 1) {   // 落地的衝擊波
+    const r = (k - .3) / .7; ctx.strokeStyle = `rgba(255,140,80,${1 - r})`; ctx.lineWidth = 10 * (1 - r) + 2;
+    ctx.beginPath(); ctx.ellipse(cx, H * .62, 40 + r * W, 14 + r * 80, 0, 0, TAU); ctx.stroke();
+    if (k < .4) { ctx.fillStyle = `rgba(255,255,255,${(.4 - k) * 5})`; ctx.fillRect(0, 0, W, H); }
+  }
+}
 // ===== 豪天翔：卷軸展開・揮毫 =====
 // 0～0.15 秒卷軸飛入 → 0.35 秒攤開 → 0.35～0.75 毛筆逐字寫出「豪天翔」→ 0.75 蓋「忍」印 → 0.85～1.2 卷軸燒成金焰、主角衝天
-const CAST_T = 1.2, BRUSH = '"Ma Shan Zheng","Yu Mincho","Hiragino Mincho ProN","Noto Serif TC","Noto Serif JP","PMingLiU","MS Mincho",serif';
+const CAST_T = 1.2, BRUSH = '"Yuji Boku","Yu Mincho","Hiragino Mincho ProN","Noto Serif TC","Noto Serif JP","PMingLiU","MS Mincho",serif';
 const easeO = x => 1 - (1 - x) * (1 - x);
 // 時間軸上的音效（e0→e1 這一幀跨過的時間點）
 function castCue(e0, e1) {
@@ -2277,7 +2453,7 @@ function drawCast() {
     if (w > SW * .9) {
       const cs = Math.min(100, (SW - 40) / 3);
       ctx.font = `${cs}px ${BRUSH}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ['豪', '天', '翔'].forEach((ch, i) => {
+      [...(g.castJ || JUTSU[0]).n].forEach((ch, i) => {
         const p = clamp((e - .35 - i * .13) / .12, 0, 1); if (p <= 0) return;
         const x = (i - 1) * cs * .98 - 12, yy = [6, -4, 8][i];   // 毛筆字：每個字高低錯落、微微傾斜
         ctx.save(); ctx.beginPath(); ctx.rect(x - cs * .7, -cs * .7, cs * 1.4, cs * 1.4 * p); ctx.clip();
@@ -2321,7 +2497,7 @@ function drawCast() {
   // 「忍法」與英文副標
   ctx.globalAlpha = Math.min(1, e * 5) * (1 - burn);
   txt(t('cast_top'), cx, y - SH / 2 - 30, 28, '#ffd27a', 'center', '#000', 5);
-  if (LI === 2) txt('SKY SOAR', cx, y + SH / 2 + 30, 20, '#fff', 'center', '#000', 4);
+  if (LI === 2) txt(t('ju_' + (g.castJ || JUTSU[0]).id).toUpperCase(), cx, y + SH / 2 + 30, 20, '#fff', 'center', '#000', 4);
   ctx.globalAlpha = 1;
   // 主角：最後從光柱中往上衝
   const ny = H * .9 - easeO(burn) * H * .62;
@@ -2484,8 +2660,17 @@ function render() {
   for (const it of g.items) drawItem(it);
   for (const o of g.corpses) drawCorpse(o);   // 斬成兩半的敵人
   for (const e of g.enemies) if (!e.dead) drawEnemy(e.x, e.y, e.type, 1, e.ph, e);
-  if (g.boss && state !== 'kill') drawBossWorld(g.boss);
+  for (const e of g.enemies) if (!e.dead) {   // 夢幻術：飄出 Z；雪華封：冰塊
+    if (e.sleep > 0) { const k = (g.t * 1.2 + e.ph) % 1; ctx.globalAlpha = 1 - k; txt('z', e.x + 10 + k * 10, e.y - 22 - k * 18, 12 + k * 6, '#d8c0ff', 'center', '#000', 2); ctx.globalAlpha = 1; }
+    if (e.frozen > 0) { const ed = ENEMY[e.type]; ctx.fillStyle = 'rgba(190,234,255,.45)'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(e.x - ed.w / 2 - 4, e.y - ed.h / 2 - 4, ed.w + 8, ed.h + 8, 5); else ctx.rect(e.x - ed.w / 2 - 4, e.y - ed.h / 2 - 4, ed.w + 8, ed.h + 8); ctx.fill(); ctx.stroke(); }
+  }
+  if (g.boss && state !== 'kill' && state !== 'fin') drawBossWorld(g.boss);
   const p = g.p;
+  if (g.kongo > 0) {   // 金剛身：金色光環
+    const a = Math.min(1, g.kongo) * (.55 + .25 * Math.sin(g.t * 20));
+    ctx.strokeStyle = `rgba(255,214,90,${a})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(p.x, p.y - 22, 30 + Math.sin(g.t * 12) * 2, 0, TAU); ctx.stroke();
+    ctx.fillStyle = `rgba(255,214,90,${a * .25})`; ctx.fill();
+  }
   // 殘影
   for (const o of g.ghosts) {
     ctx.save(); ctx.globalAlpha = .45 * (1 - o.t / .25);
@@ -2517,6 +2702,8 @@ function render() {
   for (const tx of g.texts) if (tx.screen) { ctx.globalAlpha = clamp(1.1 - tx.t, 0, 1); txt(tx.s, W / 2, H * .22 + tx.y - tx.t * 20, tx.size, tx.c, 'center', '#000', 4); }
   ctx.globalAlpha = 1;
   if (g.fly > 0 && state === 'play') { ctx.fillStyle = 'rgba(255,220,120,.12)'; ctx.fillRect(0, 0, W, H); }
+  if (g.jfx) { ctx.globalAlpha = Math.max(0, g.jfx.t) * .4; ctx.fillStyle = g.jfx.col; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }   // 忍法發動的閃光
+  if (g.kishinT > 0) drawKishin(1 - g.kishinT / .7);
   if (g.fever > 0) { // 狂熱：金色外框
     ctx.strokeStyle = `rgba(255,200,60,${.5 + .3 * Math.sin(g.t * 12)})`; ctx.lineWidth = 10; ctx.strokeRect(0, 0, W, H);
     ctx.fillStyle = 'rgba(255,200,60,.08)'; ctx.fillRect(0, 0, W, H);
@@ -2526,9 +2713,10 @@ function render() {
   else if (state === 'qte') drawQte();
   else if (state === 'kill') drawKill();
   else if (state === 'flee') drawFlee();
+  else if (state === 'fin') drawFin();
   else if (state === 'zintro') drawZIntro();
   else if (state === 'ascend') drawAscend();
-  if (state !== 'slash' && state !== 'cast' && state !== 'qte' && state !== 'kill') { drawHUD(); if (state === 'play' || state === 'zintro') drawScrollBtn(); }
+  if (state !== 'slash' && state !== 'cast' && state !== 'qte' && state !== 'kill' && state !== 'fin') { drawHUD(); if (state === 'play' || state === 'zintro') drawScrollBtn(); }
   sideHudTick();
   if (state === 'play') drawBanner();
   if (g.tut && state !== 'slash' && state !== 'cast') drawTutorial();
@@ -2604,9 +2792,10 @@ function showOver() {
     card('🏯', THEMES[g.th].k + ' ' + (g.stage + 1) + '/' + ST_N, 'st_reach') + card('👹', g.bossN, 'st_boss') + card('🏆', save.best.rogue.toLocaleString(), 'st_best') +
     `</div>`;
   $('overCoins').innerHTML = t('over_coins', coins, save.coins);
-  $('overReach').innerHTML = t('over_reach2', THEMES[g.th].k, stageName(g.stage));
+  const jm = g.makiGot != null && JUTSU.find(j => j.th === g.makiGot);   // 這一局拿到的卷軸
+  $('overReach').innerHTML = jm ? `<span class="ov-maki">📜 ${t('over_maki', t('maki_' + g.makiGot), t('ju_' + jm.id))}</span>` : t('over_reach2', THEMES[g.th].k, stageName(g.stage));
   if (typeof adCoinsBtn === 'function') adCoinsBtn(coins);   // 看廣告，小判 ×2（ads.js）
-  if (!g.cleared && ac && musV()) { BGM.setVol(musV()); BGM.jingle(ac, 'fail'); }   // 修行中斷的收尾短曲（music.js）
+  if (ac && musV()) { BGM.setVol(musV()); BGM.jingle(ac, g.cleared ? 'clear' : 'fail'); }   // 收尾短曲：任務達成／修行中斷（music.js）
   show('over');
 }
 
@@ -2707,6 +2896,8 @@ document.addEventListener('click', e => {
     case 'retry': startRun(); break;
     case 'lvgo': if (lvPaid(+arg)) openFull('lv'); else startRun(+arg); break;
     case 'fullinfo': openFull('lv'); break;   // 完整版（levels.js）
+    case 'jutsu': save.jutsu = arg; persist(); renderJutsuPick(); break;   // 選關畫面：選擇帶進關卡的忍法
+    case 'jutsulock': toast(t('ju_locked', lvName(LEVELS.findIndex(l => l.th === +arg)))); break;
     case 'fullbuy': buyFull(); break;
     case 'fullclose': closeFull(); break;
     case 'contad': contWatch(); break;   // 看廣告復活（ads.js）
@@ -2773,7 +2964,7 @@ document.addEventListener('click', e => {
 });
 
 applyLang();
-try { document.fonts.load('80px "Ma Shan Zheng"', '豪天翔'); } catch (e) { }   // 先載好豪天翔卷軸的毛筆字（canvas 不會自己等字型）
+try { document.fonts.load('80px "Yuji Boku"', '豪天翔任務達成金剛身夢幻術雪華封鬼神斬風林火山之卷軸秘忍'); } catch (e) { }   // 先載好豪天翔卷軸的毛筆字（canvas 不會自己等字型）
 buildHeroArt();   // 產生標題大圖與商店頭像（程式畫的主角）
 goTitle();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
@@ -2782,7 +2973,7 @@ window.__tobi = { get g() { return g; }, get state() { return state; }, startRun
 // ===== iPad／電腦橫向：兩側的資訊欄（左：分數、關卡、技能與秘傳；右：豪天翔大按鈕） =====
 const SH = { t: 0, key: '' };
 function sideHudTick() {
-  const on = document.body.classList.contains('pillar') && g && !g.tut && (state === 'play' || state === 'zintro' || state === 'ascend' || state === 'slash' || state === 'cast' || state === 'qte' || state === 'kill' || state === 'flee');
+  const on = document.body.classList.contains('pillar') && g && !g.tut && (state === 'play' || state === 'zintro' || state === 'ascend' || state === 'slash' || state === 'cast' || state === 'qte' || state === 'kill' || state === 'flee' || state === 'fin');
   document.body.classList.toggle('shud', !!on);
   if (!on) return;
   const now = performance.now(); if (now - SH.t < 250) return; SH.t = now;
@@ -2791,7 +2982,7 @@ function sideHudTick() {
   const key = JSON.stringify([g.skills, g.perks, g.lv]);
   if (key !== SH.key) { SH.key = key; renderPauseSkills($('shSk')); }
   const b = $('shScroll'), has = g.scrolls > 0 && g.fly <= 0;
-  b.classList.toggle('ready', has); b.querySelector('i').textContent = '×' + g.scrolls;
+  b.classList.toggle('ready', has); b.querySelector('i').textContent = '×' + g.scrolls; b.querySelector('b').textContent = t('ju_' + curJutsu().id);
 }
 $('shScroll').addEventListener('pointerdown', e => {
   e.preventDefault(); e.stopPropagation(); A();

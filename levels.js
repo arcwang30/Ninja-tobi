@@ -246,5 +246,14 @@ function openLvSel() {
       <span class="lv-k">${lvName(i)}</span><span class="lv-motto">${L(L0.motto)}</span>${info}</button>`;
   }).join('');
   $('lvList').innerHTML = h;
+  renderJutsuPick();
   show('lvsel', state === 'menu');
+}
+// 帶進關卡的忍法：豪天翔＋已取得卷軸解鎖的新忍法（沒解鎖的顯示鎖頭與取得條件）
+function renderJutsuPick() {
+  const cur = curJutsu().id;
+  $('lvJutsu').innerHTML = `<div class="lj-h">${t('ju_title')}<small>${t('jd_' + cur)}</small></div><div class="lj-row">` +
+    JUTSU.map(j => jutsuOK(j)
+      ? `<button class="lj ${j.id === cur ? 'on' : ''}" data-act="jutsu" data-arg="${j.id}">${t('ju_' + j.id)}</button>`
+      : `<button class="lj lock" data-act="jutsulock" data-arg="${j.th}">🔒</button>`).join('') + `</div>`;
 }

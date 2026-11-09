@@ -218,6 +218,24 @@ const BGM = (() => {
       taiko: [[0, .2], [3, .12], [8, .18], [16, .2], [20, .14], [24, .26], [25, .22]],
       hit: [[8, .35, .1, .05], [16, .35, .1, .05], [24, .45, .9, .05]],
     },
+    finish: {   // 決戰擊倒（約 4.4 秒，對齊演出）：尺八長音（對峙）→ 太鼓一擊（一閃）→ 琴的下行刷弦（斷）→ 鈴聲＋低音漸強（封印）→ 笛聲上行（卷軸展開）
+      bpm: 120, len: 36,
+      lead: [['E5', 0, 5, .07], ['E5', 24, 1, .08, 'p25'], ['F#5', 25, 1, .08, 'p25'], ['A5', 26, 1, .08, 'p25'], ['B5', 27, 2, .08, 'p25'], ['E6', 29, 7, .08, 'p25']],
+      bass: [['E2', 12, 2], ['F2', 14, 2], ['A2', 16, 2], ['B2', 18, 2], ['E2', 24, 12]],
+      koto: [['B5', 7.5], ['A5', 8], ['F5', 8.5], ['E5', 9], ['C5', 9.5], ['B4', 10], ['A4', 10.5]],
+      bell: [['B6', 12], ['B6', 14], ['E7', 16], ['B6', 18], ['E7', 19.2]],
+      taiko: [[5.6, .3], [7.2, .12], [19.2, .22], [24, .2], [31.2, .28], [32, .2]],
+      hit: [[5.6, .6, .5, .07], [19.2, .5, .4, .05], [31.2, .4, .6, .05]],
+    },
+    clear: {   // 任務達成結算（約 5 秒）：太鼓開場＋笛聲主旋律，明亮的陽音階（D E G A B）
+      bpm: 132, len: 42,
+      lead: [['D5', 8, 1, .08, 'p25'], ['E5', 9, 1, .08, 'p25'], ['G5', 10, 2, .08, 'p25'], ['A5', 12, 4, .08, 'p25'], ['G5', 16, 2, .08, 'p25'], ['A5', 18, 2, .08, 'p25'], ['D6', 20, 4, .08, 'p25'],
+        ['B5', 24, 2, .08, 'p25'], ['A5', 26, 2, .08, 'p25'], ['G5', 28, 2, .08, 'p25'], ['A5', 30, 2, .08, 'p25'], ['D6', 32, 10, .08, 'p25']],
+      bass: [['D2', 8, 8], ['G2', 16, 8], ['A2', 24, 8], ['D2', 32, 10]],
+      koto: [['D4', 16], ['G4', 16.5], ['A4', 17], ['D5', 17.5], ['D4', 32], ['A4', 32.5], ['D5', 33], ['G5', 33.5], ['A5', 34], ['D6', 34.5]],
+      taiko: [[0, .25], [2, .18], [4, .15], [5, .15], [6, .25], [8, .2], [16, .2], [24, .2], [32, .28], [33, .24]],
+      hit: [[32, .45, .9, .05]],
+    },
   };
 
   // ---- 波形 ----
@@ -349,13 +367,16 @@ const BGM = (() => {
       const st = 60 / J.bpm / 4, t0 = ac.currentTime + .06, prev = out;
       out = ac.createGain(); out.gain.value = MASTER * vol; out.connect(ac.destination);
       let s = 0;
-      for (const [n, len] of J.mel) { if (n !== '.') { note(waves.p25, hz(n), t0 + s * st, len * st, .08, len >= 6); note(waves.p12, hz(n), t0 + (s + 2) * st, len * st, .025, false); } s += len; }
-      for (const [n, at, len] of J.bass) note(waves.tri, hz(n), t0 + at * st, len * st, .11, false);
-      for (const [n, at] of J.koto) note(waves.p12, hz(n), t0 + at * st, 6 * st, .035, false);
-      for (const [at, v] of J.taiko) kick(t0 + at * st, v);
-      for (const [at, r, d, v] of J.hit) hit(t0 + at * st, r, d, v);
+      for (const [n, len] of J.mel || []) { if (n !== '.') { note(waves.p25, hz(n), t0 + s * st, len * st, .08, len >= 6); note(waves.p12, hz(n), t0 + (s + 2) * st, len * st, .025, false); } s += len; }
+      // lead：指定時間點的旋律（尺八＝p50 帶顫音；笛＝p25），[音, 開始, 長度, 音量, 波形]
+      for (const [n, at, len, v = .07, w = 'p50'] of J.lead || []) { note(waves[w], hz(n), t0 + at * st, len * st, v, len >= 3); note(waves.p12, hz(n), t0 + (at + 2) * st, len * st, v * .3, false); }
+      for (const [n, at, len] of J.bass || []) note(waves.tri, hz(n), t0 + at * st, len * st, .11, false);
+      for (const [n, at] of J.koto || []) note(waves.p12, hz(n), t0 + at * st, 6 * st, .035, false);
+      for (const [n, at] of J.bell || []) note(waves.p12, hz(n), t0 + at * st, 3 * st, .05, false);   // 鈴
+      for (const [at, v] of J.taiko || []) kick(t0 + at * st, v);
+      for (const [at, r, d, v] of J.hit || []) hit(t0 + at * st, r, d, v);
       const o = out; out = prev;
-      setTimeout(() => o.disconnect(), (s + 12) * st * 1000);
+      setTimeout(() => o.disconnect(), (Math.max(s, J.len || 0) + 12) * st * 1000);
     },
     // 設定頁調整音樂音量：播放中的曲子立即套用
     setVol(v) { if (v === vol) return; vol = v; if (out && timer) out.gain.setTargetAtTime(MASTER * v, ac.currentTime, .03); },

@@ -1,7 +1,7 @@
 /* NINJA 鳶 — 介面風格「竹林夜襲」：月夜竹林、鐵灰金屬面板、金色鉚釘、紅色緞帶，全部粗黑描邊＋上緣高光 */
 @import url("https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Sans+TC:wght@700;900&display=swap");
-/* 毛筆字（豪天翔卷軸用）：只下載用到的三個字 */
-@import url("https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap&text=%E8%B1%AA%E5%A4%A9%E7%BF%94");
+/* 毛筆字（Yuji Boku，卷軸用）：只下載用到的字——豪天翔任務達成金剛身夢幻術雪華封鬼神斬風林火山之卷軸秘忍 */
+@import url("https://fonts.googleapis.com/css2?family=Yuji+Boku&display=swap&text=%E8%B1%AA%E5%A4%A9%E7%BF%94%E4%BB%BB%E5%8B%99%E9%81%94%E6%88%90%E9%87%91%E5%89%9B%E8%BA%AB%E5%A4%A2%E5%B9%BB%E8%A1%93%E9%9B%AA%E8%8F%AF%E5%B0%81%E9%AC%BC%E7%A5%9E%E6%96%AC%E9%A2%A8%E6%9E%97%E7%81%AB%E5%B1%B1%E4%B9%8B%E5%8D%B7%E8%BB%B8%E7%A7%98%E5%BF%8D");
 
 :root {
   --ink: #0e1414;       /* 描邊 */
@@ -227,6 +227,8 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .ovp .ov-koban .ad-btn { width: auto; margin: 0; padding: .35em .7em; font-size: .78em; white-space: nowrap; flex-shrink: 0; }
 .ovp .ov-reach { text-align: center; font-size: .78em; color: var(--muted); font-weight: 700; margin: .5em 0 .2em; }
 .ovp .ov-reach b { color: #fff; }
+.ovp .ov-maki { display: inline-block; color: var(--gold-l); background: rgba(232,184,74,.15); border: calc(var(--u)*2) solid rgba(232,184,74,.5); border-radius: 1em; padding: .2em .8em; font-size: 1.15em; }
+.ovp .ov-maki b { color: #fff; }
 .clear-body { line-height: 1.6; margin-bottom: .8em; text-align: center; font-size: .95em; font-weight: 700; }
 .clear-body b { color: var(--gold-l); }
 
@@ -410,6 +412,14 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 .tut-skip::before { display: none; }
 body.tut .tut-skip { display: block; }
 .lvsel .lv-tut { margin: 0 0 .6em; background: #2a3a5a; color: #fff; }
+/* 選關：帶進關卡的忍法 */
+.lvsel .lv-jutsu { background: rgba(0,0,0,.28); border: calc(var(--u)*2) solid rgba(0,0,0,.45); border-radius: calc(var(--u)*10); padding: .35em .5em .45em; margin-bottom: .55em; }
+.lvsel .lj-h { font-size: .72em; color: var(--gold); letter-spacing: .15em; display: flex; justify-content: space-between; gap: .6em; align-items: baseline; margin-bottom: .3em; }
+.lvsel .lj-h small { color: var(--muted); letter-spacing: 0; font-size: .92em; text-align: right; }
+.lvsel .lj-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: .3em; }
+.lvsel .lj { margin: 0; padding: .4em .1em; font-size: .72em; letter-spacing: 0; white-space: nowrap; overflow: hidden; }
+.lvsel .lj.on { background: linear-gradient(var(--gold-l), var(--gold)); color: #3a2a08; text-shadow: none; }
+.lvsel .lj.lock { opacity: .5; }
 body.tut .scr.on ~ .tut-skip { display: none; }   /* 暫停、三選一時先藏起來 */
 
 /* iPad／電腦橫向：兩側的月下城夜景鋪滿視窗，遊戲畫面在中間 */
@@ -428,7 +438,7 @@ body.rotate #app { visibility: hidden; }
 /* 選關：畫面比較矮（例如 iPad 直向）時，四張圖卡跟著縮小，下方「新手教學」「返回」按鈕不會被壓扁 */
 #lvsel { container-type: size; }
 .lvsel > button { flex: none; }
-.lvsel .lv-list { justify-content: center; grid-template-columns: repeat(2, minmax(0, min(50%, calc((92cqh - 16em) / 2.5)))); }
+.lvsel .lv-list { justify-content: center; grid-template-columns: repeat(2, minmax(0, min(50%, calc((92cqh - 19.5em) / 2.5)))); }
 .lvsel .lv-card { width: 100%; }
 /* iPad／電腦橫向：左側資訊欄（分數、關卡、技能、秘傳）＋右側豪天翔大按鈕。寬度＝兩側背景露出的寬度 */
 #sideHud, #shScroll { display: none; }

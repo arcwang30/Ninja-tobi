@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>毛筆字型比較</title>
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Boku&family=Yuji+Syuku&family=Yuji+Mai&family=Zen+Kurenaido&family=LXGW+WenKai+TC:wght@700&family=Kaisei+Decol:wght@700&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; padding: 16px 10px 40px; background: #2a0a0a; color: #f4f1e8; font-family: "Noto Sans TC", sans-serif; }
+h1 { text-align: center; color: #ffe28a; font-size: 19px; margin: 0 0 4px; }
+.sub { text-align: center; color: #ccb; font-size: 12.5px; margin: 0 0 14px; }
+.list { max-width: 760px; margin: 0 auto; display: grid; gap: 10px; }
+.f { background: #efe3c2; color: #140c0c; border-radius: 8px; padding: 8px 12px; border: 3px solid #6b4a22; }
+.f h2 { margin: 0; font: 700 13px "Noto Sans TC", sans-serif; color: #6b4a22; display: flex; justify-content: space-between; }
+.f h2 span { color: #2a8a4a; } .f h2 span.bad { color: #c0262d; }
+.big { font-size: 64px; line-height: 1.15; letter-spacing: .04em; }
+.small { font-size: 24px; line-height: 1.4; }
+</style></head><body>
+<h1>毛筆字型比較（全部字都有，不會缺字）</h1>
+<p class="sub">要用到的字：豪天翔・任務達成・金剛身・夢幻術・雪華封・鬼神斬・風林火山之卷軸・秘</p>
+<div class="list" id="list"></div>
+<script>
+const FONTS = [['A', 'Yuji Boku', '粗獷墨跡、筆畫最重'], ['B', 'Yuji Syuku', '端正的楷書毛筆、最好讀'], ['C', 'Yuji Mai', '細緻的行書、最優雅'], ['D', 'Zen Kurenaido', '輕快的筆刷、偏手寫'], ['E', 'LXGW WenKai TC', '霞鶩文楷：工整楷體（繁中）'], ['F', 'Kaisei Decol', '粗明朝帶筆勢（參考）']];
+const TEXT = '豪天翔任務達成金剛身夢幻術雪華封鬼神斬風林火山之卷軸秘';
+const weight = f => f.includes('WenKai') || f.includes('Kaisei') ? 700 : 400;
+document.getElementById('list').innerHTML = FONTS.map(([k, f, d]) => `<div class="f" data-f="${f}"><h2>${k}．${f}　${d}<span>檢查中…</span></h2><div class="big" style="font-family:'${f}';font-weight:${weight(f)}">豪天翔　任務達成</div><div class="small" style="font-family:'${f}';font-weight:${weight(f)}">金剛身・夢幻術・雪華封・鬼神斬　風之卷軸・林之卷軸・火之卷軸・山之卷軸</div></div>`).join('');
+// 缺字檢查：同一個字用「這個字型＋兩種不同的備用字型」量寬度，有缺字時寬度會不同
+document.fonts.ready.then(async () => {
+  for (const el of document.querySelectorAll('.f')) {
+    const f = el.dataset.f, w = weight(f); await document.fonts.load(`${w} 40px "${f}"`, TEXT);
+    const c = document.createElement('canvas').getContext('2d'), miss = [];
+    for (const ch of TEXT) { c.font = `${w} 40px "${f}", monospace`; const a = c.measureText(ch).width; c.font = `${w} 40px "${f}", serif`; const b = c.measureText(ch).width; c.font = `${w} 40px "${f}", cursive`; const d = c.measureText(ch).width; if (a !== b || b !== d) miss.push(ch); }
+    const s = el.querySelector('h2 span'); s.textContent = miss.length ? '缺字：' + miss.join('') : '✓ 全部字都有'; if (miss.length) s.classList.add('bad');
+  }
+});
+</script>
+</body></html>
