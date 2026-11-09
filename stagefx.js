@@ -36,6 +36,7 @@ function updateZIntro(dt) {
   if (z.t >= ZI_T) {
     if (z.hide) { g.puffs.push({ x: g.p.x, y: g.p.y - 20, t: 0, r: 30 }); SFX.scroll(); }   // 倒數完：主角化煙現身
     state = 'play'; g.zi = null; g.p.vy = -JUMP; g.p.inv = Math.max(g.p.inv, .6);
+    if (g.promoPending) { g.promoPending = false; openFull('boss'); }   // 第一次在林關擊倒魔王：介紹完整版
   }
 }
 function skipZIntro() { if (g && g.zi) g.zi.t = Math.max(g.zi.t, ZI_T); }

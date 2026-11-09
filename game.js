@@ -171,20 +171,20 @@ const MODS = [
 ];
 // 修行（永久強化）：16 項，共 56 級。cost(l) = 從 Lv l 升到 Lv l+1 的價格
 const META = [
-  { id: 'hp', n: ['體魄', '体力', 'Vitality'], d: ['最大 HP +20', '最大HP +20', 'Max HP +20'], max: 5, cost: l => 150 * (l + 1), ic: '❤️' },
+  { id: 'hp', n: ['體魄', '体力', 'Vitality'], d: ['最大 HP +20', '最大HP +20', 'Max HP +20'], max: 5, cost: l => 105 * (l + 1), ic: '❤️' },
   { id: 'armor', n: ['鎖帷子', '鎖帷子', 'Chain Mail'], d: ['受到的傷害 -6%', '受けるダメージ -6%', 'Damage taken -6%'], max: 5, cost: l => 180 * (l + 1), ic: '🛡️' },
   { id: 'revive', n: ['再起', '再起', 'Second Wind'], d: ['每局一次：倒下時以一半 HP 復活', '1回だけ、倒れてもHP半分で復活', 'Once per run, revive with half HP'], max: 1, cost: () => 2000, ic: '🔥' },
-  { id: 'reach', n: ['長刀', '長刀', 'Long Blade'], d: ['斬擊接觸範圍擴大', '斬撃の当たり判定が広がる', 'Larger slash reach'], max: 3, cost: l => 200 * (l + 1), ic: '🗡️' },
+  { id: 'reach', n: ['長刀', '長刀', 'Long Blade'], d: ['斬擊接觸範圍擴大', '斬撃の当たり判定が広がる', 'Larger slash reach'], max: 3, cost: l => 140 * (l + 1), ic: '🗡️' },
   { id: 'power', n: ['剛力', '剛力', 'Might'], d: ['對魔王與大天狗的傷害 +10%', '魔王・大天狗へのダメージ +10%', 'Damage to bosses +10%'], max: 5, cost: l => 200 * (l + 1), ic: '💪' },
   { id: 'cd', n: ['迅術', '迅術', 'Quick Arts'], d: ['自動技能的冷卻縮短 5%', '自動技の再使用 -5%', 'Skill cooldowns -5%'], max: 5, cost: l => 220 * (l + 1), ic: '⏱️' },
-  { id: 'speed', n: ['輕身', '軽身', 'Light Feet'], d: ['左右移動速度 +5%', '左右の移動速度 +5%', 'Move speed +5%'], max: 3, cost: l => 160 * (l + 1), ic: '👟' },
+  { id: 'speed', n: ['輕身', '軽身', 'Light Feet'], d: ['左右移動速度 +5%', '左右の移動速度 +5%', 'Move speed +5%'], max: 3, cost: l => 110 * (l + 1), ic: '👟' },
   { id: 'ki', n: ['丹田', '丹田', 'Inner Core'], d: ['「氣」上限 +1', '「気」の上限 +1', 'Max Ki +1'], max: 2, cost: l => 400 * (l + 1), ic: '🔷' },
   { id: 'kireg', n: ['調息', '調息', 'Breathing'], d: ['「氣」回復速度 +15%', '「気」の回復 +15%', 'Ki regen +15%'], max: 3, cost: l => 180 * (l + 1), ic: '🌬️' },
-  { id: 'magnet', n: ['吸魂', '吸魂', 'Soul Magnet'], d: ['魂與小判的吸收範圍擴大', '魂と小判を吸い寄せる範囲が広がる', 'Larger pickup range'], max: 3, cost: l => 150 * (l + 1), ic: '🧲' },
+  { id: 'magnet', n: ['吸魂', '吸魂', 'Soul Magnet'], d: ['魂與小判的吸收範圍擴大', '魂と小判を吸い寄せる範囲が広がる', 'Larger pickup range'], max: 3, cost: l => 105 * (l + 1), ic: '🧲' },
   { id: 'xp', n: ['悟性', '悟性', 'Insight'], d: ['獲得的經驗 +8%', '経験値 +8%', 'XP +8%'], max: 5, cost: l => 200 * (l + 1), ic: '📖' },
-  { id: 'gold', n: ['商才', '商才', 'Merchant'], d: ['小判 +10%', '小判 +10%', 'Koban +10%'], max: 5, cost: l => 120 * (l + 1), ic: '💰' },
+  { id: 'gold', n: ['商才', '商才', 'Merchant'], d: ['小判 +10%', '小判 +10%', 'Koban +10%'], max: 5, cost: l => 85 * (l + 1), ic: '💰' },
   { id: 'luck', n: ['福運', '福運', 'Good Luck'], d: ['寶箱與卷軸更容易出現', '宝箱と巻物が出やすい', 'More chests and scrolls'], max: 3, cost: l => 220 * (l + 1), ic: '🍀' },
-  { id: 'scroll', n: ['秘卷', '秘巻', 'Secret Scroll'], d: ['起始卷軸 +1', '開始時の巻物 +1', 'Start with +1 scroll'], max: 2, cost: l => 200 * (l + 1), ic: '📜' },
+  { id: 'scroll', n: ['秘卷', '秘巻', 'Secret Scroll'], d: ['起始卷軸 +1', '開始時の巻物 +1', 'Start with +1 scroll'], max: 2, cost: l => 140 * (l + 1), ic: '📜' },
   { id: 'reroll', n: ['天眼', '天眼', 'Third Eye'], d: ['三選一時可重抽 +1 次', '三択の引き直し +1回', '+1 reroll on level-up choices'], max: 3, cost: l => 250 * (l + 1), ic: '👁️' },
   { id: 'banish', n: ['封印', '封印', 'Seal'], d: ['三選一時可封印 +1 次（被封印的選項本局不再出現）', '三択で封印 +1回（その選択肢はもう出ない）', '+1 Seal: remove a choice for the rest of the run'], max: 3, cost: l => 300 * (l + 1), ic: '🈲' },
 ];
@@ -198,7 +198,7 @@ const metaCost = (m, l) => TEST_FREE ? 0 : m.cost(l);
 const ACH = [];
 {
   const add = (id, cat, n, d) => ACH.push({ id, cat, n, d });
-  const LV = [['林', '林', 'Forest'], ['風', '風', 'Wind'], ['火', '火', 'Fire'], ['山', '山', 'Mountain']];
+  const LV = [['林', '林', 'Forest'], ['風', '風', 'Wind'], ['山', '山', 'Mountain'], ['火', '火', 'Fire']];   // 和 LEVELS 的順序一致（v64 起山在火前面）
   add('run1', 0, ['初陣', '初陣', 'First Battle'], ['完成第一次挑戰', '初めての挑戦を終える', 'Finish your first run']);
   LV.forEach((k, i) => {
     add('lv' + i + 'r5', 0, [k[0] + '之卷・中', k[1] + 'の巻・中', k[2] + ' Midway'], ['在「' + k[0] + '」到達第 5 舞台', '「' + k[1] + '」で第5舞台に到達', 'Reach Stage 5 in ' + k[2]]);
@@ -588,7 +588,7 @@ function genRow() {
   const pl = { x, y, w, type, bx: x, ph: rnd(0, 6.28), sp: rnd(1, 1.8 + d), amp: rnd(40, 90) };
   g.plats.push(pl);
   // 釘刺（另外加一塊安全地板）
-  const pSpike = g.top < 600 ? 0 : (.05 + .12 * d) * (m === 'rich' ? 1.8 : 1);
+  const pSpike = g.top < 600 || (g.th === 0 && g.stage < 1) ? 0 :   /* 林關第 1 舞台沒有釘刺 */ (.05 + .12 * d) * (m === 'rich' ? 1.8 : 1);
   if (type !== 'move' && Math.random() < pSpike) {
     pl.type = 'spike';
     let x2 = x + (x < W / 2 ? rnd(110, 180) : -rnd(110, 180));
@@ -617,7 +617,7 @@ function genRow() {
   if (Math.random() < .012 * lucky) g.items.push({ t: 'scroll', x: rnd(30, W - 30), y: y - gap / 2, ph: 0 });
   else if (Math.random() < .022 * lucky) g.items.push({ t: 'chest', x: rnd(30, W - 30), y: y - gap / 2, ph: 0 });
   // 敵忍者
-  const pE = g.top < 250 || g.tut ? 0 : (.08 + .14 * d) * (m === 'horde' ? 2.6 : 1) * (1 + .06 * g.stage + .3 * hardN());   // 越後面的幕敵人越多
+  const pE = g.top < 250 || g.tut ? 0 : (.08 + .14 * d) * (m === 'horde' ? 2.6 : 1) * (1 + .06 * g.stage + .3 * hardN()) * (g.th === 2 ? 1.2 : 1);   /* 火關敵人多 20% */   // 越後面的幕敵人越多
   // 倖存者節奏：敵人密度比之前高（技能需要靶子，魂也從這裡來）
   // 世界加寬時敵人也按比例增加（例如 1.5 倍寬 → 平均 1.5 倍敵人）
   for (let k = WK(); k > 0; k--) if (Math.random() < pE * 1.4 * Math.min(1, k)) g.enemies.push(mkEnemy(enemyType(d), rnd(30, W - 30), (y + prevY) / 2, rnd(10, 50)));
@@ -903,6 +903,8 @@ function updatePlay(dt) {
   if (g.mod && g.mod.id === 'rise') zs *= 1.5;
   zs *= Math.pow(.85, pk('slowzone')) * (1 + .15 * hardN());
   if (g.boss) zs *= .6;
+  if (g.th === 0 && g.stage < 2) zs *= .8;   // 林關前兩個舞台：追兵慢 20%
+  if (g.th === 2) zs *= 1.12;   // 火關（最後一關）：追兵快 12%
   if (g.tut) zs = 0;   // 新手教學：下方沒有追兵
   g.zoneY -= zs * dt;
   const zVis = Math.min(g.zoneY, g.camY + H - 26);
@@ -1618,6 +1620,8 @@ function finishBoss(killed) {
   g.midDone = false; if (g.mid) { g.mid.dead = true; g.mid = null; }
   g.mod = pick(MODS); g.wind = 0; g.windT = 0;
   g.pendingPerk = killed;
+  if (killed) stageCoins();
+  if (killed && g.lvl === 0 && !hasFull() && !save.fullSeen) g.promoPending = true;   // 第一次在林關擊倒魔王：下一個舞台開始時介紹完整版
   // 第 10 舞台的魔王倒下：破台
   if (g.stage >= ST_N) {
     g.stage = ST_N - 1; g.cleared = true;
@@ -1641,7 +1645,10 @@ function nextStage() {
   stageBanner(); SFX.item();
 }
 // 突破一個舞台時的成就檢查（天候、無傷）
+// 過舞台獎勵：舞台數 × 15 小判（前期收入比較不會太少）
+function stageCoins() { const n = (g.stage + 1) * 15; addCoins(n); floatText(W / 2, 96, '+' + n + ' ' + t('koban'), '#ffd27a', 18, true); }
 function stageDone() {
+  stageCoins();
   if (g.wx && g.wx.cur > .3) unlock('wx_' + g.wx.k);
   if (!g.stHit && g.stage >= 2) unlock('nohit');   // 第 3 舞台起才算
   g.stHit = false;
@@ -2507,6 +2514,7 @@ function renderRank() {
 function renderOpt() {
   $('bSnd').textContent = t('snd', save.opt.snd ? 'ON' : 'OFF');
   $('bVib').textContent = t('vib', save.opt.vib ? 'ON' : 'OFF');
+  const bf = $('bFull'); bf.style.display = TEST_FREE ? '' : 'none'; bf.textContent = t('full_test', hasFull() ? t('full_own') : t('full_none'));   // 測試模式才顯示
   $('bLang').textContent = t('lang', LANGS[LI].name);
   const r = $('bReset'); delete r.dataset.armed; r.textContent = t('reset');
 }
@@ -2530,7 +2538,11 @@ document.addEventListener('click', e => {
     case 'tutorial': startTutorial(); break;
     case 'tutskip': if (g && g.tut) endTutorial(false); break;
     case 'retry': startRun(); break;
-    case 'lvgo': startRun(+arg); break;
+    case 'lvgo': if (lvPaid(+arg)) openFull('lv'); else startRun(+arg); break;
+    case 'fullinfo': openFull('lv'); break;   // 完整版（levels.js）
+    case 'fullbuy': buyFull(); break;
+    case 'fullclose': closeFull(); break;
+    case 'fulltest': save.full = !hasFull(); persist(); renderOpt(); break;   // 測試模式：切換是否擁有完整版
     case 'lvlock': toast(t('lv_locked')); break;
     case 'shop':
       if (b.classList.contains('shop-corner')) {   // 主畫面寶箱：打開蓋子、噴出金光，0.4 秒後才進商店

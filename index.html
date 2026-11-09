@@ -96,6 +96,19 @@
     </div>
   </div>
 
+  <!-- 完整版介紹（levels.js）：林關免費，風、山、火要購買 -->
+  <div class="scr dim" id="full">
+    <div class="panel wide full">
+      <h2 data-i18n="full_title"></h2>
+      <p class="full-lead" id="fullLead"></p>
+      <div class="full-lvs" id="fullLvs"></div>
+      <ul class="full-list" id="fullList"></ul>
+      <div class="full-price" data-i18n="full_price"></div>
+      <button data-act="fullbuy" id="fullBuy" class="big red" data-i18n="full_buy"></button>
+      <button data-act="fullclose" data-i18n="full_later"></button>
+    </div>
+  </div>
+
   <!-- 結算 -->
   <div class="scr dim" id="over">
     <div class="panel">
@@ -137,6 +150,7 @@
       <button data-act="snd" id="bSnd"></button>
       <button data-act="vib" id="bVib"></button>
       <button data-act="replay" data-i18n="replay"></button>
+      <button data-act="fulltest" id="bFull"></button>   <!-- 測試模式：切換是否擁有完整版 -->
       <button data-act="reset" class="red" id="bReset"></button>
       <button data-act="back" data-i18n="back"></button>
       <small id="diag" class="diag"></small>

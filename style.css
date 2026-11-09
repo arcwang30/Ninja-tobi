@@ -415,3 +415,15 @@ body.pillar.shud #shScroll { display: flex; position: fixed; z-index: 2; right: 
 body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%, #ff6a5a, #b81e22 70%); border-color: #ffd27a; color: #fff; filter: none; opacity: 1; animation: sh-glow 1.4s ease-in-out infinite; }
 #shScroll.ready:active { transform: translateX(50%) translateY(.2em) scale(.96); }
 @keyframes sh-glow { 0%,100% { box-shadow: 0 .35em 0 #000, 0 0 .6em rgba(255,210,90,.5); } 50% { box-shadow: 0 .35em 0 #000, 0 0 2em rgba(255,210,90,.95); } }
+/* 選關：完整版的關卡（還沒購買）＋完整版介紹畫面 */
+.lv-card.paid { border-color: #c9a14a; }
+.lv-card.paid .lv-art { filter: brightness(.42) saturate(.6); }
+#full { z-index: 6; }   /* 蓋在選關圖卡的文字上面 */
+.lv-card .lv-full { position: relative; z-index: 1; font-size: .7em; font-weight: 900; color: #1a1a22; background: linear-gradient(#ffe28a, #e8b84a); border-radius: 1em; padding: .15em .8em; margin-top: .2em; box-shadow: 0 .1em 0 rgba(0,0,0,.4); }
+.panel.full { text-align: center; }
+.full-lead { margin: 0 0 .7em; line-height: 1.5; color: #ffe9a8; font-weight: 700; }
+.full-lvs { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5em; margin-bottom: .7em; }
+.full-lv { position: relative; aspect-ratio: 4 / 5; border-radius: .6em; border: 2px solid #e8b84a; background-size: cover; background-position: center; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+.full-lv b { font-size: 1.8em; font-weight: 900; color: #fff; text-shadow: 0 0 .12em #000, 0 .06em 0 #c0262d; margin-bottom: .15em; }
+.full-list { text-align: left; margin: 0 0 .6em; padding-left: 1.3em; font-size: .85em; line-height: 1.6; }
+.full-price { font-size: .85em; color: #cfd8ff; margin-bottom: .4em; }

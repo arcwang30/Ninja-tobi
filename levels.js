@@ -1,15 +1,15 @@
 'use strict';
 /* NINJA 鳶 TOBI — 選關、舞台時段、天候（在 game.js 之後載入）
-   ・四大關：風、林、火、山。每關 10 個舞台，白天→黃昏→夜晚→凌晨→魔王 5 個為一輪，第 6 舞台起進入第二輪
+   ・四大關：林、風、山、火（解鎖順序；火關最難、最後解鎖）。每關 10 個舞台，白天→黃昏→夜晚→凌晨→魔王 5 個為一輪，第 6 舞台起進入第二輪
    ・關卡解鎖：在前一關到達第 5 舞台（魔王舞台）就開放下一關（參考吸血鬼倖存者：前一關達成條件才開下一關）
    ・天候：每關有招牌天候（第 2～4 舞台輕微、第 6～9 舞台加強），魔王登場時會換成魔王自己的天候 */
 
-// th = THEMES 的索引（林 0、風 1、火 2、山 3）
+// th = THEMES 的索引（林 0、風 1、火 2、山 3）；LEVELS 的順序＝選關與解鎖順序（v64 起火關和山關對調）
 const LEVELS = [
   { th: 0, wx: 'fog', motto: ['其徐如林', '徐かなること林の如く', 'Silent as the Forest'] },
   { th: 1, wx: 'rain', motto: ['其疾如風', '疾きこと風の如く', 'Swift as the Wind'] },
-  { th: 2, wx: 'dark', motto: ['侵掠如火', '侵掠すること火の如く', 'Fierce as Fire'] },
   { th: 3, wx: 'snow', motto: ['不動如山', '動かざること山の如し', 'Steady as the Mountain'] },
+  { th: 2, wx: 'dark', motto: ['侵掠如火', '侵掠すること火の如く', 'Fierce as Fire'] },   // 火關：難度最高、最後解鎖
 ];
 const ST_N = 10, ST_UNLOCK = 4;   // 一關 10 個舞台；到達第 5 舞台（索引 4）開下一關
 // 時段：白天、黃昏、夜晚、凌晨、魔王。mul = 乘色（整個背景的色調）、glow = 天空上方的光
@@ -48,6 +48,14 @@ function lvSave() {
       const A = save.ach || {}; for (const k of ['r5', 'c']) { const a = A['lv0' + k], b = A['lv1' + k]; if (b) A['lv0' + k] = b; else delete A['lv0' + k]; if (a) A['lv1' + k] = a; else delete A['lv1' + k]; }
       if (s.sel <= 1) s.sel = 1 - s.sel;
     }
+    persist();
+  }
+  // v64：火關和山關的選關位置對調（火關改成最後解鎖），把兩關的紀錄與成就也對調一次
+  if (!s.v3) {
+    s.v3 = 1;
+    [s.best[2], s.best[3]] = [s.best[3], s.best[2]]; [s.clear[2], s.clear[3]] = [s.clear[3], s.clear[2]];
+    const A = save.ach || {}; for (const k of ['r5', 'c']) { const a = A['lv2' + k], b = A['lv3' + k]; if (b) A['lv2' + k] = b; else delete A['lv2' + k]; if (a) A['lv3' + k] = a; else delete A['lv3' + k]; }
+    if (s.sel >= 2) s.sel = 5 - s.sel;
     persist();
   }
   return s;
@@ -92,7 +100,7 @@ function updateWx(dt) {
 function wxMove(mv, dt) {
   const w = g.wx; if (!w || dt <= 0) return mv;
   if (w.k === 'rain') return mv + w.gust * dt;
-  if (w.k === 'snow') { const k = Math.min(1, dt * (14 - 9 * w.cur)); w.v += (mv / dt - w.v) * k; return w.v * dt; }
+  if (w.k === 'snow') { const k = Math.min(1, dt * (14 - 5.5 * w.cur));   /* v64：打滑減輕（原本 14 - 9） */ w.v += (mv / dt - w.v) * k; return w.v * dt; }
   return mv;
 }
 
@@ -170,6 +178,32 @@ function drawWeather() {
   c.restore();
 }
 
+
+// ===== 完整版：林關免費；風、山、火三關要購買完整版（價格上架前再定，目前用測試按鈕） =====
+const FULL_LV = 1;   // LEVELS 索引 >= 1 的關卡屬於完整版
+// 測試模式：沒有特別設定時視為已擁有（設定頁有「完整版（測試）」開關可以切換）
+function hasFull() { return save.full === true || (TEST_FREE && save.full !== false); }
+const lvPaid = i => i >= FULL_LV && !hasFull();
+function openFull(why) {
+  if (g && state === 'play') { paused = true; inp.dx = 0; }
+  if (why === 'boss') { save.fullSeen = 1; persist(); }
+  $('fullLead').textContent = t(why === 'boss' ? 'full_lead_boss' : 'full_lead');
+  $('fullLvs').innerHTML = LEVELS.slice(FULL_LV).map((L0, k) => `<span class="full-lv" style="background-image:url(${lvThumb(FULL_LV + k)})"><b>${lvName(FULL_LV + k)}</b></span>`).join('');
+  $('fullList').innerHTML = ['full_p1', 'full_p2', 'full_p3', 'full_p4'].map(k => `<li>${t(k)}</li>`).join('');
+  $('fullBuy').style.display = hasFull() ? 'none' : '';
+  show('full', true);
+}
+function closeFull() {
+  hide('full');
+  if (g && paused && state === 'play') resumeGame();
+  if (state === 'menu' && $('lvsel').classList.contains('on')) openLvSel();
+}
+// 測試用的購買：直接設為已擁有（上架時改接 App Store／Google Play 的付款）
+function buyFull() {
+  save.full = true; persist(); SFX.fever();
+  toast(t('full_thanks'));
+  closeFull();
+}
 // ===== 選關畫面（吸血鬼倖存者風：大張的關卡圖卡，未開放的顯示剪影與開放條件） =====
 const lvThumbs = {};
 function lvThumb(i) {
@@ -188,13 +222,14 @@ function lvThumb(i) {
 function openLvSel() {
   const s = lvSave();
   const h = LEVELS.map((L0, i) => {
-    const open = i < (TEST_FREE ? LEVELS.length : s.open),   // 測試模式：四關全開
+    const paid = lvPaid(i), open = !paid && i < (TEST_FREE ? LEVELS.length : s.open),   // 測試模式：四關全開；完整版的關卡沒買就顯示「完整版」
       best = s.best[i], clr = s.clear[i];
     const wx = WX[L0.wx];
     const info = open
       ? `<span class="lv-best">${clr ? '✓ ' + t('lv_cleared') : best ? t('lv_best', best) : t('lv_new')}</span><span class="lv-wx">${wx.ic} ${L(wx.n)}</span>`
+      : paid ? `<span class="lv-full">${t('full_tag')}</span>${i < s.open || TEST_FREE ? '' : `<span class="lv-cond">🔒 ${t('lv_cond', lvName(i - 1), ST_UNLOCK + 1)}</span>`}`
       : `<span class="lv-cond">🔒 ${t('lv_cond', lvName(i - 1), ST_UNLOCK + 1)}</span>`;
-    return `<button class="lv-card ${open ? '' : 'locked'} ${s.sel === i && open ? 'sel' : ''}" ${open ? `data-act="lvgo" data-arg="${i}"` : 'data-act="lvlock"'}>
+    return `<button class="lv-card ${open ? '' : paid ? 'paid' : 'locked'} ${s.sel === i && open ? 'sel' : ''}" ${open ? `data-act="lvgo" data-arg="${i}"` : paid ? 'data-act="fullinfo"' : 'data-act="lvlock"'}>
       <span class="lv-art" style="background-image:url(${lvThumb(i)})"></span>
       <span class="lv-k">${lvName(i)}</span><span class="lv-motto">${L(L0.motto)}</span>${info}</button>`;
   }).join('');
