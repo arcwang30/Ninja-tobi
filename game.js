@@ -337,7 +337,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v68';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v69';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -1237,18 +1237,24 @@ function touchEnemy(e) {
   }
   // 菁英：第一刀只會打退
   if (e.hp > 1) {
-    e.hp--; e.cool = .35; e.flash = .3;
+    e.hp--; e.cool = .35; e.flash = .3; e.tough = 1;   // 要斬好幾刀的敵人（菁英、大天狗）：最後一刀播特寫
     if (!p.dive) { p.dash = 0; p.vy = -JUMP; }
     g.hitstop = .1; g.shake = 6; SFX.slash();
     g.fx.push({ x: e.x, y: e.y, a: rnd(0, 3.14), t: 0 });
     floatText(e.x, e.y - 30, e.type === 13 ? 'HP ' + e.hp : t('one_more'), '#e0b0ff', 14);
     return false;
   }
-  // 連斬的第一刀才播放全畫面演出，之後改用短暫 HIT STOP，讓連斬節奏不中斷
-  const cine = !fast && g.comboT <= 0 && g.fever <= 0;
   slay(e);
+  // 全畫面特寫斬擊：連斬到 5、10、20、30…的那一刀，或菁英／大天狗的最後一刀。
+  // 播過後 6 秒內不再播（10、20、30 連斬本來就隔很多刀，不受冷卻限制）、魔王戰和豪天翔中不播；其他時候只用短暫 HIT STOP
+  const big = g.combo >= 10 && g.combo % 10 === 0;
+  const cine = !g.boss && g.fly <= 0 && (big || (g.t - (g.cineT ?? -99) >= 6 && (e.tough || e.type === 13 || g.combo === 5)));
+  if (cine) g.cineT = g.t;
   if (g.fly > 0) return false;
-  if (p.dive) { g.hitstop = .04; return false; }   // 急降斬穿過敵人繼續往下
+  if (p.dive) {   // 急降斬穿過敵人繼續往下（特寫結束後接著往下劈）
+    if (cine) { state = 'slash'; g.slash = { e, t: 0, dur: ENEMY[e.type].dur, lines: [], n: 0, nextL: 0 }; return true; }
+    g.hitstop = .04; return false;
+  }
   if (p.dash > 0 && p.banks > 0) unlock('bank1');
   p.dash = 0; p.vy = -JUMP * (1 + .08 * pk('bounce')); p.wallUsed = false;
   if (g.combo >= 1) p.spin = .4;   // 連斬中踩著敵人往上：空翻
