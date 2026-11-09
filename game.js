@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v73';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v74';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -446,6 +446,7 @@ cv.addEventListener('pointerdown', e => {
   if (state === 'menu' && INTRO.tap()) return;   // 開場：點一下開始／跳過
   if (state === 'zintro') { skipZIntro(); return; }   // 每一幕的開場演出：點一下跳過
   if (state === 'ascend') { skipAscend(); return; }
+  if (state === 'cast') { g.castT = Math.min(g.castT, CAST_T - .85); return; }   // 豪天翔：點一下直接跳到燒卷軸、衝天
   const p = toL(e);
   if (state === 'play' && !paused) {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
@@ -804,7 +805,7 @@ function update(dt) {
       else updatePlay(dt);
       break;
     case 'slash': updateSlash(dt); break;
-    case 'cast': g.castT -= dt; if (g.castT <= 0) { state = 'play'; g.fly = 1.7 * (1 + .4 * pk('feather')); g.p.inv = Math.max(g.p.inv, g.fly + .6); } break;
+    case 'cast': { const e0 = CAST_T - g.castT; g.castT -= dt; castCue(e0, CAST_T - g.castT); } if (g.castT <= 0) { state = 'play'; g.fly = 1.7 * (1 + .4 * pk('feather')); g.p.inv = Math.max(g.p.inv, g.fly + .6); } break;
     case 'qte': updateQte(dt); break;
     case 'zintro': updateZIntro(dt); break;
     case 'ascend': updateAscend(dt); break;
@@ -1427,7 +1428,7 @@ function countKill() {
 // ===== 忍法 =====
 function castScroll() {
   if (!g || state !== 'play' || paused || g.scrolls <= 0 || g.fly > 0) return;
-  g.scrolls--; state = 'cast'; g.castT = 1.0; SFX.scroll(); vib(60);
+  g.scrolls--; state = 'cast'; g.castT = CAST_T; SFX.scroll(); vib(60);
   g.p.dash = 0; g.p.dive = false;
   if (!g.usedScroll) { g.usedScroll = true; unlock('scroll1'); }
   if (++g.scrollN >= 5) unlock('scroll5');
@@ -2237,17 +2238,92 @@ function drawSlash() {
   if (g.combo >= 2) txt(t('chain_hud', g.combo), W / 2, H * .8, 22, '#ffd27a', 'center', '#000', 4);
 }
 
+// ===== 豪天翔：卷軸展開・揮毫 =====
+// 0～0.15 秒卷軸飛入 → 0.35 秒攤開 → 0.35～0.75 毛筆逐字寫出「豪天翔」→ 0.75 蓋「忍」印 → 0.85～1.2 卷軸燒成金焰、主角衝天
+const CAST_T = 1.2, BRUSH = '"Yu Mincho","Hiragino Mincho ProN","Noto Serif TC","Noto Serif JP","PMingLiU","MS Mincho",serif';
+const easeO = x => 1 - (1 - x) * (1 - x);
+// 時間軸上的音效（e0→e1 這一幀跨過的時間點）
+function castCue(e0, e1) {
+  const at = x => e0 < x && e1 >= x;
+  if (at(.15)) { noise(.18, .06); tone(500, .14, 'triangle', .03, 600); }   // 唰：攤開
+  for (const x of [.35, .48, .61]) if (at(x)) noise(.09, .045);            // 毛筆
+  if (at(.75)) { SFX.impact(); vib(40); }                                     // 蓋印
+  if (at(.85)) { noise(.5, .08); tone(220, .45, 'sawtooth', .04, 500); }     // 燒起來
+}
 function drawCast() {
-  const k = 1 - g.castT;
-  ctx.fillStyle = 'rgba(20,0,0,.75)'; ctx.fillRect(0, 0, W, H);
-  speedLines(k * 8, 'rgba(255,200,120,.5)');
-  ctx.save(); ctx.translate(W / 2, H / 2 + 40); ctx.rotate(-.2);
-  ctx.fillStyle = '#fff3d0'; ctx.fillRect(-120, -40, 240, 80); ctx.fillStyle = '#6b4a22'; ctx.fillRect(-130, -44, 12, 88); ctx.fillRect(118, -44, 12, 88);
+  const e = CAST_T - g.castT, T = performance.now() / 1000, cx = W / 2;
+  const burn = clamp((e - .85) / .35, 0, 1), SW = Math.min(W - 36, 330), SH = 150;
+  ctx.fillStyle = `rgba(22,6,8,${Math.min(.95, e * 9)})`; ctx.fillRect(0, 0, W, H);
+  speedLines(e * 8, `rgba(255,200,120,${.3 * (1 - burn) + .15})`);
+  // 光柱（燒起來之後）
+  if (burn > 0) {
+    const pw = 60 + burn * 90, gr = ctx.createLinearGradient(cx - pw / 2, 0, cx + pw / 2, 0);
+    gr.addColorStop(0, 'rgba(255,210,90,0)'); gr.addColorStop(.5, `rgba(255,240,180,${.75 * burn})`); gr.addColorStop(1, 'rgba(255,210,90,0)');
+    ctx.fillStyle = gr; ctx.fillRect(cx - pw / 2, 0, pw, H);
+  }
+  // 卷軸位置與寬度
+  const y = e < .15 ? -80 + (H * .44 + 80) * easeO(e / .15) : H * .44;
+  const w = e < .15 ? 22 : 22 + (SW - 22) * easeO(clamp((e - .15) / .2, 0, 1));
+  const sk = e >= .75 && e < .85 ? Math.sin(e * 140) * 5 * (1 - (e - .75) / .1) : 0;   // 蓋印的震動
+  ctx.save(); ctx.translate(cx + sk, y + sk * .4);
+  ctx.globalAlpha = 1;
+  // 紙：從下往上燒掉
+  const ph = SH * (1 - burn), top = -SH / 2;
+  if (ph > 0) {
+    ctx.fillStyle = '#efe3c2'; ctx.fillRect(-w / 2, top, w, ph);
+    ctx.strokeStyle = '#c9b07a'; ctx.lineWidth = 2; ctx.strokeRect(-w / 2 + 8, top + 8, w - 16, Math.max(0, ph - 16));
+    ctx.save(); ctx.beginPath(); ctx.rect(-w / 2, top, w, ph); ctx.clip();
+    // 揮毫：每個字由上往下顯現（毛筆）
+    if (w > SW * .9) {
+      const cs = Math.min(80, (SW - 60) / 3);
+      ctx.font = `900 ${cs}px ${BRUSH}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ['豪', '天', '翔'].forEach((ch, i) => {
+        const p = clamp((e - .35 - i * .13) / .12, 0, 1); if (p <= 0) return;
+        const x = (i - 1) * cs * 1.05 - 14;
+        ctx.save(); ctx.beginPath(); ctx.rect(x - cs * .6, -cs * .6, cs * 1.2, cs * 1.2 * p); ctx.clip();
+        ctx.fillStyle = '#1a1010'; ctx.fillText(ch, x, 4); ctx.restore();
+        if (p < 1) { ctx.fillStyle = 'rgba(26,16,16,.85)'; aCirc(ctx, x + Math.sin(p * 9) * cs * .2, -cs * .5 + cs * 1.1 * p, 4); ctx.fill(); }   // 筆尖
+      });
+      // 「忍」印
+      if (e >= .75) {
+        const s = 1 + 1.6 * (1 - easeO(clamp((e - .75) / .08, 0, 1))), sx = SW / 2 - 28;
+        ctx.save(); ctx.translate(sx, 46); ctx.rotate(.14); ctx.scale(s, s);
+        ctx.globalAlpha = Math.min(1, (e - .75) / .03);
+        ctx.fillStyle = '#c0262d'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-15, -15, 30, 30, 4); else ctx.rect(-15, -15, 30, 30); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = `900 22px ${BRUSH}`; ctx.fillText('忍', 0, 2); ctx.restore();
+      }
+    }
+    ctx.restore();
+    // 燒到的邊緣：火舌與餘燼
+    if (burn > 0) {
+      const ey = top + ph;
+      for (let i = 0; i <= 12; i++) {
+        const x = -w / 2 + i * w / 12, fh = 14 + Math.sin(T * 30 + i * 2.1) * 6;
+        ctx.fillStyle = i % 2 ? '#ffd25a' : '#ff7a2a';
+        ctx.beginPath(); ctx.moveTo(x - 10, ey + 4); ctx.quadraticCurveTo(x - 4, ey - fh * .5, x, ey - fh); ctx.quadraticCurveTo(x + 4, ey - fh * .5, x + 10, ey + 4); ctx.closePath(); ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(40,20,10,.6)'; ctx.fillRect(-w / 2, ey - 3, w, 3);   // 焦痕
+      for (let i = 0; i < 14; i++) { const ex = -w / 2 + ((i * 53 + T * 40) % w), eyy = ey - ((T * 160 + i * 37) % 150); ctx.fillStyle = i % 2 ? '#ffe28a' : '#ff9a4a'; ctx.fillRect(ex, eyy, 3, 3); }
+    }
+  }
+  // 卷軸兩端的軸
+  ctx.globalAlpha = 1 - burn;
+  for (const sx of [-1, 1]) {
+    const rx = sx * w / 2;
+    ctx.fillStyle = '#6b4a22'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(rx - 6, top - 9, 12, SH + 18, 6); else ctx.rect(rx - 6, top - 9, 12, SH + 18); ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#d9a441'; ctx.fillRect(rx - 7, top - 12, 14, 6); ctx.fillRect(rx - 7, top + SH + 6, 14, 6);
+  }
+  ctx.globalAlpha = 1;
   ctx.restore();
-  txt(t('cast_top'), W / 2, H * .3, 30, '#ffd27a', 'center', '#000', 5);
-  const s = Math.min(1, k * 4);
-  txt(t('cast_name'), W / 2, H / 2 + 34, 46 * (2 - s) * (LI === 2 ? .7 : 1), '#c0262d', 'center', '#fff', 6);
-  drawNinja(W / 2, H * .82, { face: 1, t: g.t + k, vy: -800, skin: save.skin });
+  // 「忍法」與英文副標
+  ctx.globalAlpha = Math.min(1, e * 5) * (1 - burn);
+  txt(t('cast_top'), cx, y - SH / 2 - 30, 28, '#ffd27a', 'center', '#000', 5);
+  if (LI === 2) txt('SKY SOAR', cx, y + SH / 2 + 30, 20, '#fff', 'center', '#000', 4);
+  ctx.globalAlpha = 1;
+  // 主角：最後從光柱中往上衝
+  const ny = H * .9 - easeO(burn) * H * .62;
+  drawNinja(cx, ny, { face: 1, t: T, vy: -900, skin: save.skin, fly: burn > 0 });
 }
 
 function drawQte() {
