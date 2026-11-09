@@ -27,7 +27,7 @@ const HELP_PAGES = [
   ] },
   { t: ['魔王與關卡', '魔王とステージ', 'Bosses & Stages'], items: [
     ['tengu', ['大天狗', '大天狗', 'Great Tengu'], ['每一幕中段出現，限時內擊倒可以開寶箱。', '各幕の中盤に出現、時間内に倒すと宝箱。', 'Appears mid-act; defeat it in time for a chest.']],
-    ['boss', ['魔王戰', '魔王戦', 'Boss Fight'], ['躲開標出的危險範圍，用衝刺斬打出破綻，再以時機斬了結。', '危険範囲を避け、突進斬で隙を作り、見切り斬でとどめ。', 'Dodge the marked danger zones, dash-slash to break its guard, then finish with a Timing Slash.']],
+    ['boss', ['魔王戰', '魔王戦', 'Boss Fight'], ['第 5 舞台初戰（擊退）、第 10 舞台決戰（破關）。躲開危險範圍，用衝刺斬打出破綻，再以時機斬了結。', '第5舞台は初戦（撃退）、第10舞台は決戦（クリア）。危険範囲を避け、突進斬で隙を作り、見切り斬でとどめ。', 'Stage 5: First Clash (repel it). Stage 10: Final Battle (clear). Dodge danger zones, dash-slash to break its guard, finish with a Timing Slash.']],
     ['zone', ['追上來的危險', '迫る危険', 'Rising Danger'], ['下方的火海、龍捲風、熔岩、雪崩會上升，掉進去會扣 HP。', '下から炎・竜巻・溶岩・雪崩が迫る。落ちるとHPが減る。', 'Fire, tornadoes, lava or avalanches rise from below — falling in costs HP.']],
     ['plat', ['機關', 'しかけ', 'Gimmicks'], ['跳台雙倍彈跳、半毀地板只能踩一次、釘刺會受傷。', 'ジャンプ台は2倍、壊れる床は一度だけ、まきびしは痛い。', 'Springs boost, cracked floors break, spikes hurt.']],
   ] },

@@ -152,7 +152,7 @@ const STR = {
   full_title: ['完整版', '完全版', 'Full Version'],
   full_tag: ['完整版', '完全版', 'Full Version'],
   full_lead: ['林關免費遊玩；風、山、火三大關收錄在完整版。', '林ステージは無料。風・山・火の3ステージは完全版に収録。', 'The Forest is free. Wind, Mountain and Fire are in the Full Version.'],
-  full_lead_boss: ['擊倒第一隻魔王了！風、山、火三大關等著你——收錄在完整版。', '最初の魔王を撃破！風・山・火の3ステージは完全版で。', 'First boss down! Wind, Mountain and Fire await in the Full Version.'],
+  full_lead_boss: ['擊退第一隻魔王了！風、山、火三大關等著你——收錄在完整版。', '最初の魔王を撃退！風・山・火の3ステージは完全版で。', 'First boss repelled! Wind, Mountain and Fire await in the Full Version.'],
   full_p1: ['3 大關 × 10 舞台，各有不同的背景與天候', '3ステージ×10舞台、それぞれ違う景色と天候', '3 levels × 10 stages, each with its own scenery and weather'],
   full_p2: ['3 隻魔王、3 隻中魔王，36 種新敵人', '魔王3体・中ボス3体・新しい敵36種', '3 bosses, 3 mid-bosses, 36 new enemies'],
   full_p3: ['各關專屬的敵人特性與音樂', 'ステージごとの敵の特性と音楽', 'Level-specific enemy traits and music'],
@@ -232,6 +232,11 @@ const STR = {
   boss_in: ['BOSS 襲來', 'BOSS 襲来', 'BOSS INCOMING'],
   boss_appear: ['{0}登場!!', '{0}見参!!', '{0} appears!!'],
   boss_desc: ['技能：{0}　用衝刺斬打出破綻，再以時機斬了結', 'スキル：{0}　突進斬で隙を作り、見切り斬でとどめ', 'Skill: {0} · Dash-slash to break its guard, then finish with a Timing Slash'],
+  boss_in_first: ['BOSS 初戰', 'BOSS 初戦', 'BOSS · FIRST CLASH'],
+  boss_in_fin: ['BOSS 決戰', 'BOSS 決戦', 'BOSS · FINAL BATTLE'],
+  boss_repelled: ['擊退! +{0}', '撃退! +{0}', 'Repelled! +{0}'],
+  boss_fled: ['{0}逃走了…第 10 舞台再決勝負', '{0}は逃げた…第10舞台で決着を', '{0} fled… settle it on Stage 10'],
+  flee_big: ['擊 退 !', '撃 退 !', 'REPELLED!'],
   boss_block: ['擋住了！用衝刺斬攻擊', '防がれた！突進斬で攻めろ', 'Blocked! Use a Dash Slash'],
   boss_st: ['破綻', '隙', 'Guard'],
   boss_stun: ['破 綻 !!', '隙 あ り !!', 'GUARD BROKEN!!'],
@@ -274,7 +279,7 @@ const STR = {
 <p><b>忍法卷軸</b>：點擊左上卷軸圖示（電腦：空白鍵）發動「豪天翔」，無敵並急速上升。</p>
 <p><b>死亡區域</b>：畫面下方的火海／海嘯／怪獸不斷上升，掉進去會失去 HP。</p>
 <p><b>機關</b>：<span class="t-spring">跳台</span>雙倍彈跳、<span class="t-crumble">半毀地板</span>只能踩一次、<span class="t-move">移動地板</span>、<span class="t-spike">釘刺</span>踩到受傷。</p>
-<p><b>BOSS</b>：每一幕最後出現魔王。用<b>衝刺斬、急降斬</b>或從上方踩下去打牠（直接跳上去撞會被擋開），打滿<b>破綻</b>魔王就會暈眩，這時碰牠進入<b>時機斬</b>：圓圈縮到白圈上時點擊，連續 3 次，三連完美有追加傷害，失誤會被反擊。魔王出招前會在畫面上標出<b>危險範圍</b>，躲開後牠會喘一下，正是反擊的時機。擊破後打開寶箱，再選 1 項強化。</p>
+<p><b>BOSS</b>：每一關的魔王會出現兩次：第 5 舞台是<b>初戰</b>（比較弱，擊退後牠會逃走），第 10 舞台是<b>決戰</b>（招式更多更強，打倒才算破關）。用<b>衝刺斬、急降斬</b>或從上方踩下去打牠（直接跳上去撞會被擋開），打滿<b>破綻</b>魔王就會暈眩，這時碰牠進入<b>時機斬</b>：圓圈縮到白圈上時點擊，連續 3 次，三連完美有追加傷害，失誤會被反擊。魔王出招前會在畫面上標出<b>危險範圍</b>，躲開後牠會喘一下，正是反擊的時機。擊破後打開寶箱，再選 1 項強化。</p>
 <p><b>主線與無盡</b>：通過 風・林・火・山 四幕即修行完成，可選擇繼續挑戰<b>無盡之塔</b>，每一輪難度和分數都會提高。</p>`,
 `<p><b>ジャンプ</b>：忍者は自動で跳ねる。画面を押したまま<b>左右にスライド</b>して移動、指を離すとその場に留まる。両側は壁。空中で壁に向かうと自動で<b>壁蹴り</b>（着地までに一回）。PC は ← → / A D。</p>
 <p><b>弾き斬り</b>：指を<b>少し押したまま止める</b>と照準モードになり、時間が遅くなる。<b>反対方向に引く</b>と壁の反射も含めた軌道が表示され、軌道上の敵が光る。敵の近くを狙うと自動で吸い付く。<b>離して発射</b>。中心に戻して離すとキャンセル。上に引く（下を狙う）と<b>急降斬</b>：敵を貫き、着地の衝撃波で周りの敵を斬り、まきびしを砕いて高く跳ねる。一回につき<b>「気」</b>を1つ消費、敵を斬ると回復（突進で連続して斬ると二体目からは回復が少なく、床に着地すると元に戻る）。慣れたら<b>素早く上下にフリック</b>でも出せる（PC：↑ / ↓）。</p>
@@ -286,7 +291,7 @@ const STR = {
 <p><b>忍法巻物</b>：左上の巻物アイコンをタップ（PC：スペース）で「豪天翔」、無敵で急上昇。</p>
 <p><b>死の領域</b>：画面下の火の海・津波・怪獣がせり上がってくる。落ちると HP を失う。</p>
 <p><b>仕掛け</b>：<span class="t-spring">跳び台</span>は二倍ジャンプ、<span class="t-crumble">朽ちた床</span>は一度きり、<span class="t-move">動く床</span>、<span class="t-spike">まきびし</span>は踏むとダメージ。</p>
-<p><b>BOSS</b>：各幕の最後に魔王が現れる。<b>突進斬・急降斬</b>か上から踏みつけて攻撃（下から跳んでぶつかると防がれる）。<b>隙</b>がたまると魔王がよろめき、触れると<b>見切り斬</b>：輪が白い円に重なった瞬間にタップ、3回連続。三連完璧で追加ダメージ、ミスすると反撃される。魔王は技の前に<b>危険範囲</b>を示す。避けた後の息切れが反撃のチャンス。撃破すると宝箱から強化を1つ選べる。</p>
+<p><b>BOSS</b>：各ステージの魔王は二度現れる。第5舞台は<b>初戦</b>（弱めで、撃退すると逃げていく）、第10舞台は<b>決戦</b>（技が増えて強い、倒せばクリア）。<b>突進斬・急降斬</b>か上から踏みつけて攻撃（下から跳んでぶつかると防がれる）。<b>隙</b>がたまると魔王がよろめき、触れると<b>見切り斬</b>：輪が白い円に重なった瞬間にタップ、3回連続。三連完璧で追加ダメージ、ミスすると反撃される。魔王は技の前に<b>危険範囲</b>を示す。避けた後の息切れが反撃のチャンス。撃破すると宝箱から強化を1つ選べる。</p>
 <p><b>本編と無限</b>：風・林・火・山 の四幕を越えると修行完了。続けて<b>無限の塔</b>に挑むと、周回ごとに難しく、スコアも高くなる。</p>`,
 `<p><b>Jumping</b>: your ninja bounces automatically. Hold the screen and <b>slide left or right</b> to move; let go to stay put. There are walls on both sides: push into a wall in mid-air to <b>wall-kick</b> (once per landing). PC: ← → / A D.</p>
 <p><b>Slingshot Slash</b>: <b>hold your finger still</b> for a moment to aim, and time slows down. <b>Pull back</b> in the opposite direction: a trajectory appears, including wall bounces, and enemies on the path light up. Aim near an enemy and it snaps on. <b>Release to launch</b>; drag back to the center to cancel. Pull up (aim down) for a <b>Dive Slash</b>: cut through enemies, and the landing shockwave slashes nearby foes, smashes spikes and bounces you high. Each costs 1 <b>Ki</b>; slashing enemies restores it (kills in a row from dashes restore less after the first, until you land on a floor). Once you get the hang of it, you can also <b>flick up / down</b> quickly (PC: ↑ / ↓).</p>
@@ -298,7 +303,7 @@ const STR = {
 <p><b>Ninjutsu Scroll</b>: tap the scroll icon at top left (PC: Space) for SKY SOAR: invincible, rocketing upward.</p>
 <p><b>Death Zone</b>: the fire, tsunami or monster at the bottom keeps rising. Fall in and you lose HP.</p>
 <p><b>Traps</b>: <span class="t-spring">springs</span> double your jump, <span class="t-crumble">cracked floors</span> break after one step, <span class="t-move">moving floors</span>, and <span class="t-spike">spikes</span> hurt.</p>
-<p><b>BOSS</b>: each act ends with a boss. Hit it with a <b>Dash Slash, Dive Slash</b> or by landing on it (jumping into it from below gets blocked). Fill its <b>Guard</b> gauge to stun it, then touch it for a <b>Timing Slash</b>: tap when the shrinking ring meets the white circle, 3 times in a row. A triple Perfect deals bonus damage; a miss lets it strike back. Before each attack the boss marks the <b>danger zone</b>; dodge it and the boss is winded, which is your chance to strike. Defeat it to open a treasure chest and choose an upgrade.</p>
+<p><b>BOSS</b>: each stage's boss appears twice: the <b>First Clash</b> on Stage 5 (weaker; repel it and it flees) and the <b>Final Battle</b> on Stage 10 (more and stronger attacks; defeat it to clear the stage).Hit it with a <b>Dash Slash, Dive Slash</b> or by landing on it (jumping into it from below gets blocked). Fill its <b>Guard</b> gauge to stun it, then touch it for a <b>Timing Slash</b>: tap when the shrinking ring meets the white circle, 3 times in a row. A triple Perfect deals bonus damage; a miss lets it strike back. Before each attack the boss marks the <b>danger zone</b>; dodge it and the boss is winded, which is your chance to strike. Defeat it to open a treasure chest and choose an upgrade.</p>
 <p><b>Story and Endless</b>: clear all four acts (Wind, Forest, Fire, Mountain) to complete your training, then keep climbing the <b>Endless Tower</b>, where every loop gets harder and scores higher.</p>`,
   ],
 };

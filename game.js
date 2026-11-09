@@ -81,10 +81,10 @@ const ENEMY = [
 ];
 // 以下名稱與說明皆為 [繁中, 日文, 英文]
 const BOSS_KINDS = [
-  { n: ['真妖鬼', '真妖鬼', 'True Oni'], skill: ['金棒落・踩裂站台', '金棒落とし・足場破壊', 'Club drops, breaks platforms'], col: '#d0302a' },
-  { n: ['怠惰鬼', '怠惰鬼', 'Sloth Oni'], skill: ['睡魔霧（降速）', '睡魔の霧（鈍足）', 'Sleep mist (slows you)'], col: '#8a3fd0' },
-  { n: ['雪女鬼', '雪女鬼', 'Snow Oni'], skill: ['吹雪（冰凍）', '吹雪（凍結）', 'Blizzard (freezes you)'], col: '#3fa6e0' },
-  { n: ['鐵甲鬼', '鉄甲鬼', 'Iron Oni'], skill: ['護盾・突進', '盾・突進', 'Shield, charge'], col: '#5a5a66' },
+  { n: ['真妖鬼', '真妖鬼', 'True Oni'], skill: ['金棒落', '金棒落とし', 'Club drops'], skill2: ['三連金棒落・踩裂站台', '三連金棒落とし・足場破壊', 'Triple club drops, breaks platforms'], col: '#d0302a' },
+  { n: ['怠惰鬼', '怠惰鬼', 'Sloth Oni'], skill: ['睡魔霧（降速）', '睡魔の霧（鈍足）', 'Sleep mist (slows you)'], skill2: ['雙重睡魔霧・七連飛彈', '二重の睡魔の霧・七連弾', 'Double sleep mist, 7-way volley'], col: '#8a3fd0' },
+  { n: ['雪女鬼', '雪女鬼', 'Snow Oni'], skill: ['吹雪（冰凍）', '吹雪（凍結）', 'Blizzard (freezes you)'], skill2: ['左右吹雪（冰凍）', '左右の吹雪（凍結）', 'Sweeping blizzard (freezes you)'], col: '#3fa6e0' },
+  { n: ['鐵甲鬼', '鉄甲鬼', 'Iron Oni'], skill: ['突進', '突進', 'Charge'], skill2: ['護盾・連續突進', '盾・連続突進', 'Shield, double charge'], col: '#5a5a66' },
 ];
 const PERKS = [
   { id: 'bounce', n: ['強腳', '強脚', 'Strong Legs'], d: ['跳躍高度 +8%', 'ジャンプ力 +8%', 'Jump height +8%'], max: 3, ic: '🦶' },
@@ -158,7 +158,7 @@ const EVO = {
 };
 // HP：基礎 100，體魄／鋼身每級 +20；各種攻擊的傷害
 const HP_BASE = 100, HP_STEP = 20;
-const DMG = { shot: 15, kunai: 15, arrow: 20, spike: 20, onibi: 25, zone: 30, ember: 8, fire: 12, boss: 20, mist: 12, qte: 10 };   // ember＝火關提燈妖怪的火星、fire＝火車留下的火焰
+const DMG = { shot: 15, kunai: 15, arrow: 20, spike: 20, onibi: 25, zone: 30, ember: 8, fire: 12, boss: 20, mist: 12, qte: 10, qte5: 6 };   // ember＝火關提燈妖怪的火星、fire＝火車留下的火焰
 const SOUL_V = [1, 2, 3, 2, 3, 2, 8, 1, 1, 2, 2, 2, 2, 25];   // 各種敵人掉落的魂量
 const xpNeed = l => Math.round(5 + 3.5 * (l - 1) + .4 * (l - 1) ** 2);
 const MODS = [
@@ -337,7 +337,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v67';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v68';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -802,6 +802,7 @@ function update(dt) {
     case 'zintro': updateZIntro(dt); break;
     case 'ascend': updateAscend(dt); break;
     case 'kill': g.killT -= dt; if (g.killT <= 0) finishBoss(true); break;
+    case 'flee': updateFlee(dt); break;   // 初戰擊退：魔王逃走演出
     case 'dying': g.dieT -= dt; g.p.vy += GRAV * dt; g.p.y += g.p.vy * dt; if (g.dieT <= 0) showOver(); break;
   }
   if (g && state !== 'perk') updateFx(dt);
@@ -1418,22 +1419,24 @@ function castScroll() {
 // 暈眩時碰到它進入「時機斬」（QTE）。魔王會輪流放有預兆的攻擊，放完會喘一下，那就是反擊的空檔。
 // 從下方直接跳上去撞（沒有衝刺）會被擋開，所以要留「氣」來打它。
 const BOSS_ATK = [['club', 'club', 'fan'], ['mist', 'mist', 'fan'], ['snow', 'snow', 'fan'], ['charge', 'charge', 'fan']];
-// 每一幕第 5 舞台的魔王（以 THEMES 索引）：林＝真妖鬼、風＝怠惰鬼、火＝鐵甲鬼、山＝雪女鬼；第 10 舞台是往後數兩隻的那一隻
-const BOSS_OF = [0, 1, 3, 2];
+// 每一關的魔王（以 THEMES 索引）：林＝鐵甲鬼、風＝怠惰鬼、火＝真妖鬼、山＝雪女鬼。
+// 第 5 舞台是「初戰」（弱化版、招式較少，打完魔王會逃走），第 10 舞台是「決戰」（完整招式，打倒才破關）
+const BOSS_OF = [3, 1, 0, 2];
 function spawnBoss() {
-  // 第 5 舞台：這一關的魔王；第 10 舞台：另一隻更強的魔王
-  const second = g.stage >= 5, kind = (BOSS_OF[g.th] + (second ? 2 : 0)) % 4, n = g.lvl * 2 + (second ? 1 : 0);
+  const fin = g.stage >= 5, kind = BOSS_OF[g.th], lv = g.lvl;
   // 選關畫面：遇過這一關的魔王之後，圖卡上才顯示它的彩圖（之前是剪影）
-  if (!g.tut && !second) { const ls = lvSave(); if (!ls.boss[g.lvl]) { ls.boss[g.lvl] = 1; persist(); } }
-  const hp = 10 + 3 * n;
+  if (!g.tut && !fin) { const ls = lvSave(); if (!ls.boss[g.lvl]) { ls.boss[g.lvl] = 1; persist(); } }
+  const hp = fin ? 16 + 5 * lv : 8 + 3 * lv;
   g.bossT0 = g.t; wxBoss(kind);   // 魔王登場時換成魔王的天候（levels.js）
   g.boss = {
-    n, kind, hp, max: hp, x: W / 2, y: g.camY - 60, t: 0, ai: 0, cool: 0, skillT: 9, crT: 2.6,
+    n: lv * 2 + fin, lv, fin, kind, hp, max: hp, x: W / 2, y: g.camY - 60, t: 0, ai: 0, cool: 0, skillT: 9, crT: 2.6,
     shield: false, shT: 1.5, r: 30, warn: 0, flash: 0,
-    st: 0, stN: 3 + (n >= 4) + (n >= 8), stun: 0,   // 破綻：打滿 stN 下就暈眩
+    st: 0, stN: fin && lv >= 2 ? 4 : 3, stun: 0,   // 破綻：打滿 stN 下就暈眩
     atk: null, atkT: 3, rest: 0, blockN: 0,
+    warnT: fin ? Math.max(.6, .9 - .08 * lv) : 1, gapT: fin ? Math.max(1.6, 3 - .3 * lv) : 3.4,   // 預兆時間、出招間隔
   };
-  g.banner = { t: 2.2, a: t('boss_in'), b: t('boss_appear', L(BOSS_KINDS[kind].n)), c: t('boss_desc', L(BOSS_KINDS[kind].skill)) };
+  const K = BOSS_KINDS[kind];
+  g.banner = { t: 2.2, a: t(fin ? 'boss_in_fin' : 'boss_in_first'), b: t('boss_appear', L(K.n)), c: t('boss_desc', L(fin ? K.skill2 : K.skill)) };
   SFX.boss(); vib(200);
 }
 function updateBoss(dt) {
@@ -1452,8 +1455,8 @@ function updateBoss(dt) {
     const tx = W / 2 + Math.sin(b.ai * .9) * Math.min(120, W / 2 - WALL - 50);
     b.x += (tx - b.x) * Math.min(1, dt * 3);
   }
-  // 常駐技能：真妖鬼踩裂站台；鐵甲鬼的護盾開關（出招和喘氣時沒有護盾）
-  if (b.stun <= 0 && b.kind === 0) {
+  // 常駐技能（只有決戰）：真妖鬼踩裂站台；鐵甲鬼的護盾開關（出招和喘氣時沒有護盾）
+  if (b.stun <= 0 && b.kind === 0 && b.fin) {
     b.crT -= dt;
     if (b.crT <= 0) {
       b.crT = 2.6;
@@ -1462,7 +1465,7 @@ function updateBoss(dt) {
     }
   }
   if (b.kind === 3) {
-    if (b.stun > 0 || a || b.rest > 0) b.shield = false;
+    if (!b.fin || b.stun > 0 || a || b.rest > 0) b.shield = false;
     else { b.shT -= dt; if (b.shT <= 0) { b.shield = !b.shield; b.shT = b.shield ? 1.6 : 1.8; } }
   }
   // 出招
@@ -1500,19 +1503,19 @@ function bossHit(b) {
 }
 // 出招：先預兆（地上畫出危險範圍、魔王眼睛發光），時間到才判定
 function bossAttack(b) {
-  const p = g.p, n = b.n, k = pick(BOSS_ATK[b.kind]);
-  const a = { k, ph: 'warn', t: Math.max(.6, .9 - .03 * n), hit: false };
-  if (k === 'club') {   // 金棒落：幾道直線從天而降，其中一道對準玩家
+  const p = g.p, fin = b.fin, k = pick(BOSS_ATK[b.kind]);
+  const a = { k, ph: 'warn', t: b.warnT, hit: false };
+  if (k === 'club') {   // 金棒落：幾道直線從天而降，其中一道對準玩家（初戰 2 道、決戰 3 道）
     a.w = 54; a.xs = [clamp(p.x, WALL + 30, W - WALL - 30)];
-    const m = 1 + (n >= 3) + (W > 500);
+    const m = 1 + fin + (W > 500);
     for (let tries = 0; a.xs.length < m + 1 && tries < 40; tries++) { const x = rnd(WALL + 30, W - WALL - 30); if (a.xs.every(o => Math.abs(o - x) > 80)) a.xs.push(x); }
   } else if (k === 'mist') {   // 睡魔霧：在玩家身邊冒出紫霧（降速＋小傷害）
     a.r = 72; a.cs = [{ x: p.x, y: p.y - 20 }];
-    if (n >= 3) a.cs.push({ x: clamp(p.x + (p.x < W / 2 ? 1 : -1) * rnd(110, 160), WALL + 40, W - WALL - 40), y: p.y - 20 - rnd(40, 110) });
+    if (fin) a.cs.push({ x: clamp(p.x + (p.x < W / 2 ? 1 : -1) * rnd(110, 160), WALL + 40, W - WALL - 40), y: p.y - 20 - rnd(40, 110) });
   } else if (k === 'snow') {   // 吹雪：掃過玩家所在的那半邊（冰凍），強化後兩邊輪流
-    a.side = p.x < W / 2 ? -1 : 1; a.twice = n >= 4;
-  } else if (k === 'charge') {   // 突進：鎖定玩家的位置直線衝過去
-    a.tx = p.x; a.ty = p.y - 20; a.t += .1;
+    a.side = p.x < W / 2 ? -1 : 1; a.twice = fin;
+  } else if (k === 'charge') {   // 突進：鎖定玩家的位置直線衝過去（決戰連衝兩次）
+    a.tx = p.x; a.ty = p.y - 20; a.t += .1; a.twice = fin;
   } else a.t = .6;   // 扇形飛彈
   b.atk = a; b.warn = a.t;
   floatText(b.x, b.y + 48, t('batk_' + k), '#ffd27a', 16); SFX.warn();
@@ -1531,7 +1534,7 @@ function updateBossAtk(b, a, dt) {
     else if (a.k === 'snow') { a.t = .4; SFX.wind(); g.shake = 4; }
     else if (a.k === 'charge') { const dx = a.tx - b.x, dy = a.ty - b.y, d = Math.hypot(dx, dy) || 1; a.vx = dx / d * 680; a.vy = dy / d * 680; a.t = (d + 70) / 680; SFX.dash(); }
     else {
-      const a0 = Math.atan2((p.y - 20) - b.y, p.x - b.x), m = b.n >= 3 ? 7 : 5;
+      const a0 = Math.atan2((p.y - 20) - b.y, p.x - b.x), m = b.fin ? 7 : 5;
       for (let i = 0; i < m; i++) { const an = a0 + (i - (m - 1) / 2) * .26; g.eshots.push({ x: b.x, y: b.y + 20, vx: Math.cos(an) * 175, vy: Math.sin(an) * 175, t: 0, skin: g.th }); }
       a.t = .1; SFX.throw();
     }
@@ -1546,8 +1549,9 @@ function updateBossAtk(b, a, dt) {
   if (hit && !a.hit) { a.hit = true; if (hurt(a.k === 'mist' ? 'mist' : 'boss')) return true; }
   if (a.t > 0) return false;
   if (a.k === 'snow' && a.twice) { a.twice = false; a.side = -a.side; a.ph = 'warn'; a.t = .55; a.hit = false; return false; }
+  if (a.k === 'charge' && a.twice) { a.twice = false; a.tx = p.x; a.ty = p.y - 20; a.ph = 'warn'; a.t = .5; a.hit = false; return false; }   // 再鎖定一次
   b.atk = null; b.warn = 0; b.skillT = 9;
-  b.rest = a.k === 'charge' ? 1.8 : .9; b.atkT = Math.max(1.6, 3.2 - .15 * b.n);
+  b.rest = a.k === 'charge' ? 1.8 : .9; b.atkT = b.gapT;
   if (a.k === 'charge') floatText(b.x, b.y - 46, t('boss_tired'), '#9ae0ff', 16);
   return false;
 }
@@ -1556,7 +1560,7 @@ function startQte() {
   const b = g.boss, p = g.p;
   state = 'qte'; p.dash = 0; p.dive = false;
   g.qte = { t: 0, hits: [], n: 0, rings: [], log: [], i: 0, cnt: 3, perf: 0, next: .45, fl: 0, end: 0, kill: false,
-    dur: Math.max(.62, .95 - .035 * b.n), R0: 120, RT: 34 };
+    dur: b.fin ? Math.max(.62, .9 - .05 * b.lv) : 1, R0: 120, RT: 34 };   // 初戰的圓圈縮得比較慢
   SFX.boss(); vib(80);
 }
 const qteR = r => g.qte.R0 * (1 - (g.qte.t - r.t0) / g.qte.dur);
@@ -1576,7 +1580,7 @@ function qteRes(r, lv) {
     g.shake = lv === 2 ? 9 : 5; SFX.slash(); vib(lv === 2 ? 40 : 20);
   } else {   // 失誤：魔王反擊
     q.fl = .35; g.shake = 9; g.p.inv = 0;
-    if (hurt('qte')) return;
+    if (hurt(b.fin ? 'qte' : 'qte5')) return;
   }
   if (b.hp <= 0) { b.hp = 0; q.end = .45; q.kill = true; }
   else if (q.i >= q.cnt) q.end = .6;
@@ -1599,18 +1603,55 @@ function updateQte(dt) {
 }
 function endQte() {
   const q = g.qte, b = g.boss;
+  if (q.kill && !b.fin) { startFlee(); return; }   // 初戰：魔王被擊退、逃走
   if (q.kill) { state = 'kill'; g.killT = 1.5; SFX.kill(); vib([60, 40, 160]); return; }
   state = 'play'; g.qte = null;
   b.stun = 0; b.cool = 1.2; b.atkT = 1.4; b.rest = 0;
   g.p.vy = -JUMP; g.p.inv = 1;
   floatText(W / 2, g.camY + H * .45, t('boss_flee'), '#ffd27a', 20);
 }
+// ===== 初戰擊退：魔王踉蹌冒煙 → 往上跳走（殘影）→ 字幕「逃走了…第 10 舞台再決勝負」 =====
+const FLEE_T = 2.2;
+function startFlee() {
+  const b = g.boss;
+  state = 'flee'; g.qte = null; g.fleeT = 0;
+  b.stun = 0; b.atk = null; b.warn = 0; b.shield = false; b.fy = b.y; b.vy = 0; b.trail = [];
+  b.y = Math.min(b.y, g.camY + H * .38);
+  SFX.boom(); vib([60, 40, 120]); g.shake = 10;
+}
+function updateFlee(dt) {
+  const b = g.boss; g.fleeT += dt; b.t += dt;
+  const k = g.fleeT;
+  if (k < .7) { b.x += Math.sin(k * 60) * 1.5; if (Math.random() < .5) g.parts.push({ x: b.x + rnd(-26, 26), y: b.y + rnd(-20, 20), vx: rnd(-30, 30), vy: rnd(-90, -40), life: .7, max: .7, c: 'rgba(80,80,90,.7)', s: rnd(4, 8) }); }
+  else {
+    if (!b.jump) { b.jump = 1; b.vy = -260; SFX.dash(); for (let i = 0; i < 14; i++) g.parts.push({ x: b.x + rnd(-30, 30), y: b.y + 20, vx: rnd(-120, 120), vy: rnd(-40, 60), life: .6, max: .6, c: '#ddd', s: rnd(4, 9) }); }
+    b.vy -= 1500 * dt; b.y += b.vy * dt;
+    b.trail.push({ x: b.x, y: b.y }); if (b.trail.length > 6) b.trail.shift();
+  }
+  if (k >= FLEE_T) finishBoss(true);
+}
+function drawFlee() {
+  const b = g.boss, k = g.fleeT;
+  const s = Math.min(1, k * 4);
+  txt(t('flee_big'), W / 2, H * .3, 54 * (1.5 - .5 * s) * (LI === 2 ? .7 : 1), '#fff', 'center', '#c0262d', 8);
+  if (k > .8) { ctx.globalAlpha = Math.min(1, (k - .8) * 3); txt(t('boss_fled', L(BOSS_KINDS[b.kind].n)), W / 2, H * .3 + 46, 15, '#ffd27a', 'center', '#000', 4); ctx.globalAlpha = 1; }
+}
 function finishBoss(killed) {
   const b = g.boss;
   g.boss = null; g.qte = null;
-  if (killed) {
-    const pts = 3000 + 2000 * b.n;
-    addBonus(pts); addCoins(20 + 5 * b.n);
+  if (killed && !b.fin) {   // 初戰：擊退（獎勵較少，仍然開寶箱）
+    const pts = 2000 + 1000 * b.lv;
+    addBonus(pts); addCoins(15 + 5 * b.lv);
+    floatText(W / 2, g.camY + H * .4, t('boss_repelled', Math.round(pts * (1 + .2 * pk('score')))), '#ffd27a', 24);
+    for (let i = 0; i < 8; i++) g.drops.push({ k: i < 5 ? 'soul' : 'coin', x: W / 2 + rnd(-40, 40), y: g.camY + H * .3, vx: rnd(-90, 90), vy: -rnd(120, 260), v: i < 5 ? 3 : 2, ph: rnd(0, 6) });
+    save.stats.bosses++; unlock('boss1');   // 擊退也算進累計（「討伐・〇〇」只在決戰擊破時才算）
+    if (save.stats.bosses >= 10) unlock('boss10');
+    if (save.stats.bosses >= 30) unlock('boss30');
+    if (g.t - g.bossT0 <= 20) unlock('bossfast');
+    if (g.hp < g.maxHp * .2) unlock('lowhp');
+  } else if (killed) {
+    const pts = 5000 + 3000 * b.lv;
+    addBonus(pts); addCoins(30 + 15 * b.lv);
     floatText(W / 2, g.camY + H * .4, t('boss_down', Math.round(pts * (1 + .2 * pk('score')))), '#ffd27a', 24);
     burst(b.x, b.y, BOSS_KINDS[b.kind].col, 40);
     for (let i = 0; i < 12; i++) g.drops.push({ k: i < 8 ? 'soul' : 'coin', x: b.x + rnd(-30, 30), y: b.y, vx: rnd(-90, 90), vy: -rnd(120, 260), v: i < 8 ? 3 : 2, ph: rnd(0, 6) });
@@ -2235,6 +2276,7 @@ function drawQte() {
 // 遊戲畫面中的魔王：攻擊預兆、暈眩、受擊閃白
 function drawBossWorld(b) {
   drawBossAtk(b);
+  if (b.trail) b.trail.forEach((o, i) => { ctx.save(); ctx.globalAlpha = .08 + i * .05; drawBoss(b, o.x, o.y + (b.trail.length - i) * 14, 1); ctx.restore(); });   // 逃走時的殘影
   ctx.save(); ctx.translate(b.x, b.y);
   if (b.stun > 0) ctx.rotate(Math.sin(g.t * 7) * .14);
   drawBoss(b, 0, 0, 1);
@@ -2375,6 +2417,7 @@ function render() {
   else if (state === 'cast') drawCast();
   else if (state === 'qte') drawQte();
   else if (state === 'kill') drawKill();
+  else if (state === 'flee') drawFlee();
   else if (state === 'zintro') drawZIntro();
   else if (state === 'ascend') drawAscend();
   if (state !== 'slash' && state !== 'cast' && state !== 'qte' && state !== 'kill') { drawHUD(); if (state === 'play' || state === 'zintro') drawScrollBtn(); }
@@ -2616,7 +2659,7 @@ window.__tobi = { get g() { return g; }, get state() { return state; }, startRun
 // ===== iPad／電腦橫向：兩側的資訊欄（左：分數、關卡、技能與秘傳；右：豪天翔大按鈕） =====
 const SH = { t: 0, key: '' };
 function sideHudTick() {
-  const on = document.body.classList.contains('pillar') && g && !g.tut && (state === 'play' || state === 'zintro' || state === 'ascend' || state === 'slash' || state === 'cast' || state === 'qte' || state === 'kill');
+  const on = document.body.classList.contains('pillar') && g && !g.tut && (state === 'play' || state === 'zintro' || state === 'ascend' || state === 'slash' || state === 'cast' || state === 'qte' || state === 'kill' || state === 'flee');
   document.body.classList.toggle('shud', !!on);
   if (!on) return;
   const now = performance.now(); if (now - SH.t < 250) return; SH.t = now;
