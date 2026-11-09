@@ -64,7 +64,7 @@ function helpIconDraw(k) {
   else if (k === 'shield') drawEnemy(50, 46, 4, 1.5, .4, { look: 1, bx: 2 });
   else if (k === 'elite') drawEnemy(50, 52, 6, 1.5, .4, { look: 1, bx: 3 });
   else if (k === 'tengu') drawEnemy(50, 54, 13, .62, .4, { look: 1, bx: 4 });
-  else if (k === 'boss') drawBoss({ kind: 3, t: .6, skillT: 9, warn: 0 }, 50, 50, .68);   // 鐵甲鬼（林關魔王）
+  else if (k === 'boss') drawBoss({ kind: 0, t: .6, skillT: 9, warn: 0 }, 50, 50, .68);   // 真妖鬼（林關魔王）
   else if (k === 'zone') { for (let i = 0; i < 6; i++) { c.fillStyle = ['#d8300a', '#ff7a1a', '#ffd25a'][i % 3]; c.beginPath(); c.moveTo(i * 18 - 6, 100); c.quadraticCurveTo(i * 18 - 10, 66, i * 18 + 6, 40 + (i % 2) * 16); c.quadraticCurveTo(i * 18 + 16, 70, i * 18 + 14, 100); c.closePath(); c.fill(); } hero(50, 40, .95, { hurt: .3 }); }
   else if (k === 'plat') { aRR(c, 14, 62, 72, 12, 6); aFI(c, '#f2f4ef', 2.4); c.strokeStyle = '#c0262d'; c.lineWidth = 3.4; c.beginPath(); for (let i = 0; i < 5; i++) c.lineTo(i % 2 ? 58 : 42, 60 - i * 7); c.stroke(); aRR(c, 34, 22, 32, 8, 3); aFI(c, '#ffd27a', 2); arrow(50, 12, -Math.PI / 2); }
 }
