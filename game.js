@@ -346,7 +346,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v92';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v93';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -410,8 +410,8 @@ function resize() {
   const dg = $('diag'); if (dg) dg.textContent = DIAG;
 }
 let SAFE_T = 0, BLUR_T = 0;
-const HUD_ROW = 40;            // HUD 單列的高度（遊戲座標）
-let HUD_Y0 = 0, HUD_Y1 = 64;   // HUD 那一列的上下緣（扣掉瀏海後），點擊判定用
+const HUD_R1 = 30, HUD_R2 = 26;   // HUD 兩列的高度（遊戲座標）：第一列分數／高度／舞台、第二列 HP／小判
+let HUD_Y0 = 0, HUD_Y1 = 64, HUD_P = 30;   // HUD 的上下緣與第一列的下緣（扣掉瀏海後），點擊判定用
 addEventListener('resize', resize);
 addEventListener('orientationchange', () => setTimeout(resize, 300));
 resize();
@@ -459,8 +459,7 @@ cv.addEventListener('pointerdown', e => {
   if (state === 'play' && !paused) {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
     const inG = p.x >= 0 && p.x <= W;   // iPad 橫向：點在兩側背景時只算移動，不判定 HUD 與按鈕
-    if (inG && hy < HUD_Y1 + 6 && p.x > W - 40) { pauseGame(); return; }
-    if (inG && hy > HUD_Y0 - 4 && hy < HUD_Y1 + 6 && p.x > 116 && p.x < 172) { castScroll(); return; }
+    if (inG && hy < HUD_P + 6 && p.x > W - 40) { pauseGame(); return; }   // 暫停鈕在第一列右邊
     // 豪天翔按鈕（畫面中間偏下）：按鈕在操作區中間，所以只有「點一下就放開」才算按鈕；按住滑動仍是一般移動
     { const sb = scrollBtnPos(); inp.btn = g.scrolls > 0 && g.fly <= 0 && Math.hypot(p.x - sb.x, p.y - sb.y) < sb.r + 8 ? { t: performance.now(), x: p.x, y: p.y } : null; }   // 只有按鈕出現時才算
   }
@@ -2310,37 +2309,42 @@ function drawHUD() {
   if (SAFE_T > 0) ctx.translate(0, SAFE_T);
   // 上方資訊列（忍術風）：夜行衣的深藍黑底＋淡金青海波紋。
   // iOS 會在瀏海下方疊一段模糊帶（BLUR_T），那段只放紋樣，所有文字和按鈕排成一列放在它下面
-  const BY = BLUR_T, HB = BY + HUD_ROW, cy = BY + HUD_ROW / 2, y0 = -SAFE_T;
-  HUD_Y0 = BY; HUD_Y1 = HB;
+  // 兩列：第一列＝分數、高度、幕與舞台、暫停；第二列＝HP、小判
+  const BY = BLUR_T, HB = BY + HUD_R1 + HUD_R2, cy = BY + HUD_R1 / 2, cy2 = BY + HUD_R1 + HUD_R2 / 2 - 2, y0 = -SAFE_T;
+  HUD_Y0 = BY; HUD_Y1 = HB; HUD_P = BY + HUD_R1;
   const hg = ctx.createLinearGradient(0, y0, 0, HB); hg.addColorStop(0, '#0a0d14'); hg.addColorStop(1, '#1a2236');
   ctx.fillStyle = hg; ctx.fillRect(0, y0, W, HB - y0);
   ctx.globalAlpha = .5; ctx.fillStyle = hudPattern(); ctx.fillRect(0, y0, W, HB - y0); ctx.globalAlpha = 1;
   // 底部不畫線，用柔和的陰影漸層接到遊戲畫面
   const fade = ctx.createLinearGradient(0, HB, 0, HB + 12); fade.addColorStop(0, 'rgba(10,13,20,.55)'); fade.addColorStop(1, 'rgba(10,13,20,0)');
   ctx.fillStyle = fade; ctx.fillRect(0, HB, W, 12);
+  // ── 第一列 ──
   // 分數：手裡劍＋數字
   drawShuriken(14, cy, 9, g.t * 2);
   txt(String(score()), 27, cy, 15, '#fff', 'left', INK, 4);
-  // 小判
-  ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(93, cy, 7, 9, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = '#e8b020'; ctx.beginPath(); ctx.ellipse(93, cy, 5.5, 7.5, 0, 0, 7); ctx.fill();
-  txt(String(Math.floor(g.coins)), 102, cy, 13, '#ffd27a', 'left', INK, 3);
-  // 卷軸（可點擊發動忍法）
-  ctx.fillStyle = INK; rr(124, cy - 7, 24, 14, 3); ctx.fill();
-  ctx.fillStyle = g.scrolls ? '#fff3d0' : '#777'; ctx.fillRect(126, cy - 5, 20, 10);
-  ctx.fillStyle = '#c0262d'; ctx.fillRect(133, cy - 6, 6, 12);
-  txt('×' + g.scrolls, 151, cy, 12, g.scrolls ? '#fff' : '#999', 'left', INK, 3);
-  // HP：「命」字印章＋血條（低於 30% 會閃爍）
-  const hr = g.hp / g.maxHp, low = hr < .3 && Math.sin(g.t * 10) > 0;
-  seal(181, cy, 16, '命');
-  bar(192, cy - 8, 76, 16, hr, low ? '#ff9a9a' : hr < .3 ? '#ff3a3a' : '#e5342a');
-  txt(`${Math.ceil(g.hp)}/${g.maxHp}`, 230, cy, 9, '#fff', 'center', INK, 3);
-  // 幕名（紅色落款方印）、高度＋本幕進度小條
-  seal(283, cy, 18, THEMES[g.th].k);
-  txt((g.stage + 1) + '/' + ST_N, 323, cy - 4, 11, g.stage % 5 === 4 ? '#ff9a8a' : '#fff', 'right', INK, 3);   // 舞台 N/10（魔王舞台是紅字）
+  // 高度：小山圖示＋公尺
+  { const hx = Math.max(118, W * .33); ctx.fillStyle = INK; ctx.beginPath(); ctx.moveTo(hx - 9, cy + 7); ctx.lineTo(hx - 3, cy - 6); ctx.lineTo(hx, cy - 1); ctx.lineTo(hx + 4, cy - 8); ctx.lineTo(hx + 11, cy + 7); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#9ad8ff'; ctx.beginPath(); ctx.moveTo(hx - 7, cy + 5.5); ctx.lineTo(hx - 3, cy - 3.5); ctx.lineTo(hx, cy + 1); ctx.lineTo(hx + 4, cy - 5.5); ctx.lineTo(hx + 9, cy + 5.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(hx + 4, cy - 5.5); ctx.lineTo(hx + 2, cy - 2); ctx.lineTo(hx + 6, cy - 2); ctx.closePath(); ctx.fill();   // 山頂積雪
+    txt(Math.floor(g.top / 10) + 'm', hx + 15, cy, 13, '#cfeeff', 'left', INK, 3); }
+  // 幕名（紅色落款方印）＋舞台 N/10＋本幕進度小條
+  const sx = W - 96;
+  seal(sx, cy, 18, THEMES[g.th].k);
+  txt((g.stage + 1) + '/' + ST_N, sx + 40, cy - 4, 11, g.stage % 5 === 4 ? '#ff9a8a' : '#fff', 'right', INK, 3);   // 舞台 N/10（魔王舞台是紅字）
   const pr = g.boss ? 1 : clamp((g.top - g.base) / STAGE_PX, 0, 1);
-  ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(296, cy + 6, 27, 3, 1.5); ctx.fill();
-  ctx.fillStyle = '#ffe28a'; rr(296, cy + 6, 27 * pr, 3, 1.5); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(sx + 13, cy + 6, 27, 3, 1.5); ctx.fill();
+  ctx.fillStyle = '#ffe28a'; rr(sx + 13, cy + 6, 27 * pr, 3, 1.5); ctx.fill();
+  // ── 第二列 ──
+  // HP：「命」字印章＋血條（低於 30% 會閃爍），拉長到小判前面
+  const hr = g.hp / g.maxHp, low = hr < .3 && Math.sin(g.t * 10) > 0, bw = W - 31 - 96;
+  seal(18, cy2, 15, '命');
+  bar(30, cy2 - 7, bw, 14, hr, low ? '#ff9a9a' : hr < .3 ? '#ff3a3a' : '#e5342a');
+  txt(`${Math.ceil(g.hp)}/${g.maxHp}`, 30 + bw / 2, cy2, 9, '#fff', 'center', INK, 3);
+  // 小判
+  const kx = W - 80;
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(kx, cy2, 7, 9, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#e8b020'; ctx.beginPath(); ctx.ellipse(kx, cy2, 5.5, 7.5, 0, 0, 7); ctx.fill();
+  txt(String(Math.floor(g.coins)), kx + 10, cy2, 13, '#ffd27a', 'left', INK, 3);
   // 暫停：金框圓形家紋
   const px = W - 18, py = cy;
   ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(px, py, 14, 0, 7); ctx.fill();
