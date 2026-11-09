@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v80';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v81';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -2370,7 +2370,7 @@ function drawHUD() {
         txt(t('chain_grace'), W / 2, 118, 10, '#ff8a7a', 'center', '#000', 3);
       } else {
         ctx.fillStyle = '#ffd27a'; ctx.fillRect(W / 2 - 40, 104, 80 * (g.comboT / comboMax()), 3);
-        if (g.combo < 10) txt(t('chain_hint', 10 - g.combo), W / 2, 116, 9, '#fff', 'center', '#000', 2);
+        // （連斬下方的白色說明文字已移除：畫面太雜）
       }
     }
   }
