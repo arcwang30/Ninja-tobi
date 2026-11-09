@@ -95,6 +95,7 @@ const STR = {
   ju_title: ['忍法', '忍法', 'Ninjutsu'], ju_locked: ['打倒{0}第 10 舞台魔王取得卷軸', '{0}第10舞台の魔王を倒して巻物を入手', 'Beat the Stage 10 boss of {0}'],
   maki_0: ['林之卷軸', '林之巻物', 'Forest Scroll'], maki_1: ['風之卷軸', '風之巻物', 'Wind Scroll'], maki_2: ['火之卷軸', '火之巻物', 'Fire Scroll'], maki_3: ['山之卷軸', '山之巻物', 'Mountain Scroll'],
   mission: ['任務達成', '任務達成', 'Mission Complete'],
+  tap_next: ['▶ 點一下繼續', '▶ タップで次へ', '▶ Tap to continue'],
   fin_new: ['新忍法「{0}」', '新忍法「{0}」', 'New Ninjutsu: {0}'],
   fin_have: ['卷軸已收藏　小判 +{0}', '巻物は収蔵済み　小判 +{0}', 'Already collected · Koban +{0}'],
   over_maki: ['獲得 <b>{0}</b>・新忍法「<b>{1}</b>」', '<b>{0}</b> 入手・新忍法「<b>{1}</b>」', 'Got <b>{0}</b> · New Ninjutsu <b>{1}</b>'],

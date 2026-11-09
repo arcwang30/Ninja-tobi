@@ -344,7 +344,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v77';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v78';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -447,7 +447,12 @@ cv.addEventListener('pointerdown', e => {
   if (state === 'zintro') { skipZIntro(); return; }   // 每一幕的開場演出：點一下跳過
   if (state === 'ascend') { skipAscend(); return; }
   if (state === 'cast') { g.castT = Math.min(g.castT, CAST_T - .85); return; }   // 豪天翔：點一下直接跳到燒卷軸、衝天
-  if (state === 'fin') { if (g.finT < .4) return; if (g.finT < 3) g.finT = 3; else g.finT = FIN_T; return; }   // 決戰擊倒演出：點一下跳到卷軸展開，再點一下進結算
+  if (state === 'fin') {   // 決戰擊倒演出：點一下跳到卷軸展開、再點一下看完整卷軸；演出完成後停在卷軸畫面，點一下才進結算（預覽則重播）
+    if (g.finT < .4) return;
+    if (g.finT >= FIN_T) { if ((g.finHoldT || 0) < .4) return; if (g.preview) { g.finT = 0; g.finHoldT = 0; if (ac && musV()) BGM.jingle(ac, 'finish'); } else finishBoss(true); }
+    else g.finT = g.finT < 3 ? 3 : FIN_T;
+    return;
+  }
   const p = toL(e);
   if (state === 'play' && !paused) {
     const hy = p.y - SAFE_T;   // HUD 往下讓開瀏海，點擊判定也一起位移
@@ -1674,7 +1679,7 @@ function endQte() {
 const FIN_T = 4.4, MAKI_COIN = 100;
 const MAKI_COL = { 3: ['#3a3d46', '#d9a441'], 1: ['#5a2a8a', '#d8dce8'], 2: ['#5aa8d8', '#ffffff'], 0: ['#b01e18', '#1a1010'] };   // 卷軸顏色（依魔王）：[軸身, 邊]
 function startFin() {
-  state = 'fin'; g.qte = null; g.finT = 0;
+  state = 'fin'; g.qte = null; g.finT = 0; g.finHoldT = 0;
   g.finInfo = { first: !hasMaki(g.th), th: g.th, kind: g.boss.kind, jutsu: JUTSU.find(j => j.th === g.th) };
   SFX.kill(); vib([60, 40, 160]);
   if (ac && musV()) { BGM.setVol(musV()); BGM.jingle(ac, 'finish'); }
@@ -1686,7 +1691,7 @@ function updateFin(dt) {
   if (at(.95)) SFX.clank();
   if (at(2.4)) vib([30, 30, 60]);
   if (at(3.9)) { SFX.impact(); vib(40); }
-  if (g.finT >= FIN_T) { if (g.preview) { g.finT = 0; if (ac && musV()) BGM.jingle(ac, 'finish'); } else finishBoss(true); }   // ?finshow 預覽：重播、不寫存檔
+  if (g.finT >= FIN_T) { g.finT = FIN_T; g.finHoldT = (g.finHoldT || 0) + dt; }   // 演出完成：停在卷軸畫面，等玩家點一下（見 pointerdown）
 }
 // 封印陣：外圈雙環＋九字環（臨兵闘者皆陣烈在前）＋反向旋轉的刻度環＋五芒星＋內圈「封」，依進度 L 依序浮現；k＝整段進度（最後放光）
 function drawSeal(x, y, R, L, k, T) {
@@ -1851,6 +1856,8 @@ function drawFin() {
       }
       ctx.restore();
       drawNinja(cx, H * .9, { face: 1, t: T, vy: 0, skin: save.skin });
+      // 演出完成：停在這裡，提示點一下繼續（一閃一閃）
+      if (e >= FIN_T && (g.finHoldT || 0) > .3) { ctx.globalAlpha = .55 + .45 * Math.sin(T * 5); txt(t('tap_next'), cx, H * .42 + 150, 16, '#fff', 'center', '#000', 4); ctx.globalAlpha = 1; }
     }
   }
 }
