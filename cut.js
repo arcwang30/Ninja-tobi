@@ -648,6 +648,9 @@ const FH = { act: null, at: 0, dur: 0, rest: 2.4, tapN: 0, stage: -1, bag: [], v
 const FH_DUR = { look: 2.2, stretch: 1.7, draw: 1.9, mie: 2, victory: 1.6, cheer: 1.6, fire: 2.5, shuriken: 2.4, kunai: 2.2,
   spin: .9, clone: 1.4, poke: 1.1, happy: 1.3, leaf: 2.4, windy: 2.2, sweat: 2.2, gaze: 2.2 };
 const FH_IDLE = ['look', 'stretch', 'draw', 'mie', 'victory', 'cheer', 'fire', 'shuriken', 'kunai'];
+// 火遁：各角色嘴巴的位置（主角盒子座標，腳底在 (0,32)；依 art.js／chars.js 畫嘴的位置換算，稍微往前一點讓火從嘴前噴出）
+// 鳶、霞是面罩遮住嘴，取面罩下緣的嘴部位置；狐是狐面的嘴
+const FIRE_MOUTH = { tobi: [10, 13], ao: [9.5, 15.5], sakura: [9.5, 14.5], kage: [7, 13.5], homura: [9.5, 15.5], kon: [18.5, 13], shizuku: [7, 13], kasumi: [10, 13], gan: [9.5, 15], kasa: [10.5, 12.5] };
 function fhStart(a) {
   FH.act = a; FH.at = 0; FH.dur = FH_DUR[a];
   const s = { draw: () => SFX.clank(), mie: () => SFX.impact(), victory: () => SFX.item(), cheer: () => SFX.item(), shuriken: () => SFX.throw(), kunai: () => SFX.throw(),
@@ -715,7 +718,8 @@ function drawFrontHero(t) {
     case 'fire':
       o.eye = 'focus'; o.pose = q < .2 ? 'apex' : 'fly';
       if (q < .2) back.push(() => { c.strokeStyle = '#ffe28a'; c.lineWidth = 1.4; c.setLineDash([3, 2]); aCirc(c, 0, 6, 26 * ez(q / .2)); c.stroke(); c.setLineDash([]); });
-      else front.push(() => { for (let i = 0; i < 18; i++) { const f = (at * 2.6 + i / 18) % 1, fx = 16 + f * 46, fy = 9 + sin(i * 3 + at * 20) * f * 9 - f * 4; c.fillStyle = f < .35 ? `rgba(255,240,150,${1 - f})` : f < .7 ? `rgba(255,140,40,${1 - f})` : `rgba(200,40,30,${1 - f})`; aCirc(c, fx, fy, 2.5 + f * 7); c.fill(); } });
+      else front.push(() => { const [mx, my] = FIRE_MOUTH[(SKINS[save.skin] || SKINS[0]).id] || FIRE_MOUTH.tobi;   // 火從各角色的嘴巴噴出
+        for (let i = 0; i < 18; i++) { const f = (at * 2.6 + i / 18) % 1, fx = mx + f * 46, fy = my + sin(i * 3 + at * 20) * f * 9 - f * 4; c.fillStyle = f < .35 ? `rgba(255,240,150,${1 - f})` : f < .7 ? `rgba(255,140,40,${1 - f})` : `rgba(200,40,30,${1 - f})`; aCirc(c, fx, fy, 2.5 + f * 7); c.fill(); } });
       break;
     case 'shuriken':
       o.pose = 'up'; o.eye = 'happy';
