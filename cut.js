@@ -703,7 +703,27 @@ function drawFrontHero(t) {
     case 'look': o.face = q > .22 && q < .62 ? -1 : 1; o.pose = 'apex'; break;
     case 'stretch': o.pose = 'fall'; o.sq = -sin(q * Math.PI) * .9; if (q > .2 && q < .8) o.eye = 'happy'; break;
     case 'draw':
-      if (q > .15 && q < .85) { o.pose = 'dash'; o.eye = 'focus'; if (q > .25 && q < .6) front.push(() => drawStar4(c, 40, 20, 4 + sin((q - .25) / .35 * Math.PI) * 6, q * 6, '#ffffff')); }
+      if (q > .15 && q < .85) {   // 拔刀衝刺：往前一衝的殘影、腳下揚起的煙塵與氣流、刀身一道光從刀鍔滑到刀尖（不用線條）
+        o.pose = 'dash'; o.eye = 'focus';
+        const k = (q - .15) / .7, lunge = Math.sin(Math.min(1, k * 4) * Math.PI / 2) * 7 * (k > .75 ? 1 - (k - .75) / .25 : 1);
+        dx = lunge;
+        back.push(() => {
+          const ga = k < .55 ? 1 - k / .55 : 0;   // 殘影：剛衝出去時最濃，之後淡掉
+          if (ga > 0) for (let j = 3; j >= 1; j--) { c.save(); c.globalAlpha *= .2 * ga * (4 - j) / 3; drawHeroNinja(-j * 9 * Math.min(1, k * 5), 32, Object.assign({}, o), c); c.restore(); }
+          for (let i = 0; i < 4; i++) { const f = Math.min(1, k * 2.2 + i * .12), x = -10 - f * (26 + i * 6), y = 26 - i * 7 - f * 4, r = 6 + i * 2 + f * 5;   // 身後的氣流：往後散開的柔和霧團
+            const al = .5 * (1 - f) * (k < .7 ? 1 : 1 - (k - .7) / .3), mg = c.createRadialGradient(x, y, 1, x, y, r); mg.addColorStop(0, `rgba(255,255,255,${al})`); mg.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = mg; c.save(); c.translate(x, y); c.scale(1.7, .7); c.translate(-x, -y); aCirc(c, x, y, r); c.fill(); c.restore(); }
+          if (k < .5) { const f = k / .5; for (let i = 0; i < 3; i++) { c.fillStyle = `rgba(255,255,255,${.8 * (1 - f)})`; aCirc(c, -6 - f * (14 + i * 9), 31 - i * 2.5 - f * 5, (4 - i) * (1 - f * .3)); c.fill(); } }   // 腳下踢起的煙
+        });
+        front.push(() => {
+          c.save(); c.globalCompositeOperation = 'lighter';
+          const sp = (x, y, s, a) => { const gl = c.createRadialGradient(x, y, 0, x, y, s * 1.6); gl.addColorStop(0, `rgba(255,226,130,${.85 * a})`); gl.addColorStop(1, 'rgba(255,200,90,0)'); c.fillStyle = gl; aCirc(c, x, y, s * 1.6); c.fill();
+            c.fillStyle = `rgba(255,250,215,${a})`; c.beginPath(); for (let i = 0; i < 8; i++) { const r2 = i % 2 ? s * .2 : s, an = i * Math.PI / 4 + at * 3; c.lineTo(x + Math.cos(an) * r2, y + sin(an) * r2); } c.closePath(); c.fill(); };
+          const g2 = Math.min(1, Math.max(0, (k - .15) / .35));   // 刃光：從刀鍔滑到刀尖
+          if (g2 > 0 && g2 < 1) sp(18 + g2 * 25, 21 - g2 * 1.5, 3.5 + sin(g2 * Math.PI) * 2.5, 1);
+          if (k > .45 && k < .85) { const e = (k - .45) / .4; sp(44, 19.5, 4 + sin(e * Math.PI) * 7, sin(e * Math.PI)); }   // 刀尖最後「叮」地一閃
+          c.restore();
+        });
+      }
       break;
     case 'mie':
       o.pose = 'fly'; o.eye = 'focus'; dx = q < .1 ? sin(at * 90) * 1.5 : 0;
