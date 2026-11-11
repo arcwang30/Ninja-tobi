@@ -30,7 +30,9 @@
 
 ## 🤖 我之後可以做的（等你有帳號後）
 - [ ] 用 Capacitor 把網頁包成 iOS App（Xcode 專案）
-- [ ] 接上 AdMob SDK（取代假廣告）＋ Google 的同意視窗（UMP，歐洲玩家需要）
+- [x] ads.js 已支援 AdMob 外掛（v106）：App 裡自動改播真廣告＋UMP 同意視窗＋ATT 追蹤提示；網頁版照舊用假廣告
+- [ ] 安裝 `@capacitor-community/admob`、在 Info.plist 填 GADApplicationIdentifier（App ID）與 NSUserTrackingUsageDescription
+- [ ] 上架前把 ads.js 的 `ADS_CFG.testing` 改成 false、`rewardedId` 換成自己的廣告單元 ID
 - [ ] iOS「是否允許追蹤」提示（ATT）
   - Info.plist `NSUserTrackingUsageDescription` 建議文字：
     「我們會用這個識別碼為您顯示更相關的廣告。不允許也能正常遊玩並觀看廣告。」
