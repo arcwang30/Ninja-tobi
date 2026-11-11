@@ -107,7 +107,7 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 @keyframes hero-vanish { 0% { opacity: 1; transform: translate(-50%, -50%); } 35% { opacity: 1; transform: translate(-50%, -54%) scale(1.1, .88); } 100% { opacity: 0; transform: translate(-50%, -62%) scale(.08) rotate(170deg); } }
 /* 待機展示：標題選單暫時淡出，讓畫布上的展示畫面露出來 */
 #title > * { transition: opacity .5s; }
-#title.attract > * { opacity: 0; pointer-events: none; }
+#title.attract > * { opacity: 0; visibility: hidden; pointer-events: none; }   /* visibility 也一起藏：iPhone 上透明度 0 的忍術陣放射線偶爾會在滿月上露出一條直線 */
 #title.attract .menu, #title.attract .dock { animation: none; }
 
 @keyframes logo-stamp { 0% { transform: scale(2.4) rotate(-6deg); opacity: 0; } 30% { opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }

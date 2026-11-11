@@ -1350,7 +1350,8 @@ function heroEye(c, x, y, rx, ry, mood) {
   c.strokeStyle = INK; c.lineCap = 'round'; c.lineWidth = 1.7;
   if (mood === 'blink') { c.beginPath(); c.moveTo(x - rx, y + ry * .2); c.quadraticCurveTo(x, y + ry * .5, x + rx, y + ry * .2); c.stroke(); return; }
   if (mood === 'happy') { c.beginPath(); c.arc(x, y + ry * .4, rx, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); return; }
-  if (mood === 'hurt') { c.beginPath(); c.moveTo(x - rx, y - ry * .6); c.lineTo(x + rx * .7, y); c.lineTo(x - rx, y + ry * .6); c.stroke(); return; }
+  if (mood === 'hurt') {   // 「><」：左眼畫成 >、右眼畫成 <（以臉的中線 x≈5 區分左右眼）
+    const s = x < 5 ? 1 : -1; c.beginPath(); c.moveTo(x - rx * s, y - ry * .6); c.lineTo(x + rx * .7 * s, y); c.lineTo(x - rx * s, y + ry * .6); c.stroke(); return; }
   const sy = mood === 'focus' ? .6 : 1;
   aEll(c, x, y, rx, ry * sy); c.fillStyle = '#fff'; c.fill(); c.lineWidth = 1.2; c.stroke();
   c.save(); aEll(c, x, y, rx, ry * sy); c.clip();
