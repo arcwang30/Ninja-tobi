@@ -2266,17 +2266,53 @@ function shopIcon(style = SHOP_STYLE, size = 200, open = true) {
 }
 
 // ===== 「開始修行」按鈕的底圖（三案；網址 ?start=a|b|c 預覽；文字仍是網頁文字，會跟著換語言） =====
-let START_STYLE = new URLSearchParams(location.search).get('start') || 'a';   // 遊戲使用 A 卷軸
+let START_STYLE = new URLSearchParams(location.search).get('start') || 'a1';   // 遊戲使用 A 卷軸＋a1 金工雕花軸頭
 function startBg(style, w = 320, h = 96) {
   const cnv = document.createElement('canvas'); cnv.width = w * 2; cnv.height = h * 2;
   const c = cnv.getContext('2d'); c.scale(2, 2);
-  if (style === 'a') {   // 卷軸：兩端木軸、米色紙面、紅色毛筆底紋、右邊朱印「忍」
+  if (style === 'a' || /^a[123]$/.test(style)) {   // 卷軸：兩端木軸、米色紙面、紅色毛筆底紋、右邊朱印「忍」
     const px = 18, pw = w - 36;
     c.fillStyle = 'rgba(0,0,0,.35)'; aRR(c, px, 14, pw, h - 22, 4); c.fill();
     aRR(c, px, 8, pw, h - 22, 3); const pg = c.createLinearGradient(0, 8, 0, h - 14); pg.addColorStop(0, '#fbf3df'); pg.addColorStop(1, '#e6d2a6'); c.fillStyle = pg; c.fill(); aInk(c, 3);
     c.fillStyle = 'rgba(192,38,45,.85)'; c.beginPath(); c.moveTo(px + 26, h * .5 - 14); c.quadraticCurveTo(w * .5, h * .5 - 24, w - px - 50, h * .5 - 12); c.lineTo(w - px - 40, h * .5 + 2); c.quadraticCurveTo(w * .5, h * .5 + 12, px + 20, h * .5 + 4); c.closePath(); c.fill();   // 毛筆底紋
     c.fillStyle = 'rgba(192,38,45,.5)'; for (const [x, y, r] of [[px + 18, h * .5 - 10, 2.4], [w - px - 36, h * .5 + 8, 2], [w * .6, h * .5 - 22, 1.6]]) { aCirc(c, x, y, r); c.fill(); }
-    for (const x of [px, w - px]) { aRR(c, x - 9, 2, 18, h - 10, 6); const wg = c.createLinearGradient(x - 9, 0, x + 9, 0); wg.addColorStop(0, '#4a2a14'); wg.addColorStop(.45, '#a8663a'); wg.addColorStop(1, '#4a2a14'); c.fillStyle = wg; c.fill(); aInk(c, 2.6); for (const y of [2, h - 8]) { aEll(c, x, y, 11, 4.6); aFI(c, '#e8b84a', 2); } }
+    if (style === 'a') for (const x of [px, w - px]) { aRR(c, x - 9, 2, 18, h - 10, 6); const wg = c.createLinearGradient(x - 9, 0, x + 9, 0); wg.addColorStop(0, '#4a2a14'); wg.addColorStop(.45, '#a8663a'); wg.addColorStop(1, '#4a2a14'); c.fillStyle = wg; c.fill(); aInk(c, 2.6); for (const y of [2, h - 8]) { aEll(c, x, y, 11, 4.6); aFI(c, '#e8b84a', 2); } }
+    else {   // 精緻軸頭三案：a1 金工雕花／a2 象牙軸先／a3 黑漆家紋（軸頭蓋在木軸兩端，和原本 A 的位置相同）
+      const hg = (x, w2, cols) => { const g2 = c.createLinearGradient(x - w2, 0, x + w2, 0); cols.forEach((cc, i) => g2.addColorStop(i / (cols.length - 1), cc)); return g2; };
+      const GOLD = ['#7a5414', '#e8b84a', '#fff0b0', '#e8b84a', '#7a5414'];
+      for (const x of [px, w - px]) {
+        // 木軸：軸身＋木紋與光澤
+        aRR(c, x - 8, 5, 16, h - 12, 4); c.fillStyle = hg(x, 8, ['#3a1e0c', '#8a522c', '#c0804a', '#6a3a1c', '#2a1408']); c.fill(); aInk(c, 2.4);
+        c.strokeStyle = 'rgba(40,18,6,.45)'; c.lineWidth = .7; for (const dx of [-4, 1, 4.5]) { c.beginPath(); c.moveTo(x + dx, 16); c.bezierCurveTo(x + dx + 1.2, 34, x + dx - 1.2, h - 40, x + dx + .6, h - 18); c.stroke(); }
+        c.fillStyle = 'rgba(255,240,210,.22)'; c.fillRect(x - 4, 16, 1.6, h - 34);
+        for (const [inner, outer] of [[15, 1], [h - 16, h - 2]]) {
+          const Y = f => inner + (outer - inner) * f, top = outer < inner;
+          const band = (f0, f1, hw, fill, r = 1.5, lw = 1.4) => { const ya = Math.min(Y(f0), Y(f1)), yb = Math.max(Y(f0), Y(f1)); aRR(c, x - hw, ya, hw * 2, yb - ya, r); c.fillStyle = fill; c.fill(); aInk(c, lw); return [ya, yb]; };
+          if (style === 'a1') {   // 金工雕花：黑色束環＋金色寶珠形軸頭（兩道雕刻紋＋高光）＋尖端小珠
+            band(0, .22, 10, '#16100c');
+            c.beginPath(); c.moveTo(x - 11.5, Y(.2)); c.lineTo(x - 11.5, Y(.55)); c.quadraticCurveTo(x - 11.5, Y(.86), x - 5, Y(.86)); c.lineTo(x + 5, Y(.86)); c.quadraticCurveTo(x + 11.5, Y(.86), x + 11.5, Y(.55)); c.lineTo(x + 11.5, Y(.2)); c.closePath(); c.fillStyle = hg(x, 11.5, GOLD); c.fill(); aInk(c, 1.6);
+            c.strokeStyle = 'rgba(90,60,10,.85)'; c.lineWidth = .8; for (const f of [.36, .52]) { c.beginPath(); c.moveTo(x - 10.6, Y(f)); c.lineTo(x + 10.6, Y(f)); c.stroke(); }   // 雕刻紋
+            c.fillStyle = 'rgba(90,60,10,.7)'; for (const dx of [-6, 0, 6]) { aCirc(c, x + dx, Y(.44), .9); c.fill(); }   // 雕刻的小點
+            c.fillStyle = 'rgba(255,255,255,.6)'; aEll(c, x - 5, Y(.62), 1.4, 2.6); c.fill();
+            aEll(c, x, Y(.94), 4.5, 1.8); c.fillStyle = hg(x, 4.5, GOLD); c.fill(); aInk(c, 1.1);   // 尖端小珠
+          } else if (style === 'a2') {   // 象牙軸先：金色細環＋象牙色圓筒（細紋）＋外側端面
+            band(0, .18, 10, hg(x, 10, GOLD), 1, 1.1);
+            const [ya, yb] = band(.16, .94, 10.5, hg(x, 10.5, ['#a8987a', '#efe6d0', '#fffaf0', '#e0d4b6', '#8e7e60']), 3, 1.6);
+            c.strokeStyle = 'rgba(150,130,90,.35)'; c.lineWidth = .5; for (const dx of [-6, -2.5, 1.5, 5.5]) { c.beginPath(); c.moveTo(x + dx, ya + 1.5); c.lineTo(x + dx + .4, yb - 1.5); c.stroke(); }
+            c.fillStyle = 'rgba(255,255,255,.55)'; c.fillRect(x - 7, ya + 2, 1.4, yb - ya - 4);
+            aEll(c, x, Y(.94), 10.5, 2.4); c.fillStyle = top ? '#fffaf0' : '#d8ccb0'; c.fill(); aInk(c, 1.2);   // 端面
+          } else {   // 黑漆家紋：黑漆軸頭（上下兩道金線）＋側面嵌著家紋圓章（金框、朱底、金色手裡劍紋）
+            const [ya, yb] = band(0, .95, 11.5, hg(x, 11.5, ['#000', '#2a2630', '#55505e', '#1a1820', '#000']), 3, 1.6);
+            c.strokeStyle = hg(x, 11, GOLD); c.lineWidth = 1.1; for (const yy of [ya + 1.8, yb - 1.8]) { c.beginPath(); c.moveTo(x - 10, yy); c.lineTo(x + 10, yy); c.stroke(); }
+            const cy = (ya + yb) / 2;
+            c.fillStyle = hg(x, 6.5, GOLD); aCirc(c, x, cy, 6.2); c.fill(); aInk(c, 1.1);
+            c.fillStyle = '#a8202a'; aCirc(c, x, cy, 4.6); c.fill();
+            c.save(); c.translate(x, cy); c.rotate(.4); c.fillStyle = '#ffe28a'; c.beginPath(); for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; c.lineTo(Math.cos(a) * 4, Math.sin(a) * 4); c.lineTo(Math.cos(a + Math.PI / 4) * 1.3, Math.sin(a + Math.PI / 4) * 1.3); } c.closePath(); c.fill(); c.restore();
+            c.fillStyle = 'rgba(255,255,255,.3)'; c.fillRect(x - 8, ya + 3, 1.4, yb - ya - 6);   // 漆的光澤
+          }
+        }
+      }
+    }
     aRR(c, w - px - 40, h - 40, 22, 22, 3); aFI(c, '#c0262d', 2); c.fillStyle = '#fff'; c.font = '900 14px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('忍', w - px - 29, h - 28.5);
   } else if (style === 'b') {   // 刀身：左邊是柄與鍔，右邊是刀尖；文字寫在刀身上
     const y0 = 16, y1 = h - 20, my = (y0 + y1) / 2;
@@ -2288,6 +2324,125 @@ function startBg(style, w = 320, h = 96) {
     aRR(c, 6, y0 + 4, 52, y1 - y0 - 8, 6); c.fillStyle = '#1c1c26'; c.fill(); aInk(c, 2.4);   // 柄
     c.fillStyle = '#f2f2f2'; for (let i = 0; i < 4; i++) { const x = 12 + i * 11; c.beginPath(); c.moveTo(x, my); c.lineTo(x + 5, my - 6); c.lineTo(x + 10, my); c.lineTo(x + 5, my + 6); c.closePath(); c.fill(); }
     c.fillStyle = '#c0262d'; c.beginPath(); c.moveTo(8, my); c.quadraticCurveTo(-2, my + 18, 6, h - 2); c.lineTo(10, h - 4); c.quadraticCurveTo(4, my + 16, 12, my + 2); c.closePath(); c.fill();   // 下緒
+  } else if (style === 'd') {   // 精緻掛軸：藍錦表裝＋金紋、和紙纖維與金箔、雙層毛筆朱紋、黑漆木軸配金色軸頭、上方掛繩
+    const px = 22, top = 14, bot = h - 12, r = aRng(31);
+    c.strokeStyle = '#a8202a'; c.lineWidth = 2; c.beginPath(); c.moveTo(w * .5 - 22, top + 1); c.quadraticCurveTo(w * .5, top - 12, w * .5 + 22, top + 1); c.stroke();   // 掛繩
+    c.fillStyle = 'rgba(0,0,0,.4)'; aRR(c, px + 2, top + 6, w - px * 2, bot - top, 3); c.fill();
+    aRR(c, px, top, w - px * 2, bot - top, 3); const sg = c.createLinearGradient(0, top, 0, bot); sg.addColorStop(0, '#2c3f6e'); sg.addColorStop(1, '#16213e'); c.fillStyle = sg; c.fill(); aInk(c, 3);
+    c.fillStyle = 'rgba(232,184,74,.75)'; for (const y of [top + 4, bot - 4]) for (let x = px + 10; x < w - px - 6; x += 11) { c.beginPath(); c.moveTo(x, y - 2); c.lineTo(x + 2, y); c.lineTo(x, y + 2); c.lineTo(x - 2, y); c.closePath(); c.fill(); }   // 錦的金色菱紋
+    const iy0 = top + 9, iy1 = bot - 9, ix0 = px + 8, ix1 = w - px - 8;
+    const pg = c.createLinearGradient(0, iy0, 0, iy1); pg.addColorStop(0, '#fffaf0'); pg.addColorStop(1, '#ead9b0'); c.fillStyle = pg; c.fillRect(ix0, iy0, ix1 - ix0, iy1 - iy0);
+    c.save(); c.beginPath(); c.rect(ix0, iy0, ix1 - ix0, iy1 - iy0); c.clip();
+    c.strokeStyle = 'rgba(150,115,60,.14)'; c.lineWidth = .6; for (let i = 0; i < 60; i++) { const x = ix0 + r() * (ix1 - ix0), y = iy0 + r() * (iy1 - iy0), a = r() * 3; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + Math.cos(a) * 6, y + Math.sin(a) * 6 + 2, x + Math.cos(a) * 12, y + Math.sin(a) * 12); c.stroke(); }   // 和紙纖維
+    c.fillStyle = 'rgba(214,170,60,.6)'; for (let i = 0; i < 22; i++) { const x = ix0 + r() * (ix1 - ix0), y = iy0 + r() * (iy1 - iy0), s = .8 + r() * 1.8; c.beginPath(); c.moveTo(x, y); c.lineTo(x + s, y + s * .4); c.lineTo(x + s * .6, y + s * 1.2); c.closePath(); c.fill(); }   // 金箔
+    const my = (iy0 + iy1) / 2;   // 雙層毛筆朱紋：淡的大筆＋濃的細筆，收筆有飛白
+    c.fillStyle = 'rgba(192,38,45,.28)'; c.beginPath(); c.moveTo(ix0 + 6, my - 12); c.quadraticCurveTo(w * .5, my - 22, ix1 - 16, my - 9); c.lineTo(ix1 - 6, my + 4); c.quadraticCurveTo(w * .5, my + 16, ix0 + 2, my + 8); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(192,38,45,.85)'; c.beginPath(); c.moveTo(ix0 + 14, my - 7); c.quadraticCurveTo(w * .5, my - 15, ix1 - 30, my - 6); c.lineTo(ix1 - 22, my + 3); c.quadraticCurveTo(w * .5, my + 8, ix0 + 10, my + 4); c.closePath(); c.fill();
+    c.strokeStyle = '#fbf3df'; c.lineWidth = .9; for (const k of [-3, 0, 3]) { c.beginPath(); c.moveTo(ix1 - 70, my + k - 2); c.quadraticCurveTo(ix1 - 45, my + k - 4, ix1 - 24, my + k * .6); c.stroke(); }
+    c.restore();
+    c.strokeStyle = '#c9a24a'; c.lineWidth = .9; c.strokeRect(ix0 + 2.5, iy0 + 2.5, ix1 - ix0 - 5, iy1 - iy0 - 5);   // 一文字的金線
+    aRR(c, ix1 - 30, iy1 - 25, 20, 20, 2); aFI(c, '#c0262d', 1.6); c.strokeStyle = 'rgba(255,235,220,.7)'; c.lineWidth = .8; c.strokeRect(ix1 - 27.5, iy1 - 22.5, 15, 15);
+    c.fillStyle = '#fff4e8'; c.font = '900 12px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('忍', ix1 - 20, iy1 - 14.5);
+    for (const x of [px, w - px]) {   // 黑漆木軸＋金色軸頭
+      aRR(c, x - 6, top - 4, 12, bot - top + 8, 4); const wg = c.createLinearGradient(x - 6, 0, x + 6, 0); wg.addColorStop(0, '#120a08'); wg.addColorStop(.45, '#5a3422'); wg.addColorStop(1, '#120a08'); c.fillStyle = wg; c.fill(); aInk(c, 2.4);
+      for (const y of [top - 7, bot + 1]) { aRR(c, x - 8, y, 16, 7, 3); const gg = c.createLinearGradient(0, y, 0, y + 7); gg.addColorStop(0, '#fff0b0'); gg.addColorStop(.5, '#e8b84a'); gg.addColorStop(1, '#8a6018'); c.fillStyle = gg; c.fill(); aInk(c, 1.6); }
+    }
+  } else if (style === 'e') {   // 黑漆金蒔絵：黑漆板、金色雙框與四角金具、淡金青海波、左右金色手裡劍、上半部漆的光澤
+    const x0 = 14, x1 = w - 14, y0 = 8, y1 = h - 14;
+    c.fillStyle = 'rgba(0,0,0,.45)'; aRR(c, x0 + 2, y0 + 6, x1 - x0, y1 - y0, 10); c.fill();
+    aRR(c, x0, y0, x1 - x0, y1 - y0, 10); const bg = c.createLinearGradient(0, y0, 0, y1); bg.addColorStop(0, '#2e2a30'); bg.addColorStop(1, '#0a0809'); c.fillStyle = bg; c.fill(); aInk(c, 3);
+    c.save(); aRR(c, x0, y0, x1 - x0, y1 - y0, 10); c.clip();
+    c.strokeStyle = 'rgba(232,184,74,.16)'; c.lineWidth = 1; for (let y = y0 + 10, row = 0; y < y1 + 10; y += 8, row++) for (let x = x0 + (row % 2) * 8; x < x1 + 8; x += 16) for (const rr of [8, 5, 2]) { c.beginPath(); c.arc(x, y, rr, Math.PI, 0); c.stroke(); }
+    const gl = c.createLinearGradient(0, y0, 0, (y0 + y1) / 2); gl.addColorStop(0, 'rgba(255,255,255,.2)'); gl.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gl; c.fillRect(x0, y0, x1 - x0, (y1 - y0) / 2);
+    c.restore();
+    const gold = (a, b) => { const g2 = c.createLinearGradient(0, a, 0, b); g2.addColorStop(0, '#fff0b0'); g2.addColorStop(.5, '#e8b84a'); g2.addColorStop(1, '#a87a20'); return g2; };
+    c.strokeStyle = gold(y0, y1); c.lineWidth = 2.4; aRR(c, x0 + 5, y0 + 5, x1 - x0 - 10, y1 - y0 - 10, 7); c.stroke(); c.lineWidth = .9; aRR(c, x0 + 9, y0 + 9, x1 - x0 - 18, y1 - y0 - 18, 5); c.stroke();
+    for (const [cx, cy, sx, sy] of [[x0 + 5, y0 + 5, 1, 1], [x1 - 5, y0 + 5, -1, 1], [x0 + 5, y1 - 5, 1, -1], [x1 - 5, y1 - 5, -1, -1]]) {   // 四角金具
+      c.fillStyle = gold(cy - 8, cy + 8); c.beginPath(); c.moveTo(cx - sx * 2, cy - sy * 2); c.lineTo(cx + sx * 16, cy - sy * 2); c.lineTo(cx + sx * 16, cy + sy * 3); c.lineTo(cx + sx * 3, cy + sy * 3); c.lineTo(cx + sx * 3, cy + sy * 16); c.lineTo(cx - sx * 2, cy + sy * 16); c.closePath(); c.fill(); aInk(c, 1.2);
+      c.fillStyle = '#5a3a10'; aCirc(c, cx + sx * 1, cy + sy * 1, 1.2); c.fill();
+    }
+    for (const x of [x0 + 34, x1 - 34]) {   // 金色手裡劍
+      const cy = (y0 + y1) / 2; c.save(); c.translate(x, cy); c.rotate(.4);
+      c.beginPath(); for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; c.lineTo(Math.cos(a) * 13, Math.sin(a) * 13); c.lineTo(Math.cos(a + Math.PI / 4) * 4, Math.sin(a + Math.PI / 4) * 4); } c.closePath();
+      c.fillStyle = gold(-13, 13); c.fill(); aInk(c, 1.4); c.fillStyle = '#0a0809'; aCirc(c, 0, 0, 2.6); c.fill(); c.restore();
+    }
+  } else if (style === 'f') {   // 墨筆一閃：中段飽滿、兩端收細的粗墨筆當底（收筆有飛白）、朱色一筆與飛沫、金色斬光、右端朱印「忍」
+    const my = h * .5 - 3, P = t => [16 + (w - 30) * t, my + 5 - 10 * t + Math.sin(t * Math.PI) * -4];
+    const band = (wd, off) => {   // 中段最粗、左端較重、右端拉細；邊緣帶一點毛邊
+      const L = [], R = [];
+      for (let i = 0; i <= 48; i++) { const t = i / 48, q = P(t), q2 = P(Math.min(1, t + .01)), q1 = P(Math.max(0, t - .01)); let dx = q2[0] - q1[0], dy = q2[1] - q1[1]; const d = Math.hypot(dx, dy); dx /= d; dy /= d;
+        const ww = wd * (.16 + .84 * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.15)), .4)) * (1.06 - .22 * t) / 2, j = 1 + .05 * Math.sin(t * 37) + .03 * Math.sin(t * 91);
+        L.push([q[0] - dy * ww * j, q[1] + dx * ww * j + off]); R.push([q[0] + dy * ww / j, q[1] - dx * ww / j + off]); }
+      c.beginPath(); c.moveTo(L[0][0], L[0][1]); for (const q of L) c.lineTo(q[0], q[1]); for (let i = R.length - 1; i >= 0; i--) c.lineTo(R[i][0], R[i][1]); c.closePath();
+      return [L, R];
+    };
+    c.fillStyle = 'rgba(0,0,0,.4)'; band(60, 4); c.fill();   // 影子
+    c.fillStyle = 'rgba(214,40,40,.9)'; for (const [x, y, rr] of [[w - 66, my - 28, 3], [w - 52, my - 32, 1.8], [w - 80, my - 31, 1.3], [26, my + 26, 2.2], [38, my + 30, 1.2]]) { aCirc(c, x, y, rr); c.fill(); }
+    c.fillStyle = '#c8262d'; c.beginPath(); c.moveTo(w - 128, my - 20); c.quadraticCurveTo(w - 70, my - 34, w - 22, my - 34); c.quadraticCurveTo(w - 70, my - 26, w - 122, my - 15); c.closePath(); c.fill();   // 朱色的一筆（在墨筆後面）
+    const [L, R] = band(58, 0); const ig = c.createLinearGradient(0, my - 30, 0, my + 30); ig.addColorStop(0, '#2a2430'); ig.addColorStop(.5, '#141018'); ig.addColorStop(1, '#0a080c'); c.fillStyle = ig; c.fill();
+    c.save(); c.globalCompositeOperation = 'destination-out'; c.strokeStyle = '#000'; c.lineCap = 'round';   // 飛白：右段挖出幾道乾筆的細縫
+    for (const [k, s0, lw] of [[.18, .62, 1.1], [.36, .7, .8], [.55, .58, 1], [.74, .76, .7], [.86, .66, .9]]) { c.lineWidth = lw; c.beginPath(); for (let i = Math.floor(48 * s0); i <= 48; i++) { const x = L[i][0] + (R[i][0] - L[i][0]) * k, y = L[i][1] + (R[i][1] - L[i][1]) * k; i === Math.floor(48 * s0) ? c.moveTo(x, y) : c.lineTo(x, y); } c.stroke(); }
+    c.restore();
+    c.save(); band(58, 0); c.clip(); const gl = c.createLinearGradient(0, my - 30, 0, my - 4); gl.addColorStop(0, 'rgba(255,255,255,.16)'); gl.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gl; c.fillRect(0, 0, w, h); c.restore();   // 墨的光澤
+    c.strokeStyle = 'rgba(255,226,138,.95)'; c.lineWidth = 1.4; c.lineCap = 'round'; c.beginPath(); c.moveTo(34, my + 24); c.quadraticCurveTo(w * .5, my + 14, w - 58, my + 10); c.stroke();   // 金色斬光（在字的下方）
+    c.strokeStyle = 'rgba(255,248,220,.55)'; c.lineWidth = .6; c.beginPath(); c.moveTo(60, my + 21); c.quadraticCurveTo(w * .5, my + 13, w - 80, my + 10.5); c.stroke();
+    aRR(c, w - 44, my + 2, 22, 22, 3); aFI(c, '#c0262d', 1.8); c.fillStyle = '#fff4e8'; c.font = '900 14px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('忍', w - 33, my + 13.5);
+  } else if (style === 'g' || style === 'h' || style === 'i') {   // 忍者風卷軸三案：G 闇之密書／H 血判之卷／I 雙刃之卷
+    const px = style === 'i' ? 46 : 22, top = 13, bot = h - 13, my = (top + bot) / 2, rng = aRng(7);
+    const roller = (c0, c1, cap0, cap1, cap2) => { for (const x of [px, w - px]) {
+      aRR(c, x - 6, top - 5, 12, bot - top + 10, 4); const g2 = c.createLinearGradient(x - 6, 0, x + 6, 0); g2.addColorStop(0, c0); g2.addColorStop(.45, c1); g2.addColorStop(1, c0); c.fillStyle = g2; c.fill(); aInk(c, 2.4);
+      for (const y of [top - 9, bot + 2]) { aRR(c, x - 8, y, 16, 7, 3); const g3 = c.createLinearGradient(0, y, 0, y + 7); g3.addColorStop(0, cap0); g3.addColorStop(.5, cap1); g3.addColorStop(1, cap2); c.fillStyle = g3; c.fill(); aInk(c, 1.6); } } };
+    const paper = (a, b) => { c.fillStyle = 'rgba(0,0,0,.42)'; c.fillRect(px + 2, top + 5, w - px * 2, bot - top); const pg = c.createLinearGradient(0, top, 0, bot); pg.addColorStop(0, a); pg.addColorStop(1, b); c.fillStyle = pg; c.fillRect(px, top, w - px * 2, bot - top); c.strokeStyle = INK; c.lineWidth = 3; c.strokeRect(px, top, w - px * 2, bot - top); };
+    const seal = (ch, x, y, s) => { aRR(c, x, y, s, s, 2); aFI(c, '#c0262d', 1.6); c.strokeStyle = 'rgba(255,235,220,.7)'; c.lineWidth = .8; c.strokeRect(x + 2.5, y + 2.5, s - 5, s - 5); c.fillStyle = '#fff4e8'; c.font = '900 ' + (s * .6) + 'px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(ch, x + s / 2, y + s / 2 + .5); };
+    const kunai = (x, y, a, len) => {   // 苦無：刀身（銀）＋纏繩握把＋圓環
+      c.save(); c.translate(x, y); c.rotate(a);
+      c.beginPath(); c.moveTo(0, 0); c.lineTo(len * .45, -5); c.lineTo(len * .55, 0); c.lineTo(len * .45, 5); c.closePath(); const bg = c.createLinearGradient(0, -5, 0, 5); bg.addColorStop(0, '#f4f6fa'); bg.addColorStop(.5, '#9aa2b0'); bg.addColorStop(1, '#4a5060'); c.fillStyle = bg; c.fill(); aInk(c, 1.3);
+      aRR(c, len * .55, -2.4, len * .3, 4.8, 1); c.fillStyle = '#1c1820'; c.fill(); aInk(c, 1.1); c.strokeStyle = '#a8202a'; c.lineWidth = .9; for (let k = len * .58; k < len * .84; k += 3) { c.beginPath(); c.moveTo(k, -2.4); c.lineTo(k + 2, 2.4); c.stroke(); }
+      c.strokeStyle = INK; c.lineWidth = 3.2; c.beginPath(); c.arc(len * .9, 0, 4, 0, TAU); c.stroke(); c.strokeStyle = '#8a8e98'; c.lineWidth = 1.6; c.stroke();
+      c.restore(); };
+    if (style === 'g') {   // 闇之密書：墨黑的紙、淡淡的「忍」浮水印與墨雲、銀色細框、紅繩綁結、鐵軸銀頭、朱印「秘」
+      paper('#2e2a36', '#121016');
+      c.save(); c.beginPath(); c.rect(px, top, w - px * 2, bot - top); c.clip();
+      for (let i = 0; i < 7; i++) { const x = px + rng() * (w - px * 2), y = top + rng() * (bot - top), r = 18 + rng() * 26, gg = c.createRadialGradient(x, y, 2, x, y, r); gg.addColorStop(0, 'rgba(0,0,0,.45)'); gg.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = gg; c.fillRect(x - r, y - r, r * 2, r * 2); }   // 墨雲
+      c.fillStyle = 'rgba(255,255,255,.06)'; c.font = '900 64px serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('忍', w * .5, my + 3);   // 浮水印
+      c.fillStyle = 'rgba(210,214,230,.5)'; for (let i = 0; i < 18; i++) c.fillRect(px + rng() * (w - px * 2), top + rng() * (bot - top), 1, 1);   // 銀粉
+      c.restore();
+      c.strokeStyle = 'rgba(200,204,220,.45)'; c.lineWidth = .9; c.strokeRect(px + 5, top + 5, w - px * 2 - 10, bot - top - 10);
+      const cx = px + 30;   // 紅繩：兩條直繩＋中間的結＋兩段垂下的繩尾
+      for (const [col, lw] of [[INK, 4.4], ['#c0262d', 2.2]]) { c.strokeStyle = col; c.lineWidth = lw; for (const dx of [-2.5, 2.5]) { c.beginPath(); c.moveTo(cx + dx, top - 1); c.lineTo(cx + dx, bot + 1); c.stroke(); } }
+      c.fillStyle = '#c0262d'; aEll(c, cx, my, 6, 4.5); c.fill(); aInk(c, 1.6);
+      c.strokeStyle = '#c0262d'; c.lineWidth = 2; c.lineCap = 'round'; for (const [ex, ey] of [[cx - 9, my + 13], [cx + 8, my + 15]]) { c.beginPath(); c.moveTo(cx, my + 3); c.quadraticCurveTo((cx + ex) / 2 + 3, my + 8, ex, ey); c.stroke(); }
+      seal('秘', w - px - 30, bot - 26, 20);
+      roller('#08080a', '#4a4c56', '#ffffff', '#b8bcc8', '#4a4e5a');
+    } else if (style === 'h') {   // 血判之卷：舊紙＋焦黑邊緣、朱紅日輪、橫掃的墨筆帶（白字寫在上面）、墨點飛濺、右上角插著一把苦無、朱漆木軸
+      paper('#f4e8c8', '#d6bf92');
+      c.save(); c.beginPath(); c.rect(px, top, w - px * 2, bot - top); c.clip();
+      const eg = c.createLinearGradient(px, 0, w - px, 0); eg.addColorStop(0, 'rgba(90,50,20,.35)'); eg.addColorStop(.12, 'rgba(90,50,20,0)'); eg.addColorStop(.88, 'rgba(90,50,20,0)'); eg.addColorStop(1, 'rgba(90,50,20,.35)'); c.fillStyle = eg; c.fillRect(px, top, w - px * 2, bot - top);   // 焦邊
+      c.fillStyle = 'rgba(200,30,36,.9)'; aCirc(c, w * .5 + 34, my - 2, 27); c.fill();   // 日輪
+      c.fillStyle = '#151018'; c.beginPath(); c.moveTo(px + 14, my - 4); c.quadraticCurveTo(w * .3, my - 17, w * .55, my - 14); c.quadraticCurveTo(w * .78, my - 12, w - px - 16, my - 6); c.lineTo(w - px - 6, my - 2); c.quadraticCurveTo(w * .78, my + 13, w * .5, my + 13); c.quadraticCurveTo(w * .28, my + 14, px + 8, my + 6); c.closePath(); c.fill();   // 墨筆帶
+      c.strokeStyle = '#ead9b0'; c.lineWidth = .8; for (const k of [-6, -1, 5]) { c.beginPath(); c.moveTo(w - px - 70, my + k); c.quadraticCurveTo(w - px - 40, my + k - 2, w - px - 12, my + k * .5 - 2); c.stroke(); }   // 飛白
+      c.fillStyle = '#151018'; for (const [x, y, r] of [[px + 22, my + 20, 2.6], [px + 34, my + 23, 1.4], [w * .5 - 30, my - 22, 1.8], [w - px - 40, my + 22, 2.2], [w - px - 26, my + 18, 1.2]]) { aCirc(c, x, y, r); c.fill(); }
+      c.restore();
+      roller('#3a0606', '#b02420', '#fff0b0', '#e8b84a', '#8a6018');
+      kunai(w - px - 64, top + 12, -.48, 42);   // 苦無：刀尖插進卷軸右上方，握把朝右上
+    } else {   // 雙刃之卷：兩把交叉的忍者刀藏在卷軸後面（柄從左邊露出、刀尖從右邊露出）、米色紙上一道斜斜的墨筆、手裡劍與朱印
+      const blade = (x0, y0, x1, y1) => {
+        const a = Math.atan2(y1 - y0, x1 - x0), L = Math.hypot(x1 - x0, y1 - y0);
+        c.save(); c.translate(x0, y0); c.rotate(a);
+        aRR(c, 0, -3.5, 30, 7, 2); c.fillStyle = '#1c1820'; c.fill(); aInk(c, 1.4); c.fillStyle = '#e8e2d0'; for (let k = 3; k < 28; k += 6) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k + 3, -3); c.lineTo(k + 6, 0); c.lineTo(k + 3, 3); c.closePath(); c.fill(); }   // 柄
+        aRR(c, 29, -6.5, 5, 13, 1); c.fillStyle = '#2a2a30'; c.fill(); aInk(c, 1.2);   // 方形鍔
+        c.beginPath(); c.moveTo(34, -3); c.lineTo(L - 10, -3); c.lineTo(L, 0); c.lineTo(L - 10, 3); c.lineTo(34, 3); c.closePath(); const bg = c.createLinearGradient(0, -3, 0, 3); bg.addColorStop(0, '#f6f8fc'); bg.addColorStop(1, '#7a8496'); c.fillStyle = bg; c.fill(); aInk(c, 1.2);
+        c.restore(); };
+      blade(4, 8, w - 4, h - 12); blade(4, h - 10, w - 4, 10);
+      paper('#fbf3df', '#e4cfa0');
+      c.save(); c.beginPath(); c.rect(px, top, w - px * 2, bot - top); c.clip();
+      c.strokeStyle = 'rgba(150,115,60,.14)'; c.lineWidth = .6; for (let i = 0; i < 40; i++) { const x = px + rng() * (w - px * 2), y = top + rng() * (bot - top); c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8, y + rng() * 4 - 2); c.stroke(); }
+      c.fillStyle = 'rgba(20,16,24,.88)'; c.beginPath(); c.moveTo(px + 10, my + 14); c.quadraticCurveTo(w * .45, my + 2, w - px - 18, my - 16); c.lineTo(w - px - 8, my - 12); c.quadraticCurveTo(w * .5, my + 10, px + 6, my + 20); c.closePath(); c.fill();   // 斜斜的墨筆
+      c.restore();
+      roller('#1a0e08', '#6a3e22', '#fff0b0', '#e8b84a', '#8a6018');
+      c.save(); c.translate(px + 18, top + 13); c.rotate(.3); c.beginPath(); for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; c.lineTo(Math.cos(a) * 8, Math.sin(a) * 8); c.lineTo(Math.cos(a + Math.PI / 4) * 2.6, Math.sin(a + Math.PI / 4) * 2.6); } c.closePath(); c.fillStyle = '#5a606e'; c.fill(); aInk(c, 1.1); c.fillStyle = '#fbf3df'; aCirc(c, 0, 0, 1.4); c.fill(); c.restore();   // 手裡劍
+      seal('忍', w - px - 27, bot - 25, 19);
+    }
   } else {   // 朱漆護符：紅漆板、金色雙邊框、青海波紋，兩端掛著黑色繩結與流蘇
     c.fillStyle = 'rgba(0,0,0,.35)'; aRR(c, 22, 14, w - 44, h - 22, 12); c.fill();
     aRR(c, 22, 8, w - 44, h - 22, 12); const rg = c.createLinearGradient(0, 8, 0, h - 14); rg.addColorStop(0, '#ef4a3a'); rg.addColorStop(1, '#8e1c16'); c.fillStyle = rg; c.fill(); aInk(c, 3);

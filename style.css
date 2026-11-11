@@ -351,9 +351,23 @@ button:disabled { opacity: .45; filter: grayscale(.6); }
 /* ===== 「開始修行」按鈕：縮小＋忍者風底圖（art.js startBg；A 卷軸／B 刀身／C 朱漆護符） ===== */
 #title .menu button.st { width: 66%; height: 3.4em; padding: 0 0 .2em; border: 0; border-radius: 0; background: var(--stbg) center / 100% 100% no-repeat; box-shadow: none; font-size: 1.1em; letter-spacing: .08em; }
 #title .menu button.st::before { display: none; }
-#title .menu button.st-a { color: #1a1a1a; text-shadow: 0 0 calc(var(--u)*4) #fff8e6, 0 0 calc(var(--u)*2) #fff8e6; }
+#title .menu button.st-a, #title .menu button.st-a1, #title .menu button.st-a2, #title .menu button.st-a3 { color: #1a1a1a; text-shadow: 0 0 calc(var(--u)*4) #fff8e6, 0 0 calc(var(--u)*2) #fff8e6; }
 #title .menu button.st-b { color: #1a2a4a; padding-left: 16%; text-shadow: 0 calc(var(--u)*1) 0 #fff; }
 #title .menu button.st-c { color: #fff; text-shadow: 0 calc(var(--u)*2) 0 #3a0a08, 0 0 calc(var(--u)*6) rgba(0,0,0,.4); }
+/* 細緻化三案：D 精緻掛軸／E 黑漆金蒔絵／F 墨筆一閃 */
+#title .menu button.st-d { color: #1a1210; letter-spacing: .14em; text-shadow: 0 0 calc(var(--u)*4) #fffaf0, 0 0 calc(var(--u)*2) #fffaf0; }
+#title .menu button.st-e { color: #ffe28a; letter-spacing: .14em; text-shadow: 0 calc(var(--u)*1.5) 0 #5a3a08, 0 0 calc(var(--u)*8) rgba(255,200,80,.45); }
+#title .menu button.st-f { color: #fff; letter-spacing: .14em; padding-right: 6%; text-shadow: 0 calc(var(--u)*2) 0 #000, 0 0 calc(var(--u)*6) rgba(0,0,0,.7); }
+/* 忍者風卷軸三案：G 闇之密書／H 血判之卷／I 雙刃之卷 */
+#title .menu button.st-g { color: #f4f0ff; letter-spacing: .14em; text-shadow: 0 calc(var(--u)*2) 0 #000, 0 0 calc(var(--u)*8) rgba(180,190,255,.35); }
+#title .menu button.st-h { color: #fff; letter-spacing: .14em; text-shadow: 0 calc(var(--u)*2) 0 #000, 0 0 calc(var(--u)*6) rgba(0,0,0,.6); }
+#title .menu button.st-i { color: #fff; letter-spacing: .14em; text-shadow: 0 0 calc(var(--u)*3) #000, 0 calc(var(--u)*2) 0 #000; }
+/* 共用：每隔幾秒一道斜光掃過（只照在底圖有畫的地方） */
+#title .menu button.st-d::after, #title .menu button.st-e::after, #title .menu button.st-f::after,
+#title .menu button.st-g::after, #title .menu button.st-h::after, #title .menu button.st-i::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.4) 48%, rgba(255,255,255,0) 60%) -150% 0 / 60% 100% no-repeat;
+  -webkit-mask: var(--stbg) center / 100% 100% no-repeat; mask: var(--stbg) center / 100% 100% no-repeat; animation: stShine 3.6s ease-in-out infinite; }
+@keyframes stShine { 0%, 55% { background-position: -150% 0; } 85%, 100% { background-position: 250% 0; } }
 #title .menu button[data-act=start]:not(.st) { width: 66%; font-size: 1.1em; padding: .5em .8em; }   /* 還沒選定忍者風底圖前，先縮小預設的紅色按鈕 */
 
 /* ===== 選關（吸血鬼倖存者風的關卡圖卡） ===== */
