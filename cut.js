@@ -707,7 +707,13 @@ function drawFrontHero(t) {
       break;
     case 'mie':
       o.pose = 'fly'; o.eye = 'focus'; dx = q < .1 ? sin(at * 90) * 1.5 : 0;
-      back.push(() => { c.strokeStyle = `rgba(255,236,170,${.7 * (1 - q)})`; c.lineWidth = 1.6; for (let i = 0; i < 16; i++) { const an = i / 16 * TAU; c.beginPath(); c.moveTo(Math.cos(an) * 26, 4 + sin(an) * 26); c.lineTo(Math.cos(an) * (40 + q * 10), 4 + sin(an) * (40 + q * 10)); c.stroke(); } });
+      back.push(() => {   // 亮相：金色後光＋擴散的柔光衝擊波＋腳下踏出的煙（不用線條）
+        const A = q < .1 ? q / .1 : 1 - (q - .1) / .9;
+        const R = 38 + sin(at * 6) * 2 + q * 6, g2 = c.createRadialGradient(0, 4, 6, 0, 4, R); g2.addColorStop(0, `rgba(255,240,180,${.9 * A})`); g2.addColorStop(.55, `rgba(255,200,80,${.5 * A})`); g2.addColorStop(1, 'rgba(255,170,40,0)'); c.fillStyle = g2; aCirc(c, 0, 4, R); c.fill();
+        if (q < .45) { const k = q / .45, r = 20 + k * 40, rg = c.createRadialGradient(0, 4, r * .72, 0, 4, r); rg.addColorStop(0, 'rgba(255,240,200,0)'); rg.addColorStop(.7, `rgba(255,236,170,${.6 * (1 - k)})`); rg.addColorStop(1, 'rgba(255,236,170,0)'); c.fillStyle = rg; aCirc(c, 0, 4, r); c.fill(); }
+        if (q < .6) { const k = q / .6; for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) { c.fillStyle = `rgba(255,255,255,${.85 * (1 - k)})`; aCirc(c, sd * (8 + k * (22 + i * 8)), 32 - i * 3 - k * 4, (4.5 - i) * (1 - k * .4)); c.fill(); } }
+      });
+      front.push(() => { c.save(); c.globalCompositeOperation = 'lighter'; for (let i = 0; i < 8; i++) { const an = i * .785 + .3, f = Math.min(1, q * 2.2 + (i % 3) * .08), r = 18 + f * 24, tw = .5 + .5 * sin(at * 14 + i * 2), s = (4 + tw * 4) * (1 - q * .55), x = Math.cos(an) * r, y = 4 + sin(an) * r * .85; const gl = c.createRadialGradient(x, y, 0, x, y, s * 1.4); gl.addColorStop(0, 'rgba(255,230,140,.7)'); gl.addColorStop(1, 'rgba(255,200,80,0)'); c.fillStyle = gl; aCirc(c, x, y, s * 1.4); c.fill(); c.fillStyle = '#fff2b0'; c.beginPath(); for (let k = 0; k < 8; k++) { const rr2 = k % 2 ? s * .22 : s, a2 = k * Math.PI / 4 + at * 2; c.lineTo(x + Math.cos(a2) * rr2, y + sin(a2) * rr2); } c.closePath(); c.fill(); } c.restore(); });   // 金色光芒從身邊彈出、閃爍（發光的四角星，沒有黑框）
       front.push(() => { const k = Math.min(1, q / .15); c.save(); c.translate(27, -16); c.scale(2 - k, 2 - k); c.globalAlpha *= k; aCirc(c, 0, 0, 9); aFI(c, '#c0262d', 1.6); txt('忍', 0, .5, 11, '#fff', 'center', null); c.restore(); });
       break;
     case 'victory':
@@ -746,7 +752,15 @@ function drawFrontHero(t) {
       break;
     case 'windy':
       o.pose = 'fall'; o.eye = 'focus'; rot = sin(at * 7) * .14; dx = sin(at * 7) * 3;
-      back.push(() => { c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 1.4; for (let i = 0; i < 5; i++) { const x = 50 - ((at * 120 + i * 30) % 110); c.beginPath(); c.moveTo(x, -16 + i * 11); c.quadraticCurveTo(x - 10, -20 + i * 11, x - 22, -16 + i * 11); c.stroke(); } });
+      back.push(() => {   // 風：一團團被吹過去的霧氣（不用線條）
+        for (let i = 0; i < 5; i++) { const f = (at * .9 + i / 5) % 1, x = 60 - f * 120, y = -18 + (i * 13) % 44, r = 7 + (i % 3) * 3; const al = .62 * sin(f * Math.PI), mg = c.createRadialGradient(x, y, 1, x, y, r * 2); mg.addColorStop(0, `rgba(255,255,255,${al})`); mg.addColorStop(.6, `rgba(235,245,255,${al * .6})`); mg.addColorStop(1, 'rgba(235,245,255,0)'); c.fillStyle = mg; c.save(); c.translate(x, y); c.scale(1.6, .7); aCirc(c, 0, 0, r * 2); c.fill(); c.restore(); }
+      });
+      front.push(() => {   // 竹葉與紅葉翻滾著飛過
+        const LC = ['#6fbf5a', '#3f8f3a', '#e8a030', '#d8502a'];
+        for (let i = 0; i < 7; i++) { const f = (at * .75 + i / 7) % 1, x = 62 - f * 130, y = -26 + (i * 17) % 60 + sin(f * 9 + i) * 8;
+          c.save(); c.translate(x, y); c.rotate(at * (4 + i % 3) + i); c.scale(1, .35 + .65 * Math.abs(sin(at * 5 + i))); c.globalAlpha *= sin(f * Math.PI);
+          c.fillStyle = LC[i % 4]; c.beginPath(); c.ellipse(0, 0, 5.5, 2.2, 0, 0, TAU); c.fill(); c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = .6; c.beginPath(); c.moveTo(-5.5, 0); c.lineTo(5.5, 0); c.stroke(); c.restore(); }
+      });
       break;
     case 'sweat':
       o.pose = 'up'; o.eye = 'blink';
@@ -762,8 +776,18 @@ function drawFrontHero(t) {
     o.sq = p < .08 ? (.08 - p) * 9 : p > .93 ? (p - .93) * 9 : 0;
     if (n % 3 === 2 && p > .15 && p < .8) o.spin = .45 * (1 - (p - .15) / .65) + .001;
     ground.push(() => {
-      heroSilhouette(c, [{ path: c => { c.beginPath(); for (const [x, y, r] of [[-15, 38, 7], [-5, 36, 8.5], [6, 36, 8.5], [16, 38, 7]]) { c.moveTo(x + r, y); c.arc(x, y, r, 0, TAU); } }, fill: '#f2f6f2' }], 1.6);
-      c.fillStyle = '#d8e2dc'; c.fillRect(-21, 40, 42, 3);
+      const PUFF = [[-15, 38, 7], [-5, 36, 8.5], [6, 36, 8.5], [16, 38, 7]], puffs = (oy = 0) => { c.beginPath(); for (const [x, y, r] of PUFF) { c.moveTo(x + r, y + oy); c.arc(x, y + oy, r, 0, TAU); } };
+      // 雲投在下方的影子：一片扁平、邊緣柔和的橢圓（和雲同寬）
+      c.save(); c.translate(1, 53); c.scale(1, .2); const sg = c.createRadialGradient(0, 0, 3, 0, 0, 27); sg.addColorStop(0, 'rgba(8,16,24,.42)'); sg.addColorStop(.65, 'rgba(8,16,24,.2)'); sg.addColorStop(1, 'rgba(8,16,24,0)'); c.fillStyle = sg; aCirc(c, 0, 0, 27); c.fill(); c.restore();
+      heroSilhouette(c, [{ path: () => puffs(), fill: '#f4f8f6' }], 1.6);
+      // 雲本身的立體感：每一團的下緣帶淡灰藍陰影，上緣一點高光（取代原本的灰色長條）
+      c.save(); puffs(); c.clip();
+      c.fillStyle = '#cbd8e2'; c.fillRect(-24, 26, 48, 22);
+      c.fillStyle = '#f4f8f6'; puffs(-3.2); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.9)'; for (const [x, y, r] of PUFF) { aEll(c, x - r * .3, y - r * .55, r * .38, r * .18, -.3); c.fill(); }
+      c.restore();
+      // 主角落在雲上的影子：跳得越高越小、越淡
+      const hk = 1 - Math.min(1, -dy / 24) * .6; c.fillStyle = `rgba(60,80,100,${.32 * hk})`; aEll(c, 1, 31, 11 * hk, 2.4 * hk); c.fill();
       for (const d of FH.dust) { const k = d.t / .45; c.globalAlpha = (1 - k) * .9; for (const sd of [-1, 1]) { c.fillStyle = '#ffffff'; aCirc(c, sd * (10 + k * 16), 32 - k * 6, 4 * (1 - k * .5)); c.fill(); } c.globalAlpha = 1; }
     });
   } else if (!a && FH.mode === 'dash') {
