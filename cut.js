@@ -790,12 +790,8 @@ function drawFrontHero(t) {
   }
   // 沒在表演時：A 在雲上原地彈跳（落地壓扁、噴煙塵、每三下空翻一次）／C 往上奔跑（速度線、殘影、背景加速捲動）
   const ground = [];
-  if (!a && FH.mode === 'bounce') {
-    const p = FH.hop % 1, n = Math.floor(FH.hop);
-    dy = -Math.sin(p * Math.PI) * 24; o.vy = p < .5 ? -700 : 500;
-    o.sq = p < .08 ? (.08 - p) * 9 : p > .93 ? (p - .93) * 9 : 0;
-    if (n % 3 === 2 && p > .15 && p < .8) o.spin = .45 * (1 - (p - .15) / .65) + .001;
-    ground.push(() => {
+  // 腳下的雲：表演中也固定都在（不會空飄）；主角的影子跟著主角的左右位置與高度
+  ground.push(() => {
       const PUFF = [[-15, 38, 7], [-5, 36, 8.5], [6, 36, 8.5], [16, 38, 7]], puffs = (oy = 0) => { c.beginPath(); for (const [x, y, r] of PUFF) { c.moveTo(x + r, y + oy); c.arc(x, y + oy, r, 0, TAU); } };
       // 雲投在下方的影子：一片扁平、邊緣柔和的橢圓（和雲同寬）
       c.save(); c.translate(1, 53); c.scale(1, .2); const sg = c.createRadialGradient(0, 0, 3, 0, 0, 27); sg.addColorStop(0, 'rgba(8,16,24,.42)'); sg.addColorStop(.65, 'rgba(8,16,24,.2)'); sg.addColorStop(1, 'rgba(8,16,24,0)'); c.fillStyle = sg; aCirc(c, 0, 0, 27); c.fill(); c.restore();
@@ -807,7 +803,14 @@ function drawFrontHero(t) {
       c.fillStyle = 'rgba(255,255,255,.9)'; for (const [x, y, r] of PUFF) { aEll(c, x - r * .3, y - r * .55, r * .38, r * .18, -.3); c.fill(); }
       c.restore();
       // 主角落在雲上的影子：跳得越高越小、越淡
-      const hk = 1 - Math.min(1, -dy / 24) * .6; c.fillStyle = `rgba(60,80,100,${.32 * hk})`; aEll(c, 1, 31, 11 * hk, 2.4 * hk); c.fill();
+      const hk = 1 - Math.min(1, Math.max(0, -dy) / 24) * .6; c.fillStyle = `rgba(60,80,100,${.32 * hk})`; aEll(c, 1 + dx * .8, 31, 11 * hk, 2.4 * hk); c.fill();
+  });
+  if (!a && FH.mode === 'bounce') {
+    const p = FH.hop % 1, n = Math.floor(FH.hop);
+    dy = -Math.sin(p * Math.PI) * 24; o.vy = p < .5 ? -700 : 500;
+    o.sq = p < .08 ? (.08 - p) * 9 : p > .93 ? (p - .93) * 9 : 0;
+    if (n % 3 === 2 && p > .15 && p < .8) o.spin = .45 * (1 - (p - .15) / .65) + .001;
+    ground.push(() => {   // 彈跳落地時噴出的小煙塵
       for (const d of FH.dust) { const k = d.t / .45; c.globalAlpha = (1 - k) * .9; for (const sd of [-1, 1]) { c.fillStyle = '#ffffff'; aCirc(c, sd * (10 + k * 16), 32 - k * 6, 4 * (1 - k * .5)); c.fill(); } c.globalAlpha = 1; }
     });
   } else if (!a && FH.mode === 'dash') {
