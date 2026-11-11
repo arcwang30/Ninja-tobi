@@ -1,12 +1,14 @@
 'use strict';
 /* NINJA 鳶 TOBI — 玩法說明（分類分頁）＋製作名單（CREDIT）
-   玩法說明：每一頁是一個分類（基本操作／斬擊／成長／敵人／魔王與關卡），每一項＝圖示＋一句話說明；
+   玩法說明：每一頁是一個分類（基本操作&關卡／斬擊／成長；「敵人」「魔王與關卡」兩頁已移除），每一項＝圖示＋一句話說明；
    左右箭頭或左右滑動切頁。圖示在開機時用遊戲的繪圖函式畫好（開機遮罩還蓋著時），之後直接用圖片 */
 const HELP_PAGES = [
-  { t: ['基本操作', '基本操作', 'Basics'], items: [
+  { t: ['基本操作&關卡', '基本操作&ステージ', 'Basics & Stages'], items: [   // 原本「魔王與關卡」頁的「追上來的危險」「機關」併到這一頁
     ['move', ['移動與跳躍', '移動とジャンプ', 'Move & Jump'], ['忍者會自動彈跳；按住畫面左右滑動來移動。', '忍者は自動で跳ねる。押したまま左右にスライドで移動。', 'You bounce automatically. Hold and slide left/right to move.']],
     ['wall', ['蹬牆跳', '壁蹴り', 'Wall Kick'], ['空中往牆推會自動蹬牆，每次落地前一次。', '空中で壁に向かうと自動で壁蹴り（着地まで一回）。', 'Push into a wall mid-air to kick off (once per landing).']],
     ['scroll', ['忍法卷軸', '忍法巻物', 'Ninjutsu Scroll'], ['點一下畫面下方中間的卷軸按鈕發動「豪天翔」：無敵並急速上升。', '画面下中央の巻物ボタンで「豪天翔」：無敵で急上昇。', 'Tap the scroll button (lower center) to soar up, invincible.']],
+    ['zone', ['追上來的危險', '迫る危険', 'Rising Danger'], ['下方的火海、龍捲風、熔岩、雪崩會上升，掉進去會扣 HP。', '下から炎・竜巻・溶岩・雪崩が迫る。落ちるとHPが減る。', 'Fire, tornadoes, lava or avalanches rise from below — falling in costs HP.']],
+    ['plat', ['機關', 'しかけ', 'Gimmicks'], ['跳台雙倍彈跳、半毀地板只能踩一次、釘刺會受傷。', 'ジャンプ台は2倍、壊れる床は一度だけ、まきびしは痛い。', 'Springs boost, cracked floors break, spikes hurt.']],
   ] },
   { t: ['斬擊', '斬撃', 'Slashing'], items: [
     ['aim', ['彈射斬', '弾き斬り', 'Sling Slash'], ['按住不動瞄準、往反方向拉、放開發射。消耗 1 格氣。', '押したまま止めて照準、反対に引いて離すと発射。気を1消費。', 'Hold still to aim, pull back and release. Uses 1 Ki.']],
@@ -18,18 +20,6 @@ const HELP_PAGES = [
     ['soul', ['魂與升級', '魂とレベルアップ', 'Souls & Level Up'], ['吸收藍色的魂，集滿經驗條就升級，從三個強化選一個。', '青い魂を集めてレベルアップ、3つから1つ強化を選ぶ。', 'Collect blue souls to level up and pick 1 of 3 upgrades.']],
     ['koban', ['小判', '小判', 'Koban'], ['金色小判帶回整備商店，買新忍者和強化。', '金の小判はショップで忍者や強化に使う。', 'Spend gold koban in the shop on ninjas and upgrades.']],
     ['evo', ['技能進化', '技の進化', 'Evolution'], ['技能練到 Lv5 並持有對應被動，寶箱就會出現進化。', '技をLv5にして対応する強化を持つと、宝箱で進化が出る。', 'Max a skill (Lv5) with its paired perk to evolve it from a chest.']],
-  ] },
-  { t: ['敵人', '敵', 'Enemies'], items: [
-    ['foe', ['雜兵', '雑兵', 'Minions'], ['一般忍者、烏鴉、小天狗，碰到就斬。', '普通の忍者・カラス・小天狗は触れれば斬れる。', 'Ninjas, crows and small tengu are cut on contact.']],
-    ['shooter', ['攻擊型', '攻撃型', 'Attackers'], ['手裡劍、弓、土遁、蜘蛛、鬼火的攻擊會傷人。', '手裏剣・弓・土遁・蜘蛛・鬼火の攻撃はダメージ。', 'Shuriken, arrows, earth ninja, spiders and wisps can hurt you.']],
-    ['shield', ['盾與爆彈', '盾と爆弾', 'Shield & Bomb'], ['盾忍從下方撞會被打落；爆彈忍斬殺後會爆炸。', '盾忍者は下からぶつかると落とされる。爆弾忍者は斬ると爆発。', 'Hit a shield ninja from below and you fall; bombers explode.']],
-    ['elite', ['菁英', '精鋭', 'Elite'], ['要斬兩刀以上，帶有詞綴並掉寶箱。', '二回以上斬る必要あり、特性付きで宝箱を落とす。', 'Takes 2+ hits, has a trait and drops a chest.']],
-  ] },
-  { t: ['魔王與關卡', '魔王とステージ', 'Bosses & Stages'], items: [
-    ['tengu', ['大天狗', '大天狗', 'Great Tengu'], ['每一幕中段出現，限時內擊倒可以開寶箱。', '各幕の中盤に出現、時間内に倒すと宝箱。', 'Appears mid-act; defeat it in time for a chest.']],
-    ['boss', ['魔王戰', '魔王戦', 'Boss Fight'], ['第 5 舞台初戰（擊退）、第 10 舞台決戰（破關）。躲開危險範圍，用衝刺斬打出破綻，再以時機斬了結。', '第5舞台は初戦（撃退）、第10舞台は決戦（クリア）。危険範囲を避け、突進斬で隙を作り、見切り斬でとどめ。', 'Stage 5: First Clash (repel it). Stage 10: Final Battle (clear). Dodge danger zones, dash-slash to break its guard, finish with a Timing Slash.']],
-    ['zone', ['追上來的危險', '迫る危険', 'Rising Danger'], ['下方的火海、龍捲風、熔岩、雪崩會上升，掉進去會扣 HP。', '下から炎・竜巻・溶岩・雪崩が迫る。落ちるとHPが減る。', 'Fire, tornadoes, lava or avalanches rise from below — falling in costs HP.']],
-    ['plat', ['機關', 'しかけ', 'Gimmicks'], ['跳台雙倍彈跳、半毀地板只能踩一次、釘刺會受傷。', 'ジャンプ台は2倍、壊れる床は一度だけ、まきびしは痛い。', 'Springs boost, cracked floors break, spikes hurt.']],
   ] },
 ];
 let helpPg = 0;
