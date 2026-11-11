@@ -738,7 +738,15 @@ function drawFrontHero(t) {
       break;
     case 'victory':
       o.pose = 'up'; o.eye = 'happy'; dy = -sin(q * Math.PI) * 12;
-      front.push(() => { for (let i = 0; i < 4; i++) { const an = i * 1.6 + at * 3; drawStar4(c, 12 + Math.cos(an) * 16, 6 + sin(an) * 10, 2.5 + sin(at * 8 + i) * 1.2, at * 4, '#ffe28a'); } });
+      front.push(() => {   // 勝利：繞著主角轉的發光金星＋往上飄的小光點（和亮相同一種發光四角星，沒有黑框）
+        c.save(); c.globalCompositeOperation = 'lighter';
+        const sp = (x, y, s, a, r0) => { const gl = c.createRadialGradient(x, y, 0, x, y, s * 1.5); gl.addColorStop(0, `rgba(255,230,140,${.75 * a})`); gl.addColorStop(1, 'rgba(255,200,80,0)'); c.fillStyle = gl; aCirc(c, x, y, s * 1.5); c.fill();
+          c.fillStyle = `rgba(255,246,190,${a})`; c.beginPath(); for (let k = 0; k < 8; k++) { const rr2 = k % 2 ? s * .22 : s, a2 = k * Math.PI / 4 + r0; c.lineTo(x + Math.cos(a2) * rr2, y + sin(a2) * rr2); } c.closePath(); c.fill(); };
+        const fade = Math.min(1, q / .12, (1 - q) / .2);
+        for (let i = 0; i < 5; i++) { const an = i * 1.257 + at * 3; sp(2 + Math.cos(an) * 33, -1 + sin(an) * 22, 3.5 + (.5 + .5 * sin(at * 10 + i * 2)) * 3.5, fade, at * 2 + i); }
+        for (let i = 0; i < 6; i++) { const f = (at * 1.1 + i / 6) % 1; sp(-18 + i * 7.5 + sin(at * 4 + i) * 3, 20 - f * 46, 1.8 + (1 - f) * 1.4, fade * (1 - f), 0); }
+        c.restore();
+      });
       break;
     case 'cheer': o.pose = 'fall'; o.eye = 'happy'; dy = -Math.abs(sin(q * TAU)) * 10; break;
     case 'fire':
