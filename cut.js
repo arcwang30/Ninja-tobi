@@ -543,8 +543,15 @@ function cutShot4(st, PY, PH) {
     }
     if (st < 1.25) {   // 主角（彩色）：結印 → 起跳
       const jq = ez((st - .9) / .35), y = ridge - jq * PH * .3;
+      const ho = { face: 1, t: st + 2, vy: st < .9 ? 0 : -900, skin: save.skin, eye: st < .9 ? 'focus' : undefined, spin: st > .9 ? .45 - (st - .9) * 1.2 : 0, noSpeed: true };
+      if (st >= .9) {   // 起跳特效（取代速度線）：屋頂上往兩旁踏出的煙、往下散落的瓦屑、身後拉出的殘影
+        const k = (st - .9) / .35;
+        for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) { c.fillStyle = `rgba(236,236,250,${.95 * (1 - k * .85)})`; aCirc(c, hx + sd * (14 + k * (40 + i * 18)), ridge - 6 - i * 7 - k * 12, (17 - i * 3.5) * (1 - k * .35)); c.fill(); }
+        c.fillStyle = `rgba(20,18,36,${1 - k})`; for (let i = 0; i < 6; i++) { const dx2 = (i - 2.5) * 9, f = k * (1 + (i % 3) * .3); c.save(); c.translate(hx + dx2 * (1 + f), ridge + f * 26 + f * f * 20); c.rotate(i + f * 6); c.fillRect(-3, -1.5, 6, 3); c.restore(); }
+        for (let j = 3; j >= 1; j--) { const yj = ridge - Math.max(0, jq - j * .14) * PH * .3; c.save(); c.globalAlpha *= .22 * (1 - k * .7) * (4 - j) / 3; c.translate(hx, yj); c.scale(2, 2); drawHeroNinja(0, 0, Object.assign({}, ho), c); c.restore(); }
+      }
       c.save(); c.translate(hx, y); c.scale(2, 2);
-      drawHeroNinja(0, 0, { face: 1, t: st + 2, vy: st < .9 ? 0 : -900, skin: save.skin, eye: st < .9 ? 'focus' : undefined, spin: st > .9 ? .45 - (st - .9) * 1.2 : 0 }, c);
+      drawHeroNinja(0, 0, ho, c);
       c.restore();
     } else {   // 化煙 → 鳶的黑影飛過月亮、往竹林深處
       const pq = (st - 1.25) / .5;
@@ -561,7 +568,11 @@ function cutShot4(st, PY, PH) {
     nightSky(PY, PY + PH, st, '#12463a', '#2a7a5a');
     const r = aRng(21);
     for (let i = 0; i < 9; i++) { const x = r() * W, w = 10 + r() * 18, col = r() < .5 ? '#0e3a2c' : '#08241b'; const off = (tt * (700 + r() * 500) + r() * 400) % 160; c.fillStyle = col; c.fillRect(x - w / 2, PY, w, PH); for (let yy = PY - 160 + off; yy < PY + PH; yy += 160) c.fillRect(x - w / 2 - 2, yy, w + 4, 4); }
-    c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1.5; for (let i = 0; i < 14; i++) { const x = r() * W, l = 30 + r() * 60, y = PY + ((r() * PH + tt * 1400) % PH); c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + l); c.stroke(); }
+    for (let i = 0; i < 14; i++) {   // 往下掠過的竹葉與螢光（取代速度線）
+      const x = r() * W, y = PY + ((r() * PH + tt * (900 + r() * 500)) % PH), rot = r() * 6 + tt * (3 + i % 3), s = .8 + r() * .8;
+      if (i % 3 === 0) { const gl = c.createRadialGradient(x, y, 0, x, y, 7 * s); gl.addColorStop(0, 'rgba(220,255,200,.85)'); gl.addColorStop(1, 'rgba(160,255,160,0)'); c.fillStyle = gl; aCirc(c, x, y, 7 * s); c.fill(); continue; }
+      c.save(); c.translate(x, y); c.rotate(rot); c.scale(s, s * (.4 + .6 * Math.abs(Math.sin(tt * 6 + i)))); c.fillStyle = i % 2 ? '#3f9a52' : '#6fc06a'; c.beginPath(); c.ellipse(0, 0, 9, 3, 0, 0, TAU); c.fill(); c.strokeStyle = 'rgba(0,0,0,.3)'; c.lineWidth = .8; c.beginPath(); c.moveTo(-9, 0); c.lineTo(9, 0); c.stroke(); c.restore();
+    }
     kiteBird(c, W / 2 + Math.sin(tt * 3) * 18, PY + PH * .5 - tt * 40, 1.3, Math.sin(st * 16), '#020806');
     c.globalAlpha = 1;
   }

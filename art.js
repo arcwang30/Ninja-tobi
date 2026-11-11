@@ -1429,7 +1429,7 @@ function drawHeroNinja(x, y, o, c = ctx, PR = HERO_PROP) {
   const pn = o.pose || heroPoseOf(o), Q = HERO_POSE[pn], cy = y + PR.pivot;
   const k = PR.hr / 19, HY = PR.hy, BT = PR.bt, BB = PR.bb, BW = PR.bw;
   // 往上衝很快時，身後拉出速度線
-  if (vy < -700 && !o.dash && !o.dive) {
+  if (vy < -700 && !o.dash && !o.dive && !o.noSpeed) {   // noSpeed：演出改用其他特效時不畫速度線
     c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1.5;
     for (let i = 0; i < 3; i++) { const lx = x + (i - 1) * 12 + Math.sin(t * 30 + i) * 2, l = 14 + ((t * 90 + i * 17) % 18); c.beginPath(); c.moveTo(lx, y); c.lineTo(lx, y + l); c.stroke(); }
   }
