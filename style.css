@@ -511,3 +511,29 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 #adFake .ad-box small { color: #a8b0c0; }
 #adFake .ad-t { font-size: 1.1em; color: #ffd27a; font-weight: 900; margin: .4em 0; }
 #adFake .ad-x { position: absolute; top: .4em; right: .4em; width: 2.2em; height: 2.2em; padding: 0; margin: 0; border-radius: 50%; font-size: .9em; }
+
+/* ===== 成就頁（排行已移除）：總進度卡、分類篩選、成就列 ===== */
+#rank .ach-chips { display: flex; flex-wrap: wrap; gap: .3em; margin-bottom: .55em; }
+#rank .ach-chips button { width: auto; flex: 1 1 auto; margin: 0; padding: .32em .5em; font-size: .72em; letter-spacing: 0; border-width: calc(var(--u)*2); display: flex; gap: .35em; align-items: baseline; justify-content: center; white-space: nowrap; }
+#rank .ach-chips button small { opacity: .75; font-size: .85em; }
+#rank .ach-chips button.done small { color: #7fe08a; opacity: 1; }
+#rank .ach-chips button.sel { background: linear-gradient(var(--gold-l), var(--gold)); color: #3a2a08; text-shadow: none; }
+#rank .ach-chips button.sel small { color: #5a3a08; }
+.ach-sum { display: flex; align-items: center; gap: .6em; padding: .55em .75em; margin-bottom: .55em; background: linear-gradient(135deg, rgba(232,184,74,.25), rgba(0,0,0,.28)); border: calc(var(--u)*3) solid var(--ink); border-radius: calc(var(--u)*12); }
+.ach-trophy { font-size: 2em; line-height: 1; filter: drop-shadow(0 calc(var(--u)*3) 0 rgba(0,0,0,.5)); }
+.ach-sum-r { flex: 1; min-width: 0; }
+.ach-sum-r b { color: var(--gold-l); font-size: .95em; }
+.ach-bar { height: .62em; margin-top: .3em; background: rgba(0,0,0,.5); border-radius: 1em; overflow: hidden; border: calc(var(--u)*2) solid var(--ink); }
+.ach-bar i { display: block; height: 100%; background: linear-gradient(90deg, #c8901e, #ffe28a); border-radius: 1em; }
+.ach-pct { font-weight: 900; color: var(--gold-l); font-size: 1.2em; }
+.ach { display: flex; align-items: center; gap: .6em; padding: .45em .6em; margin-bottom: .38em; background: rgba(0,0,0,.28); border: calc(var(--u)*2.5) solid var(--ink); border-radius: calc(var(--u)*10); }
+.ach.on { background: linear-gradient(90deg, rgba(232,184,74,.2), rgba(0,0,0,.25) 70%); border-color: #4a3208; }
+.ach-md { width: 2.3em; height: 2.3em; flex: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em; background: radial-gradient(circle at 35% 30%, #5a5a66, #24242c); border: calc(var(--u)*2.5) solid var(--ink); }
+.ach:not(.on) .ach-md { filter: grayscale(1); opacity: .7; }
+.ach.on .ach-md { background: radial-gradient(circle at 35% 30%, #fff3c0, #e8b84a 55%, #9a6c18); box-shadow: 0 0 calc(var(--u)*10) rgba(255,210,100,.45), inset 0 0 0 calc(var(--u)*2) rgba(255,255,255,.35); }
+.ach-tx { flex: 1; min-width: 0; line-height: 1.3; }
+.ach-tx b { display: block; font-size: .95em; }
+.ach-tx small { color: var(--muted); font-weight: 700; font-size: .78em; }
+.ach:not(.on) .ach-tx b { color: #a4a4ae; }
+.ach-ok { flex: none; color: #7fe08a; font-weight: 900; font-size: 1.1em; text-align: right; line-height: 1.1; }
+.ach-ok small { display: block; color: var(--muted); font-size: .55em; font-weight: 700; }

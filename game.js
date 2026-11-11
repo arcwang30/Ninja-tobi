@@ -255,7 +255,7 @@ const ACH = [];
 const defSave = () => ({
   coins: 0, skin: 0, skins: [0], outfits: [0], charOut: {},
   meta: Object.fromEntries(META.map(m => [m.id, 0])), ach: {}, lv: { open: 1, best: [0, 0, 0, 0], clear: [0, 0, 0, 0], sel: 0 }, opt: { mus: 4, sfx: 4, vib: 1, lang: guessLang() }, seen: 0, intro: 0, maki: [0, 0, 0, 0], jutsu: 'soar',
-  best: { rogue: 0 }, rank: { rogue: [] },
+  best: { rogue: 0 },
   stats: { runs: 0, slashes: 0, bosses: 0, coins: 0, mids: 0 },
 });
 let save = defSave();
@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v107';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v108';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -3037,9 +3037,6 @@ function showOver() {
   save.coins += coins; save.stats.coins += coins; save.stats.runs++;
   const nr = sc > save.best.rogue;
   if (nr) save.best.rogue = sc;
-  const list = save.rank.rogue;
-  list.push({ s: sc, h, d: new Date().toLocaleDateString(), st: g.stage, lv: g.lvl });
-  list.sort((a, b) => b.s - a.s); list.length = Math.min(list.length, 10);
   unlock('run1');
   if (save.stats.coins >= 500) unlock('coin500');
   if (save.stats.coins >= 5000) unlock('coin5000');
@@ -3113,23 +3110,22 @@ function renderShop() {
   }
   $('shopBody').innerHTML = h;
 }
-// 排行
-let rankTab = 0;
+// 成就（原本的「排行」分頁已移除）：上方總進度卡＋分類篩選，下方成就列表（已達成＝金色獎章＋分類圖示＋達成日期；未達成＝灰色鎖頭）
+let achCat = -1;   // -1 ＝全部
+const ACH_IC = ['🏯', '⚔️', '🌱', '📜', '⛈️', '💰'];
 function renderRank() {
-  tabs('rankTabs', [t('tab_rank'), t('tab_ach')], rankTab, 'rtab');
-  let h = '';
-  if (rankTab === 0) {
-    const l = save.rank.rogue;
-    h = l.length ? l.map((r, i) => `<div class="rk"><span>${i + 1}</span><span>${r.s.toLocaleString()}</span><span>${r.h}m・${r.d}</span></div>`).join('') : `<div class="empty">${t('no_record')}</div>`;
-  } else {
-    // 分類顯示，最上面是達成數
-    const got = ACH.filter(a => save.ach[a.id]).length;
-    h = `<div class="meta-head">${t('ach_count', got, ACH.length)}</div>`;
-    t('ach_cat').forEach((cn, ci) => {
-      const list = ACH.filter(a => a.cat === ci), n = list.filter(a => save.ach[a.id]).length;
-      h += `<div class="ach-cat">${cn}<small>${n}/${list.length}</small></div>` + list.map(a => `<div class="item ${save.ach[a.id] ? '' : 'locked'}"><span class="ic" style="background:${save.ach[a.id] ? '#ffd27a' : '#ccc'}">🏆</span><span class="nm"><b>${L(a.n)}</b><small>${L(a.d)}</small></span></div>`).join('');
-    });
-  }
+  const has = a => !!save.ach[a.id], got = ACH.filter(has).length, pct = Math.round(got / ACH.length * 100), cats = t('ach_cat');
+  $('rankTabs').innerHTML = [[-1, t('ach_all'), got, ACH.length], ...cats.map((cn, ci) => { const l = ACH.filter(a => a.cat === ci); return [ci, ACH_IC[ci] + ' ' + cn, l.filter(has).length, l.length]; })]
+    .map(([ci, n, g2, tot]) => `<button class="${ci === achCat ? 'sel' : ''}${g2 === tot ? ' done' : ''}" data-act="acat" data-arg="${ci}">${n}<small>${g2}/${tot}</small></button>`).join('');
+  let h = `<div class="ach-sum"><span class="ach-trophy">🏆</span><div class="ach-sum-r"><b>${t('ach_count', got, ACH.length)}</b><div class="ach-bar"><i style="width:${pct}%"></i></div></div><span class="ach-pct">${pct}%</span></div>`;
+  const row = a => { const on = has(a), dt = on && save.ach[a.id] > 1 ? new Date(save.ach[a.id]).toLocaleDateString() : '';
+    return `<div class="ach${on ? ' on' : ''}"><span class="ach-md">${on ? ACH_IC[a.cat] : '🔒'}</span><span class="ach-tx"><b>${L(a.n)}</b><small>${L(a.d)}</small></span>${on ? `<span class="ach-ok">✓${dt ? `<small>${dt}</small>` : ''}</span>` : ''}</div>`; };
+  cats.forEach((cn, ci) => {
+    if (achCat >= 0 && achCat !== ci) return;
+    const list = ACH.filter(a => a.cat === ci);
+    if (achCat < 0) h += `<div class="ach-cat">${ACH_IC[ci]} ${cn}<small>${list.filter(has).length}/${list.length}</small></div>`;
+    h += list.map(row).join('');
+  });
   $('rankBody').innerHTML = h;
 }
 function renderOpt() {
@@ -3203,7 +3199,7 @@ document.addEventListener('click', e => {
     case 'perk': choosePerk(+arg); break;
     case 'reroll': g.rerolls--; openPerks(perkWhy); break;
     case 'stab': shopTab = +arg; renderShop(); break;
-    case 'rtab': rankTab = +arg; renderRank(); break;
+    case 'acat': achCat = +arg; renderRank(); $('rankBody').scrollTop = 0; break;   // 成就分類篩選
     case 'skin': save.skin = +arg; persist(); renderShop(); updateHeroArt(); resetHelpIcons(); break;
     case 'outfit': if (!save.charOut) save.charOut = {}; save.charOut[save.skin] = +arg; persist(); refreshHero(); renderShop(); break;
     case 'buyout': { const o = OUTFITS[+arg]; if (save.coins >= o.cost && !outOwned(+arg)) { save.coins -= o.cost; save.outfits.push(+arg); if (!save.charOut) save.charOut = {}; save.charOut[save.skin] = +arg; persist(); SFX.item(); refreshHero(); collAch(); } renderShop(); break; }

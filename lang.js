@@ -47,7 +47,7 @@ const STR = {
   tagline: ['我が名は鳶、いざ参る！', '我が名は鳶、いざ参る！', 'I am Tobi. Here I come!'],
   start: ['開始修行', '修行開始', 'Start Training'],
   shop: ['整備商店', '装備ショップ', 'Shop'],
-  rank: ['排行・成就', '記録・実績', 'Records'],
+  rank: ['成就', '実績', 'Achievements'],
   help: ['玩法說明', '遊び方', 'How to Play'],
   opt: ['設定', '設定', 'Settings'],
   koban: ['小判', '小判', 'Koban'],
@@ -139,7 +139,7 @@ const STR = {
   // ---- 商店・排行 ----
   tab_ninja: ['忍者', '忍者', 'Ninjas'],
   tab_train: ['修行', '修行', 'Training'],
-  tab_rank: ['排行', 'ランキング', 'Ranking'],
+  ach_all: ['全部', 'すべて', 'All'],
   tab_ach: ['成就', '実績', 'Achievements'],
   ninja_name: ['忍者「{0}」', '忍者「{0}」', 'Ninja "{0}"'],
   owned: ['已擁有', '所持済み', 'Owned'],
