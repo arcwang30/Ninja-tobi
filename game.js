@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v113';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v114';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -2463,6 +2463,20 @@ function drawLowHp() {
   gr.addColorStop(0, 'rgba(200,0,10,0)'); gr.addColorStop(.45, `rgba(190,0,10,${a * .55})`); gr.addColorStop(1, `rgba(140,0,0,${a})`);
   ctx.fillStyle = gr; ctx.fillRect(-1, -1, 2, 2); ctx.restore();
 }
+// 危險光暈：碰到會扣血的敵人（鬼火）身後一圈像心跳一樣脈動的紅紫光，外緣一圈慢慢轉的尖刺（「發紅光＝別碰」）
+// 玩家衝刺、急降或豪天翔時（這時砍得掉）光暈變暗、縮小
+function drawDangerAura(e) {
+  const c = ctx, p = g.p, fast = p.dash > 0 || p.dive || g.fly > 0 || g.kongo > 0, t = g.t + (e.ph || 0);
+  const beat = Math.max(Math.exp(-Math.pow(((t * 1.3) % 1 - .1) / .08, 2)), .6 * Math.exp(-Math.pow(((t * 1.3) % 1 - .32) / .08, 2)));   // 咚、咚
+  const k = fast ? .3 : 1, R = (24 + beat * 6) * (fast ? .8 : 1);
+  c.save(); c.translate(e.x, e.y);
+  const gr = c.createRadialGradient(0, 0, 4, 0, 0, R * 1.5); gr.addColorStop(0, `rgba(255,40,90,${.42 * k})`); gr.addColorStop(.6, `rgba(200,20,120,${.22 * k})`); gr.addColorStop(1, 'rgba(160,0,120,0)');
+  c.fillStyle = gr; aCirc(c, 0, 0, R * 1.5); c.fill();
+  c.rotate(t * .8); c.fillStyle = `rgba(255,70,110,${(.5 + beat * .35) * k})`; c.beginPath();
+  for (let i = 0; i < 24; i++) { const a = i / 24 * TAU, rr = i % 2 ? R : R + 7 + beat * 3; c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+  c.closePath(); c.arc(0, 0, R - 2, 0, TAU, true); c.fill('evenodd');   // 只留外圈的尖刺環
+  c.restore();
+}
 // 紅色落款印章（方形、粗黑框、白字）
 function seal(x, y, s, ch) {
   ctx.fillStyle = INK; rr(x - s / 2 - 2, y - s / 2 - 2, s + 4, s + 4, 4); ctx.fill();
@@ -2923,6 +2937,7 @@ function render() {
   for (const pl of g.plats) if (pl.y - camY > -20 && pl.y - camY < H + 20) drawPlat(pl);
   if (state !== 'zintro') for (const it of g.items) drawItem(it);   // 開場演出（倒數結束前）不顯示道具、金幣與卷軸
   for (const o of g.corpses) drawCorpse(o);   // 斬成兩半的敵人
+  for (const e of g.enemies) if (!e.dead && e.type === 10) drawDangerAura(e);   // 碰到會扣血的鬼火：先畫危險光暈（在敵人後面）
   for (const e of g.enemies) if (!e.dead) drawEnemy(e.x + (e.sleep > 0 ? Math.sin(g.t * 2.5 + e.ph) * 3 : 0), e.y, e.type, 1, e.ph, e);   // 睡著的敵人輕輕搖晃
   for (const e of g.enemies) if (!e.dead) {   // 夢幻術：飄出 Z；雪華封：冰塊
     if (e.sleep > 0) { const ed = ENEMY[e.type], gl = ctx.createRadialGradient(e.x, e.y, 2, e.x, e.y, ed.w * .9); gl.addColorStop(0, 'rgba(184,138,255,.35)'); gl.addColorStop(1, 'rgba(184,138,255,0)'); ctx.fillStyle = gl; ctx.fillRect(e.x - ed.w, e.y - ed.w, ed.w * 2, ed.w * 2); }   // 睡著：淡紫色光暈
