@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v112';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v113';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -931,6 +931,12 @@ function updatePlay(dt) {
   if (g.boss) zs *= .6;
   if (g.th === 0 && g.stage < 2) zs *= .8;   // 林關前兩個舞台：追兵慢 20%
   if (g.th === 2) zs *= 1.12;   // 火關（最後一關）：追兵快 12%
+  // B：原地不爬就加壓——2 秒內高度沒有創新高，追兵每秒多快 20（最多 +120）；一往上爬就恢復（魔王／大天狗戰不加壓）
+  if (g.top > (g.zTop ?? 0) + 1) { g.zTop = g.top; g.zIdle = 0; } else g.zIdle = (g.zIdle || 0) + dt;
+  if (!g.boss && !g.mid && g.zIdle > 2) zs += Math.min(120, (g.zIdle - 2) * 20);
+  // A：落後畫面下緣太多就加速追上——落後越多追得越快（落後 300 約 0.5 秒補回），最遠只落後畫面下緣 120（剛被救起的無敵時間除外）
+  const lag = g.zoneY - (g.camY + H);
+  if (lag > 0 && !g.boss && p.inv <= 1) { zs += lag * 2; g.zoneY = Math.min(g.zoneY, g.camY + H + 120); }
   if (g.tut) zs = 0;   // 新手教學：下方沒有追兵
   g.zoneY -= zs * dt;
   const zVis = Math.min(g.zoneY, g.camY + H - 26);
