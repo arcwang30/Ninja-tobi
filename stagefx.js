@@ -143,6 +143,7 @@ function startZI2() {
   if (!pl) { pl = { x: W / 2, y: tgt, w: 90, type: 'normal', bx: W / 2, ph: 0, sp: 0, amp: 0 }; g.plats.push(pl); }
   if (pl.type === 'crumble') pl.type = 'normal';   // 落地的那一塊一定踩得穩
   g.enemies = g.enemies.filter(e => Math.hypot(e.x - pl.x, e.y - pl.y) > 140);   // 落點附近的敵人先清掉
+  g.items = g.items.filter(it => it.y < pl.y - 40);   // 上升途中會經過的道具、金幣、卷軸直接清掉（反正拿不到）
   z.pl = pl; z.x0 = p.x; z.y0 = p.y;
   z.V = (40 - (pl.y - 150)) / ZI2_DIST;   // 依實際的地板高度微調速度，剛好落在它上面
 }
@@ -178,7 +179,7 @@ function updateZI2(dt) {
   if (g.shake > 0) g.shake = Math.max(0, g.shake - dt * 20);
   if (k >= ZI2_T) {
     p.y = z.pl.y; state = 'play'; g.zi = null; p.vy = -JUMP; p.inv = Math.max(p.inv, .6);
-    g.top = Math.max(g.top, -p.y + 40); g.base = g.top;   // 開場上升的高度不算進第一個舞台，舞台進度從落地處開始算
+    g.y0 = p.y; g.top = 0; g.base = 0;   // 開場上升的高度不算：高度、分數與舞台長度都從落地處重新算起
     if (g.promoPending) { g.promoPending = false; openFull('boss'); }
   }
 }

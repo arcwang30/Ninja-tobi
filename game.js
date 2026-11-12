@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v111';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v112';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -917,7 +917,7 @@ function updatePlay(dt) {
 
   // 相機與高度
   if (p.y < g.camY + H * .42) g.camY = p.y - H * .42;
-  g.top = Math.max(g.top, -p.y + 40);
+  g.top = Math.max(g.top, -p.y + (g.y0 ?? 40));   // y0＝高度 0 的位置（開場演出結束時改成落地處，開場上升的高度不算）
   while (g.genY > g.camY - 150) genRow();
   const cut = g.camY + H + 120;
   g.plats = g.plats.filter(o => o.y < cut);
@@ -2915,7 +2915,7 @@ function render() {
   if (g.shake > 0) ctx.translate(rnd(-g.shake, g.shake) * .5, rnd(-g.shake, g.shake) * .5);
   ctx.translate(0, -camY);
   for (const pl of g.plats) if (pl.y - camY > -20 && pl.y - camY < H + 20) drawPlat(pl);
-  for (const it of g.items) drawItem(it);
+  if (state !== 'zintro') for (const it of g.items) drawItem(it);   // 開場演出（倒數結束前）不顯示道具、金幣與卷軸
   for (const o of g.corpses) drawCorpse(o);   // 斬成兩半的敵人
   for (const e of g.enemies) if (!e.dead) drawEnemy(e.x + (e.sleep > 0 ? Math.sin(g.t * 2.5 + e.ph) * 3 : 0), e.y, e.type, 1, e.ph, e);   // 睡著的敵人輕輕搖晃
   for (const e of g.enemies) if (!e.dead) {   // 夢幻術：飄出 Z；雪華封：冰塊
