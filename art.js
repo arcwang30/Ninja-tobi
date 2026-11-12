@@ -960,21 +960,30 @@ function drawZone(camY, stage, t) {
   const type = THEMES[stage % 4].zone;
   if (zy > H) return;
   const c = ctx;
-  if (type === 'fire') {
-    const gr = c.createLinearGradient(0, zy, 0, H); gr.addColorStop(0, '#ff7a1a'); gr.addColorStop(.4, '#d8300a'); gr.addColorStop(1, '#6a0600');
-    // 後層火焰（暗、慢）
-    c.fillStyle = '#c8280a'; c.beginPath(); c.moveTo(0, H); c.lineTo(0, zy);
-    for (let x = 0; x <= W + 20; x += 20) c.lineTo(x, zy - 18 - Math.sin(x * .07 + t * 4) * 9 - Math.sin(x * .19 + t * 7) * 5);
-    c.lineTo(W, H); c.fill();
-    c.fillStyle = gr; c.fillRect(0, zy, W, H - zy);
-    // 前層火舌
-    for (let i = 0; i < Math.ceil(W / 26) + 1; i++) {
-      const x = i * 26 + 8, h = 26 + Math.sin(t * 9 + i * 1.7) * 11, sw = Math.sin(t * 7 + i) * 5;
-      c.fillStyle = i % 2 ? '#ffb23a' : '#ff7a1a';
-      c.beginPath(); c.moveTo(x - 15, zy + 6); c.quadraticCurveTo(x - 6, zy - h * .5, x + sw, zy - h); c.quadraticCurveTo(x + 6, zy - h * .4, x + 15, zy + 6); c.fill();
-      c.fillStyle = '#ffe58a'; c.beginPath(); c.moveTo(x - 6, zy + 6); c.quadraticCurveTo(x - 2, zy - h * .25, x + sw * .5, zy - h * .5); c.quadraticCurveTo(x + 3, zy - h * .2, x + 6, zy + 6); c.fill();
+  if (type === 'fire') {   // 火海：上方三層搖曳的火舌＋熱氣光暈，下方的火體裡有往上翻滾的火團、流動的火苗與暗煙
+    const tongue = (x, base, h, w, sw, col) => { c.fillStyle = col; c.beginPath(); c.moveTo(x - w, base); c.bezierCurveTo(x - w * .9, base - h * .45, x - w * .2 + sw * .5, base - h * .7, x + sw, base - h); c.bezierCurveTo(x + w * .25 + sw * .4, base - h * .65, x + w * .95, base - h * .4, x + w, base); c.closePath(); c.fill(); };
+    const hg = c.createLinearGradient(0, zy - 90, 0, zy); hg.addColorStop(0, 'rgba(255,120,30,0)'); hg.addColorStop(1, 'rgba(255,120,30,.32)'); c.fillStyle = hg; c.fillRect(0, zy - 90, W, 90);   // 熱氣光暈
+    for (let i = 0; i < Math.ceil(W / 22) + 2; i++) { const h = 46 + Math.sin(t * 3.2 + i * 1.3) * 14 + Math.sin(t * 5.1 + i * 2.7) * 8; tongue(i * 22 - 11, zy + 14, h, 16, Math.sin(t * 2.6 + i) * 7, '#a8200a'); }   // 後層：深紅、高、慢
+    const gr = c.createLinearGradient(0, zy, 0, zy + Math.max(160, H - zy)); gr.addColorStop(0, '#ffc23a'); gr.addColorStop(.08, '#ff8a1a'); gr.addColorStop(.3, '#e8400c'); gr.addColorStop(.65, '#a81806'); gr.addColorStop(1, '#4a0400');   // 表面一道亮黃，往下漸暗
+    c.fillStyle = gr; c.fillRect(0, zy + 6, W, H - zy);
+    c.save(); c.beginPath(); c.rect(0, zy + 4, W, H - zy); c.clip();
+    for (let i = 0; i < 6; i++) { const x = ((i * 91 + t * 10) % (W + 120)) - 60, yy = zy + 60 + (i * 53) % Math.max(60, H - zy) + Math.sin(t * .8 + i) * 10, r = 50 + (i % 3) * 16; const sg = c.createRadialGradient(x, yy, 4, x, yy, r); sg.addColorStop(0, 'rgba(60,0,0,.32)'); sg.addColorStop(1, 'rgba(60,0,0,0)'); c.fillStyle = sg; c.save(); c.translate(x, yy); c.scale(1.6, .55); c.translate(-x, -yy); aCirc(c, x, yy, r); c.fill(); c.restore(); }   // 深處流動的暗煙（柔和、沒有硬邊）
+    c.globalCompositeOperation = 'lighter';
+    const depth = Math.max(80, H - zy) + 60;
+    for (let i = 0; i < 14; i++) {   // 往上翻滾的火團（亮橘黃光斑）
+      const sp = 40 + (i % 4) * 18, yy = zy + depth - ((t * sp + i * 97) % depth), x = ((i * 83.7 + Math.sin(t * 1.3 + i) * 24) % (W + 40)) - 20, r = 26 + (i % 3) * 12, f = (yy - zy) / depth;
+      const rg = c.createRadialGradient(x, yy, 2, x, yy, r); rg.addColorStop(0, `rgba(255,200,80,${.4 * (1 - f * .6)})`); rg.addColorStop(1, 'rgba(255,90,20,0)'); c.fillStyle = rg; c.fillRect(x - r, yy - r, r * 2, r * 2);
     }
-    for (let i = 0; i < 10; i++) { const x = (i * 71 + t * 30) % W, y = zy - ((t * 80 + i * 37) % 70); c.fillStyle = `rgba(255,220,120,${1 - ((t * 80 + i * 37) % 70) / 70})`; c.fillRect(x, y, 2, 2); }
+    for (let i = 0; i < 14; i++) {   // 火體裡往上竄的柔光火焰（拉長的光暈，沒有硬邊）
+      const cyc = (t * .9 + i * .37) % 1, x = (i * 47.3 + t * 12 + Math.sin(t * 2 + i) * 10) % W, yy = zy + 30 + (1 - cyc) * (depth - 40), r = 24 + (i % 3) * 10, a = .45 * Math.sin(cyc * Math.PI);
+      c.save(); c.translate(x, yy); c.scale(.42, 1.5); const fg = c.createRadialGradient(0, 0, 1, 0, 0, r); fg.addColorStop(0, `rgba(255,240,170,${a})`); fg.addColorStop(.45, `rgba(255,170,60,${a * .7})`); fg.addColorStop(1, 'rgba(255,110,30,0)'); c.fillStyle = fg; aCirc(c, 0, 0, r); c.fill(); c.restore();
+    }
+    c.globalAlpha = 1; c.restore();
+    for (let i = 0; i < Math.ceil(W / 26) + 2; i++) {   // 中層橘＋前層黃白的火舌（快、亮）
+      const x = i * 26 + 2, h = 32 + Math.sin(t * 8 + i * 1.7) * 12 + Math.sin(t * 13 + i) * 5, sw = Math.sin(t * 6 + i) * 6;
+      tongue(x, zy + 10, h, 14, sw, i % 2 ? '#ff9a2a' : '#ff6a14'); tongue(x + 1, zy + 10, h * .62, 8, sw * .6, '#ffd24a'); tongue(x + 1, zy + 10, h * .3, 4, sw * .3, '#fff3b0');
+    }
+    for (let i = 0; i < 18; i++) { const cyc = (t * .9 + i * .37) % 1, x = (i * 61.7 + Math.sin(t * 2 + i) * 14) % W, y = zy - cyc * 110; c.fillStyle = `rgba(255,${190 + (i % 3) * 25},90,${1 - cyc})`; aCirc(c, x, y, 1.8 * (1 - cyc) + .6); c.fill(); }   // 飛起的火星
   } else if (type === 'sea') {
     // 後浪
     c.fillStyle = '#1a4a90'; c.beginPath(); c.moveTo(0, H);
