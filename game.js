@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v115';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v116';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -427,13 +427,40 @@ let booting = true;
     same = DIAG === last ? same + 1 : 0; last = DIAG;
     const el = performance.now() - t0;
     if ((same < 2 || el < 2700) && el < 4000) return setTimeout(tick, 100);
+    // LOGO 播完但還沒載入好（網路慢：圖片、字型還在下載）：轉成全黑畫面＋右下角月下剪影小忍者，等載入好才往下走（最多再等 20 秒）
+    const b = $('boot'), lt = +(new URLSearchParams(location.search).get('loadtest') || 0);   // ?loadtest=秒數：模擬多載入幾秒（預覽用）
+    const ready = () => document.readyState === 'complete' && (!document.fonts || document.fonts.status === 'loaded') && el >= 0 && performance.now() - t0 >= 2700 + lt * 1000;
+    if (!ready() && performance.now() - t0 < 24000) { if (b && !b.classList.contains('loading')) { b.classList.add('loading'); bootLoader(); } return setTimeout(tick, 100); }
     try { buildHelpIcons(); } catch (e) { }   // 玩法說明的圖示：趁開機遮罩還蓋著時先畫好
     booting = false;
-    const b = $('boot'); if (b) b.classList.add('off');
+    if (b) b.classList.add('off');
     if (state === "menu") setTimeout(() => INTRO.begin(), 450);   // 遮罩淡出到全黑後：點一下開始 → 過場 → 標題（cut.js）
   };
   setTimeout(tick, 100);
 })();
+// 開機 LOADING：黑底上一輪發光的小滿月，忍者剪影在月前原地小跳、每三下翻一次跟斗，落地揚起小煙塵；下方「LOADING…」
+function bootLoader() {
+  const cv0 = $('bootLoad'); if (!cv0) return;
+  const c = cv0.getContext('2d'), tmp = document.createElement('canvas'), t0 = performance.now();
+  tmp.width = tmp.height = 120; const tc = tmp.getContext('2d');
+  const draw = () => {
+    const b = $('boot'); if (!b || b.classList.contains('off')) return;
+    const t = (performance.now() - t0) / 1000, per = .62, n = Math.floor(t / per), p = (t % per) / per, hgt = Math.sin(p * Math.PI);
+    const spin = n % 3 === 2 && p > .12 && p < .85 ? .45 * (1 - (p - .12) / .73) + .001 : 0, sq = p < .08 ? (.08 - p) * 8 : p > .94 ? (p - .94) * 8 : 0, land = p < .1 ? 1 - p / .1 : 0;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, 200, 200); c.translate(100, 132); c.scale(2.6, 2.6);
+    const mg = c.createRadialGradient(0, -22, 4, 0, -22, 32); mg.addColorStop(0, 'rgba(255,240,190,.55)'); mg.addColorStop(1, 'rgba(255,240,190,0)'); c.fillStyle = mg; c.beginPath(); c.arc(0, -22, 32, 0, TAU); c.fill();
+    c.fillStyle = '#fbefc8'; c.beginPath(); c.arc(0, -22, 21, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(214,190,130,.45)'; for (const [mx, my, mr] of [[-7, -27, 4], [6, -17, 5], [-2, -12, 2.5]]) { c.beginPath(); c.arc(mx, my, mr, 0, TAU); c.fill(); }
+    tc.setTransform(1, 0, 0, 1, 0, 0); tc.globalCompositeOperation = 'source-over'; tc.clearRect(0, 0, 120, 120); tc.translate(60, 90); tc.scale(.55, .55);
+    try { drawHeroNinja(0, -hgt * 11 / .55, { face: 1, t, vy: p < .5 ? -500 : 400, skin: save.skin, spin, sq, noSpeed: true }, tc); } catch (e) { }
+    tc.globalCompositeOperation = 'source-in'; tc.setTransform(1, 0, 0, 1, 0, 0); tc.fillStyle = '#000'; tc.fillRect(0, 0, 120, 120);
+    c.drawImage(tmp, -60, -90);
+    if (land > 0) for (const sd of [-1, 1]) { c.fillStyle = `rgba(220,225,240,${land * .8})`; c.beginPath(); c.arc(sd * (10 + (1 - land) * 10), 0, 3 * land + 1, 0, TAU); c.fill(); }
+    c.font = '900 9px sans-serif'; c.textAlign = 'center'; c.fillStyle = '#e8c870'; c.fillText('LOADING' + '.'.repeat(1 + Math.floor(t * 2.5) % 3), 0, 18);
+    requestAnimationFrame(draw);
+  };
+  draw();
+}
 
 // ===== 狀態 =====
 let state = 'menu';   // menu | play | slash | cast | qte | kill | dying | perk | clearq | over

@@ -537,3 +537,10 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 .ach:not(.on) .ach-tx b { color: #a4a4ae; }
 .ach-ok { flex: none; color: #7fe08a; font-weight: 900; font-size: 1.1em; text-align: right; line-height: 1.1; }
 .ach-ok small { display: block; color: var(--muted); font-size: .55em; font-weight: 700; }
+
+/* 開機：LOGO 播完遊戲還沒準備好時，轉成全黑畫面，右下角出現月下剪影小忍者（LOADING） */
+#bootLoad { position: absolute; right: 14px; bottom: calc(200px + 18px + env(safe-area-inset-bottom, 0px)); width: 100px; height: 100px; opacity: 0; transition: opacity .4s; pointer-events: none; }
+#boot.loading { background: #000; }
+#boot.loading img { animation: boot-logo-out .4s ease-in forwards; }   /* 用動畫淡出（LOGO 的淡入動畫會蓋過一般的 opacity） */
+@keyframes boot-logo-out { to { opacity: 0; } }
+#boot.loading #bootLoad { opacity: 1; }
