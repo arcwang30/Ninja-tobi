@@ -262,6 +262,8 @@ const STR = {
   boss_fled: ['{0}逃走了…第 10 舞台再決勝負', '{0}は逃げた…第10舞台で決着を', '{0} fled… settle it on Stage 10'],
   flee_big: ['擊 退 !', '撃 退 !', 'REPELLED!'],
   boss_block: ['擋住了！用衝刺斬攻擊', '防がれた！突進斬で攻めろ', 'Blocked! Use a Dash Slash'],
+  boss_shield_hint: ['護盾中！等它收起再打', '盾を構えている！解くまで待て', 'Shielded! Wait for it to drop'],
+  boss_charge_hint: ['突進中！用衝刺斬才擋得下', '突進中！突進斬で迎え撃て', 'Charging! Only a Dash Slash can meet it'],
   boss_st: ['破綻', '隙', 'Guard'],
   boss_stun: ['破 綻 !!', '隙 あ り !!', 'GUARD BROKEN!!'],
   boss_stun_hud: ['破綻！碰觸魔王發動時機斬', '隙あり！触れて見切り斬', 'Guard broken! Touch it for a Timing Slash'],

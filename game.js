@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v114';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v115';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -1561,27 +1561,28 @@ function updateBoss(dt) {
   if (b.cool <= 0 && Math.abs(p.x - b.x) < b.r + 12 && Math.abs((p.y - 20) - b.y) < b.r + 18) {
     if (b.stun > 0) startQte();
     else if (charging && !fast) { b.cool = .6; p.vy = 320; p.x += p.x < b.x ? -30 : 30; if (hurt('boss')) return; }
-    else if (b.shield || charging) {
-      p.vy = 300; p.dash = 0; p.dive = false; p.x += (p.x < b.x ? -40 : 40); b.cool = .8; g.shake = 6; SFX.hit();
-      floatText(b.x, b.y - 40, t('boss_repel'), '#ccc', 20);
+    else if (b.shield || charging) {   // 護盾中／突進中：彈開（盾形火花＋前幾次提示原因）
+      p.vy = 300; p.dash = 0; p.dive = false; p.x += (p.x < b.x ? -40 : 40); b.cool = .8; g.shake = 6; SFX.hit(); SFX.clank();
+      g.booms.push({ x: (p.x + b.x) / 2, y: (p.y - 20 + b.y) / 2, r: 30, t: 0, c: '#cfe8ff' }); burst((p.x + b.x) / 2, (p.y - 20 + b.y) / 2, '#e8f4ff', 12);
+      floatText(b.x, b.y - 40, t('boss_repel'), '#cfe8ff', 20);
+      if (b.blockN++ < 3) floatText(p.x, p.y - 70, t(b.shield ? 'boss_shield_hint' : 'boss_charge_hint'), '#ffd27a', 14);
     } else if (fast || p.vy > 0) bossHit(b);
-    else {   // 從下方跳上去撞：被擋開，提示要用衝刺斬
-      p.vy = 160; b.cool = .5; SFX.clank();
-      floatText(b.x, b.y - 40, t(b.blockN++ < 3 ? 'boss_block' : 'boss_repel'), '#ccc', 15);
-    }
+    else bossHit(b, true);   // 從下方往上撞：輕擊（傷害與破綻都只有 1/3），衝刺斬仍然比較強
+
   }
   // 魔王不會逃走：一定要打倒才能進入下一個舞台
 }
 // 打到魔王身體：小傷害＋累積破綻（不會直接打死，最後一擊一定是時機斬）
 const SWING_T = .24;   // 揮擊動作的長度（秒）
-function bossHit(b) {
+function bossHit(b, light) {   // light：從下方往上撞的輕擊（傷害與破綻都是 1/3）
   g.p.swing = SWING_T;
-  const p = g.p, dv = p.dive, d = (dv ? 1.5 : 1) * (1 + .1 * mt('power'));
-  b.hp = Math.max(1, b.hp - d); b.st += dv ? 2 : 1; b.cool = g.fly > 0 ? .8 : .45; b.flash = .15;
-  g.fx.push({ x: b.x, y: b.y, a: rnd(0, 3.14), t: 0 }); burst(b.x, b.y, BOSS_KINDS[b.kind].col, 14);
-  g.hitstop = .1; g.shake = 7; SFX.slash(); vib(40);
-  floatText(b.x, b.y - 46, '-' + Math.round(d * 10) / 10, '#fff', 18);
-  if (g.fly <= 0) { p.dash = 0; p.dive = false; p.vy = -JUMP; p.wallUsed = false; }
+  const p = g.p, dv = p.dive, d = (dv ? 1.5 : 1) * (1 + .1 * mt('power')) * (light ? 1 / 3 : 1);
+  b.hp = Math.max(1, b.hp - d); b.st += light ? 1 / 3 : dv ? 2 : 1; b.cool = g.fly > 0 ? .8 : .3; b.flash = b.cool;   // 打中後的無效時間（魔王會閃白）
+  g.fx.push({ x: b.x, y: b.y, a: rnd(0, 3.14), t: 0 }); burst(b.x, b.y, BOSS_KINDS[b.kind].col, light ? 6 : 14);
+  g.hitstop = light ? .04 : .1; g.shake = light ? 3 : 7; SFX.slash(); vib(light ? 20 : 40);
+  floatText(b.x, b.y - 46, '-' + Math.round(d * 10) / 10, light ? '#ddd' : '#fff', light ? 14 : 18);
+  if (light) { p.vy = 160; p.dash = 0; }   // 輕擊：往下彈開，不會卡在魔王身體裡
+  else if (g.fly <= 0) { p.dash = 0; p.dive = false; p.vy = -JUMP; p.wallUsed = false; }
   p.inv = Math.max(p.inv, .3);
   g.ki = Math.min(kiMax(), g.ki + .5);
   if (b.st >= b.stN || b.hp <= 1) {   // 破綻：暈眩 3 秒，碰到它就能時機斬
@@ -2407,7 +2408,7 @@ function drawHUD() {
     bar(40, 110, W - 80, 16, b.hp / b.max, '#e5342a');
     // 破綻：打滿就暈眩（暈眩中改成閃爍提示）
     if (b.stun > 0) txt(t('boss_stun_hud'), W / 2, 137, 11, Math.sin(g.t * 12) > 0 ? '#ffd27a' : '#fff', 'center', '#000', 3);
-    else txt(t('boss_st') + ' ' + '◆'.repeat(b.st) + '◇'.repeat(Math.max(0, b.stN - b.st)), W / 2, 137, 11, '#ffd27a', 'center', '#000', 3);
+    else txt(t('boss_st') + ' ' + '◆'.repeat(Math.floor(b.st)) + '◇'.repeat(Math.max(0, b.stN - Math.floor(b.st))), W / 2, 137, 11, '#ffd27a', 'center', '#000', 3);
     txt(L(BOSS_KINDS[b.kind].n), W / 2, 119, 9, '#fff', 'center', '#000', 2);
   }
   // 中 BOSS
@@ -2841,7 +2842,7 @@ function drawBossWorld(b) {
   if (b.stun > 0) ctx.rotate(Math.sin(g.t * 7) * .14);
   drawBoss(b, 0, 0, 1);
   ctx.restore();
-  if (b.flash > 0) drawSil(b.x, b.y, 150, 150, 75, 75, 'rgba(255,255,255,.85)', c2 => drawBoss(b, 0, 0, 1, c2));
+  if (b.flash > 0 && ((b.flash * 20) | 0) % 2 === 0) drawSil(b.x, b.y, 150, 150, 75, 75, 'rgba(255,255,255,.85)', c2 => drawBoss(b, 0, 0, 1, c2));   // 打中後的無效時間：一閃一閃的白光
   if (b.stun > 0) {
     for (let i = 0; i < 3; i++) { const an = g.t * 4 + i * 2.09; txt('★', b.x + Math.cos(an) * 34, b.y - 44 + Math.sin(an) * 9, 14, '#ffe27a', 'center', '#000', 2); }
     if (Math.sin(g.t * 10) > -.3) txt(t('boss_stun_tap'), b.x, b.y + 62, 14, '#ffd27a', 'center', '#000', 3);
