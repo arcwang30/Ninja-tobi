@@ -1003,34 +1003,77 @@ function drawZone(camY, stage, t) {
     // 青海波紋
     c.strokeStyle = 'rgba(160,210,255,.18)'; c.lineWidth = 1.5;
     for (let row = 0; row < 5; row++) { const yy = zy + 30 + row * 16; if (yy > H) break; for (let x = (row % 2) * 16; x < W + 20; x += 32) { c.beginPath(); c.arc(x, yy, 14, Math.PI, 0); c.stroke(); c.beginPath(); c.arc(x, yy, 8, Math.PI, 0); c.stroke(); } }
-  } else if (type === 'tornado') {
-    // 風：龍捲風與暴風雲。灰藍色的雲牆往上翻滾，裡面捲著旋轉的白色風線與碎片
-    const gr = c.createLinearGradient(0, zy - 20, 0, H); gr.addColorStop(0, '#6a7c96'); gr.addColorStop(1, '#2a3446');
-    c.fillStyle = gr; c.beginPath(); c.moveTo(0, H); c.lineTo(0, zy);
-    for (let x = 0; x <= W + 24; x += 24) { const k = Math.sin(x * .05 + t * 3); c.quadraticCurveTo(x - 12, zy - 22 - k * 8, x, zy - 4 + k * 4); }
-    c.lineTo(W, H); c.closePath(); c.fill();
-    c.fillStyle = 'rgba(200,215,235,.55)'; for (let x = ((t * 40) % 60) - 60; x < W + 60; x += 60) { aCirc(c, x, zy + 4 + Math.sin(x + t * 2) * 4, 18); c.fill(); }
-    c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 2; c.lineCap = 'round';
-    for (let i = 0; i < 8; i++) { const cx = (i * 97 + t * 50) % (W + 80) - 40, cy = zy + 30 + (i % 3) * 22, r = 16 + (i % 2) * 8, a = t * 6 + i; if (cy > H) continue; c.beginPath(); c.ellipse(cx, cy, r, r * .35, 0, a, a + 3.6); c.stroke(); }
-    for (let i = 0; i < 8; i++) { const a = t * 4 + i * .8, x = (W / 2 + Math.cos(a) * (W * .45)) % W, y = zy + 20 + ((i * 23 + t * 30) % 60); c.save(); c.translate(x, y); c.rotate(a * 2); c.fillStyle = i % 2 ? '#8a6a3a' : '#c8a46a'; c.fillRect(-3, -1.5, 6, 3); c.restore(); }
-  } else if (type === 'lava') {
-    // 火：熔岩。橘黃色的岩漿表面，浮著黑色岩殼，冒泡噴出火星
-    const gr = c.createLinearGradient(0, zy, 0, H); gr.addColorStop(0, '#ffd25a'); gr.addColorStop(.25, '#ff7a1a'); gr.addColorStop(1, '#8a1a04');
-    c.fillStyle = 'rgba(255,120,30,.35)'; c.fillRect(0, zy - 30, W, 30);
-    c.fillStyle = gr; c.beginPath(); c.moveTo(0, H); for (let x = 0; x <= W; x += 10) c.lineTo(x, zy + Math.sin(x * .04 + t * 1.6) * 4); c.lineTo(W, H); c.fill();
-    for (let i = 0; i < Math.ceil(W / 50); i++) { const x = (i * 50 + t * 12) % (W + 50) - 25, y = zy + 16 + (i % 3) * 18; if (y > H) continue; c.fillStyle = '#2a0e06'; c.beginPath(); c.moveTo(x - 16, y); c.lineTo(x - 6, y - 5); c.lineTo(x + 12, y - 3); c.lineTo(x + 16, y + 4); c.lineTo(x - 4, y + 6); c.closePath(); c.fill(); c.strokeStyle = '#ffb04a'; c.lineWidth = 1; c.stroke(); }
-    for (let i = 0; i < 6; i++) { const ph = (t * .8 + i * .37) % 1, x = (i * 71 + 20) % W, y = zy + 6; c.fillStyle = `rgba(255,230,120,${1 - ph})`; aCirc(c, x, y - ph * 10, 3 + ph * 5); c.fill(); }
-    for (let i = 0; i < 10; i++) { const x = (i * 61 + t * 20) % W, y = zy - ((t * 90 + i * 37) % 80); c.fillStyle = `rgba(255,200,90,${1 - ((t * 90 + i * 37) % 80) / 80})`; c.fillRect(x, y, 2, 2); }
-  } else if (type === 'avalanche') {
-    // 山：雪崩。白色的雪浪翻滾湧上，帶著藍色陰影、滾動的雪球與岩塊
-    c.fillStyle = 'rgba(255,255,255,.4)'; c.fillRect(0, zy - 24, W, 24);
-    const gr = c.createLinearGradient(0, zy, 0, H); gr.addColorStop(0, '#ffffff'); gr.addColorStop(.5, '#dce8f6'); gr.addColorStop(1, '#9ab4d4');
-    c.fillStyle = gr; c.beginPath(); c.moveTo(0, H); c.lineTo(0, zy);
-    for (let x = 0; x <= W + 30; x += 30) { const k = Math.sin(x * .07 + t * 4); c.quadraticCurveTo(x - 15, zy - 26 - k * 10, x, zy - 2 + k * 3); }
-    c.lineTo(W, H); c.closePath(); c.fill();
-    c.fillStyle = 'rgba(150,180,215,.45)'; for (let x = ((t * 30) % 40) - 40; x < W + 40; x += 40) { c.beginPath(); c.arc(x, zy + 18, 12, 0, Math.PI); c.fill(); }
-    for (let i = 0; i < 6; i++) { const x = (i * 83 + t * 40) % (W + 40) - 20, y = zy + 10 + (i % 3) * 20, r = 6 + (i % 3) * 3, a = t * 5 + i; if (y > H) continue; c.save(); c.translate(x, y); c.rotate(a); if (i % 3 === 2) { c.fillStyle = '#7a7c84'; c.fillRect(-r * .7, -r * .6, r * 1.4, r * 1.2); } else { c.fillStyle = '#ffffff'; aCirc(c, 0, 0, r); c.fill(); c.strokeStyle = 'rgba(120,150,190,.7)'; c.lineWidth = 1.2; c.beginPath(); c.arc(0, 0, r * .6, 0, 2); c.stroke(); } c.restore(); }
-    c.fillStyle = 'rgba(255,255,255,.9)'; for (let i = 0; i < 14; i++) { const x = (i * 37 + t * 60) % W, y = zy - ((t * 70 + i * 29) % 50); aCirc(c, x, y, 1.6); c.fill(); }
+  } else if (type === 'tornado') {   // 風：狂風。表面是三層日式風紋（從左下拉起、在前端捲成渦的毛筆筆觸）往右吹，風體裡有流過的風帶與打轉的小旋風，捲起葉子與木片
+    const depth = Math.max(80, H - zy) + 60;
+    const hz = c.createLinearGradient(0, zy - 100, 0, zy); hz.addColorStop(0, 'rgba(150,170,195,0)'); hz.addColorStop(1, 'rgba(150,170,195,.35)'); c.fillStyle = hz; c.fillRect(0, zy - 100, W, 100);   // 風捲起的塵霧
+    // 一道風浪：從左下拉起，在前端（右上）捲成渦；用毛筆筆觸畫（起筆粗、收筆細）
+    const crest = (x, base, h, col, w) => { const R = h * .44, cx = x, cy = base - h + R;
+      inkStroke(c, s => { if (s < .45) { const u = s / .45, v = 1 - u; const P = [[x - h * 1.7, base + 4], [x - h * 1.1, base - h * .2], [x - R * 1.5, base - h * 1.05], [x, base - h]]; return [v * v * v * P[0][0] + 3 * v * v * u * P[1][0] + 3 * v * u * u * P[2][0] + u * u * u * P[3][0], v * v * v * P[0][1] + 3 * v * v * u * P[1][1] + 3 * v * u * u * P[2][1] + u * u * u * P[3][1]]; }
+        const u = (s - .45) / .55, a = -Math.PI / 2 + u * TAU * .82, rr = R * (1 - u * .72); return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]; }, w, 1, col, null); };
+    const row = (n, base, h, sp, col, w, off) => { const gap = (W + h * 3) / n; for (let i = 0; i < n + 1; i++) { const x = ((i * gap + t * sp + off) % (W + h * 3)) - h * .5, hh = h * (1 + .15 * Math.sin(t * 2 + i * 1.7 + off)); crest(x, base + Math.sin(t * 2.4 + i) * 3, hh, col, w); } };
+    row(5, zy + 4, 50, 45, '#6e8098', 22, 0);   // 後層：深灰藍、大、慢
+    const gr = c.createLinearGradient(0, zy, 0, zy + Math.max(160, H - zy)); gr.addColorStop(0, '#a6b4c6'); gr.addColorStop(.3, '#6e7f96'); gr.addColorStop(1, '#2c3646');
+    c.fillStyle = gr; c.beginPath(); c.moveTo(0, H); for (let x = 0; x <= W + 10; x += 10) c.lineTo(x, zy + 6 + Math.sin(x * .05 + t * 4) * 4); c.lineTo(W, H); c.closePath(); c.fill();
+    c.save(); c.beginPath(); c.rect(0, zy + 4, W, H - zy); c.clip();
+    for (let i = 0; i < 9; i++) {   // 流過的風帶（往右吹）
+      const L = 120 + (i % 3) * 40, sp = 160 + (i % 4) * 50, x0 = ((i * 97 + t * sp) % (W + L + 60)) - L - 30, y0 = zy + 26 + (i * 47) % Math.max(60, depth - 60);
+      inkStroke(c, s => [x0 + L - s * L, y0 + Math.sin(s * Math.PI * 2 + t * 3 + i) * 7], 9 + (i % 3) * 3, 1, 'rgba(230,238,248,.26)', null);
+    }
+    for (let i = 0; i < 5; i++) {   // 打轉的小旋風（由外往內收細的渦）
+      const cx = ((i * 131 + t * 60) % (W + 80)) - 40, cy = zy + 50 + (i * 71) % Math.max(60, depth - 70), R = 16 + (i % 3) * 6, rot = t * 4 + i;
+      inkStroke(c, s => { const a = rot + s * TAU * .9, rr = R * (1 - s * .75); return [cx + Math.cos(a) * rr * 1.3, cy + Math.sin(a) * rr * .8]; }, 7, 1, 'rgba(240,245,252,.4)', null);
+    }
+    c.restore();
+    row(7, zy + 10, 34, 85, '#aebdd0', 16, 40);    // 中層
+    row(10, zy + 14, 22, 135, '#eef3f9', 11, 80);  // 前層：亮白、快
+    for (let i = 0; i < 16; i++) {   // 被捲起的葉子與木片（斜斜往右上飛）
+      const cyc = (t * .8 + i * .37) % 1, a = t * 5 + i, x = (i * 61.7 + cyc * 90 + Math.sin(t * 2 + i) * 14) % W, y = zy + 20 - cyc * 150;
+      c.save(); c.translate(x, y); c.rotate(a * 2); c.globalAlpha = 1 - cyc; c.fillStyle = ['#8a6a3a', '#c8a46a', '#6fbf5a', '#d8e4ee'][i % 4]; if (i % 4 === 2) { c.beginPath(); c.ellipse(0, 0, 5, 2, 0, 0, TAU); c.fill(); } else c.fillRect(-3.5, -1.5, 7, 3); c.restore();
+    }
+  } else if (type === 'lava') {   // 火：熔岩。上方三層翻滾的岩漿浪頭＋熱氣、下方岩漿裡有對流的亮光、浮動的岩殼、氣泡與噴濺
+    const depth = Math.max(80, H - zy) + 60;
+    const hg = c.createLinearGradient(0, zy - 90, 0, zy); hg.addColorStop(0, 'rgba(255,110,30,0)'); hg.addColorStop(1, 'rgba(255,110,30,.35)'); c.fillStyle = hg; c.fillRect(0, zy - 90, W, 90);   // 熱氣光暈
+    const wave = (base, amp, sp, k1, col) => { c.fillStyle = col; c.beginPath(); c.moveTo(0, H); for (let x = 0; x <= W + 8; x += 8) c.lineTo(x, base - amp * (.5 + .5 * Math.sin(x * k1 + t * sp)) - amp * .35 * Math.sin(x * k1 * 2.3 - t * sp * 1.4)); c.lineTo(W, H); c.closePath(); c.fill(); };
+    wave(zy - 4, 22, 1.4, .035, '#8a1606');   // 後層：暗紅、慢
+    wave(zy + 2, 14, 2.2, .05, '#e8500e');    // 中層：橘
+    const gr = c.createLinearGradient(0, zy, 0, zy + Math.max(160, H - zy)); gr.addColorStop(0, '#ffd25a'); gr.addColorStop(.1, '#ff8a1a'); gr.addColorStop(.4, '#d8360a'); gr.addColorStop(1, '#5a0a02');
+    c.fillStyle = gr; c.beginPath(); c.moveTo(0, H); for (let x = 0; x <= W + 8; x += 8) c.lineTo(x, zy + 6 + Math.sin(x * .06 + t * 2.8) * 4); c.lineTo(W, H); c.closePath(); c.fill();   // 前層：亮黃的表面
+    c.save(); c.beginPath(); c.rect(0, zy + 6, W, H - zy); c.clip();
+    for (let i = 0; i < 5; i++) { const x = ((i * 113 + t * 8) % (W + 120)) - 60, yy = zy + 70 + (i * 59) % Math.max(60, depth - 60), r = 54 + (i % 2) * 18; const sg = c.createRadialGradient(x, yy, 4, x, yy, r); sg.addColorStop(0, 'rgba(60,4,0,.3)'); sg.addColorStop(1, 'rgba(60,4,0,0)'); c.fillStyle = sg; c.save(); c.translate(x, yy); c.scale(1.6, .55); c.translate(-x, -yy); aCirc(c, x, yy, r); c.fill(); c.restore(); }   // 深處冷卻的暗流
+    c.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 12; i++) {   // 對流翻上來的亮光
+      const sp = 26 + (i % 4) * 10, yy = zy + depth - ((t * sp + i * 97) % depth), x = ((i * 83.7 + Math.sin(t * .9 + i) * 26) % (W + 40)) - 20, r = 28 + (i % 3) * 12, f = (yy - zy) / depth;
+      const rg = c.createRadialGradient(x, yy, 2, x, yy, r); rg.addColorStop(0, `rgba(255,220,110,${.42 * (1 - f * .6)})`); rg.addColorStop(1, 'rgba(255,100,20,0)'); c.fillStyle = rg; c.fillRect(x - r, yy - r, r * 2, r * 2);
+    }
+    c.globalCompositeOperation = 'source-over';
+    for (let i = 0; i < Math.ceil(W / 46) + 1; i++) {   // 浮動的岩殼（裂縫透出亮光）
+      const x = ((i * 46 + t * 14) % (W + 60)) - 30, y = zy + 18 + (i % 3) * 16 + Math.sin(t * 1.5 + i) * 3; if (y > H) continue;
+      c.save(); c.translate(x, y); c.rotate(Math.sin(t + i) * .15); c.fillStyle = '#2a0e06'; c.beginPath(); c.moveTo(-15, 0); c.lineTo(-7, -5); c.lineTo(9, -4); c.lineTo(15, 2); c.lineTo(3, 6); c.lineTo(-10, 5); c.closePath(); c.fill(); c.strokeStyle = '#ffb04a'; c.lineWidth = 1.2; c.stroke(); c.beginPath(); c.moveTo(-6, -2); c.lineTo(0, 1); c.lineTo(6, -1); c.stroke(); c.restore();
+    }
+    c.restore();
+    for (let i = 0; i < 8; i++) { const ph = (t * .7 + i * .37) % 1, x = (i * 71 + 20 + Math.sin(i * 3) * 10) % W, y = zy + 6; c.strokeStyle = `rgba(255,236,150,${1 - ph})`; c.lineWidth = 1.6; c.beginPath(); c.arc(x, y - ph * 6, 3 + ph * 7, Math.PI, 0); c.stroke(); }   // 浮到表面破掉的氣泡
+    for (let i = 0; i < 4; i++) { const u = (t * .55 + i * .27) % 1, x0 = (i * 97 + 40) % W, vx = (i % 2 ? 1 : -1) * 40; for (let j = 0; j < 3; j++) { const uu = u - j * .04; if (uu < 0) continue; const x = x0 + vx * uu, y = zy - 160 * uu + 300 * uu * uu; c.fillStyle = `rgba(255,${150 + j * 30},40,${1 - uu})`; aCirc(c, x, y, 3.2 - j); c.fill(); } }   // 噴濺的熔岩滴
+    for (let i = 0; i < 14; i++) { const cyc = (t * .9 + i * .37) % 1, x = (i * 61.7 + Math.sin(t * 2 + i) * 14) % W, y = zy - cyc * 100; c.fillStyle = `rgba(255,${180 + (i % 3) * 25},90,${1 - cyc})`; aCirc(c, x, y, 1.8 * (1 - cyc) + .5); c.fill(); }   // 火星
+  } else if (type === 'avalanche') {   // 山：雪崩。上方三層翻滾的雪浪（帶藍色陰影）＋雪霧、下方雪體裡的陰影流動、滾動的雪球與岩塊、閃亮的雪粉
+    const depth = Math.max(80, H - zy) + 60;
+    const mg = c.createLinearGradient(0, zy - 110, 0, zy); mg.addColorStop(0, 'rgba(255,255,255,0)'); mg.addColorStop(1, 'rgba(255,255,255,.5)'); c.fillStyle = mg; c.fillRect(0, zy - 110, W, 110);   // 雪霧
+    const puffRow = (n, base, rr, amp, sp, col, sh, off) => { for (const pass of [0, 1, 2]) { c.fillStyle = [sh, col, 'rgba(255,255,255,.9)'][pass]; c.beginPath(); for (let i = 0; i < n; i++) { const x = ((i / (n - 1)) * (W + 60) - 30 + Math.sin(t * sp + i * 1.9 + off) * 8), r = rr * (1 + .2 * Math.sin(t * sp * 1.3 + i * 2.3 + off)), y = base - amp * (.6 + .4 * Math.sin(t * sp * .8 + i * 1.3 + off)) + (pass === 0 ? 5 : 0); const rx = pass === 2 ? r * .5 : r, ox = pass === 2 ? -r * .22 : 0, oy = pass === 2 ? -r * .3 : 0; c.moveTo(x + ox + rx, y + oy); c.arc(x + ox, y + oy, rx, 0, TAU); } c.fill(); } };   // 每團雪：藍色暗影＋本色＋左上高光
+    puffRow(9, zy - 6, 30, 24, 1.3, '#d8e6f6', '#9ab4d4', 0);   // 後層：淡藍、大、慢
+    const gr = c.createLinearGradient(0, zy, 0, zy + Math.max(160, H - zy)); gr.addColorStop(0, '#f4f8fd'); gr.addColorStop(.3, '#c8d8ec'); gr.addColorStop(1, '#6a86b0');   // 雪體往下漸深
+    c.fillStyle = gr; c.fillRect(0, zy + 4, W, H - zy);
+    c.save(); c.beginPath(); c.rect(0, zy + 2, W, H - zy); c.clip();
+    for (let i = 0; i < 7; i++) { const x = ((i * 97 + t * 24) % (W + 120)) - 60, yy = zy + 50 + (i * 61) % Math.max(60, depth - 60), r = 44 + (i % 3) * 14; const sg = c.createRadialGradient(x, yy, 4, x, yy, r); sg.addColorStop(0, 'rgba(110,140,190,.3)'); sg.addColorStop(1, 'rgba(110,140,190,0)'); c.fillStyle = sg; c.save(); c.translate(x, yy); c.scale(1.5, .6); c.translate(-x, -yy); aCirc(c, x, yy, r); c.fill(); c.restore(); }   // 雪體裡流動的藍色陰影
+    for (let i = 0; i < 8; i++) {   // 滾動的雪球與岩塊
+      const x = ((i * 83 + t * 46) % (W + 40)) - 20, y = zy + 18 + (i % 3) * 22 + Math.abs(Math.sin(t * 3 + i)) * -6, r = 7 + (i % 3) * 3, a = t * 5 + i; if (y > H) continue;
+      c.save(); c.translate(x, y); c.rotate(a);
+      if (i % 4 === 3) { c.fillStyle = '#6a6c74'; c.beginPath(); c.moveTo(-r, -2); c.lineTo(-3, -r * .8); c.lineTo(r * .9, -3); c.lineTo(r * .6, r * .7); c.lineTo(-r * .6, r * .6); c.closePath(); c.fill(); c.fillStyle = '#ffffff'; c.fillRect(-r * .6, -r * .8, r, 3); }
+      else { c.fillStyle = '#ffffff'; aCirc(c, 0, 0, r); c.fill(); c.strokeStyle = 'rgba(120,150,190,.7)'; c.lineWidth = 1.2; c.beginPath(); c.arc(0, 0, r * .6, 0, 2); c.stroke(); }
+      c.restore();
+    }
+    c.restore();
+    puffRow(12, zy + 2, 22, 16, 2.4, '#f2f7fd', '#b8cce4', 2);   // 中層
+    puffRow(16, zy + 8, 14, 10, 3.6, '#ffffff', '#d0def0', 4);   // 前層：亮白、快
+    for (let i = 0; i < 20; i++) { const cyc = (t * .7 + i * .37) % 1, x = (i * 37.3 + t * 30 + Math.sin(t * 2 + i) * 10) % W, y = zy - cyc * 120, tw = .5 + .5 * Math.sin(t * 9 + i * 2); c.fillStyle = `rgba(255,255,255,${(1 - cyc) * (.6 + .4 * tw)})`; aCirc(c, x, y, 1.2 + tw * 1.2); c.fill(); }   // 往上飄、閃亮的雪粉
   } else {
     // 妖怪群：黑紫色的大嘴，很多眨眼的紅眼睛看著玩家
     const gr = c.createLinearGradient(0, zy, 0, H); gr.addColorStop(0, '#3a1440'); gr.addColorStop(1, '#12040f');
@@ -1063,10 +1106,27 @@ function drawPlat(pl) {
   if (pl.broken) c.globalAlpha = .6;
   if (pl.type === 'ground') {
     const gk = g && g.th != null ? THEMES[g.th].k : '林';
-    if (gk === '火') {   // 火：黑色熔岩地，裂縫透出紅光
-      c.fillStyle = '#24140f'; c.fillRect(x, y, w, 300);
-      c.strokeStyle = '#ff7a2a'; c.lineWidth = 2; for (let i = 0; i < w; i += 46) { c.beginPath(); c.moveTo(x + i, y + 4); c.lineTo(x + i + 12, y + 24); c.lineTo(x + i + 6, y + 44); c.stroke(); }
-      c.fillStyle = '#3a2420'; c.fillRect(x, y, w, 8); c.fillStyle = '#ff9a3a'; c.fillRect(x, y, w, 1.5);
+    if (gk === '火') {   // 火：黑色熔岩地，零星幾道樹枝狀的地裂（上寬下窄、往下分岔的裂口），裂口裡透出熔岩的光（用色塊，不用線條）
+      const tt = g ? g.t : 0, glow = .78 + .22 * Math.sin(tt * 2.2), D = 300, r = aRng(23);
+      const bg = c.createLinearGradient(0, y, 0, y + D); bg.addColorStop(0, '#2c1812'); bg.addColorStop(1, '#120806'); c.fillStyle = bg; c.fillRect(x, y, w, D);
+      for (let i = 0; i < w / 30; i++) {   // 岩面上零星、不規則的深淺色塊
+        const cx = x + r() * w, cy = y + 14 + r() * 200, s = 12 + r() * 22; c.fillStyle = r() < .5 ? 'rgba(70,40,30,.35)' : 'rgba(0,0,0,.28)';
+        c.beginPath(); for (let k = 0; k < 7; k++) { const a = k / 7 * TAU + r() * .5, rr = s * (.6 + r() * .5); c.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * .5); } c.closePath(); c.fill();
+      }
+      // 一道裂口：沿著折線、起點最寬往下收細（inkStroke 的筆觸），三層：外圈橘紅光暈、中層亮橘、黃白色的芯
+      const path = pts => s => { const f = s * (pts.length - 1), k = Math.min(pts.length - 2, Math.floor(f)), u = f - k; return [pts[k][0] + (pts[k + 1][0] - pts[k][0]) * u, pts[k][1] + (pts[k + 1][1] - pts[k][1]) * u]; };
+      const fissure = (pts, wd) => { for (const [m, col] of [[2.4, `rgba(255,90,20,${.28 * glow})`], [1, `rgba(255,120,30,${.95 * glow})`], [.42, `rgba(255,232,150,${glow})`]]) inkStroke(c, path(pts), wd * m, 1, col, null); };
+      const walk = (x0, y0, n, dx, dy, spread) => { const pts = [[x0, y0]]; let px = x0, py = y0; for (let k = 0; k < n; k++) { px += dx + (r() - .5) * spread; py += dy * (.7 + r() * .6); pts.push([px, py]); } return pts; };
+      const N = Math.max(3, Math.round(w / 100));
+      for (let i = 0; i < N; i++) {   // 零星幾道主裂口，每道往下分出 2～3 條枝
+        const x0 = x + (i + .3 + r() * .4) * (w / N), main = walk(x0, y + 1, 7, (r() - .5) * 6, 22, 18);
+        fissure(main, 11);
+        const nb = 2 + Math.floor(r() * 2);
+        for (let b = 0; b < nb; b++) { const k = 1 + Math.floor(r() * 4), sd = r() < .5 ? -1 : 1, br = walk(main[k][0], main[k][1], 4, sd * (10 + r() * 8), 16, 10); fissure(br, 6 - b); if (r() < .5) { const k2 = 1 + Math.floor(r() * 2), br2 = walk(br[k2][0], br[k2][1], 3, -sd * (6 + r() * 6), 13, 8); fissure(br2, 3.5); } }
+      }
+      for (let i = 0; i < Math.round(w / 70); i++) { const x0 = x + (i + .5 + (r() - .5) * .6) * 70, y0 = y + 1, sm = walk(x0, y0, 2 + Math.floor(r() * 2), (r() - .5) * 10, 12, 12); fissure(sm, 4); }   // 主裂口之間的淺短小裂
+      c.fillStyle = '#3a2420'; c.fillRect(x, y, w, 5);   // 上緣的岩殼
+      const eg = c.createLinearGradient(0, y - 8, 0, y + 1); eg.addColorStop(0, 'rgba(255,130,40,0)'); eg.addColorStop(1, `rgba(255,130,40,${.4 * glow})`); c.fillStyle = eg; c.fillRect(x, y - 8, w, 9);   // 地面上方的熱光
       c.restore(); return;
     }
     if (gk === '山') {   // 山：積雪的地面
