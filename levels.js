@@ -282,9 +282,14 @@ function closeFull() {
 }
 // 測試用的購買：直接設為已擁有（上架時改接 App Store／Google Play 的付款）
 function buyFull() {
-  save.full = true; persist(); SFX.fever();
-  toast(t('full_thanks'));
-  closeFull();
+  // 購買處理中：顯示 LOADING 遮罩（正式上架後在這裡呼叫商店的購買 API，完成或失敗時 busyHide）；目前是測試，模擬 1.2 秒的處理時間
+  busyShow('busy_buy');
+  setTimeout(() => {
+    busyHide();
+    save.full = true; persist(); SFX.fever();
+    toast(t('full_thanks'));
+    closeFull();
+  }, 1200);
 }
 // ===== 選關畫面（吸血鬼倖存者風：大張的關卡圖卡，未開放的顯示剪影與開放條件） =====
 const lvThumbs = {};

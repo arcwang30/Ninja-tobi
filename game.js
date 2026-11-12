@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v116';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v117';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -430,21 +430,32 @@ let booting = true;
     // LOGO 播完但還沒載入好（網路慢：圖片、字型還在下載）：轉成全黑畫面＋右下角月下剪影小忍者，等載入好才往下走（最多再等 20 秒）
     const b = $('boot'), lt = +(new URLSearchParams(location.search).get('loadtest') || 0);   // ?loadtest=秒數：模擬多載入幾秒（預覽用）
     const ready = () => document.readyState === 'complete' && (!document.fonts || document.fonts.status === 'loaded') && el >= 0 && performance.now() - t0 >= 2700 + lt * 1000;
-    if (!ready() && performance.now() - t0 < 24000) { if (b && !b.classList.contains('loading')) { b.classList.add('loading'); bootLoader(); } return setTimeout(tick, 100); }
+    if (!ready() && performance.now() - t0 < 24000) { if (!busyOn) busyShow('busy_load', { now: true, timeout: 30000 }); return setTimeout(tick, 100); }   // 遮罩蓋在團隊 LOGO 上（LOGO 變灰、變暗）
     try { buildHelpIcons(); } catch (e) { }   // 玩法說明的圖示：趁開機遮罩還蓋著時先畫好
     booting = false;
-    if (b) b.classList.add('off');
+    busyHide(); if (b) b.classList.add('off');
     if (state === "menu") setTimeout(() => INTRO.begin(), 450);   // 遮罩淡出到全黑後：點一下開始 → 過場 → 標題（cut.js）
   };
   setTimeout(tick, 100);
 })();
-// 開機 LOADING：黑底上一輪發光的小滿月，忍者剪影在月前原地小跳、每三下翻一次跟斗，落地揚起小煙塵；下方「LOADING…」
-function bootLoader() {
-  const cv0 = $('bootLoad'); if (!cv0) return;
+// ===== LOADING 遮罩（通用）：busyShow('訊息的 lang key') 顯示、busyHide() 關閉 =====
+// 0.3 秒內就完成的處理不顯示（避免一閃而過）；顯示期間擋住所有點擊；逾時（預設 20 秒）就關閉並提示「連線逾時」
+let busyOn = false, busyT = null, busyTO = null;
+function busyShow(key, opt = {}) {
+  clearTimeout(busyT); clearTimeout(busyTO); busyOn = true;
+  const m = $('busyMsg'); if (m) m.textContent = key ? t(key) : '';
+  const go = () => { if (!busyOn) return; const el = $('busy'); if (el && !el.classList.contains('on')) { el.classList.add('on'); busyAnim(); } };
+  if (opt.now) go(); else busyT = setTimeout(go, 300);
+  busyTO = setTimeout(() => { if (!busyOn) return; busyHide(); if (!booting) toast(t('busy_timeout')); if (opt.onTimeout) opt.onTimeout(); }, opt.timeout || 20000);
+}
+function busyHide() { busyOn = false; clearTimeout(busyT); clearTimeout(busyTO); const el = $('busy'); if (el) el.classList.remove('on'); }
+// 右下角的月下剪影小忍者：一輪發光的小滿月，忍者剪影在月前原地小跳、每三下翻一次跟斗，落地揚起小煙塵；下方「LOADING…」
+function busyAnim() {
+  const cv0 = $('busyNinja'); if (!cv0) return;
   const c = cv0.getContext('2d'), tmp = document.createElement('canvas'), t0 = performance.now();
   tmp.width = tmp.height = 120; const tc = tmp.getContext('2d');
   const draw = () => {
-    const b = $('boot'); if (!b || b.classList.contains('off')) return;
+    const el = $('busy'); if (!el || !el.classList.contains('on')) return;
     const t = (performance.now() - t0) / 1000, per = .62, n = Math.floor(t / per), p = (t % per) / per, hgt = Math.sin(p * Math.PI);
     const spin = n % 3 === 2 && p > .12 && p < .85 ? .45 * (1 - (p - .12) / .73) + .001 : 0, sq = p < .08 ? (.08 - p) * 8 : p > .94 ? (p - .94) * 8 : 0, land = p < .1 ? 1 - p / .1 : 0;
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, 200, 200); c.translate(100, 132); c.scale(2.6, 2.6);

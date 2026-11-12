@@ -538,9 +538,9 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 .ach-ok { flex: none; color: #7fe08a; font-weight: 900; font-size: 1.1em; text-align: right; line-height: 1.1; }
 .ach-ok small { display: block; color: var(--muted); font-size: .55em; font-weight: 700; }
 
-/* 開機：LOGO 播完遊戲還沒準備好時，轉成全黑畫面，右下角出現月下剪影小忍者（LOADING） */
-#bootLoad { position: absolute; right: 14px; bottom: calc(200px + 18px + env(safe-area-inset-bottom, 0px)); width: 100px; height: 100px; opacity: 0; transition: opacity .4s; pointer-events: none; }
-#boot.loading { background: #000; }
-#boot.loading img { animation: boot-logo-out .4s ease-in forwards; }   /* 用動畫淡出（LOGO 的淡入動畫會蓋過一般的 opacity） */
-@keyframes boot-logo-out { to { opacity: 0; } }
-#boot.loading #bootLoad { opacity: 1; }
+/* LOADING 遮罩（通用）：半透明深色＋底下畫面轉灰階、微模糊，和一般畫面明顯區隔；擋住所有點擊 */
+#busy { position: fixed; inset: 0; z-index: 200; background: rgba(6,8,16,.55); -webkit-backdrop-filter: grayscale(.85) blur(2px); backdrop-filter: grayscale(.85) blur(2px);
+  opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; pointer-events: none; }
+#busy.on { opacity: 1; visibility: visible; pointer-events: auto; }
+#busyMsg { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: #f2e6c8; font-weight: 900; font-size: 16px; letter-spacing: .12em; text-shadow: 0 2px 0 #000, 0 0 8px rgba(0,0,0,.8); }
+#busyNinja { position: absolute; right: 14px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: 100px; height: 100px; }

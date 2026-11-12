@@ -64,7 +64,7 @@ async function adInit() {
 function adFinish() {
   if (!NA.busy) return;
   const ok = !!NA.rewarded, res = NA.res;
-  NA.busy = false; NA.rewarded = false; NA.res = null; NA.loaded = false;
+  NA.busy = false; NA.rewarded = false; NA.res = null; NA.loaded = false; if (typeof busyHide === 'function') busyHide();
   if (typeof A === 'function') A();   // 播廣告時把遊戲音效暫停了，這裡喚醒
   adPrepare();
   if (res) res(ok);
@@ -85,8 +85,9 @@ const ADS = {
       if (!ADS.ready()) { res(false); return; }
       NA.busy = true; NA.rewarded = false; NA.res = res;
       try { if (ac && ac.suspend) ac.suspend(); } catch (e) { }   // 廣告自己有聲音，遊戲音效先停
+      busyShow('busy_ad', { onTimeout: () => adFinish() });   // 讀取廣告中：LOADING 遮罩（廣告畫面出來或失敗時關閉）
       NATIVE_AD.showRewardVideoAd()
-        .then(item => { if (item) NA.rewarded = true; })
+        .then(item => { busyHide(); if (item) NA.rewarded = true; })
         .catch(() => adFinish());   // 播放失敗：直接當作沒看完
     });
     return new Promise(res => {
@@ -96,8 +97,9 @@ const ADS = {
       const draw = () => { $('adFakeT').textContent = left > 0 ? t('ad_wait', left) : t('ad_done'); $('adFakeOk').disabled = left > 0; };
       $('adFakeOk').onclick = () => { if (left <= 0) fin(true); };
       $('adFakeX').onclick = () => fin(false);
-      const iv = setInterval(() => { left--; draw(); }, 1000);
-      draw(); el.classList.add('on');
+      let iv = null;
+      busyShow('busy_ad');   // 網頁版假廣告：先模擬 0.8 秒的讀取（LOADING 遮罩），再出現廣告畫面
+      setTimeout(() => { busyHide(); iv = setInterval(() => { left--; draw(); }, 1000); draw(); el.classList.add('on'); }, 800);
     });
   },
 };

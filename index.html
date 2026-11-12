@@ -236,7 +236,9 @@
   <div id="adFake"><div class="ad-box"><button class="ad-x" id="adFakeX">✕</button><b data-i18n="ad_test"></b><small data-i18n="ad_test2"></small><div class="ad-t" id="adFakeT"></div><button class="big red" id="adFakeOk" data-i18n="ad_claim"></button></div></div>
 </div>
 <!-- 開場遮罩：等畫面尺寸量穩了才拿掉，避免一開啟就看到版面跳動 -->
-<div id="boot" aria-hidden="true"><img src="assets/team_logo.webp" alt=""><canvas id="bootLoad" width="200" height="200"></canvas></div>   <!-- 需要載入時：全黑＋右下角月下剪影小忍者 -->
+<div id="boot" aria-hidden="true"><img src="assets/team_logo.webp" alt=""></div>
+<!-- LOADING 遮罩（通用）：半透明深色＋底下畫面轉灰階、微模糊；中間一行說明、右下角月下剪影小忍者；開機慢、內購、讀取廣告時用 -->
+<div id="busy" aria-hidden="true"><div id="busyMsg"></div><canvas id="busyNinja" width="200" height="200"></canvas></div>
 <script src="lang.js"></script>
 <script src="music.js"></script>
 <script src="art.js"></script>
