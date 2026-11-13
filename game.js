@@ -58,10 +58,11 @@ const OUTFITS = [
   { n: ['金', '金', 'Gold'], suit: '#e8b84a', dark: '#9a6a1a', band: '#c0262d', cost: 1000 },
   { n: ['水', '水', 'Aqua'], suit: '#2ab4c8', dark: '#147080', band: '#ffffff', cost: 300 },
 ];
+const ofCol = o => o.n[2] === 'Shadow' ? '#9a9ab4' : o.suit;   // 換裝名稱字色（影太暗，在深色底上改淺灰紫）
 const outOf = i => { const v = save.charOut && save.charOut[i]; return v != null ? v : SKINS[i].out; };   // 角色目前穿的換裝
 const heroPal = i => OUTFITS[outOf(i || 0)] || OUTFITS[0];
 // 測試模式：商店全部開放、免費（正式上線前改回 false）
-const TEST_FREE = true;
+const TEST_FREE = !/[?&]notfree/.test(location.search);   // ?notfree：測試付費流程
 const outOwned = (o, ci = save.skin) => TEST_FREE || o === SKINS[ci].out || (save.outfits || []).includes(o);   // 預設色永遠可穿
 const ENEMY = [
   { n: '敵', w: 34, h: 42, dur: .45, pts: 100, col: '#15151c' },  // 0 瘦
@@ -347,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v120';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v121';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -2255,9 +2256,10 @@ function heroThumb(i) {
 }
 // 換裝預覽：某角色穿某顏色的小圖（快取）
 const outThumbs = {};
+const OUTFIT_STYLE = new URLSearchParams(location.search).get('outfit') || 'c';   // 換裝分頁的版型（預覽用）
 function outThumb(ci, oi) {
   const k = ci + '_' + oi; if (outThumbs[k]) return outThumbs[k];
-  const cnv = document.createElement('canvas'); cnv.width = cnv.height = 112; const c = cnv.getContext('2d'); c.scale(112 / 84, 112 / 84);
+  const cnv = document.createElement('canvas'); cnv.width = cnv.height = 224; const c = cnv.getContext('2d'); c.scale(224 / 84, 224 / 84);   // 兩倍解析度：換裝的大卡也清楚
   try { drawHeroNinja(42, 74, { face: 1, t: .35, vy: 0, skin: ci, pal: OUTFITS[oi] }, c); outThumbs[k] = cnv.toDataURL(); } catch (e) { outThumbs[k] = ''; }
   return outThumbs[k];
 }
@@ -3139,7 +3141,7 @@ function applyLang() {
 }
 
 // 商店
-let shopTab = 0;
+let shopTab = 0, outPrev = null;   // outPrev：換裝分頁正在試穿（預覽）的顏色
 function tabs(id, names, sel, act) {
   $(id).innerHTML = names.map((n, i) => `<button class="${i === sel ? 'sel' : ''}" data-act="${act}" data-arg="${i}">${n}</button>`).join('');
 }
@@ -3156,10 +3158,28 @@ function renderShop() {
     }).join('');
   } else if (shopTab === 1) {   // 換裝：目前角色穿上各種顏色的預覽
     const ci = save.skin, cur = outOf(ci);
-    h = `<div class="meta-head">${t('outfit_for', L(SKINS[ci].n))}</div><div class="outfits">` + [SKINS[ci].out, ...OUTFITS.map((_, k) => k).filter(k => k !== SKINS[ci].out)].map(i => {   // 第一格固定是這名角色的預設顏色
+    // 版型（?outfit=a|b|c 預覽）：a＝三欄大卡、b＝兩欄橫卡、c＝上方大預覽＋下方色票
+    const os = OUTFIT_STYLE, co = OUTFITS[cur];
+    if (os === 'c') {   // c：點色票＝試穿（大預覽換成那套），再用預覽下方的按鈕穿上／購買
+      if (outPrev == null || outPrev.ci !== ci) outPrev = { ci, i: cur };
+      const pi = outPrev.i, po = OUTFITS[pi], pown = outOwned(pi, ci), pcur = pi === cur, lack = po.cost - save.coins;
+      const btn = pcur ? `<button class="of-act on" disabled>✓ ${t('equipped')}</button>`
+        : pown ? `<button class="of-act" data-act="outfit" data-arg="${pi}">${t('equip')}</button>`
+        : lack > 0 ? `<button class="of-act buy" disabled><span><span class="kb"></span>${po.cost}</span><small>${t('of_lack', lack)}</small></button>`
+        : `<button class="of-act buy" data-act="buyout" data-arg="${pi}">${t('buy')}　<span class="kb"></span>${po.cost}</button>`;
+      h = `<div class="meta-head">${t('outfit_for', L(SKINS[ci].n))}</div><div class="outfits oc">` +
+        `<div class="of-big ${pown ? '' : 'try'}">${pown ? '' : `<em class="of-try">${t('of_try')}</em>`}<img src="${outThumb(ci, pi)}" alt=""><b style="color:${ofCol(po)}">${L(po.n)}</b>${btn}</div>` +
+        [SKINS[ci].out, ...OUTFITS.map((_, k) => k).filter(k => k !== SKINS[ci].out)].map(i => {
+          const o = OUTFITS[i], def = i === SKINS[ci].out, own = outOwned(i, ci), sel = cur === i, pv = pi === i;
+          return `<button class="of ${sel ? 'sel' : ''} ${pv ? 'pv' : ''} ${own ? '' : 'nown'}" data-act="ofprev" data-arg="${i}"><i class="sw" style="--suit:${o.suit};--dark:${o.dark}">${sel ? '✓' : ''}</i>${own ? '' : '<i class="lk">🔒</i>'}${def ? `<em class="of-def">${t('outfit_def')}</em>` : ''}<span class="of-tx"><b style="color:${ofCol(o)}">${L(o.n)}</b><small>${sel ? t('equipped') : own ? t('owned') : `<span class="kb"></span>${o.cost}`}</small></span></button>`;
+        }).join('') + '</div>';
+    } else
+    h = `<div class="meta-head">${t('outfit_for', L(SKINS[ci].n))}</div><div class="outfits ${os ? 'o' + os : ''}">` +
+      (os === 'c' ? `<div class="of-big"><img src="${outThumb(ci, cur)}" alt=""><b style="color:${co.suit}">${L(co.n)}</b><small>${t('equipped')}</small></div>` : '') +
+      [SKINS[ci].out, ...OUTFITS.map((_, k) => k).filter(k => k !== SKINS[ci].out)].map(i => {   // 第一格固定是這名角色的預設顏色
       const o = OUTFITS[i], def = i === SKINS[ci].out;
       const own = outOwned(i, ci), sel = cur === i;
-      return `<button class="of ${sel ? 'sel' : ''} ${own ? '' : 'nown'}" data-act="${own ? 'outfit' : 'buyout'}" data-arg="${i}" ${!own && save.coins < o.cost ? 'disabled' : ''}><img src="${outThumb(ci, i)}" alt="">${def ? `<em class="of-def">${t('outfit_def')}</em>` : ''}<b style="color:${o.suit}">${L(o.n)}</b><small>${sel ? t('equipped') : own ? t('equip') : t('price', o.cost)}</small></button>`;
+      return `<button class="of ${sel ? 'sel' : ''} ${own ? '' : 'nown'}" data-act="${own ? 'outfit' : 'buyout'}" data-arg="${i}" ${!own && save.coins < o.cost ? 'disabled' : ''}><img src="${outThumb(ci, i)}" alt=""><i class="sw" style="--suit:${o.suit};--dark:${o.dark}">${sel ? '✓' : own ? '' : '🔒'}</i>${def ? `<em class="of-def">${t('outfit_def')}</em>` : ''}<span class="of-tx"><b style="color:${o.suit}">${L(o.n)}</b><small>${sel ? t('equipped') : own ? t('equip') : t('price', o.cost)}</small></span></button>`;
     }).join('') + '</div>';
   } else {
     const tot = META.reduce((s, m) => s + m.max, 0), now = META.reduce((s, m) => s + mt(m.id), 0), spent = metaSpent();
@@ -3209,6 +3229,20 @@ function openSub(id) {
   show(id, menuFrom === 'title' && state === 'menu');   // 從主畫面打開時保留主畫面在底下，關掉後不必重演開場、可以立刻再選
 }
 
+// 換裝購買確認視窗：顯示要買的換裝、價格、買後剩下的小判；按「購買」才真的扣款
+function buyAsk(i) {
+  const o = OUTFITS[i], ci = save.skin; if (!o || outOwned(i, ci) || save.coins < o.cost) return;
+  buyClose();
+  const d = document.createElement('div'); d.id = 'buyCf';
+  d.innerHTML = `<div class="cf-box"><div class="cf-h">${t('cf_title')}</div>` +
+    `<img src="${outThumb(ci, i)}" alt=""><b style="color:${ofCol(o)}">${L(o.n)}</b>` +
+    `<div class="cf-q">${t('cf_q', L(SKINS[ci].n), L(o.n))}</div>` +
+    `<div class="cf-coin"><span><span class="kb"></span>${save.coins}</span><i>→</i><span><span class="kb"></span>${save.coins - o.cost}</span></div>` +
+    `<div class="cf-btns"><button data-act="buyno">${t('cf_no')}</button><button class="buy" data-act="buyok" data-arg="${i}">${t('buy')}　<span class="kb"></span>${o.cost}</button></div></div>`;
+  d.addEventListener('click', e => { if (e.target === d) buyClose(); });   // 點外面＝取消
+  $('shop').appendChild(d);
+}
+function buyClose() { const d = $('buyCf'); if (d) d.remove(); }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
   A(); SFX.click();
@@ -3262,8 +3296,11 @@ document.addEventListener('click', e => {
     case 'stab': shopTab = +arg; renderShop(); break;
     case 'acat': achCat = +arg; renderRank(); $('rankBody').scrollTop = 0; break;   // 成就分類篩選
     case 'skin': save.skin = +arg; persist(); renderShop(); updateHeroArt(); resetHelpIcons(); break;
+    case 'ofprev': outPrev = { ci: save.skin, i: +arg }; SFX.tap && SFX.tap(); renderShop(); break;
     case 'outfit': if (!save.charOut) save.charOut = {}; save.charOut[save.skin] = +arg; persist(); refreshHero(); renderShop(); break;
-    case 'buyout': { const o = OUTFITS[+arg]; if (save.coins >= o.cost && !outOwned(+arg)) { save.coins -= o.cost; save.outfits.push(+arg); if (!save.charOut) save.charOut = {}; save.charOut[save.skin] = +arg; persist(); SFX.item(); refreshHero(); collAch(); } renderShop(); break; }
+    case 'buyout': buyAsk(+arg); break;   // 先跳出確認視窗
+    case 'buyno': buyClose(); break;
+    case 'buyok': { buyClose(); const o = OUTFITS[+arg]; if (save.coins >= o.cost && !outOwned(+arg)) { save.coins -= o.cost; save.outfits.push(+arg); if (!save.charOut) save.charOut = {}; save.charOut[save.skin] = +arg; persist(); SFX.item(); refreshHero(); collAch(); } renderShop(); break; }
     case 'buyskin': { const s = SKINS[+arg]; if (s.req && !save.ach[s.req]) break; if (save.coins >= s.cost) { save.coins -= s.cost; save.skins.push(+arg); save.skin = +arg; persist(); SFX.item(); collAch(); } renderShop(); updateHeroArt(); resetHelpIcons(); break; }
     case 'buymeta': { const m = META.find(x => x.id === arg), c = metaCost(m, mt(arg)); if (save.coins >= c && mt(arg) < m.max) { save.coins -= c; save.meta[arg] = mt(arg) + 1; persist(); SFX.item(); collAch(); } renderShop(); break; }
     case 'refund':   // 修行全部歸零、退還小判（按兩次確認）

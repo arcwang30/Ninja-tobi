@@ -557,3 +557,75 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 /* 商店、成就、了解歷史的面板固定同樣高度（內容少的分頁也不會縮小），內容區撐滿、可捲動 */
 #shop .panel, #rank .panel, #hist .panel { height: 92%; }
 #shop #shopBody { flex: 1; min-height: 0; }
+
+/* 換裝分頁三種版型（?outfit=a|b|c） */
+.outfits .sw { display: none; }
+.outfits .of-tx { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+/* A：三欄大卡 */
+.outfits.oa { grid-template-columns: repeat(3, 1fr); gap: .55em; }
+.outfits.oa .of { padding: .35em .3em .5em; border-radius: .8em; border-width: 3px; }
+.outfits.oa .of b { font-size: 1.05em; } .outfits.oa .of small { font-size: .72em; }
+.outfits.oa .of .of-def { font-size: .7em; }
+/* B：兩欄橫卡（左邊大圖、右邊名稱與狀態） */
+.outfits.ob { grid-template-columns: repeat(2, 1fr); gap: .5em; }
+.outfits.ob .of { flex-direction: row; align-items: center; gap: .35em; padding: .3em .55em .3em .25em; border-radius: .8em; border-width: 3px; }
+.outfits.ob .of img { width: 50%; flex: none; }
+.outfits.ob .of .of-tx { align-items: flex-start; }
+.outfits.ob .of b { font-size: 1.15em; } .outfits.ob .of small { font-size: .72em; white-space: normal; }
+.outfits.ob .of .of-def { font-size: .66em; }
+/* C：上方大預覽（目前穿著）＋下方色票（點色票直接換） */
+.outfits.oc { grid-template-columns: repeat(5, 1fr); gap: .6em .4em; }
+.outfits.oc .of-big { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; padding: .3em 0 .55em; margin-bottom: .3em; border-radius: .9em;
+  background: radial-gradient(circle at 50% 42%, #4a5478, #1a1e2c 75%); border: calc(var(--u)*3) solid var(--ink); }
+.outfits.oc .of-big img { width: 48%; }
+.outfits.oc .of-big b { font-size: 1.3em; text-shadow: 0 0 3px #000, 0 2px 0 #000; } .outfits.oc .of-big small { font-size: .75em; color: #cfd6e2; }
+.outfits.oc .of { background: none; border: none; padding: .1em 0; }
+.outfits.oc .of img { display: none; }
+.outfits.oc .of .sw { display: flex; align-items: center; justify-content: center; width: 2.7em; height: 2.7em; border-radius: 50%; font-style: normal; font-weight: 900; font-size: 1em; color: #fff; text-shadow: 0 1px 2px #000;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--suit) 60%, #fff), var(--suit) 55%, var(--dark)); border: calc(var(--u)*3) solid var(--ink); box-shadow: 0 0 0 2px rgba(255,255,255,.15); }
+.outfits.oc .of.sel .sw { box-shadow: 0 0 0 3px #ffd27a, 0 0 10px rgba(255,210,122,.7); }
+.outfits.oc .of.nown .sw { filter: saturate(.6) brightness(.8); font-size: .8em; }
+.outfits.oc .of b { font-size: .85em; margin-top: .2em; } .outfits.oc .of small { font-size: .62em; color: #cfd6e2; }
+.outfits.oc .of .of-def { left: 50%; transform: translateX(-50%); top: -.5em; }
+.outfits.oa, .outfits.ob, .outfits.oc { box-sizing: border-box; padding-right: .45em; }
+.outfits.oc .of { background: none !important; box-shadow: none !important; }
+.outfits.oc .of::after { display: none; }
+.outfits.oc .of .of-def { white-space: nowrap; top: -.7em; z-index: 1; }
+.outfits .of b { -webkit-text-stroke: 0; text-shadow: 0 0 2px #000, 0 0 2px #000; }
+/* 換裝 c：試穿＋購買 */
+.kb { display: inline-block; width: .95em; height: .7em; border-radius: 50%; background: radial-gradient(ellipse at 35% 35%, #fff2b0, #f2c14e 45%, #b8862a); box-shadow: inset 0 0 0 1px #8a5a12; vertical-align: -.02em; margin-right: .2em; }
+.outfits.oc .of-big { position: relative; }
+.outfits.oc .of-big.try img { filter: drop-shadow(0 0 10px rgba(255,210,122,.35)); }
+.outfits.oc .of-try { position: absolute; top: .55em; left: .6em; font-style: normal; font-size: .7em; font-weight: 900; color: #ffd27a; border: 1.5px dashed #ffd27a; border-radius: .6em; padding: .05em .55em; }
+.outfits.oc .of-act { margin: .45em 0 0; width: 62%; min-height: 2.4em; padding: .2em .6em; font-size: .95em; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; }
+.outfits.oc .of-act.on { background: #2c3440; color: #ffd27a; box-shadow: inset 0 0 0 2px #ffd27a55; opacity: 1; }
+.outfits.oc .of-act.buy { background: linear-gradient(#ffd780, #e6a63a); color: #3a2400; text-shadow: none; box-shadow: 0 3px 0 #8a5a12; }
+.outfits.oc .of-act.buy[disabled] { background: #3a3f48; color: #aab; box-shadow: 0 3px 0 #22262c; opacity: 1; }
+.outfits.oc .of-act small { font-size: .65em; color: #ff8a7a; font-weight: 900; }
+.outfits.oc .of { position: relative; }
+.outfits.oc .of.pv:not(.sel) .sw { box-shadow: 0 0 0 3px #fff, 0 0 10px rgba(255,255,255,.5); }
+.outfits.oc .of.nown .sw { filter: saturate(.45) brightness(.6); }
+.outfits.oc .of.nown.pv .sw { filter: none; }
+.outfits.oc .of .lk { position: absolute; top: 1.55em; left: 50%; transform: translate(.55em, 0); font-style: normal; font-size: .75em; background: #1d2128; border-radius: 50%; width: 1.5em; height: 1.5em; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 1.5px #555; }
+.outfits.oc .of small { white-space: nowrap; }
+.outfits.oc .of.nown small { color: #ffd27a; }
+.outfits.oc .of.nown .sw { font-size: 1em; }
+.outfits.oc { overflow: hidden; }
+.outfits.oc .of .lk { top: 1.9em; transform: translate(.6em, 0); }
+.outfits.oc .of-act.buy:not([disabled]) { flex-direction: row; gap: .1em; }
+.outfits.oc .of-big { margin-bottom: .8em; }
+.outfits.oc .of { overflow: visible; } .outfits.oc .of .of-def { top: -.45em; }
+/* 換裝購買確認視窗 */
+#buyCf { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; background: rgba(6,8,14,.68); animation: cfIn .15s ease-out; }
+@keyframes cfIn { from { opacity: 0; } }
+#buyCf .cf-box { width: min(80%, 19em); display: flex; flex-direction: column; align-items: center; padding: .8em 1em 1em; border-radius: 1em; background: linear-gradient(#2c3340, #1d222b); border: 2px solid #ffd27a; box-shadow: 0 8px 30px rgba(0,0,0,.6); animation: cfPop .18s ease-out; }
+@keyframes cfPop { from { transform: scale(.9); } }
+#buyCf .cf-h { font-weight: 900; color: #ffd27a; font-size: 1.05em; letter-spacing: .1em; }
+#buyCf img { width: 48%; margin: .2em 0 -.1em; }
+#buyCf b { font-size: 1.25em; text-shadow: 0 0 3px #000, 0 2px 0 #000; }
+#buyCf .cf-q { font-size: .8em; color: #dfe4ec; margin: .4em 0 .35em; text-align: center; }
+#buyCf .cf-coin { display: flex; align-items: center; gap: .5em; font-weight: 900; color: #ffd27a; font-size: .9em; background: rgba(0,0,0,.3); border-radius: 1em; padding: .2em .9em; }
+#buyCf .cf-coin i { font-style: normal; color: #aab; }
+#buyCf .cf-btns { display: flex; gap: .5em; width: 100%; margin-top: .8em; }
+#buyCf .cf-btns button { flex: 1; margin: 0; min-height: 2.4em; font-size: .9em; padding: .2em .4em; }
+#buyCf .cf-btns button.buy { background: linear-gradient(#ffd780, #e6a63a); color: #3a2400; text-shadow: none; box-shadow: 0 3px 0 #8a5a12; }
