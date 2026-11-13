@@ -26,7 +26,7 @@ html, body {
 :root { padding: 0 !important; }
 #safeProbe { position: absolute; top: 0; left: 0; width: 0; padding-top: env(safe-area-inset-top, 0px); pointer-events: none; visibility: hidden; }
 #app {
-  --u: 1px; --sat: env(safe-area-inset-top, 0px);
+  --u: 1px; --sat: env(safe-area-inset-top, 0px); --blur: 0px;
   position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
   overflow: hidden; box-shadow: 0 0 40px #000;
   font-size: calc(var(--u) * 15);
@@ -34,7 +34,7 @@ html, body {
 #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 .scr { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; }
 .scr.on { display: flex; }
-.scr.dim { background: rgba(4, 14, 14, .72); }
+.scr.dim { background: rgba(4, 14, 14, .72); box-sizing: border-box; padding-top: calc(var(--sat) + var(--blur)); }   /* 面板整個放在瀏海與 iOS 模糊帶下方，標題才不會被系統霧化 */
 
 /* 粗黑描邊文字（英文標題用） */
 .stroke { -webkit-text-stroke: calc(var(--u)*6) var(--ink); paint-order: stroke fill; }

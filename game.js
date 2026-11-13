@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v117';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v118';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -407,6 +407,7 @@ function resize() {
   // iOS App 模式下瀏海下方約 30pt 會被系統模糊，HUD 這段只放紋樣
   BLUR_T = IS_IOS && appMode && top > 0 ? 30 * W / w : 0;
   app.style.setProperty('--sat', top + 'px');
+  app.style.setProperty('--blur', (BLUR_T > 0 ? 30 : 0) + 'px');   // iOS App 模式瀏海下方的模糊帶（CSS px），面板要往下讓開
   DIAG = `${APP_VER} · ${innerWidth}×${innerHeight} · screen ${screen.width}×${screen.height} · ${appMode ? 'App' : 'Web'} · env ${Math.round(env)} · gap ${Math.round(gap)} · top ${Math.round(top)} · blur ${Math.round(BLUR_T)}`;
   const dg = $('diag'); if (dg) dg.textContent = DIAG;
 }
