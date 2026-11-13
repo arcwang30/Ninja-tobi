@@ -544,3 +544,13 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 #busy.on { opacity: 1; visibility: visible; pointer-events: auto; }
 #busyMsg { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: #f2e6c8; font-weight: 900; font-size: 16px; letter-spacing: .12em; text-shadow: 0 2px 0 #000, 0 0 8px rgba(0,0,0,.8); }
 #busyNinja { position: absolute; right: 14px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: 100px; height: 100px; }
+
+/* 整備商店：和成就、了解歷史統一規格（分頁按鈕的大小與金色選取、列表項目的間距、圖示與字級） */
+#shop .tabs { gap: .35em; margin-bottom: .5em; }
+#shop .tabs button { padding: .45em .2em; font-size: .78em; line-height: 1.2; }
+#shop .tabs button.sel { background: linear-gradient(#ffd27a, #e8a83a); color: var(--ink); text-shadow: none; }
+#shop .item { padding: .45em .6em; margin-bottom: .38em; border-width: calc(var(--u)*2.5); border-radius: calc(var(--u)*10); }
+#shop .item .ic { width: 2.3em; height: 2.3em; font-size: 1.1em; border-width: calc(var(--u)*2.5); }
+#shop .item .nm b { font-size: .95em; }
+#shop .item .nm small { font-size: .78em; }
+#shop .item button { padding: .32em .75em; font-size: .78em; }
