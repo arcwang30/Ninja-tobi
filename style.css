@@ -635,3 +635,8 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 #help .tabs button { padding: .45em .2em; font-size: .78em; line-height: 1.2; }
 #help .tabs button.sel { background: linear-gradient(#ffd27a, #e8a83a); color: var(--ink); text-shadow: none; }
 #help .hp-page { justify-content: flex-start; margin-bottom: .6em; }
+/* 製作名單：備註小字、特別感謝名單 */
+.cr-note { color: #9aa6b8; font-size: .68em; font-weight: 700; margin-top: .25em; }
+.cr-note + .cr-copy { margin-top: .05em; }
+.cr-thanks { display: flex; flex-wrap: wrap; justify-content: center; gap: .1em .9em; color: #fff; font-size: .85em; font-weight: 900; padding: 0 .5em; }
+.cr-thanks .br { flex-basis: 100%; height: 0; }
