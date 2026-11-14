@@ -3,7 +3,24 @@
    玩法說明：每一頁是一個分類（基本操作&關卡／斬擊／成長；「敵人」「魔王與關卡」兩頁已移除），每一項＝圖示＋一句話說明；
    左右箭頭或左右滑動切頁。圖示在開機時用遊戲的繪圖函式畫好（開機遮罩還蓋著時），之後直接用圖片 */
 const HELP_PAGES = [
-  { t: ['基本操作&關卡', '基本操作&ステージ', 'Basics & Stages'], items: [   // 原本「魔王與關卡」頁的「追上來的危險」「機關」併到這一頁
+  { t: ['畫面說明', '画面の見かた', 'Screen Guide'], shot: 'assets/help_screen.webp', items: [   // 第一頁：一張標好編號的遊戲畫面＋逐項說明（圖片是遊戲畫面加上編號，存成 assets/help_screen.webp）
+    ['1', ['分數', 'スコア', 'Score'], ['斬殺敵人、往上爬、連斬都會加分。', '敵を斬る・上へ登る・連斬でスコアが増える。', 'Earn points by cutting foes, climbing and chaining combos.']],
+    ['2', ['高度', '高さ', 'Height'], ['這一局爬了幾公尺。', 'この回で登った高さ。', 'How high you have climbed this run.']],
+    ['3', ['關卡與舞台', 'ステージと舞台', 'Stage'], ['目前的關卡和第幾舞台；小黃條是舞台進度，第 5、10 舞台出現魔王（數字變紅）。', '今のステージと舞台。黄色いバーは進み具合、第5・10舞台は魔王（数字が赤）。', 'Current stage and part; the bar shows progress. Bosses appear on parts 5 and 10 (red number).']],
+    ['4', ['暫停', 'ポーズ', 'Pause'], ['暫停遊戲，可以查看技能、說明或離開。', '一時停止。技やヘルプの確認、終了ができる。', 'Pause to check skills, read help or quit.']],
+    ['5', ['HP（命）', 'HP（命）', 'HP'], ['剩下的血量；低於 30% 會閃爍，畫面四周出現紅色心跳警示。', '残りの体力。30%未満で点滅し、画面の四隅が赤く脈打つ。', 'Your health. Below 30% it flashes and the screen edges pulse red.']],
+    ['6', ['小判', '小判', 'Koban'], ['這一局撿到的小判數，帶回整備商店使用。', 'この回で拾った小判。ショップで使える。', 'Koban collected this run, spent in the shop.']],
+    ['7', ['氣', '気', 'Ki'], ['衝刺斬、急降斬要消耗的次數，落地後慢慢回復。', '突進斬り・急降斬で使う回数。着地すると少しずつ回復。', 'Charges for Dash and Dive Slash; they refill after landing.']],
+    ['8', ['技能', '技', 'Skills'], ['目前擁有的自動技能，小數字是等級。', '持っている自動の技。小さい数字はレベル。', 'Your automatic skills; the small number is the level.']],
+    ['9', ['等級與經驗條', 'レベルと経験値', 'Level & XP'], ['經驗條集滿就升級，從三個強化選一個。', '経験値がたまるとレベルアップ、3つから強化を1つ選ぶ。', 'Fill the bar to level up and pick 1 of 3 upgrades.']],
+    ['10', ['忍法卷軸按鈕', '忍法巻物ボタン', 'Ninjutsu Button'], ['有卷軸時才出現在下方中間，紅色數字是張數，點一下發動忍法。', '巻物があるときだけ下中央に出る。赤い数字は枚数、タップで忍法。', 'Appears at the bottom center when you have scrolls (red number = count). Tap to cast.']],
+    ['11', ['追上來的危險', '迫る危険', 'Rising Danger'], ['下方的火海、狂風、熔岩、雪崩會往上追，掉進去會扣 HP。', '下から炎・暴風・溶岩・雪崩が迫る。落ちるとHPが減る。', 'Fire, gales, lava or avalanches rise from below — falling in costs HP.']],
+    ['12', ['一般敵人', '普通の敵', 'Regular Foes'], ['碰到就自動斬殺，並再往上彈跳一次。', '触れると自動で斬って、もう一度跳ねる。', 'Touch to cut them automatically and bounce again.']],
+    ['13', ['危險敵人', '危険な敵', 'Dangerous Foes'], ['外圍有紅色鋸齒光暈的（例如鬼火）碰到會扣 HP，不能斬，要閃開。', '赤いギザギザの光をまとう敵（鬼火など）は触れるとHPが減る。斬れないので避けよう。', 'Foes with a red jagged aura (like will-o\'-wisps) hurt on touch and can\'t be cut — dodge them.']],
+    ['14', ['攻擊型敵人', '攻撃してくる敵', 'Attacking Foes'], ['會丟手裡劍或射箭，打中會扣 HP；本體碰到一樣可以斬殺。', '手裏剣や矢を撃ってくる。当たるとHPが減るが、本体は触れれば斬れる。', 'They throw shuriken or shoot arrows that hurt, but touching them still cuts them.']],
+    ['15', ['道具', 'アイテム', 'Items'], ['碰到就自動撿起：金色小判帶回商店、卷軸增加忍法次數、寶箱得到技能或強化、藍色的魂是經驗值。', '触れると自動で拾う：小判はショップで使い、巻物は忍法の回数、宝箱は技や強化、青い魂は経験値。', 'Touch to collect: koban for the shop, scrolls for ninjutsu, chests for skills or upgrades, blue souls for XP.']],
+  ] },
+  { t: ['操作{ t: ['基本操作&關卡', '基本操作&ステージ', 'Basics & Stages']關卡', '操作{ t: ['基本操作&關卡', '基本操作&ステージ', 'Basics & Stages']ステージ', 'Controls { t: ['基本操作&關卡', '基本操作&ステージ', 'Basics & Stages'] Stages'], items: [   // 原本「魔王與關卡」頁的「追上來的危險」「機關」併到這一頁
     ['move', ['移動與跳躍', '移動とジャンプ', 'Move & Jump'], ['忍者會自動彈跳；按住畫面左右滑動來移動。', '忍者は自動で跳ねる。押したまま左右にスライドで移動。', 'You bounce automatically. Hold and slide left/right to move.']],
     ['wall', ['蹬牆跳', '壁蹴り', 'Wall Kick'], ['空中往牆推會自動蹬牆，每次落地前一次。', '空中で壁に向かうと自動で壁蹴り（着地まで一回）。', 'Push into a wall mid-air to kick off (once per landing).']],
     ['scroll', ['忍法卷軸', '忍法巻物', 'Ninjutsu Scroll'], ['點一下畫面下方中間的卷軸按鈕發動「豪天翔」：無敵並急速上升。', '画面下中央の巻物ボタンで「豪天翔」：無敵で急上昇。', 'Tap the scroll button (lower center) to soar up, invincible.']],
@@ -27,7 +44,7 @@ const HELP_IC = {};
 // 圖示：借用主畫布左上角畫好再複製出來（開機遮罩蓋著時畫，玩家看不到；之後每一幀主畫布都會重畫）
 function buildHelpIcons() {
   if (HELP_IC.move) return;
-  const S = 160, kinds = HELP_PAGES.flatMap(p => p.items.map(i => i[0]));
+  const S = 160, kinds = HELP_PAGES.filter(p => !p.shot).flatMap(p => p.items.map(i => i[0]));   // 畫面說明頁用編號，不畫圖示
   for (const k of kinds) {
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, S, S); ctx.scale(S / 100, S / 100);
     try { helpIconDraw(k); } catch (e) { }
@@ -61,7 +78,8 @@ function helpIconDraw(k) {
 function renderHelp() {
   const P = HELP_PAGES[helpPg];
   tabs('hpTabs', HELP_PAGES.map(p => L(p.t)), helpPg, 'hptab');   // 分頁按鈕（和商店、成就同款）
-  $('hpPage').innerHTML = P.items.map(([k, n, d]) => `<div class="hp-row"><img src="${HELP_IC[k] || ''}" alt=""><div><b>${L(n)}</b><small>${L(d)}</small></div></div>`).join('');
+  $('hpPage').innerHTML = (P.shot ? `<button class="hp-shot" data-act="hpzoom" aria-label="zoom"><img src="${P.shot}" alt=""><i>🔍</i></button>` : '') +   // 畫面說明：上方一張標好編號的遊戲畫面（點一下放大）
+    P.items.map(([k, n, d]) => `<div class="hp-row">${P.shot ? `<span class="hp-num">${k}</span>` : `<img src="${HELP_IC[k] || ''}" alt="">`}<div><b>${L(n)}</b><small>${L(d)}</small></div></div>`).join('');
   $('hpPage').classList.remove('turn'); void $('hpPage').offsetWidth; $('hpPage').classList.add('turn');
 }
 function helpPage(d) { helpPg = (helpPg + d + HELP_PAGES.length) % HELP_PAGES.length; renderHelp(); }
@@ -71,3 +89,10 @@ function helpPage(d) { helpPg = (helpPg + d + HELP_PAGES.length) % HELP_PAGES.le
   el.addEventListener('pointerdown', e => { sx = e.clientX; });
   el.addEventListener('pointerup', e => { if (sx === null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 40) { SFX.click(); helpPage(dx < 0 ? 1 : -1); } });
 })();
+// 畫面說明的截圖：點一下全螢幕放大，再點一下關閉
+function helpZoom() {
+  const P = HELP_PAGES[helpPg]; if (!P || !P.shot) return;
+  const d = document.createElement('div'); d.id = 'hpZoom'; d.innerHTML = `<img src="${P.shot}" alt="">`;
+  d.addEventListener('click', () => d.remove());
+  $('help').appendChild(d);
+}

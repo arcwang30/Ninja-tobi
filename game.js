@@ -3215,6 +3215,7 @@ document.addEventListener('click', e => {
     case 'hist': openHist(); break;                                   // 了解歷史（history.js）
     case 'hist-tab': histTab = +b.dataset.arg; SFX.click(); renderHist(); break;
     case 'hptab': helpPg = +arg; renderHelp(); $('hpPage').scrollTop = 0; break;   // 玩法說明：切分頁
+    case 'hpzoom': helpZoom(); break;   // 畫面說明：放大截圖
     case 'help': openHelp(); break;
     case 'back':
       if ($('help').classList.contains('on') && backTo === 'game') { hide('help'); if (!$('pause').classList.contains('on')) resumeGame(); break; }

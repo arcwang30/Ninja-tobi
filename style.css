@@ -774,3 +774,13 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 #lvsel.fc .lv-card { overflow: visible; }
 #lvsel.fc .lv-card .lv-art { border-radius: .3em; overflow: hidden; }
 .opt .og-l .og-sub { display: block; margin: .1em 0 0 1.55em; font-size: .62em; font-weight: 700; color: var(--muted); white-space: normal; }
+/* 玩法說明「畫面說明」頁：上方標好編號的遊戲畫面（點一下放大）、下方用編號圓章的列表 */
+#help .hp-shot { position: relative; display: block; width: 64%; margin: 0 auto .4em; padding: 0; border: 2px solid #e8b84a; border-radius: .7em; overflow: hidden; background: #000; box-shadow: 0 .2em 0 rgba(0,0,0,.45); flex: none; }
+#help .hp-shot::before { display: none; }
+#help .hp-shot img { display: block; width: 100%; height: auto; }
+#help .hp-shot i { position: absolute; right: .3em; bottom: .3em; font-style: normal; font-size: .9em; background: rgba(0,0,0,.6); border-radius: 50%; width: 1.8em; height: 1.8em; display: flex; align-items: center; justify-content: center; }
+#help .hp-num { flex: none; width: 1.9em; height: 1.9em; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #ffd27a; color: #1a1010; font-weight: 900; font-size: .9em; box-shadow: 0 0 0 2px #1a1010; }
+#help .hp-row:has(.hp-num) { padding: .35em .6em; }
+#hpZoom { position: absolute; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: rgba(4,6,12,.88); padding: calc(var(--sat, 0px) + 8px) 8px 8px; box-sizing: border-box; animation: cfIn .15s ease-out; }
+#hpZoom img { max-width: 100%; max-height: 100%; border: 2px solid #e8b84a; border-radius: .6em; }
+#help .tabs button { font-size: .72em; }
