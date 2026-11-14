@@ -954,6 +954,9 @@ function drawWalls(camY, stage) {
 }
 
 // ===== 死亡區域：火海／海浪／妖怪群 =====
+// 柔光貼圖：同一組漸層只畫一次（64×64），之後用 drawImage 縮放貼上——比每幀 createRadialGradient 省很多
+const GLOW_SPR = {};
+function glowSpr(k, stops) { let s = GLOW_SPR[k]; if (s) return s; s = GLOW_SPR[k] = document.createElement('canvas'); s.width = s.height = 64; const x = s.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); for (const [o, col] of stops) gr.addColorStop(o, col); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return s; }
 function drawZone(camY, stage, t) {
   if (g && g.tut) return;   // 新手教學：沒有追兵
   const zy = Math.min(g.zoneY, camY + H - 26) - camY;
@@ -967,16 +970,16 @@ function drawZone(camY, stage, t) {
     const gr = c.createLinearGradient(0, zy, 0, zy + Math.max(160, H - zy)); gr.addColorStop(0, '#ffc23a'); gr.addColorStop(.08, '#ff8a1a'); gr.addColorStop(.3, '#e8400c'); gr.addColorStop(.65, '#a81806'); gr.addColorStop(1, '#4a0400');   // 表面一道亮黃，往下漸暗
     c.fillStyle = gr; c.fillRect(0, zy + 6, W, H - zy);
     c.save(); c.beginPath(); c.rect(0, zy + 4, W, H - zy); c.clip();
-    for (let i = 0; i < 6; i++) { const x = ((i * 91 + t * 10) % (W + 120)) - 60, yy = zy + 60 + (i * 53) % Math.max(60, H - zy) + Math.sin(t * .8 + i) * 10, r = 50 + (i % 3) * 16; const sg = c.createRadialGradient(x, yy, 4, x, yy, r); sg.addColorStop(0, 'rgba(60,0,0,.32)'); sg.addColorStop(1, 'rgba(60,0,0,0)'); c.fillStyle = sg; c.save(); c.translate(x, yy); c.scale(1.6, .55); c.translate(-x, -yy); aCirc(c, x, yy, r); c.fill(); c.restore(); }   // 深處流動的暗煙（柔和、沒有硬邊）
+    for (let i = 0; i < 6; i++) { const x = ((i * 91 + t * 10) % (W + 120)) - 60, yy = zy + 60 + (i * 53) % Math.max(60, H - zy) + Math.sin(t * .8 + i) * 10, r = 50 + (i % 3) * 16; c.drawImage(glowSpr('smoke', [[.06, 'rgba(60,0,0,.32)'], [1, 'rgba(60,0,0,0)']]), x - r * 1.6, yy - r * .55, r * 3.2, r * 1.1); }   // 深處流動的暗煙（柔和、沒有硬邊）
     c.globalCompositeOperation = 'lighter';
     const depth = Math.max(80, H - zy) + 60;
     for (let i = 0; i < 14; i++) {   // 往上翻滾的火團（亮橘黃光斑）
       const sp = 40 + (i % 4) * 18, yy = zy + depth - ((t * sp + i * 97) % depth), x = ((i * 83.7 + Math.sin(t * 1.3 + i) * 24) % (W + 40)) - 20, r = 26 + (i % 3) * 12, f = (yy - zy) / depth;
-      const rg = c.createRadialGradient(x, yy, 2, x, yy, r); rg.addColorStop(0, `rgba(255,200,80,${.4 * (1 - f * .6)})`); rg.addColorStop(1, 'rgba(255,90,20,0)'); c.fillStyle = rg; c.fillRect(x - r, yy - r, r * 2, r * 2);
+      const a0 = c.globalAlpha; c.globalAlpha = a0 * .4 * (1 - f * .6); c.drawImage(glowSpr('blob', [[.06, 'rgb(255,200,80)'], [1, 'rgba(255,90,20,0)']]), x - r, yy - r, r * 2, r * 2); c.globalAlpha = a0;   // 效能：預先畫好的光斑貼圖，不再每幀建立漸層
     }
     for (let i = 0; i < 14; i++) {   // 火體裡往上竄的柔光火焰（拉長的光暈，沒有硬邊）
       const cyc = (t * .9 + i * .37) % 1, x = (i * 47.3 + t * 12 + Math.sin(t * 2 + i) * 10) % W, yy = zy + 30 + (1 - cyc) * (depth - 40), r = 24 + (i % 3) * 10, a = .45 * Math.sin(cyc * Math.PI);
-      c.save(); c.translate(x, yy); c.scale(.42, 1.5); const fg = c.createRadialGradient(0, 0, 1, 0, 0, r); fg.addColorStop(0, `rgba(255,240,170,${a})`); fg.addColorStop(.45, `rgba(255,170,60,${a * .7})`); fg.addColorStop(1, 'rgba(255,110,30,0)'); c.fillStyle = fg; aCirc(c, 0, 0, r); c.fill(); c.restore();
+      if (a > .01) { const a0 = c.globalAlpha; c.globalAlpha = a0 * a; c.drawImage(glowSpr('flame', [[.03, 'rgb(255,240,170)'], [.45, 'rgba(255,170,60,.7)'], [1, 'rgba(255,110,30,0)']]), x - r * .42, yy - r * 1.5, r * .84, r * 3); c.globalAlpha = a0; }
     }
     c.globalAlpha = 1; c.restore();
     for (let i = 0; i < Math.ceil(W / 26) + 2; i++) {   // 中層橘＋前層黃白的火舌（快、亮）
@@ -1009,7 +1012,7 @@ function drawZone(camY, stage, t) {
     // 一道風浪：從左下拉起，在前端（右上）捲成渦；用毛筆筆觸畫（起筆粗、收筆細）
     const crest = (x, base, h, col, w) => { const R = h * .44, cx = x, cy = base - h + R;
       inkStroke(c, s => { if (s < .45) { const u = s / .45, v = 1 - u; const P = [[x - h * 1.7, base + 4], [x - h * 1.1, base - h * .2], [x - R * 1.5, base - h * 1.05], [x, base - h]]; return [v * v * v * P[0][0] + 3 * v * v * u * P[1][0] + 3 * v * u * u * P[2][0] + u * u * u * P[3][0], v * v * v * P[0][1] + 3 * v * v * u * P[1][1] + 3 * v * u * u * P[2][1] + u * u * u * P[3][1]]; }
-        const u = (s - .45) / .55, a = -Math.PI / 2 + u * TAU * .82, rr = R * (1 - u * .72); return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]; }, w, 1, col, null); };
+        const u = (s - .45) / .55, a = -Math.PI / 2 + u * TAU * .82, rr = R * (1 - u * .72); return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]; }, w, 1, col, null, 24); };   // 追兵的筆觸用 24 段（夠圓順、省效能）
     const row = (n, base, h, sp, col, w, off) => { const gap = (W + h * 3) / n; for (let i = 0; i < n + 1; i++) { const x = ((i * gap + t * sp + off) % (W + h * 3)) - h * .5, hh = h * (1 + .15 * Math.sin(t * 2 + i * 1.7 + off)); crest(x, base + Math.sin(t * 2.4 + i) * 3, hh, col, w); } };
     row(5, zy + 4, 50, 45, '#6e8098', 22, 0);   // 後層：深灰藍、大、慢
     const gr = c.createLinearGradient(0, zy, 0, zy + Math.max(160, H - zy)); gr.addColorStop(0, '#a6b4c6'); gr.addColorStop(.3, '#6e7f96'); gr.addColorStop(1, '#2c3646');
@@ -1017,11 +1020,11 @@ function drawZone(camY, stage, t) {
     c.save(); c.beginPath(); c.rect(0, zy + 4, W, H - zy); c.clip();
     for (let i = 0; i < 9; i++) {   // 流過的風帶（往右吹）
       const L = 120 + (i % 3) * 40, sp = 160 + (i % 4) * 50, x0 = ((i * 97 + t * sp) % (W + L + 60)) - L - 30, y0 = zy + 26 + (i * 47) % Math.max(60, depth - 60);
-      inkStroke(c, s => [x0 + L - s * L, y0 + Math.sin(s * Math.PI * 2 + t * 3 + i) * 7], 9 + (i % 3) * 3, 1, 'rgba(230,238,248,.26)', null);
+      inkStroke(c, s => [x0 + L - s * L, y0 + Math.sin(s * Math.PI * 2 + t * 3 + i) * 7], 9 + (i % 3) * 3, 1, 'rgba(230,238,248,.26)', null, 20);
     }
     for (let i = 0; i < 5; i++) {   // 打轉的小旋風（由外往內收細的渦）
       const cx = ((i * 131 + t * 60) % (W + 80)) - 40, cy = zy + 50 + (i * 71) % Math.max(60, depth - 70), R = 16 + (i % 3) * 6, rot = t * 4 + i;
-      inkStroke(c, s => { const a = rot + s * TAU * .9, rr = R * (1 - s * .75); return [cx + Math.cos(a) * rr * 1.3, cy + Math.sin(a) * rr * .8]; }, 7, 1, 'rgba(240,245,252,.4)', null);
+      inkStroke(c, s => { const a = rot + s * TAU * .9, rr = R * (1 - s * .75); return [cx + Math.cos(a) * rr * 1.3, cy + Math.sin(a) * rr * .8]; }, 7, 1, 'rgba(240,245,252,.4)', null, 24);
     }
     c.restore();
     row(7, zy + 10, 34, 85, '#aebdd0', 16, 40);    // 中層
@@ -1099,6 +1102,7 @@ const PLAT_COL = {
   normal: ['#f6fbe9', '#cfe3b0', '#6a9a50'], spike: ['#f6fbe9', '#cfe3b0', '#6a9a50'],
   spring: ['#ffe68a', '#f0b432', '#b07a10'], move: ['#e2f2ff', '#a8d0f2', '#3a7ac0'],
 };
+const FIRE_GROUND = {};   // 火關地面的離屏快取（寬度＋解析度 → [岩面, 地裂]）
 function drawPlat(pl) {
   const c = ctx; let x = pl.x - pl.w / 2; const y = pl.y, w = pl.w, h = 12;
   if (pl.crack > 0) x += rnd(-2, 2);
@@ -1107,24 +1111,32 @@ function drawPlat(pl) {
   if (pl.type === 'ground') {
     const gk = g && g.th != null ? THEMES[g.th].k : '林';
     if (gk === '火') {   // 火：黑色熔岩地，零星幾道樹枝狀的地裂（上寬下窄、往下分岔的裂口），裂口裡透出熔岩的光（用色塊，不用線條）
-      const tt = g ? g.t : 0, glow = .78 + .22 * Math.sin(tt * 2.2), D = 300, r = aRng(23);
-      const bg = c.createLinearGradient(0, y, 0, y + D); bg.addColorStop(0, '#2c1812'); bg.addColorStop(1, '#120806'); c.fillStyle = bg; c.fillRect(x, y, w, D);
-      for (let i = 0; i < w / 30; i++) {   // 岩面上零星、不規則的深淺色塊
-        const cx = x + r() * w, cy = y + 14 + r() * 200, s = 12 + r() * 22; c.fillStyle = r() < .5 ? 'rgba(70,40,30,.35)' : 'rgba(0,0,0,.28)';
-        c.beginPath(); for (let k = 0; k < 7; k++) { const a = k / 7 * TAU + r() * .5, rr = s * (.6 + r() * .5); c.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * .5); } c.closePath(); c.fill();
+      // 效能：岩面與地裂只在第一次畫進離屏畫布（依寬度與解析度快取），之後每幀只貼圖；熔岩的明暗呼吸改用透明度
+      const tt = g ? g.t : 0, glow = .78 + .22 * Math.sin(tt * 2.2), D = 300, S = Math.max(1, Math.min(3, cv.width / W)), key = Math.round(w) + '|' + S.toFixed(2);
+      let fc = FIRE_GROUND[key];
+      if (!fc) {
+        const mk = () => { const o = document.createElement('canvas'); o.width = Math.ceil(w * S); o.height = Math.ceil(D * S); const k = o.getContext('2d'); k.scale(S, S); return [o, k]; };
+        const [bc, b] = mk(), [fcv, f] = mk(), r = aRng(23), x = 0, y = 0;
+        const bg = b.createLinearGradient(0, y, 0, y + D); bg.addColorStop(0, '#2c1812'); bg.addColorStop(1, '#120806'); b.fillStyle = bg; b.fillRect(x, y, w, D);
+        for (let i = 0; i < w / 30; i++) {   // 岩面上零星、不規則的深淺色塊
+          const cx = x + r() * w, cy = y + 14 + r() * 200, s = 12 + r() * 22; b.fillStyle = r() < .5 ? 'rgba(70,40,30,.35)' : 'rgba(0,0,0,.28)';
+          b.beginPath(); for (let k = 0; k < 7; k++) { const a = k / 7 * TAU + r() * .5, rr = s * (.6 + r() * .5); b.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * .5); } b.closePath(); b.fill();
+        }
+        // 一道裂口：沿著折線、起點最寬往下收細（inkStroke 的筆觸），三層：外圈橘紅光暈、中層亮橘、黃白色的芯
+        const path = pts => s => { const q = s * (pts.length - 1), k = Math.min(pts.length - 2, Math.floor(q)), u = q - k; return [pts[k][0] + (pts[k + 1][0] - pts[k][0]) * u, pts[k][1] + (pts[k + 1][1] - pts[k][1]) * u]; };
+        const fissure = (pts, wd) => { for (const [m, col] of [[2.4, 'rgba(255,90,20,.28)'], [1, 'rgba(255,120,30,.95)'], [.42, 'rgb(255,232,150)']]) inkStroke(f, path(pts), wd * m, 1, col, null); };
+        const walk = (x0, y0, n, dx, dy, spread) => { const pts = [[x0, y0]]; let px = x0, py = y0; for (let k = 0; k < n; k++) { px += dx + (r() - .5) * spread; py += dy * (.7 + r() * .6); pts.push([px, py]); } return pts; };
+        const N = Math.max(3, Math.round(w / 100));
+        for (let i = 0; i < N; i++) {   // 零星幾道主裂口，每道往下分出 2～3 條枝
+          const x0 = x + (i + .3 + r() * .4) * (w / N), main = walk(x0, y + 1, 7, (r() - .5) * 6, 22, 18);
+          fissure(main, 11);
+          const nb = 2 + Math.floor(r() * 2);
+          for (let bb = 0; bb < nb; bb++) { const k = 1 + Math.floor(r() * 4), sd = r() < .5 ? -1 : 1, br = walk(main[k][0], main[k][1], 4, sd * (10 + r() * 8), 16, 10); fissure(br, 6 - bb); if (r() < .5) { const k2 = 1 + Math.floor(r() * 2), br2 = walk(br[k2][0], br[k2][1], 3, -sd * (6 + r() * 6), 13, 8); fissure(br2, 3.5); } }
+        }
+        for (let i = 0; i < Math.round(w / 70); i++) { const x0 = x + (i + .5 + (r() - .5) * .6) * 70, y0 = y + 1, sm = walk(x0, y0, 2 + Math.floor(r() * 2), (r() - .5) * 10, 12, 12); fissure(sm, 4); }   // 主裂口之間的淺短小裂
+        fc = FIRE_GROUND[key] = [bc, fcv];
       }
-      // 一道裂口：沿著折線、起點最寬往下收細（inkStroke 的筆觸），三層：外圈橘紅光暈、中層亮橘、黃白色的芯
-      const path = pts => s => { const f = s * (pts.length - 1), k = Math.min(pts.length - 2, Math.floor(f)), u = f - k; return [pts[k][0] + (pts[k + 1][0] - pts[k][0]) * u, pts[k][1] + (pts[k + 1][1] - pts[k][1]) * u]; };
-      const fissure = (pts, wd) => { for (const [m, col] of [[2.4, `rgba(255,90,20,${.28 * glow})`], [1, `rgba(255,120,30,${.95 * glow})`], [.42, `rgba(255,232,150,${glow})`]]) inkStroke(c, path(pts), wd * m, 1, col, null); };
-      const walk = (x0, y0, n, dx, dy, spread) => { const pts = [[x0, y0]]; let px = x0, py = y0; for (let k = 0; k < n; k++) { px += dx + (r() - .5) * spread; py += dy * (.7 + r() * .6); pts.push([px, py]); } return pts; };
-      const N = Math.max(3, Math.round(w / 100));
-      for (let i = 0; i < N; i++) {   // 零星幾道主裂口，每道往下分出 2～3 條枝
-        const x0 = x + (i + .3 + r() * .4) * (w / N), main = walk(x0, y + 1, 7, (r() - .5) * 6, 22, 18);
-        fissure(main, 11);
-        const nb = 2 + Math.floor(r() * 2);
-        for (let b = 0; b < nb; b++) { const k = 1 + Math.floor(r() * 4), sd = r() < .5 ? -1 : 1, br = walk(main[k][0], main[k][1], 4, sd * (10 + r() * 8), 16, 10); fissure(br, 6 - b); if (r() < .5) { const k2 = 1 + Math.floor(r() * 2), br2 = walk(br[k2][0], br[k2][1], 3, -sd * (6 + r() * 6), 13, 8); fissure(br2, 3.5); } }
-      }
-      for (let i = 0; i < Math.round(w / 70); i++) { const x0 = x + (i + .5 + (r() - .5) * .6) * 70, y0 = y + 1, sm = walk(x0, y0, 2 + Math.floor(r() * 2), (r() - .5) * 10, 12, 12); fissure(sm, 4); }   // 主裂口之間的淺短小裂
+      c.drawImage(fc[0], x, y, w, D); c.globalAlpha *= glow; c.drawImage(fc[1], x, y, w, D); c.globalAlpha /= glow;
       c.fillStyle = '#3a2420'; c.fillRect(x, y, w, 5);   // 上緣的岩殼
       const eg = c.createLinearGradient(0, y - 8, 0, y + 1); eg.addColorStop(0, 'rgba(255,130,40,0)'); eg.addColorStop(1, `rgba(255,130,40,${.4 * glow})`); c.fillStyle = eg; c.fillRect(x, y - 8, w, 9);   // 地面上方的熱光
       c.restore(); return;

@@ -347,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v127';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v128';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -357,6 +357,9 @@ let DIAG = '';
 let APPFIX = { w: 0, full: 0, gap: 0 };   // iOS 主畫面模式的高度修正（只增不減，避免畫面來回跳）
 // iPad／電腦橫向時遊戲的邏輯高度（越小＝畫面越放大、上下看得越少）
 const PL_H = clamp(+new URLSearchParams(location.search).get('plh') || 640, 640, 760);
+// 自動畫質：RQ＝解析度倍率（1＝正常）。遊戲中連續好幾秒掉到 45fps 以下就降一級（最低 .6），記在這台裝置上，下次開啟直接用
+var RQ = (() => { try { return Math.max(.6, Math.min(1, +localStorage.getItem('tobi_rq') || 1)); } catch (e) { return 1; } })();
+var PX_MAX = 2.4e6;   // 畫布像素上限（約 1170×2050）：平板大螢幕不會畫出五、六百萬像素的畫布
 function resize() {
   const app = $('app');
   let vw = innerWidth, vh = innerHeight, gap = 0;
@@ -396,7 +399,9 @@ function resize() {
   app.style.top = gap ? '0px' : '50%';
   app.style.transform = gap ? 'translateX(-50%)' : 'translate(-50%, -50%)';
   app.style.setProperty('--u', (w / W) + 'px');
-  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  // 解析度：最高 2 倍（3 倍螢幕的手機也只畫 2 倍，肉眼差不多、像素少一半）；整張畫布不超過 PX_MAX 像素（平板大螢幕）；再乘上自動畫質 RQ
+  let dpr = Math.min(window.devicePixelRatio || 1, 2) * RQ;
+  if (w * h * dpr * dpr > PX_MAX) dpr = Math.sqrt(PX_MAX / (w * h));
   // 尺寸沒變就不重設 canvas（重設會清空畫面、造成閃一下）
   const cw = Math.round(w * dpr), ch = Math.round(h * dpr);
   if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
@@ -2566,9 +2571,9 @@ const EMBLEM = {
 };
 const ENSO = [arcF(0, 0, 94, -2.1, -2.1 + TAU * .88), 28];
 // 一筆毛筆筆畫：起筆重壓、收筆拉細；p＝已畫出的比例（一筆一筆揮出來）
-function inkStroke(c, f, w, p, fill, dry) {
+function inkStroke(c, f, w, p, fill, dry, NS) {   // NS：取樣段數（預設 64；畫面上很多筆、又一直在動的追兵可以用少一點，省效能）
   if (p <= 0) return;
-  const N = 64, n = Math.max(2, Math.ceil(N * p)), L = [], R = [];
+  const N = NS || 64, n = Math.max(2, Math.ceil(N * p)), L = [], R = [];
   for (let i = 0; i <= n; i++) {
     const t = Math.min(p, i / N), q = f(t), q2 = f(Math.min(1, t + .01)), q1 = f(Math.max(0, t - .01));
     let dx = q2[0] - q1[0], dy = q2[1] - q1[1]; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
@@ -2957,9 +2962,23 @@ function render() {
 // ===== 主迴圈 =====
 let lastT = performance.now();
 function frame(now) {
-  const dt = Math.min(.033, (now - lastT) / 1000); lastT = now;
-  update(dt); render();
   requestAnimationFrame(frame);
+  // 最高 60fps：120Hz 的 iPhone／iPad 不會跑到 120 幀（畫面一樣順，運算與耗電少一半、比較不會發燙）
+  if (now - lastT < 1000 / 60 - 3) return;
+  const dt = Math.min(.033, (now - lastT) / 1000); lastT = now;
+  // 暫停中（暫停選單、說明蓋在遊戲上）：畫面是靜止的，每秒只重畫約 4 次，省電
+  if (paused && g && state !== 'menu') { if ((PF.pz = (PF.pz || 0) + 1) % 15) return; } else PF.pz = 0;
+  update(dt); render();
+  perfWatch(dt);
+}
+// 效能監看：遊戲進行中，若連續 4 秒平均掉到 45fps 以下，就把解析度降一級（RQ -0.15，最低 0.6），並記在這台裝置上
+const PF = { n: 0, sum: 0, t: 0, pz: 0 };
+function perfWatch(dt) {
+  if (state !== 'play' || paused || document.hidden) { PF.n = PF.sum = PF.t = 0; return; }
+  PF.n++; PF.sum += dt; PF.t += dt;
+  if (PF.t < 4) return;
+  const fps = PF.n / PF.sum; PF.n = PF.sum = PF.t = 0;
+  if (fps < 45 && RQ > .6) { RQ = Math.max(.6, +(RQ - .15).toFixed(2)); try { localStorage.setItem('tobi_rq', RQ); } catch (e) { } resize(); }
 }
 requestAnimationFrame(frame);
 
