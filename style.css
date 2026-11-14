@@ -784,3 +784,15 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 #hpZoom { position: absolute; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: rgba(4,6,12,.88); padding: calc(var(--sat, 0px) + 8px) 8px 8px; box-sizing: border-box; animation: cfIn .15s ease-out; }
 #hpZoom img { max-width: 100%; max-height: 100%; border: 2px solid #e8b84a; border-radius: .6em; }
 #help .tabs button { font-size: .72em; }
+/* 玩法說明：清單上下邊緣柔和淡出（不再硬切），以及「上下滑動看更多」提示 */
+#help .hp-page.fade-b { -webkit-mask-image: linear-gradient(#000 calc(100% - 2.2em), transparent); mask-image: linear-gradient(#000 calc(100% - 2.2em), transparent); }
+#help .hp-page.fade-t { -webkit-mask-image: linear-gradient(transparent, #000 1.4em); mask-image: linear-gradient(transparent, #000 1.4em); }
+#help .hp-page.fade-t.fade-b { -webkit-mask-image: linear-gradient(transparent, #000 1.4em, #000 calc(100% - 2.2em), transparent); mask-image: linear-gradient(transparent, #000 1.4em, #000 calc(100% - 2.2em), transparent); }
+#help .hp-more { position: relative; z-index: 2; align-self: center; margin: -2.4em 0 .6em; display: flex; align-items: center; gap: .45em; padding: .3em .9em; border-radius: 1em; background: rgba(10,13,20,.85); border: 1.5px solid #e8b84a; color: #ffe8b0; font-size: .74em; font-weight: 900; pointer-events: none; opacity: 0; transform: translateY(.3em); transition: opacity .3s, transform .3s; }
+#help .hp-more.on { opacity: 1; transform: none; }
+#help .hp-more i { position: relative; width: .7em; height: 1.1em; border: 2px solid #ffd27a; border-radius: .4em; }
+#help .hp-more i::after { content: ""; position: absolute; left: 50%; top: .12em; width: .18em; height: .28em; margin-left: -.09em; border-radius: .1em; background: #ffd27a; animation: hpWheel 1.2s ease-in-out infinite; }
+#help .hp-more.on span::after { content: " ↕"; display: inline-block; animation: hpBob 1.2s ease-in-out infinite; }
+@keyframes hpWheel { 0% { opacity: 1; transform: translateY(0); } 70% { opacity: 0; transform: translateY(.38em); } 100% { opacity: 0; } }
+@keyframes hpBob { 50% { transform: translateY(-.2em); } }
+#help .hp-more i { display: none; }

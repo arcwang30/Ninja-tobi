@@ -34,6 +34,7 @@ const STR = {
   zi_go: ['走！', '行け！', 'GO!'],
   zi_skip: ['點一下跳過', 'タップでスキップ', 'Tap to skip'],
   // ---- 製作名單 ----
+  hp_more: ['上下滑動看更多', '上下にスワイプで続きを見る', 'Swipe up/down for more'],
   credit: ['製作名單', 'クレジット', 'Credits'],
   hist: ['了解歷史', '歴史を知る', 'History'],
   hist_fb: ['前往 Facebook 粉絲團', 'Facebook ファンページへ', 'Visit our Facebook page'],

@@ -81,6 +81,7 @@ function renderHelp() {
   $('hpPage').innerHTML = (P.shot ? `<button class="hp-shot" data-act="hpzoom" aria-label="zoom"><img src="${P.shot}" alt=""><i>🔍</i></button>` : '') +   // 畫面說明：上方一張標好編號的遊戲畫面（點一下放大）
     P.items.map(([k, n, d]) => `<div class="hp-row">${P.shot ? `<span class="hp-num">${k}</span>` : `<img src="${HELP_IC[k] || ''}" alt="">`}<div><b>${L(n)}</b><small>${L(d)}</small></div></div>`).join('');
   $('hpPage').classList.remove('turn'); void $('hpPage').offsetWidth; $('hpPage').classList.add('turn');
+  $('hpPage').scrollTop = 0; requestAnimationFrame(helpScrollHint); const im = $('hpPage').querySelector('img'); if (im && !im.complete) im.onload = helpScrollHint;   // 捲動提示（圖片載入後高度才確定）
 }
 function helpPage(d) { helpPg = (helpPg + d + HELP_PAGES.length) % HELP_PAGES.length; renderHelp(); }
 // 左右滑動切頁
@@ -96,3 +97,12 @@ function helpZoom() {
   d.addEventListener('click', () => d.remove());
   $('help').appendChild(d);
 }
+// 捲動提示：內容比可視範圍長時，清單底部淡出＋「上下滑動看更多」的提示；捲到底就不再淡出，捲動過一次提示就收起
+function helpScrollHint() {
+  const el = $('hpPage'), hint = $('hpMore'); if (!el || !hint) return;
+  const more = el.scrollHeight - el.clientHeight > 8, end = el.scrollTop + el.clientHeight >= el.scrollHeight - 6;
+  el.classList.toggle('fade-b', more && !end);
+  el.classList.toggle('fade-t', el.scrollTop > 6);
+  hint.classList.toggle('on', more && !end && el.scrollTop < 30);
+}
+$('hpPage').addEventListener('scroll', helpScrollHint, { passive: true });
