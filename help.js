@@ -20,7 +20,7 @@ const HELP_PAGES = [
     ['14', ['攻擊型敵人', '攻撃してくる敵', 'Attacking Foes'], ['會丟手裡劍或射箭，打中會扣 HP；本體碰到一樣可以斬殺。', '手裏剣や矢を撃ってくる。当たるとHPが減るが、本体は触れれば斬れる。', 'They throw shuriken or shoot arrows that hurt, but touching them still cuts them.']],
     ['15', ['道具', 'アイテム', 'Items'], ['碰到就自動撿起：金色小判帶回商店、卷軸增加忍法次數、寶箱得到技能或強化、藍色的魂是經驗值。', '触れると自動で拾う：小判はショップで使い、巻物は忍法の回数、宝箱は技や強化、青い魂は経験値。', 'Touch to collect: koban for the shop, scrolls for ninjutsu, chests for skills or upgrades, blue souls for XP.']],
   ] },
-  { t: ['操作{ t: ['基本操作&關卡', '基本操作&ステージ', 'Basics & Stages']關卡', '操作{ t: ['基本操作&關卡', '基本操作&ステージ', 'Basics & Stages']ステージ', 'Controls { t: ['基本操作&關卡', '基本操作&ステージ', 'Basics & Stages'] Stages'], items: [   // 原本「魔王與關卡」頁的「追上來的危險」「機關」併到這一頁
+  { t: ['操作&關卡', '操作&ステージ', 'Controls & Stages'], items: [   // 原本「魔王與關卡」頁的「追上來的危險」「機關」併到這一頁
     ['move', ['移動與跳躍', '移動とジャンプ', 'Move & Jump'], ['忍者會自動彈跳；按住畫面左右滑動來移動。', '忍者は自動で跳ねる。押したまま左右にスライドで移動。', 'You bounce automatically. Hold and slide left/right to move.']],
     ['wall', ['蹬牆跳', '壁蹴り', 'Wall Kick'], ['空中往牆推會自動蹬牆，每次落地前一次。', '空中で壁に向かうと自動で壁蹴り（着地まで一回）。', 'Push into a wall mid-air to kick off (once per landing).']],
     ['scroll', ['忍法卷軸', '忍法巻物', 'Ninjutsu Scroll'], ['點一下畫面下方中間的卷軸按鈕發動「豪天翔」：無敵並急速上升。', '画面下中央の巻物ボタンで「豪天翔」：無敵で急上昇。', 'Tap the scroll button (lower center) to soar up, invincible.']],
