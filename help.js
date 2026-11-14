@@ -11,8 +11,8 @@ const HELP_PAGES = [
     ['plat', ['機關', 'しかけ', 'Gimmicks'], ['跳台雙倍彈跳、半毀地板只能踩一次、釘刺會受傷。', 'ジャンプ台は2倍、壊れる床は一度だけ、まきびしは痛い。', 'Springs boost, cracked floors break, spikes hurt.']],
   ] },
   { t: ['斬擊', '斬撃', 'Slashing'], items: [
-    ['aim', ['彈射斬', '弾き斬り', 'Sling Slash'], ['按住不動瞄準、往反方向拉、放開發射。消耗 1 格氣。', '押したまま止めて照準、反対に引いて離すと発射。気を1消費。', 'Hold still to aim, pull back and release. Uses 1 Ki.']],
-    ['dive', ['急降斬', '急降斬', 'Dive Slash'], ['往上拉（或快速下滑）往下劈，著地的衝擊波斬殺周圍。', '上に引く（下フリック）と急降下、着地の衝撃波で周りを斬る。', 'Pull up (or flick down) to dive; the landing shockwave cuts nearby foes.']],
+    ['dash', ['衝刺斬', '突進斬り', 'Dash Slash'], ['手指快速往上、左上或右上滑，就往那個方向高速衝刺，沿路碰到的敵人一律斬殺；撞到牆會反彈。消耗 1 格氣。', '指を素早く上・左上・右上へはらうと、その方向へ高速で突進し、触れた敵をすべて斬る。壁に当たると跳ね返る。気を1消費。', 'Flick up, up-left or up-right to dash that way, cutting every foe in your path. Walls bounce you back. Uses 1 Ki.']],
+    ['dive', ['急降斬', '急降斬', 'Dive Slash'], ['手指快速往下滑，往下劈，著地的衝擊波斬殺周圍。', '指を素早く下へはらうと急降下、着地の衝撃波で周りを斬る。', 'Flick down fast to dive; the landing shockwave cuts nearby foes.']],
     ['combo', ['空中連斬', '空中連斬', 'Air Combo'], ['連續斬殺，得分 × 連斬數；落地 0.8 秒內再斬可延續。', '連続で斬ると得点×連斬数。着地後0.8秒以内に斬れば継続。', 'Chain kills: score × combo. Slash within 0.8s of landing to keep it.']],
     ['fever', ['狂熱', 'フィーバー', 'Fever'], ['10 連斬進入狂熱：得分 ×2、衝刺只花半格氣。', '10連斬でフィーバー：得点×2、突進の気が半分。', 'A 10-hit combo starts Fever: score ×2, dashes cost ½ Ki.']],
   ] },
@@ -42,7 +42,7 @@ function helpIconDraw(k) {
   if (k === 'move') { hero(50, 84, 1.25, { vy: -700 }); arrow(14, 54, Math.PI); arrow(86, 54, 0); }
   else if (k === 'wall') { c.fillStyle = '#4f9c48'; c.fillRect(6, 0, 14, 100); c.fillStyle = '#2b6a30'; for (let y = 10; y < 100; y += 30) c.fillRect(4, y, 18, 4); hero(54, 80, 1.15, { face: 1, vy: -600, spin: .3 }); }
   else if (k === 'scroll') { bossGlow(c, 50, 50, 44, 'rgba(255,220,120,.7)'); scrollItem(c, 50, 50, 2.6, -.3); }
-  else if (k === 'aim') { hero(36, 86, 1.1, { pose: 'apex', eye: 'focus' }); c.strokeStyle = '#ffffff'; c.lineWidth = 3; c.setLineDash([5, 5]); c.beginPath(); c.moveTo(48, 52); c.quadraticCurveTo(70, 26, 90, 12); c.stroke(); c.setLineDash([]); arrow(88, 14, -.7); }
+  else if (k === 'dash') { c.strokeStyle = '#ffd27a'; c.lineWidth = 4; c.lineCap = 'round'; for (const a of [-Math.PI / 2, -Math.PI / 2 - .75, -Math.PI / 2 + .75]) { const x0 = 50 + Math.cos(a) * 26, y0 = 50 + Math.sin(a) * 26, x1 = 50 + Math.cos(a) * 40, y1 = 50 + Math.sin(a) * 40; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); arrow(50 + Math.cos(a) * 44, 50 + Math.sin(a) * 44, a); } hero(50, 92, 1.0, { pose: 'dash', eye: 'focus' }); }   // 衝刺斬：往上、左上、右上三個方向的箭頭
   else if (k === 'dive') { c.strokeStyle = 'rgba(255,255,255,.8)'; c.lineWidth = 3; for (const x of [32, 50, 68]) { c.beginPath(); c.moveTo(x, 4); c.lineTo(x, 30); c.stroke(); } hero(50, 72, 1.15, { dive: true }); c.fillStyle = 'rgba(255,255,255,.7)'; aEll(c, 50, 92, 36, 5); c.fill(); }
   else if (k === 'combo') { txt('連', 44, 48, 52, '#ffffff', 'center', '#c0262d', 8); txt('×10', 72, 78, 24, '#ffd27a', 'center', '#000', 5); }
   else if (k === 'fever') { for (let i = 0; i < 5; i++) { c.fillStyle = ['#ff6a1a', '#ffd25a'][i % 2]; c.beginPath(); c.moveTo(14 + i * 18, 92); c.quadraticCurveTo(6 + i * 18, 60, 22 + i * 18, 30 + (i % 2) * 14); c.quadraticCurveTo(32 + i * 18, 64, 30 + i * 18, 92); c.closePath(); c.fill(); } txt('×2', 50, 54, 34, '#ffffff', 'center', '#c0262d', 7); }

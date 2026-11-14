@@ -14,8 +14,8 @@ const DASH_V = 950, DASH_T = .2, DIVE_V = 1150;   // 衝刺斬／急降斬
 const FLICK_PX = 42, FLICK_MS = 130;             // 快速滑動判定：130ms 內垂直移動 42px
 const WALL = 14;                                 // 左右牆壁厚度
 const PL_MIN = WALL + 11; let PL_MAX = W - WALL - 11; // 玩家 x 可移動範圍（PL_MAX 隨 W 更新）
-// 彈射瞄準：按住不動 AIM_HOLD 秒進入瞄準，拉超過 AIM_MIN 才會發射
-const AIM_HOLD = .15, AIM_MIN = 22, AIM_MOVE = 10, AIM_SLOW = .3, AIM_SLOW_MAX = 2.5, DASH_T_AIM = .3;
+// 手指一開始移動超過 AIM_MOVE 才算移動（彈射斬已移除）
+const AIM_MOVE = 10;
 const FONT = '"Noto Sans TC","Noto Sans JP","Microsoft JhengHei","PingFang TC","Hiragino Sans","Yu Gothic","Meiryo",sans-serif';
 
 const INK = '#0e1414';          // 描邊用的黑（竹林夜襲風格）
@@ -215,7 +215,7 @@ const ACH = [];
     add(id, 1, [z, j, e], ['達成 ' + n + ' 連斬', n + '連斬を達成', 'Reach a ' + n + ' chain']);
   add('chain3', 1, ['連鎖爆破', '連鎖爆破', 'Chain Blast'], ['一次爆炸炸死 3 名以上敵人', '一度の爆発で3体以上倒す', 'Kill 3+ enemies with one explosion']);
   add('chain5', 1, ['大爆破', '大爆破', 'Big Bang'], ['一次爆炸炸死 5 名以上敵人', '一度の爆発で5体以上倒す', 'Kill 5+ enemies with one explosion']);
-  add('bank1', 1, ['反射斬', '反射斬り', 'Bank Shot'], ['彈射斬撞牆反彈後斬殺敵人', '壁で跳ね返ってから敵を斬る', 'Slash an enemy after bouncing off a wall']);
+  add('bank1', 1, ['反射斬', '反射斬り', 'Bank Shot'], ['衝刺斬撞牆反彈後斬殺敵人', '突進斬りで壁に跳ね返ってから敵を斬る', 'Dash-slash off a wall, then cut an enemy']);
   add('mid1', 1, ['天狗退治', '天狗退治', 'Tengu Hunter'], ['擊敗中 BOSS 大天狗', '中ボス大天狗を倒す', 'Defeat the Great Tengu']);
   add('mid5', 1, ['天狗殺', '天狗殺し', 'Tengu Slayer'], ['累計擊敗 5 隻大天狗', '大天狗を累計5体倒す', 'Defeat 5 Great Tengu in total']);
   add('boss1', 1, ['鬼退治', '鬼退治', 'Oni Slayer'], ['擊敗第一隻魔王', '初めて魔王を倒す', 'Defeat your first boss']);
@@ -323,7 +323,6 @@ const SFX = {
   throw: () => tone(1500, .06, 'square', .025, -400),
   clank: () => { tone(1800, .08, 'square', .04, -200); tone(1200, .1, 'triangle', .04); },
   fever: () => { for (let i = 0; i < 8; i++) tone(523 * Math.pow(1.122, i), .1, 'square', .045, 0, i * .05); },
-  aim: () => tone(620, .08, 'triangle', .04, 200),
   warn: () => { tone(880, .07, 'square', .04); tone(880, .07, 'square', .04, 0, .13); },   // 魔王出招的預兆
   ring: () => tone(1320, .05, 'triangle', .03),
   soul: () => tone(1100 + Math.random() * 300, .05, 'sine', .025),
@@ -348,7 +347,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v126';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v127';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -506,7 +505,7 @@ cv.addEventListener('pointerdown', e => {
   }
   inp.down = true; inp.id = e.pointerId; inp.lx = p.x; inp.ly = p.y; inp.sw = 0;
   inp.hist = [{ x: p.x, y: p.y, t: performance.now() }]; inp.flicked = false;
-  // 先進入「待定」：手指不動一下就變瞄準，一開始就滑動則是一般移動
+  // 先進入「待定」，一開始滑動就是一般移動
   inp.mode = state === 'play' && !paused ? 'pending' : null;
   inp.hold = 0; inp.sx = inp.cx = p.x; inp.sy = inp.cy = p.y;
   try { cv.setPointerCapture(e.pointerId); } catch (er) { }
@@ -516,8 +515,6 @@ cv.addEventListener('pointermove', e => {
   if (!inp.down || e.pointerId !== inp.id) return;
   const p = toL(e), dx = p.x - inp.lx, dy = p.y - inp.ly;
   inp.lx = p.x; inp.ly = p.y;
-  // 瞄準中：手指只用來拉彈弓，不移動角色
-  if (inp.mode === 'aim') { inp.cx = p.x; inp.cy = p.y; return; }
   if (inp.mode === 'pending' && Math.hypot(p.x - inp.sx, p.y - inp.sy) > AIM_MOVE) inp.mode = 'move';
   inp.dx += dx;
   // 快速上滑＝衝刺斬、快速下滑＝急降斬；手指放慢後可再次觸發
@@ -534,7 +531,7 @@ cv.addEventListener('pointermove', e => {
 });
 const endPtr = e => {
   if (e.pointerId !== inp.id) return;
-  // 點一下豪天翔按鈕（沒怎麼移動、很快放開）：發動忍法，不當作瞄準或移動
+  // 點一下豪天翔按鈕（沒怎麼移動、很快放開）：發動忍法，不當作移動
   if (inp.btn && e.type === 'pointerup' && state === 'play' && !paused) {
     const p = toL(e), b = inp.btn;
     if (performance.now() - b.t < 350 && Math.hypot(p.x - b.x, p.y - b.y) < 14) {
@@ -544,12 +541,6 @@ const endPtr = e => {
     }
   }
   inp.btn = null;
-  // 放開時發射彈射斬（拉得不夠遠就當作取消）
-  if (inp.mode === 'aim' && e.type === 'pointerup' && state === 'play' && !paused) {
-    const a = aimInfo();
-    if (a && a.dive) startDive();
-    else if (a) { startDash(a.dx, a.dy, DASH_T_AIM, .2); if (g.tut && g.p.dash > 0) g.tut.sling = 1; }   // 新手教學：彈射斬
-  }
   inp.down = false; inp.id = null; inp.mode = null;
 };
 cv.addEventListener('pointerup', endPtr);
@@ -618,7 +609,7 @@ function startRun(lvl) {
   inp.mode = null;
   g.skills[SKINS[save.skin].sk] = 1;   // 每個角色的起始技能不同
   stageBanner(); startZIntro();   // 第一幕的開場演出（stagefx.js）
-  // 操作改版後（彈射、牆壁）再顯示一次說明
+  // 操作改版後（牆壁）再顯示一次說明
   if (save.seen < 2) { save.seen = 2; persist(); openHelp(); paused = true; }
 }
 const loopN = () => Math.floor(g.stage / 5);   // 第幾輪（0 = 第 1～5 舞台、1 = 第 6～10 舞台）
@@ -848,12 +839,8 @@ function update(dt) {
   musicFor();
   if (state === 'menu') { INTRO.update(dt); return; }
   if (!g || paused) return;
-  if (state !== 'play' && inp.mode === 'aim') inp.mode = null;   // 進入演出時取消瞄準
   switch (state) {
     case 'play':
-      // 按住不動一下 → 進入彈射瞄準；瞄準時時間變慢（最多 AIM_SLOW_MAX 秒）
-      if (inp.mode === 'pending') { inp.hold += dt; if (inp.hold >= AIM_HOLD) { inp.mode = 'aim'; inp.aimT = 0; SFX.aim(); } }
-      if (inp.mode === 'aim') { inp.aimT += dt; if (inp.aimT < AIM_SLOW_MAX) dt *= AIM_SLOW; }
       if (g.hitstop > 0) g.hitstop -= dt;   // HIT STOP：世界短暫停格
       else updatePlay(dt);
       break;
@@ -929,7 +916,7 @@ function updatePlay(dt) {
   } else if (p.dash > 0) {
     p.dash -= dt; p.vy = p.dvy;
     p.x += p.dvx * dt;
-    // 衝刺撞牆會反射（彈射斬的軌跡預覽也照這個規則畫）
+    // 衝刺撞牆會反射
     if (p.x < PL_MIN || p.x > PL_MAX) {
       p.x = clamp(p.x, PL_MIN, PL_MAX); p.dvx = -p.dvx; p.face = p.dvx > 0 ? 1 : -1; p.banks++;
       SFX.clank(); g.shake = Math.max(g.shake, 4);
@@ -1432,40 +1419,6 @@ function upDir(dx, dy, minUp) {
   let len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
   if (dy > -minUp) { dy = -minUp; dx = Math.sign(dx || 1) * Math.sqrt(1 - minUp * minUp); }
   return [dx, dy];
-}
-
-// 彈射瞄準：依手指拉的方向算出發射方向、輔助吸附、含牆壁反射的軌跡，以及路線上會被斬到的敵人
-function aimInfo() {
-  const p = g.p;
-  const px = inp.sx - inp.cx, py = inp.sy - inp.cy, len = Math.hypot(px, py);
-  if (len < AIM_MIN) return null;
-  if (py / len > .55) return { dive: true, pull: len };   // 往上拉＝瞄準下方＝急降斬
-  let [dx, dy] = upDir(px, py, .2);
-  const ox = p.x, oy = p.y - 20, R = DASH_V * DASH_T_AIM;
-  // 輔助吸附：方向和某個敵人夾角小於約 11° 就直接對準它
-  let lock = null, best = .2;
-  for (const e of g.enemies) {
-    if (e.dead) continue;
-    const ex = e.x - ox, ey = e.y - oy, d = Math.hypot(ex, ey);
-    if (d > R + 20 || d < 1 || ey / d > -.2) continue;
-    const ang = Math.acos(clamp((ex * dx + ey * dy) / d, -1, 1));
-    if (ang < best) { best = ang; lock = e; }
-  }
-  if (lock) { const ex = lock.x - ox, ey = lock.y - oy, d = Math.hypot(ex, ey); dx = ex / d; dy = ey / d; }
-  // 模擬軌跡（每 6px 一步，碰牆反射）
-  const pts = [[ox, oy]], hits = new Set();
-  let x = ox, y = oy, vx = dx, rem = R;
-  while (rem > 0) {
-    const st = Math.min(6, rem); x += vx * st; y += dy * st; rem -= st;
-    if (x < PL_MIN || x > PL_MAX) { x = clamp(x, PL_MIN, PL_MAX); vx = -vx; pts.push([x, y]); }
-    for (const e of g.enemies) {
-      if (e.dead || hits.has(e)) continue;
-      const ed = ENEMY[e.type];
-      if (Math.abs(x - e.x) < ed.w / 2 + 10 && Math.abs(y - e.y) < ed.h / 2 + 10) hits.add(e);
-    }
-  }
-  pts.push([x, y]);
-  return { dx, dy, pts, hits, lock, pull: len };
 }
 
 // 急降斬：高速往下劈，穿過途中的敵人，著地產生衝擊波
@@ -2260,6 +2213,7 @@ function heroThumb(i) {
 // 換裝預覽：某角色穿某顏色的小圖（快取）
 const outThumbs = {};
 const OUTFIT_STYLE = new URLSearchParams(location.search).get('outfit') || 'c';   // 換裝分頁的版型（預覽用）
+{ const cs = new URLSearchParams(location.search).get('credit') || 'c'; const cp = document.querySelector('.panel.credit'); if (cs && cp) cp.classList.add('c' + cs); }   // CREDIT 版型：預設 C（主角置頂＋分段卡片）；?credit=a|b 可預覽其他版
 function outThumb(ci, oi) {
   const k = ci + '_' + oi; if (outThumbs[k]) return outThumbs[k];
   const cnv = document.createElement('canvas'); cnv.width = cnv.height = 224; const c = cnv.getContext('2d'); c.scale(224 / 84, 224 / 84);   // 兩倍解析度：換裝的大卡也清楚
@@ -2279,60 +2233,6 @@ function updateHeroArt() {
   for (const el of document.querySelectorAll('.hero-tint')) el.src = url;
 }
 function drawNinja(x, y, o) { drawHeroNinja(x, y, o); }
-
-// 彈射瞄準的軌跡預覽（世界座標）
-function drawAim() {
-  const p = g.p, a = aimInfo(), ok = g.ki >= kiCost();
-  ctx.fillStyle = 'rgba(120,200,255,.08)'; ctx.fillRect(0, g.camY, W, H);   // 慢動作的淡藍色
-  if (!a) return;
-  const col = ok ? '#ffffff' : '#888888';
-  if (a.dive) {
-    // 急降斬：往下的虛線到第一塊地板，並畫出衝擊波範圍
-    let ty = g.camY + H - 30;
-    for (const pl of g.plats) if (!pl.broken && pl.y > p.y && pl.y < ty && Math.abs(pl.x - p.x) < pl.w / 2 + 9) ty = pl.y;
-    ctx.fillStyle = col;
-    for (let y = p.y; y < ty; y += 12) { ctx.beginPath(); ctx.arc(p.x, y, 2.5, 0, 7); ctx.fill(); }
-    ctx.strokeStyle = ok ? 'rgba(255,255,255,.7)' : '#888'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
-    ctx.beginPath(); ctx.arc(p.x, ty, 90 * (1 + .5 * pk('quake')), 0, 7); ctx.stroke(); ctx.setLineDash([]);
-    txt(t('aim_dive'), p.x, p.y - 64, 14, ok ? '#fff' : '#999', 'center', '#000', 3);
-    return;
-  }
-  // 路線上會被斬到的敵人
-  for (const e of a.hits) {
-    ctx.strokeStyle = '#ff4a3a'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(e.x, e.y, ENEMY[e.type].w * .6, 0, 7); ctx.stroke();
-  }
-  if (a.lock) { // 吸附準星
-    const e = a.lock, r = ENEMY[e.type].w * .75, s = g.t * 3;
-    ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 2;
-    for (let i = 0; i < 4; i++) { const an = s + i * Math.PI / 2; ctx.beginPath(); ctx.arc(e.x, e.y, r, an, an + .9); ctx.stroke(); }
-  }
-  // 虛線軌跡：沿折線每 12px 畫一個點
-  ctx.fillStyle = col;
-  let carry = 0;
-  for (let i = 1; i < a.pts.length; i++) {
-    const [x0, y0] = a.pts[i - 1], [x1, y1] = a.pts[i], d = Math.hypot(x1 - x0, y1 - y0);
-    for (let s = carry; s < d; s += 12) { ctx.beginPath(); ctx.arc(x0 + (x1 - x0) * s / d, y0 + (y1 - y0) * s / d, 2.5, 0, 7); ctx.fill(); }
-    carry = (carry - d) % 12; if (carry < 0) carry += 12;
-  }
-  // 終點箭頭
-  const [ex, ey] = a.pts[a.pts.length - 1], [bx, by] = a.pts[a.pts.length - 2];
-  const an = Math.atan2(ey - by, ex - bx);
-  ctx.save(); ctx.translate(ex, ey); ctx.rotate(an); ctx.fillStyle = col;
-  ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-6, -7); ctx.lineTo(-6, 7); ctx.fill(); ctx.restore();
-}
-
-// 手指位置的彈弓橡皮筋（畫面座標）
-function drawSling() {
-  const a = aimInfo(), ok = g.ki >= kiCost();
-  ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(inp.sx, inp.sy, AIM_MIN, 0, 7); ctx.stroke();
-  ctx.strokeStyle = ok ? '#ffd27a' : '#888'; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(inp.sx, inp.sy); ctx.lineTo(inp.cx, inp.cy); ctx.stroke();
-  ctx.fillStyle = ok ? '#ffd27a' : '#888'; ctx.beginPath(); ctx.arc(inp.cx, inp.cy, 8, 0, 7); ctx.fill();
-  const msg = !ok ? t('ki_low') : a ? t('aim_go') : t('aim_cancel');
-  txt(msg, W / 2, H - 60, 14, ok ? '#fff' : '#9ad8ff', 'center', '#000', 3);
-}
 
 // 右下角的豪天翔按鈕：大圓鈕、裡面是卷軸，有卷軸時發光並顯示張數（拇指最好按的位置）
 function scrollBtnPos() { return { x: W / 2, y: H * 5 / 6, r: 32 }; }   // 畫面中間偏下（下方六分之一處）
@@ -3027,7 +2927,6 @@ function render() {
   ctx.globalAlpha = 1;
   for (const tx of g.texts) if (!tx.screen) { ctx.globalAlpha = clamp(1.1 - tx.t, 0, 1); txt(tx.s, tx.x, tx.y, tx.size, tx.c, 'center', '#000', 3); }
   ctx.globalAlpha = 1;
-  if (inp.mode === 'aim' && state === 'play') drawAim();
   ctx.restore();
   drawZone(camY, g.th, g.t);
   drawWeather();   // 天候（levels.js）
@@ -3053,7 +2952,6 @@ function render() {
   sideHudTick();
   if (state === 'play') drawBanner();
   if (g.tut && state !== 'slash' && state !== 'cast') drawTutorial();
-  if (inp.mode === 'aim' && state === 'play') drawSling();
 }
 
 // ===== 主迴圈 =====
@@ -3232,7 +3130,7 @@ function renderOpt() {
   $('bVib').classList.toggle('on', !!save.opt.vib);
   $('langPills').innerHTML = LANGS.map((l, i) => `<button class="${i === LI ? 'on' : ''}" data-act="setlang" data-arg="${i}">${['中', '日', 'EN'][i] || l.name}</button>`).join('');
   const bf = $('bFull'); bf.style.display = TEST_FREE ? '' : 'none'; bf.textContent = t('full_test', hasFull() ? t('full_own') : t('full_none'));   // 測試模式才顯示
-  const r = $('bReset'); delete r.dataset.armed; $('bResetT').textContent = t('reset');
+  const r = $('bReset'); delete r.dataset.armed; $('bResetT').textContent = t('reset_btn'); r.classList.remove('armed');
 }
 
 let menuFrom = 'title';
@@ -3336,7 +3234,7 @@ document.addEventListener('click', e => {
     case 'setlang': LI = +arg; save.opt.lang = LANGS[LI].id; persist(); applyLang(); renderOpt(); buildDockIcons(); break;
     case 'reset': // 按兩次才重置（不用 confirm()，部分嵌入環境不會顯示對話框）
       if (b.dataset.armed) { const lang = save.opt.lang; save = defSave(); save.opt.lang = lang; persist(); renderOpt(); toast(t('reset_done')); }
-      else { b.dataset.armed = '1'; $('bResetT').textContent = t('reset_confirm'); setTimeout(renderOpt, 3000); }
+      else { b.dataset.armed = '1'; b.classList.add('armed'); $('bResetT').textContent = t('reset_sure'); toast(t('reset_confirm')); setTimeout(renderOpt, 3000); }   // 第一次按：按鈕變「確定？」並提示再按一次
       break;
   }
 });

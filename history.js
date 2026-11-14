@@ -11,14 +11,14 @@ const HIST = {
       '# 第一階段：忍者登上電玩（1980s）\n' +
       '忍者會跳、會丟手裡劍、會施展忍術，天生就適合做成動作遊戲。\n' +
       '• 1984 年《忍者くん 魔城の冒険》：UPL 推出的街機，Q 版小忍者在城牆間跳上跳下打倒敵人，可愛的忍者主角從這裡開始。\n' +
-      '• 1987 年《Shinobi 忍》：SEGA 的街機名作，丟手裡劍、施展忍術清場，奠定了「帥氣忍者」的形象。\n' +
+      '• 1985 年《影之傳說》：TAITO 的街機，忍者「影」在森林的大樹之間一躍好幾層樓高，邊揮刀、丟手裡劍邊前進救出公主，讓「忍者能跳得又高又遠」深植人心。\n' +
       '• 1988 年《忍者龍劍傳》：Tecmo 推出，紅白機版用電影般的過場來說故事，讓玩家看得熱血沸騰。\n' +
       '# 第二階段：一路往上爬（1980s – 2010s）\n' +
       '「越爬越高」是最直覺的目標，也最容易讓人一玩再玩。\n' +
       '• 1981 年《大金剛》：任天堂的街機，主角一路往上爬到頂端救人，「往上爬」的玩法從這裡開始流行。\n' +
       '• 1985 年《溜冰攀登者》（Ice Climber）：任天堂推出，敲破頭上的冰塊一層層往上跳到山頂。\n' +
       '• 2001 年《Icy Tower》：電腦上的高塔跳躍遊戲，連跳越快、轉得越帥，分數就越高。\n' +
-      '• 2009 年《Doodle Jump》：手機上的「自動彈跳、只管左右移動」，讓往上跳的遊戲在觸控時代爆紅。本作自動彈跳的操作，就是同一種樂趣。\n' +
+      '• 2009 年《Doodle Jump》：手機上的「自動彈跳、只管左右移動」，讓往上跳的遊戲在觸控時代爆紅。\n' +
       '# 第三階段：Roguelike 的復興（1980 – 至今）\n' +
       'Roguelike 的核心是「每次遊玩都不一樣」，讓人一玩再玩。\n' +
       '• 1980 年《Rogue》：隨機生成的地城、死亡就重來，這個類型的名字就是來自它。\n' +
@@ -34,7 +34,7 @@ const HIST = {
       '# 2. 產生一路往上的關卡\n' +
       '畫面往上捲動時，一列一列隨機產生雲朵地板、只能踩一次的半毀地板、跳台和釘刺。越往上，地板越少、機關越多。\n' +
       '# 3. 設計斬擊\n' +
-      '碰到敵人自動斬殺並再彈跳一次；按住瞄準的「彈射斬」、往下劈的「急降斬」，讓同一根手指有不同的判斷。不落地連續斬殺就能累積連斬、進入狂熱。\n' +
+      '碰到敵人自動斬殺並再彈跳一次；往上滑的「衝刺斬」、往下劈的「急降斬」，讓同一根手指有不同的判斷。不落地連續斬殺就能累積連斬、進入狂熱。\n' +
       '# 4. 加上追兵\n' +
       '只要往上跳太慢，下方的火海、大浪或鬼群就會追上來。這讓玩家一直有「要往上」的壓力。\n' +
       '# 5. 設計敵人\n' +
@@ -72,14 +72,14 @@ const HIST = {
       '# 第1段階：忍者、ゲームに登場(1980年代)\n' +
       '跳んで、手裏剣を投げて、忍術を使う。忍者はもともとアクションゲームにぴったりの存在です。\n' +
       '• 1984年『忍者くん 魔城の冒険』：UPL のアーケード作品。小さな忍者が城壁を跳び回って敵を倒す、かわいい忍者主人公の元祖です。\n' +
-      '• 1987年『Shinobi 忍』：SEGA のアーケードの名作。手裏剣と忍術で敵を一掃する「かっこいい忍者」のイメージを決定づけました。\n' +
+      '• 1985年『影の伝説』：タイトーのアーケード。忍者「影」が森の大木の間を何階分もの高さまで跳び、刀と手裏剣で戦いながら姫を救い出します。「忍者は高く遠くへ跳ぶ」というイメージを強く印象づけました。\n' +
       '• 1988年『忍者龍剣伝』：テクモの作品。ファミコン版は映画のようなカットシーンで物語を描き、プレイヤーを熱くさせました。\n' +
       '# 第2段階：ひたすら上へ(1980年代 – 2010年代)\n' +
       '「どんどん高く登る」は一番わかりやすい目標で、何度も遊びたくなります。\n' +
       '• 1981年『ドンキーコング』：任天堂のアーケード作品。主人公が頂上まで登って助けに行く「上へ登る」遊びの始まりです。\n' +
       '• 1985年『アイスクライマー』：任天堂の作品。頭上の氷を割りながら一段ずつ山頂を目指します。\n' +
       '• 2001年『Icy Tower』：PC の塔ジャンプゲーム。速く、かっこよく跳ぶほどスコアが伸びます。\n' +
-      '• 2009年『Doodle Jump』：スマホで「自動でジャンプ、左右に動くだけ」。タッチ時代に上へ跳ぶゲームを大ヒットさせました。本作の自動ジャンプも同じ楽しさです。\n' +
+      '• 2009年『Doodle Jump』：スマホで「自動でジャンプ、左右に動くだけ」。タッチ時代に上へ跳ぶゲームを大ヒットさせました。\n' +
       '# 第3段階：ローグライクの復興(1980年 – 現在)\n' +
       'ローグライクの核は「毎回ちがう」こと。何度でも遊びたくなります。\n' +
       '• 1980年『Rogue』：ランダム生成のダンジョンと、やられたら最初から。このジャンル名の由来です。\n' +
@@ -94,7 +94,7 @@ const HIST = {
       '# 2. 上へ続くステージを作る\n' +
       '画面が上へスクロールするたびに、雲の足場、一度しか乗れない壊れる床、ジャンプ台、まきびしを一列ずつランダムに作ります。上へ行くほど足場が減り、しかけが増えます。\n' +
       '# 3. 斬撃を作る\n' +
-      '敵に触れると自動で斬ってもう一度跳ねる。押して狙う「弾き斬り」、下へ斬り下ろす「急降斬」で、同じ指の操作に判断が生まれます。着地せずに斬り続ければ連斬とフィーバー。\n' +
+      '敵に触れると自動で斬ってもう一度跳ねる。上へはらう「突進斬り」、下へ斬り下ろす「急降斬」で、同じ指の操作に判断が生まれます。着地せずに斬り続ければ連斬とフィーバー。\n' +
       '# 4. 追っ手を加える\n' +
       '登るのが遅いと、下から炎・大波・鬼の群れが迫ってきます。「上へ行かなきゃ」という緊張感が生まれます。\n' +
       '# 5. 敵を作る\n' +
@@ -132,14 +132,14 @@ const HIST = {
       '# Stage 1: Ninjas Enter Video Games (1980s)\n' +
       'They jump, throw shuriken and cast ninjutsu — ninjas were made for action games.\n' +
       '• 1984 — Ninja-kun: Majou no Bouken: an arcade game by UPL where a tiny ninja hops along castle walls defeating foes. The origin of the cute ninja hero.\n' +
-      '• 1987 — Shinobi: SEGA\'s arcade classic. Shuriken and ninjutsu clearing the screen defined the image of the "cool ninja".\n' +
+      '• 1985 — The Legend of Kage: Taito\'s arcade game. The ninja Kage leaps stories high between giant forest trees, fighting with sword and shuriken to rescue the princess. It made "ninjas jump high and far" an iconic image.\n' +
       '• 1988 — Ninja Gaiden: by Tecmo. The NES version told its story with movie-like cutscenes that got players fired up.\n' +
       '# Stage 2: Always Climbing (1980s – 2010s)\n' +
       '"Get higher and higher" is the most intuitive goal, and it keeps you coming back.\n' +
       '• 1981 — Donkey Kong: Nintendo\'s arcade game, where the hero climbs to the top to save the day. The "climb up" style started here.\n' +
       '• 1985 — Ice Climber: by Nintendo. Break the ice above your head and jump floor by floor to the summit.\n' +
       '• 2001 — Icy Tower: a PC tower-jumping game. The faster and flashier your jumps, the higher your score.\n' +
-      '• 2009 — Doodle Jump: "bounce automatically, just move left and right" made jump-up games a hit in the touch era. NINJA TOBI\'s auto-bounce is the same kind of fun.\n' +
+      '• 2009 — Doodle Jump: "bounce automatically, just move left and right" made jump-up games a hit in the touch era.\n' +
       '# Stage 3: The Roguelike Revival (1980 – today)\n' +
       'The heart of a Roguelike is that every run is different, so you play again and again.\n' +
       '• 1980 — Rogue: random dungeons and starting over when you die. The genre is named after it.\n' +
@@ -154,7 +154,7 @@ const HIST = {
       '# 2. Build an Endless Climb\n' +
       'As the screen scrolls up, rows of cloud platforms, crumbling floors, springs and spikes are generated at random. The higher you go, the fewer platforms and the more traps.\n' +
       '# 3. Design the Slashes\n' +
-      'Touch an enemy to cut it and bounce again. The aimed Sling Slash and the downward Dive Slash add decisions to the same finger. Keep cutting without landing to build a combo and Fever.\n' +
+      'Touch an enemy to cut it and bounce again. The upward-flick Dash Slash and the downward Dive Slash add decisions to the same finger. Keep cutting without landing to build a combo and Fever.\n' +
       '# 4. Add a Chaser\n' +
       'Climb too slowly and fire, waves or oni rise from below. It keeps the pressure on to go up.\n' +
       '# 5. Design the Enemies\n' +

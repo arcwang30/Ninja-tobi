@@ -653,3 +653,123 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 .guide-box .gx { position: absolute; top: .3em; right: .3em; width: 1.8em; height: 1.8em; min-height: 0; padding: 0; margin: 0; font-size: .75em; border-radius: 50%; }
 /* 主畫面淡入中：選單、底部按鈕、商店寶箱先不接受點擊（看得到才按得到） */
 #title.arming .menu, #title.arming .dock, #title.arming .shop-corner { pointer-events: none; }
+/* 設定：「其他」卡片裡的小按鈕（查看、重置） */
+.opt .og-btn { width: auto; margin: 0; padding: .3em .9em; min-height: 0; font-size: .8em; border-radius: 1em; box-shadow: none; }
+.opt .og-btn::before { display: none; }
+.opt .og-btn.red { background: linear-gradient(#c8423a, #8e1f1a); color: #fff; }
+.opt .og-btn.red.armed { background: linear-gradient(#ff5a4a, #c0262d); box-shadow: 0 0 0 2px #ffd27a, 0 0 10px rgba(255,90,74,.7); animation: guidePulse 1s ease-in-out infinite; }
+/* ===== CREDIT 版型提案（?credit=a|b|c） ===== */
+/* A：卷軸名單——每段之間金色細分隔線，職稱小字金色，名單白色；底部小字頁尾 */
+.panel.credit.ca .cr-role { color: var(--gold); font-size: .7em; letter-spacing: .3em; margin-top: .9em; padding-top: .8em; border-top: 1px solid rgba(255,210,122,.25); }
+.panel.credit.ca .cr-role[data-i18n="cr_r1"] { border-top: 0; padding-top: 0; margin-top: .2em; }
+.panel.credit.ca .cr-name { font-size: 1.5em; }
+.panel.credit.ca .cr-art { width: 30%; margin: 1em auto .2em; }
+.panel.credit.ca .cr-game { font-size: 1.05em; }
+.panel.credit.ca .cr-note { margin-top: .6em; }
+/* B：片尾字幕——左邊職稱、右邊名字，兩欄對齊；忍者與作品名放最上方 */
+.panel.credit.cb { display: grid; grid-template-columns: 38% 1fr; column-gap: .9em; row-gap: .15em; align-content: start; text-align: left; }
+.panel.credit.cb > h2, .panel.credit.cb > .cr-art, .panel.credit.cb > .cr-game, .panel.credit.cb > .cr-note, .panel.credit.cb > .cr-copy, .panel.credit.cb > button { grid-column: 1 / -1; text-align: center; }
+.panel.credit.cb > .cr-art { order: -2; width: 26%; margin: 0 auto; }
+.panel.credit.cb > .cr-game { order: -1; margin: .1em 0 .9em; font-size: 1.1em; }
+.panel.credit.cb > h2 { order: -3; margin-bottom: .3em; }
+.panel.credit.cb .cr-role { grid-column: 1; text-align: right; margin: 0; padding: .45em 0; font-size: .74em; color: #9fdcff; border-top: 1px solid rgba(255,255,255,.08); }
+.panel.credit.cb .cr-name, .panel.credit.cb .cr-val, .panel.credit.cb .cr-thanks { grid-column: 2; padding: .35em 0; border-top: 1px solid rgba(255,255,255,.08); font-size: .9em; }
+.panel.credit.cb .cr-name { font-size: 1.05em; }
+.panel.credit.cb .cr-thanks { display: flex; flex-direction: column; align-items: flex-start; gap: .15em; padding-left: 0; }
+.panel.credit.cb .cr-thanks .br { display: none; }
+.panel.credit.cb .cr-note { margin-top: 1em; }
+/* C：主角置頂＋分段卡片——忍者與作品名在上，每個職稱一張深色小卡，感謝名單做成小標籤 */
+.panel.credit.cc > h2 { order: -3; }
+.panel.credit.cc > .cr-art { order: -2; width: 34%; margin: 0 auto; }
+.panel.credit.cc > .cr-game { order: -1; margin: .1em 0 .7em; font-size: 1.15em; }
+.panel.credit.cc .cr-role { margin: .45em 0 0; padding: .45em 0 .1em; border-radius: .8em .8em 0 0; background: rgba(0,0,0,.28); font-size: .74em; }
+.panel.credit.cc .cr-name, .panel.credit.cc .cr-val, .panel.credit.cc .cr-thanks { padding: 0 .6em .55em; border-radius: 0 0 .8em .8em; background: rgba(0,0,0,.28); }
+.panel.credit.cc .cr-name { font-size: 1.2em; }
+.panel.credit.cc .cr-thanks { gap: .25em 1em; padding-top: .15em; }
+.panel.credit.cc .cr-note { margin-top: .9em; }
+.panel.credit.ca .cr-thanks { gap: .3em 1.1em; margin-top: .15em; }
+/* ===== 選關卡片外框提案（?lvframe=a|b|c） ===== */
+.lv-card .lv-fr { position: absolute; inset: 0; z-index: 1; pointer-events: none; display: none; }
+/* A：金工雕花——金框內再一圈細金線，四角金色角花（L 形＋小菱形） */
+#lvsel.fa .lv-card { border: 3px solid #e8b84a; box-shadow: inset 0 0 0 3px #1a1208, inset 0 0 0 4px rgba(255,210,122,.75), 0 .25em 0 rgba(0,0,0,.45); }
+#lvsel.fa .lv-card .lv-fr { display: block; inset: 7px;
+  background:
+    linear-gradient(#ffd27a, #ffd27a) top left / 18px 3px no-repeat, linear-gradient(#ffd27a, #ffd27a) top left / 3px 18px no-repeat,
+    linear-gradient(#ffd27a, #ffd27a) top right / 18px 3px no-repeat, linear-gradient(#ffd27a, #ffd27a) top right / 3px 18px no-repeat,
+    linear-gradient(#ffd27a, #ffd27a) bottom left / 18px 3px no-repeat, linear-gradient(#ffd27a, #ffd27a) bottom left / 3px 18px no-repeat,
+    linear-gradient(#ffd27a, #ffd27a) bottom right / 18px 3px no-repeat, linear-gradient(#ffd27a, #ffd27a) bottom right / 3px 18px no-repeat; }
+#lvsel.fa .lv-card .lv-fr::before, #lvsel.fa .lv-card .lv-fr::after { content: ""; position: absolute; left: 50%; width: 9px; height: 9px; background: #ffd27a; transform: translateX(-50%) rotate(45deg); box-shadow: 0 0 0 2px #1a1208; }
+#lvsel.fa .lv-card .lv-fr::before { top: -5px; } #lvsel.fa .lv-card .lv-fr::after { bottom: -5px; }
+#lvsel.fa .lv-card.sel { border-color: #ff6a4a; box-shadow: inset 0 0 0 3px #1a1208, inset 0 0 0 4px rgba(255,210,122,.75), 0 0 0 3px rgba(255,106,74,.5), 0 .25em 0 rgba(0,0,0,.45); }
+/* B：屬性色光框——外框改成各關的屬性色（林綠、風藍、火紅、山冰），外發光，底部一條屬性色漸層托住文字 */
+#lvsel.fb .lv-card { border: 3px solid var(--ec); box-shadow: 0 0 10px color-mix(in srgb, var(--ec) 55%, transparent), inset 0 0 0 1px rgba(255,255,255,.35), 0 .25em 0 rgba(0,0,0,.45); }
+#lvsel.fb .lv-card .lv-fr { display: block; inset: auto 0 0 0; height: 48%; background: linear-gradient(transparent, color-mix(in srgb, var(--ec) 45%, transparent) 70%, color-mix(in srgb, var(--ec) 70%, #000)); z-index: 0; }
+#lvsel.fb .lv-card .lv-k { text-shadow: 0 0 .12em #000, 0 .06em 0 color-mix(in srgb, var(--ec) 70%, #000), 0 0 .5em var(--ec); }
+#lvsel.fb .lv-card.sel { border-color: #fff; box-shadow: 0 0 0 3px var(--ec), 0 0 18px var(--ec), 0 .25em 0 rgba(0,0,0,.45); }
+/* C：漆木框＋金鉚釘——深色漆木粗框，四角金色鉚釘，內側一圈細金線（和面板的鉚釘同一套語言） */
+#lvsel.fc .lv-card { border: 6px solid #3a2216; border-radius: .7em; box-shadow: inset 0 0 0 1px rgba(255,210,122,.7), inset 0 0 0 3px rgba(0,0,0,.5), 0 0 0 1px #120a06, 0 .25em 0 rgba(0,0,0,.5); background: #111 !important; }
+#lvsel.fc .lv-card .lv-fr { display: block; inset: -6px; border-radius: .7em;
+  background:
+    radial-gradient(circle at 9px 9px, #fff2b0 0 1.5px, #e8b84a 2.5px 4.5px, #6a4a18 5px, transparent 5.5px),
+    radial-gradient(circle at calc(100% - 9px) 9px, #fff2b0 0 1.5px, #e8b84a 2.5px 4.5px, #6a4a18 5px, transparent 5.5px),
+    radial-gradient(circle at 9px calc(100% - 9px), #fff2b0 0 1.5px, #e8b84a 2.5px 4.5px, #6a4a18 5px, transparent 5.5px),
+    radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #fff2b0 0 1.5px, #e8b84a 2.5px 4.5px, #6a4a18 5px, transparent 5.5px); }
+#lvsel.fc .lv-card.sel { border-color: #7a2a18; box-shadow: inset 0 0 0 1px #ffd27a, inset 0 0 0 3px rgba(0,0,0,.5), 0 0 0 2px #ffd27a, 0 0 14px rgba(255,180,90,.7), 0 .25em 0 rgba(0,0,0,.5); }
+#lvsel.fa .lv-card.locked, #lvsel.fb .lv-card.locked { border-color: #555; box-shadow: 0 .25em 0 rgba(0,0,0,.45); }
+/* ===== C 漆木框＋金鉚釘：精緻版提案（?lvframe=c1|c2|c3） ===== */
+/* C1 朱漆金具：深朱漆木紋框＋上緣打光，四角 L 形金具壓著鉚釘，內側雙金線 */
+#lvsel.fc1 .lv-card { border: 7px solid transparent; background: linear-gradient(#111, #111) padding-box, repeating-linear-gradient(100deg, rgba(0,0,0,.18) 0 2px, transparent 2px 7px), linear-gradient(160deg, #8a2a1a, #4a140c 55%, #2a0a06) border-box !important;
+  box-shadow: inset 0 0 0 1px #ffd27a, inset 0 0 0 3px #1a0a06, inset 0 0 0 4px rgba(255,210,122,.55), 0 0 0 1px #120604, 0 2px 0 1px rgba(255,180,140,.12) inset, 0 .3em 0 rgba(0,0,0,.5); }
+#lvsel.fc1 .lv-card .lv-fr { inset: -7px;
+  background:
+    radial-gradient(circle at 10px 10px, #fff6c8 0 1.4px, #f0c050 2.2px 4px, #7a5014 4.6px, transparent 5px),
+    radial-gradient(circle at calc(100% - 10px) 10px, #fff6c8 0 1.4px, #f0c050 2.2px 4px, #7a5014 4.6px, transparent 5px),
+    radial-gradient(circle at 10px calc(100% - 10px), #fff6c8 0 1.4px, #f0c050 2.2px 4px, #7a5014 4.6px, transparent 5px),
+    radial-gradient(circle at calc(100% - 10px) calc(100% - 10px), #fff6c8 0 1.4px, #f0c050 2.2px 4px, #7a5014 4.6px, transparent 5px),
+    linear-gradient(#d9a441, #a8761e) top left / 26px 13px no-repeat, linear-gradient(#d9a441, #a8761e) top left / 13px 26px no-repeat,
+    linear-gradient(#d9a441, #a8761e) top right / 26px 13px no-repeat, linear-gradient(#d9a441, #a8761e) top right / 13px 26px no-repeat,
+    linear-gradient(#d9a441, #a8761e) bottom left / 26px 13px no-repeat, linear-gradient(#d9a441, #a8761e) bottom left / 13px 26px no-repeat,
+    linear-gradient(#d9a441, #a8761e) bottom right / 26px 13px no-repeat, linear-gradient(#d9a441, #a8761e) bottom right / 13px 26px no-repeat; }
+#lvsel.fc1 .lv-card.sel { box-shadow: inset 0 0 0 1px #ffd27a, inset 0 0 0 3px #1a0a06, inset 0 0 0 4px rgba(255,210,122,.55), 0 0 0 2px #ffd27a, 0 0 16px rgba(255,190,90,.8), 0 .3em 0 rgba(0,0,0,.5); }
+/* C2 黑漆蒔繪：黑漆框上灑金粉（蒔繪），內側一圈該關屬性色細線＋金線，四角鉚釘，上方中央一塊小金牌 */
+#lvsel.fc2 .lv-card { border: 7px solid transparent; background: linear-gradient(#111, #111) padding-box, radial-gradient(circle, rgba(255,215,120,.55) 0 .6px, transparent 1px) 0 0 / 6px 6px, radial-gradient(circle, rgba(255,215,120,.35) 0 .5px, transparent .9px) 3px 3px / 6px 6px, linear-gradient(160deg, #2c2a30, #0e0d10 60%, #050406) border-box !important;
+  box-shadow: inset 0 0 0 1.5px var(--ec), inset 0 0 0 3px #08070a, inset 0 0 0 4px #e8b84a, 0 0 0 1px #000, 0 .3em 0 rgba(0,0,0,.5); }
+#lvsel.fc2 .lv-card .lv-fr { inset: -7px;
+  background:
+    radial-gradient(circle at 10px 10px, #fff6c8 0 1.4px, #f0c050 2.2px 4px, #7a5014 4.6px, transparent 5px),
+    radial-gradient(circle at calc(100% - 10px) 10px, #fff6c8 0 1.4px, #f0c050 2.2px 4px, #7a5014 4.6px, transparent 5px),
+    radial-gradient(circle at 10px calc(100% - 10px), #fff6c8 0 1.4px, #f0c050 2.2px 4px, #7a5014 4.6px, transparent 5px),
+    radial-gradient(circle at calc(100% - 10px) calc(100% - 10px), #fff6c8 0 1.4px, #f0c050 2.2px 4px, #7a5014 4.6px, transparent 5px); }
+#lvsel.fc2 .lv-card .lv-fr::before { content: ""; position: absolute; top: 1px; left: 50%; transform: translateX(-50%); width: 34px; height: 9px; border-radius: 2px; background: linear-gradient(#ffe7a0, #c8902a); box-shadow: 0 0 0 1px #4a3008, 0 1px 2px rgba(0,0,0,.6); }
+#lvsel.fc2 .lv-card .lv-fr::after { content: ""; position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 5px; height: 3px; border-radius: 1px; background: var(--ec); }
+#lvsel.fc2 .lv-card.sel { box-shadow: inset 0 0 0 1.5px var(--ec), inset 0 0 0 3px #08070a, inset 0 0 0 4px #ffd27a, 0 0 0 2px #ffd27a, 0 0 16px rgba(255,200,100,.75), 0 .3em 0 rgba(0,0,0,.5); }
+/* C3 木牌掛札：原木紋框（像繪馬木牌），四角三角形金屬護角，上方一條紅繩結 */
+#lvsel.fc3 .lv-card { border: 7px solid transparent; margin-top: 6px; background: linear-gradient(#111, #111) padding-box, repeating-linear-gradient(90deg, rgba(60,30,10,.22) 0 1px, transparent 1px 5px, rgba(255,230,190,.07) 5px 6px, transparent 6px 11px), linear-gradient(170deg, #8a5a32, #5a3618 60%, #3a220e) border-box !important;
+  box-shadow: inset 0 0 0 1px rgba(255,220,160,.6), inset 0 0 0 3px rgba(20,10,4,.7), 0 0 0 1px #1a0e06, 0 .3em 0 rgba(0,0,0,.5); overflow: visible; }
+#lvsel.fc3 .lv-card .lv-art { border-radius: .35em; }
+#lvsel.fc3 .lv-card .lv-fr { inset: -7px; border-radius: .8em; overflow: hidden;
+  background:
+    linear-gradient(135deg, #e8c060 0 9px, #8a6418 9px 10px, transparent 10px) top left / 22px 22px no-repeat,
+    linear-gradient(225deg, #e8c060 0 9px, #8a6418 9px 10px, transparent 10px) top right / 22px 22px no-repeat,
+    linear-gradient(45deg, #e8c060 0 9px, #8a6418 9px 10px, transparent 10px) bottom left / 22px 22px no-repeat,
+    linear-gradient(315deg, #e8c060 0 9px, #8a6418 9px 10px, transparent 10px) bottom right / 22px 22px no-repeat; }
+#lvsel.fc3 .lv-card::after { content: ""; position: absolute; z-index: 3; top: -13px; left: 50%; transform: translateX(-50%); width: 22px; height: 12px; border: 3px solid #c0262d; border-bottom: 0; border-radius: 12px 12px 0 0; box-shadow: 0 -1px 0 #6a0e10; }
+#lvsel.fc3 .lv-card.sel { box-shadow: inset 0 0 0 1px #ffd27a, inset 0 0 0 3px rgba(20,10,4,.7), 0 0 0 2px #ffd27a, 0 0 16px rgba(255,190,90,.75), 0 .3em 0 rgba(0,0,0,.5); }
+#lvsel.fc1 .lv-card.sel, #lvsel.fc2 .lv-card.sel, #lvsel.fc3 .lv-card.sel { border-color: transparent; }
+/* ===== C1 朱漆金具：四角金具細部提案（?lvframe=c1a|c1b|c1c） ===== */
+.lv-card .lv-fr b { display: none; position: absolute; width: 30px; height: 30px; background: center / contain no-repeat; }
+#lvsel.fc1a .lv-card .lv-fr, #lvsel.fc1b .lv-card .lv-fr, #lvsel.fc1c .lv-card .lv-fr { background: none; }
+#lvsel.fc1a .lv-fr b, #lvsel.fc1b .lv-fr b, #lvsel.fc1c .lv-fr b { display: block; }
+.lv-fr b:nth-child(1) { top: -1px; left: -1px; }
+.lv-fr b:nth-child(2) { top: -1px; right: -1px; transform: scaleX(-1); }
+.lv-fr b:nth-child(3) { bottom: -1px; left: -1px; transform: scaleY(-1); }
+.lv-fr b:nth-child(4) { bottom: -1px; right: -1px; transform: scale(-1, -1); }
+/* A 唐草捲雲：細金線 L 形，兩端收成捲雲小渦，角上一顆鉚釘 */
+#lvsel.fc1a .lv-fr b { width: 38px; height: 38px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M4 25V4h21' stroke='%23300f04' stroke-width='4.2'/%3E%3Cpath d='M4 25V4h21' stroke='%23f2c75a' stroke-width='2.2'/%3E%3Cpath d='M25 4c2.6 0 3.6 3 1.6 4.2-1.4.8-2.8-.4-2-1.6' stroke='%23300f04' stroke-width='3.6'/%3E%3Cpath d='M25 4c2.6 0 3.6 3 1.6 4.2-1.4.8-2.8-.4-2-1.6' stroke='%23f2c75a' stroke-width='1.6'/%3E%3Cpath d='M4 25c0 2.6 3 3.6 4.2 1.6.8-1.4-.4-2.8-1.6-2' stroke='%23300f04' stroke-width='3.6'/%3E%3Cpath d='M4 25c0 2.6 3 3.6 4.2 1.6.8-1.4-.4-2.8-1.6-2' stroke='%23f2c75a' stroke-width='1.6'/%3E%3Cpath d='M8 13V8h5' stroke='%23f2c75a' stroke-width='1' opacity='.8'/%3E%3C/g%3E%3Ccircle cx='6.5' cy='6.5' r='3.6' fill='%23e0a83a' stroke='%23300f04' stroke-width='1.2'/%3E%3Ccircle cx='5.6' cy='5.6' r='1.2' fill='%23fff3c4'/%3E%3C/svg%3E"); }
+/* B 菱形透雕：角上一塊鏤空的菱形金具，兩邊延伸出雙金細線 */
+#lvsel.fc1b .lv-fr b { width: 34px; height: 34px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Cg stroke-linecap='round' fill='none'%3E%3Cpath d='M15 4.5H32M15 8H28M4.5 15V32M8 15V28' stroke='%23300f04' stroke-width='2.6'/%3E%3Cpath d='M15 4.5H32M15 8H28M4.5 15V32M8 15V28' stroke='%23f2c75a' stroke-width='1.1'/%3E%3C/g%3E%3Cpath d='M9 1.5 16.5 9 9 16.5 1.5 9Z' fill='%23e0a83a' stroke='%23300f04' stroke-width='1.3'/%3E%3Cpath d='M9 4.2 13.8 9 9 13.8 4.2 9Z' fill='none' stroke='%23fff0b8' stroke-width='.8'/%3E%3Cpath d='M9 6.6 11.4 9 9 11.4 6.6 9Z' fill='%23300f04'/%3E%3Ccircle cx='9' cy='9' r='1' fill='%23f2c75a'/%3E%3C/svg%3E"); }
+/* C 扇形金具：角上一片四分之一圓的扇面，刻著扇骨與弧線，中心一顆鉚釘 */
+#lvsel.fc1c .lv-fr b { width: 32px; height: 32px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M2 2H24A22 22 0 0 1 2 24Z' fill='%23e0a83a' stroke='%23300f04' stroke-width='1.4'/%3E%3Cpath d='M2 2H24A22 22 0 0 1 2 24Z' fill='none' stroke='%23fff0b8' stroke-width='.6' transform='translate(1.2 1.2) scale(.9)'/%3E%3Cg fill='none' stroke='%23300f04' stroke-width='.9' opacity='.75'%3E%3Cpath d='M2 17A15 15 0 0 0 17 2M2 11A9 9 0 0 0 11 2'/%3E%3Cpath d='M3 3 22.5 9M3 3 16 16M3 3 9 22.5'/%3E%3C/g%3E%3Ccircle cx='5' cy='5' r='3.2' fill='%23f2c75a' stroke='%23300f04' stroke-width='1.1'/%3E%3Ccircle cx='4.3' cy='4.3' r='1' fill='%23fff6d0'/%3E%3C/svg%3E"); }
+/* 漆木框：卡片本身不裁切（overflow 只會裁到外框內側，框上的金具會被切掉），改由背景圖自己裁圓角 */
+#lvsel.fc .lv-card { overflow: visible; }
+#lvsel.fc .lv-card .lv-art { border-radius: .3em; overflow: hidden; }

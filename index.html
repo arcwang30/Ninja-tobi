@@ -180,12 +180,13 @@ html, body { margin: 0; background: #070915; }
         <div class="og-it"><span class="og-l">📳 <b data-i18n="vib_n"></b></span><button class="sw" id="bVib" data-act="vib" aria-label="vibration"></button></div>
         <div class="og-it"><span class="og-l">🌐 <b data-i18n="lang_n"></b></span><span class="pills" id="langPills"></span></div>
       </div>
-      <button data-act="fulltest" id="bFull" class="opt-test"></button>   <!-- 測試模式：切換是否擁有完整版 -->
-      <div class="tiles">
-        <button class="tile" data-act="replay"><em>🎬</em><span data-i18n="replay"></span></button>
-        <button class="tile" data-act="privacy"><em>📄</em><span data-i18n="privacy"></span></button>
-        <button class="tile red" data-act="reset" id="bReset"><em>🗑️</em><span id="bResetT"></span></button>
+      <!-- 其他：隱私權政策、重置存檔（和上面兩組同一種卡片；「重看開場」已移除） -->
+      <div class="og">
+        <div class="og-h" data-i18n="opt_more"></div>
+        <div class="og-it"><span class="og-l">📄 <b data-i18n="privacy"></b></span><button class="og-btn" data-act="privacy" data-i18n="view_btn"></button></div>
+        <div class="og-it"><span class="og-l">🗑️ <b data-i18n="reset"></b></span><button class="og-btn red" data-act="reset" id="bReset"><span id="bResetT"></span></button></div>
       </div>
+      <button data-act="fulltest" id="bFull" class="opt-test"></button>   <!-- 測試模式：切換是否擁有完整版 -->
       <button data-act="back" data-i18n="back"></button>
       <small id="diag" class="diag"></small>
     </div>

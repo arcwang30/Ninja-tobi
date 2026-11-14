@@ -316,6 +316,9 @@ function lvThumb(i) {
   } catch (e) { }
   return lvThumbs[key] = cv2.toDataURL();
 }
+const LV_EC = ['#4fbf5a', '#6cc8f0', '#ff6a3a', '#b8d4f0'];   // 選關卡片的屬性色：林、風、火、山
+const LV_FRAME = new URLSearchParams(location.search).get('lvframe') || 'c1b';   // 卡片外框：預設 C1-B（朱漆金具＋菱形透雕金具）；?lvframe=a|b|c|c1|c2|c3|c1a|c1c 可預覽其他版
+if (LV_FRAME) for (let k = 1; k <= LV_FRAME.length; k++) document.getElementById('lvsel').classList.add('f' + LV_FRAME.slice(0, k));   // c1a → fc、fc1、fc1a：細部版沿用上一層的基礎
 function openLvSel() {
   const s = lvSave();
   const h = LEVELS.map((L0, i) => {
@@ -326,8 +329,8 @@ function openLvSel() {
       ? `<span class="lv-best">${clr ? '✓ ' + t('lv_cleared') : best ? t('lv_best', best) : t('lv_new')}</span><span class="lv-wx">${wx.ic} ${L(wx.n)}</span>`
       : paid ? `<span class="lv-full">${t('full_tag')}</span>${i < s.open || TEST_FREE ? '' : `<span class="lv-cond">🔒 ${t('lv_cond', lvName(i - 1), ST_UNLOCK + 1)}</span>`}`
       : `<span class="lv-cond">🔒 ${t('lv_cond', lvName(i - 1), ST_UNLOCK + 1)}</span>`;
-    return `<button class="lv-card ${open ? '' : paid ? 'paid' : 'locked'} ${s.sel === i && open ? 'sel' : ''}" ${open ? `data-act="lvgo" data-arg="${i}"` : paid ? 'data-act="fullinfo"' : 'data-act="lvlock"'}>
-      <span class="lv-art" style="background-image:url(${lvThumb(i)})"></span>
+    return `<button class="lv-card ${open ? '' : paid ? 'paid' : 'locked'} ${s.sel === i && open ? 'sel' : ''}" style="--ec:${LV_EC[L0.th] || '#e8b84a'}" ${open ? `data-act="lvgo" data-arg="${i}"` : paid ? 'data-act="fullinfo"' : 'data-act="lvlock"'}>
+      <span class="lv-art" style="background-image:url(${lvThumb(i)})"></span><i class="lv-fr"><b></b><b></b><b></b><b></b></i>
       <span class="lv-k">${lvName(i)}</span><span class="lv-motto">${L(L0.motto)}</span>${info}</button>`;
   }).join('');
   $('lvList').innerHTML = h;

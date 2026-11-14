@@ -1,6 +1,6 @@
 'use strict';
 /* NINJA 鳶 TOBI — 新手教學（在 levels.js 之後載入）
-   在林的竹林裡一步一步練習：移動 → 往上爬 → 碰到敵人斬殺 → 衝刺斬 → 彈射斬 → 急降斬 → 蹬牆跳 → 吸魂升級 → 忍法卷軸
+   在林的竹林裡一步一步練習：移動 → 往上爬 → 碰到敵人斬殺 → 衝刺斬 → 急降斬 → 蹬牆跳 → 吸魂升級 → 忍法卷軸
    教學中不會受傷、下方沒有追兵、沒有魔王；右上角有「跳過教學」。第一次按「開始修行」會自動進入，之後可在選關畫面重玩 */
 const TUT_STEPS = [
   { k: 'move', t: ['按住畫面，左右滑動來移動', '画面を押したまま左右にスライドで移動', 'Hold and slide left/right to move'],
@@ -9,10 +9,8 @@ const TUT_STEPS = [
     start() { g.tut.y0 = g.top; }, done: () => g.top - g.tut.y0 > 450 },
   { k: 'touch', t: ['碰到敵人就會自動斬殺！斬掉 3 個', '敵に触れると自動で斬る！3体斬ろう', 'Touch enemies to slash them! Defeat 3'],
     start() { g.tut.k0 = g.kills; tutFoes(3, 0); }, done: () => g.kills - g.tut.k0 >= 3, refill: 3 },
-  { k: 'flick', t: ['手指快速往上滑：衝刺斬', '指を素早く上へはらう：突進斬り', 'Flick up quickly: Dash Slash'],
-    start() { g.tut.dash = 0; g.ki = kiMax(); tutFoes(1, 0); }, done: () => g.tut.dash > 0 },
-  { k: 'sling', t: ['按住不動 → 往反方向拉 → 放開：彈射斬', '押したまま止める → 反対へ引く → 離す：弾き斬り', 'Hold still → pull back → release: Sling Slash'],
-    start() { g.tut.sling = 0; g.ki = kiMax(); tutFoes(2, 0); }, done: () => g.tut.sling > 0 },
+  { k: 'flick', t: ['手指快速往上、左上或右上滑：衝刺斬，往滑的方向衝過去斬殺敵人', '指を素早く上・左上・右上へはらう：突進斬り、その方向へ突っ込んで敵を斬る', 'Flick up, up-left or up-right: Dash Slash — charge and cut foes'],
+    start() { g.tut.dash = 0; g.ki = kiMax(); tutFoes(2, 0); }, done: () => g.tut.dash > 0 },
   { k: 'dive', t: ['手指快速往下滑：急降斬，著地震波斬殺周圍', '指を素早く下へはらう：急降斬、着地の衝撃波で周りを斬る', 'Flick down: Dive Slash, the landing shockwave cuts foes'],
     start() { g.tut.dive = 0; }, done: () => g.tut.dive > 0 },
   { k: 'wall', t: ['在空中往牆壁推：蹬牆跳', '空中で壁に向かって押す：壁蹴り', 'Push into a wall mid-air: Wall Kick'],
@@ -64,7 +62,7 @@ function updateTutorial(dt) {
   if (p.y > g.camY + H + 40) { p.y = g.camY + H * .5; p.vy = -JUMP; g.plats.push({ x: p.x, y: p.y + 4, w: 90, type: 'normal', bx: p.x, ph: 0, sp: 0, amp: 0 }); }
   // 敵人被斬光或跑出畫面了：再補
   if (S.refill && !T.ok && !g.enemies.some(e => e.tut && !e.dead && e.y > g.camY - 40 && e.y < g.camY + H)) tutFoes(S.refill, 0);
-  if ((S.k === 'flick' || S.k === 'sling') && !T.ok) { g.ki = kiMax(); if (!g.enemies.some(e => e.tut && !e.dead && e.y > g.camY && e.y < g.camY + H)) tutFoes(S.k === 'sling' ? 2 : 1, 0); }
+  if (S.k === 'flick' && !T.ok) { g.ki = kiMax(); if (!g.enemies.some(e => e.tut && !e.dead && e.y > g.camY && e.y < g.camY + H)) tutFoes(2, 0); }
   // 魂被吃完卻還沒升級（或掉出畫面）：再補一圈
   if (S.k === 'soul' && !T.ok && state === 'play' && !g.drops.some(d => d.k === 'soul')) tutSouls();
   if (!T.ok && S.done()) { T.ok = T.t; SFX.item(); floatText(W / 2, 120, t('tut_good'), '#ffd27a', 22, true); }
@@ -95,9 +93,8 @@ function drawTutorial() {
   if (S.k === 'move') { arrow(gx - 4, gy, gx - 22, gy); arrow(gx + 4, gy, gx + 22, gy); finger(gx + Math.sin(g.t * 4) * 16, gy + 12, true); }
   else if (S.k === 'climb' || S.k === 'scroll') { arrow(gx, gy + 18, gx, gy - 20); }
   else if (S.k === 'touch') { drawStar4(c, gx, gy, 10 + Math.sin(g.t * 6) * 3, g.t * 3, '#ffd27a'); }
-  else if (S.k === 'flick') { arrow(gx, gy + 18, gx, gy - 20); finger(gx, gy + 18 - k * 38, true); }
+  else if (S.k === 'flick') { const D = [[0, -1], [-.72, -.7], [.72, -.7]], di = Math.floor(g.t * 1.2) % 3; for (const [dx, dy] of D) arrow(gx - dx * 12, gy - dy * 12 + 6, gx + dx * 22, gy + dy * 22 + 6); const [fx, fy] = D[di]; finger(gx + fx * (-12 + k * 34), gy + 6 + fy * (-12 + k * 34), true); }   // 往上、左上、右上三個方向，手指輪流示範
   else if (S.k === 'dive') { arrow(gx, gy - 18, gx, gy + 20); finger(gx, gy - 18 + k * 38, true); }
-  else if (S.k === 'sling') { const q = k < .4 ? 0 : k < .8 ? (k - .4) / .4 : 1; c.strokeStyle = 'rgba(255,255,255,.5)'; arrow(gx, gy, gx - 12, gy - 18); finger(gx + q * 12, gy + q * 18, k < .85); }
   else if (S.k === 'wall') { c.fillStyle = '#8a6a3a'; c.fillRect(gx + 16, gy - 22, 6, 44); c.strokeStyle = '#fff'; arrow(gx - 14, gy, gx + 12, gy); }
   else if (S.k === 'soul') { c.fillStyle = '#5ad1ff'; aCirc(c, gx, gy + Math.sin(g.t * 5) * 4, 8); c.fill(); }
   // 卷軸那一步：在 HUD 的卷軸上畫一個閃爍的圈
