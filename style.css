@@ -651,3 +651,5 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 .guide-box b { display: block; color: #ffd27a; font-size: .9em; margin-bottom: .15em; }
 .guide-box small { display: block; color: #e8ecf2; font-size: .74em; font-weight: 700; line-height: 1.45; }
 .guide-box .gx { position: absolute; top: .3em; right: .3em; width: 1.8em; height: 1.8em; min-height: 0; padding: 0; margin: 0; font-size: .75em; border-radius: 50%; }
+/* 主畫面淡入中：選單、底部按鈕、商店寶箱先不接受點擊（看得到才按得到） */
+#title.arming .menu, #title.arming .dock, #title.arming .shop-corner { pointer-events: none; }

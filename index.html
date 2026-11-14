@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#0d2a2a">
+<meta name="theme-color" content="#070915">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,9 +12,17 @@
 <link rel="icon" href="assets/icon-64.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
 <meta name="apple-mobile-web-app-title" content="忍者鳶">
+<!-- 開機畫面的樣式直接寫在這裡：index.html 一到就能畫出開機遮罩，不必等 style.css、圖片下載（部署後第一次開啟不再先黑屏） -->
+<style>
+html, body { margin: 0; background: #070915; }
+#boot { position: fixed; left: 0; top: 0; right: 0; bottom: -200px; padding-bottom: 200px; box-sizing: border-box; display: grid; place-items: center; background: radial-gradient(circle at 50% 42%, #1a2048, #070915 70%); z-index: 99; transition: opacity .5s, visibility .5s; }
+#boot img { width: min(78vw, 46vh); }
+#boot.off { opacity: 0; visibility: hidden; pointer-events: none; }
+</style>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div id="boot" aria-hidden="true"><img src="assets/team_logo.webp" alt=""></div>   <!-- 開機遮罩放在最前面：最先畫出來 -->
 <canvas id="sideBg" aria-hidden="true"></canvas>   <!-- iPad／電腦橫向：兩側的月下城夜景（sidebg.js） -->
 <div id="sideHud" aria-hidden="true"><div class="sh-box"><div id="shStats"></div><div class="pause-sk" id="shSk"></div></div></div>   <!-- iPad／電腦橫向：左側資訊欄 -->
 <button id="shScroll" class="sh-scroll"><span class="sh-roll"></span><b data-i18n="soar_btn"></b><i>×0</i></button>   <!-- 右側豪天翔大按鈕 -->
@@ -233,7 +241,6 @@
   <div id="adFake"><div class="ad-box"><button class="ad-x" id="adFakeX">✕</button><b data-i18n="ad_test"></b><small data-i18n="ad_test2"></small><div class="ad-t" id="adFakeT"></div><button class="big red" id="adFakeOk" data-i18n="ad_claim"></button></div></div>
 </div>
 <!-- 開場遮罩：等畫面尺寸量穩了才拿掉，避免一開啟就看到版面跳動 -->
-<div id="boot" aria-hidden="true"><img src="assets/team_logo.webp" alt=""></div>
 <!-- LOADING 遮罩（通用）：半透明深色＋底下畫面轉灰階、微模糊；中間一行說明、右下角月下剪影小忍者；開機慢、內購、讀取廣告時用 -->
 <div id="busy" aria-hidden="true"><div id="busyMsg"></div><canvas id="busyNinja" width="200" height="200"></canvas></div>
 <script src="lang.js"></script>

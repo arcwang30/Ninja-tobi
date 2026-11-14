@@ -63,6 +63,7 @@ const INTRO = {
     this.outroLogo();
     this.ph = 'title'; this.flash = 0; this.idle = 0; this.endAttract();
     $('title').classList.remove('curtain'); $('intro').classList.remove('logo-only');
+    titleArm();   // 選單、底部按鈕淡入完成前不接受點擊（game.js）
     this.cyc = 'front'; this.ct = 0; TH.vis = 0; this.heroAnim('hero-in');   // 主角從忍術陣現身、選單淡入
   },
   replay() { this.playCut(); },

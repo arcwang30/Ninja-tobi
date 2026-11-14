@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v125';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v126';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -3068,7 +3068,12 @@ requestAnimationFrame(frame);
 // ===== UI =====
 const SCRS = ['title', 'pause', 'perk', 'over', 'shop', 'rank', 'opt', 'help', 'clear', 'credit', 'hist', 'lvsel'];
 let backTo = 'title';
-function show(id, keep) { if (!keep) hideAll(); $(id).classList.add('on'); }
+function show(id, keep) { if (!keep) hideAll(); $(id).classList.add('on'); if (id === 'title') titleArm(); }
+// 主畫面的選單、底部 5 顆按鈕、商店寶箱淡入期間（約 1.7 秒）看不到卻按得到，開場連點時容易誤觸：淡入完成再多 0.3 秒才接受點擊
+let titleArmT = null, tapOk = true;
+function titleArm(ms = 2000) { const el = $('title'); if (!el) return; el.classList.add('arming'); clearTimeout(titleArmT); titleArmT = setTimeout(() => el.classList.remove('arming'), ms); }
+// 手指是在開場（或按鈕還鎖著時）按下的，到主畫面才放開：這一下不算，不會打開功能
+addEventListener('pointerdown', () => { const el = $('title'); tapOk = !(typeof INTRO !== 'undefined' && INTRO.ph !== 'title') && !(el && el.classList.contains('arming')); }, true);
 function hide(id) { $(id).classList.remove('on'); }
 function hideAll() { SCRS.forEach(hide); }
 function goTitle() {
@@ -3256,6 +3261,7 @@ function buyAsk(i) {
 function buyClose() { const d = $('buyCf'); if (d) d.remove(); }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  if (!tapOk && b.closest('#title')) return;   // 開場時按下、主畫面才放開的點擊：不打開主畫面的功能
   A(); SFX.click();
   const a = b.dataset.act, arg = b.dataset.arg;
   switch (a) {
