@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v124';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v125';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -3126,6 +3126,12 @@ function showOver() {
   $('overReach').innerHTML = jm ? `<span class="ov-maki">📜 ${t('over_maki', t('maki_' + g.makiGot), t('ju_' + jm.id))}</span>` : t('over_reach2', THEMES[g.th].k, stageName(g.stage));
   if (typeof adCoinsBtn === 'function') adCoinsBtn(coins);   // 看廣告，小判 ×2（ads.js）
   if (ac && musV()) { BGM.setVol(musV()); BGM.jingle(ac, g.cleared ? 'clear' : 'fail'); }   // 收尾短曲：任務達成／修行中斷（music.js）
+  // 初學引導：第一次結算時，指向「整備商店」並提示可以用小判修行（只出現一次，不強迫購買）
+  const shopB = document.querySelector('#over [data-act=shop]'), oldTip = $('ovTip'); if (oldTip) oldTip.remove(); if (shopB) shopB.classList.remove('guide');
+  if (!g.tut && !save.hintShop && save.stats.runs <= 1 && shopB) {
+    save.hintShop = 1; persist(); shopGuide = 1; shopB.classList.add('guide');
+    shopB.parentNode.insertAdjacentHTML('beforebegin', `<div id="ovTip" class="ov-tip">${t('guide_over', save.coins)}</div>`);
+  }
   show('over');
 }
 
@@ -3145,6 +3151,7 @@ function applyLang() {
 
 // 商店
 let shopTab = 0, outPrev = null;   // outPrev：換裝分頁正在試穿（預覽）的顏色
+let shopGuide = 0;   // 初學引導：1＝結算畫面正在指向商店，2＝這次打開商店時在「修行」分頁顯示說明
 function tabs(id, names, sel, act) {
   $(id).innerHTML = names.map((n, i) => `<button class="${i === sel ? 'sel' : ''}" data-act="${act}" data-arg="${i}">${n}</button>`).join('');
 }
@@ -3186,7 +3193,8 @@ function renderShop() {
     }).join('') + '</div>';
   } else {
     const tot = META.reduce((s, m) => s + m.max, 0), now = META.reduce((s, m) => s + mt(m.id), 0), spent = metaSpent();
-    h = `<div class="meta-head">${t('meta_total', now, tot)}</div>` + META.map(m => {
+    h = (shopGuide === 2 ? `<div class="guide-box"><button class="gx" data-act="guidex" aria-label="close">✕</button><b>${t('guide_t')}</b><small>${t('guide_d', save.coins)}</small></div>` : '') +
+      `<div class="meta-head">${t('meta_total', now, tot)}</div>` + META.map(m => {
       const l = mt(m.id), max = l >= m.max, c = metaCost(m, l), op = metaOpen(m);
       if (!op) return `<div class="item locked"><span class="ic" style="background:#ccc">🔒</span><span class="nm"><b>${L(m.n)}</b><small>${t(META_TIER[m.id] === 1 ? 'meta_t1' : 'meta_t2')}</small></span><button disabled>${t('train')}</button></div>`;
       return `<div class="item"><span class="ic" style="background:#fff3d0">${m.ic}</span><span class="nm"><b>${L(m.n)}　Lv ${l}/${m.max}</b><small>${L(m.d)}${max ? '' : '・' + t('price', c)}</small></span><button data-act="buymeta" data-arg="${m.id}" ${max || save.coins < c ? 'disabled' : ''}>${max ? 'MAX' : t('train')}</button></div>`;
@@ -3226,7 +3234,7 @@ let menuFrom = 'title';
 function openSub(id) {
   if (id === 'lvsel') return openLvSel();
   menuFrom = $('over').classList.contains('on') ? 'over' : 'title';
-  if (id === 'shop') renderShop();
+  if (id === 'shop') { if (shopGuide === 1 && menuFrom === 'over') { shopTab = 2; shopGuide = 2; } else shopGuide = 0; renderShop(); }
   if (id === 'rank') renderRank();
   if (id === 'opt') { renderOpt(); resize(); }
   show(id, menuFrom === 'title' && state === 'menu');   // 從主畫面打開時保留主畫面在底下，關掉後不必重演開場、可以立刻再選
@@ -3295,7 +3303,8 @@ document.addEventListener('click', e => {
     case 'finish': hide('clear'); showOver(); break;
     case 'perk': choosePerk(+arg); break;
     case 'reroll': g.rerolls--; openPerks(perkWhy); break;
-    case 'stab': shopTab = +arg; renderShop(); break;
+    case 'stab': shopTab = +arg; if (shopGuide === 2) shopGuide = 0; renderShop(); break;
+    case 'guidex': shopGuide = 0; renderShop(); break;   // 關掉修行說明
     case 'acat': achCat = +arg; renderRank(); $('rankBody').scrollTop = 0; break;   // 成就分類篩選
     case 'skin': save.skin = +arg; persist(); renderShop(); updateHeroArt(); resetHelpIcons(); break;
     case 'ofprev': outPrev = { ci: save.skin, i: +arg }; SFX.tap && SFX.tap(); renderShop(); break;
