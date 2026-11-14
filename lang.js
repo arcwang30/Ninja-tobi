@@ -106,6 +106,7 @@ const STR = {
   tut_good: ['很好！', 'いいぞ！', 'Nice!'],
   tut_fin: ['教學完成！去選擇關卡吧', 'チュートリアル完了！ステージを選ぼう', 'Tutorial complete! Choose a stage'],
   tut_done: ['新手教學完成！', 'チュートリアル完了！', 'Tutorial complete!'],
+  tut_done_r: ['新手教學完成！獲得 {0} 小判', 'チュートリアル完了！小判 {0} 枚獲得', 'Tutorial complete! +{0} Koban'],
   tab_outfit: ['換裝', '着せ替え', 'Outfits'],
   outfit_for: ['「{0}」的換裝', '「{0}」の着せ替え', 'Outfits for {0}'],
   outfit_def: ['預設', 'デフォルト', 'Default'],

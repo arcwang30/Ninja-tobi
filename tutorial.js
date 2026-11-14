@@ -40,13 +40,18 @@ function startTutorial() {
   g.skills = {};   // 先不給自動技能，免得敵人被技能搶先斬掉
   g.zoneY = 1e9;
   g.tut = { i: 0, t: 0, ok: 0 };
+  g.items = []; g.drops = [];   // 開局已經生成的小判、卷軸、寶箱也清掉
   TUT_STEPS[0].start();
   document.body.classList.add('tut');
 }
+const TUT_REWARD = 300;
 function endTutorial(finished) {
   document.body.classList.remove('tut');
+  // 第一次就把教學做完：獎勵 300 小判（跳過不給；之後從說明重玩也不給）
+  const reward = finished && !save.tut ? TUT_REWARD : 0;
+  if (reward) { save.coins += reward; if (save.stats) save.stats.coins += reward; SFX.coin(); }
   save.tut = 1; persist();
-  if (finished) toast(t('tut_done'));
+  if (finished) toast(reward ? t('tut_done_r', reward) : t('tut_done'));
   g = null; paused = false; hideAll();
   goTitle(); openLvSel();
 }

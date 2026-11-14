@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v123';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v124';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -669,12 +669,14 @@ function genRow() {
   // 道具
   const lucky = 1 + pk('lucky') * .8 + mt('luck') * .35;
   const coinP = Math.min(.9, (m === 'rich' ? .55 : .28) * (1 + (WK() - 1) * .5));
+  if (!g.tut) {   // 新手教學：不放小判、卷軸、寶箱
   if (Math.random() < coinP) {
     const n = Math.random() < .3 ? 3 : 1;
     for (let i = 0; i < n; i++) g.items.push({ t: 'coin', x: clamp(x + (i - (n - 1) / 2) * 22, WALL + 10, W - WALL - 10), y: y - 30 - (n > 1 && i === 1 ? 10 : 0), ph: rnd(0, 6) });
   }
   if (Math.random() < .012 * lucky) g.items.push({ t: 'scroll', x: rnd(30, W - 30), y: y - gap / 2, ph: 0 });
   else if (Math.random() < .022 * lucky) g.items.push({ t: 'chest', x: rnd(30, W - 30), y: y - gap / 2, ph: 0 });
+  }
   // 敵忍者
   const pE = g.top < 250 || g.tut ? 0 : (.08 + .14 * d) * (m === 'horde' ? 2.6 : 1) * (1 + .06 * g.stage + .3 * hardN()) * (g.th === 2 ? 1.2 : 1);   /* 火關敵人多 20% */   // 越後面的幕敵人越多
   // 倖存者節奏：敵人密度比之前高（技能需要靶子，魂也從這裡來）
@@ -1157,6 +1159,7 @@ function updateSkills(dt) {
 
 // ===== 掉落物：魂（經驗）與小判 =====
 function dropLoot(x, y, type) {
+  if (g.tut) return;   // 新手教學：斬敵不掉魂（還沒教到升級，免得中途跳出三選一）也不掉小判
   g.drops.push({ k: 'soul', x, y, vx: rnd(-50, 50), vy: -rnd(140, 240), v: SOUL_V[type] ?? 1, ph: rnd(0, 6) });
   const cn = type === 6 ? 5 : Math.random() < .25 ? 1 : 0;
   for (let i = 0; i < cn; i++) g.drops.push({ k: 'coin', x, y, vx: rnd(-80, 80), vy: -rnd(160, 260), v: 1, ph: rnd(0, 6) });
