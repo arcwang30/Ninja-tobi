@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v121';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v122';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -3278,8 +3278,7 @@ document.addEventListener('click', e => {
     case 'credit': openSub('credit'); break;   // 製作名單（help.js）
     case 'hist': openHist(); break;                                   // 了解歷史（history.js）
     case 'hist-tab': histTab = +b.dataset.arg; SFX.click(); renderHist(); break;
-    case 'hp-prev': helpPage(-1); break;       // 玩法說明：上一頁／下一頁
-    case 'hp-next': helpPage(1); break;
+    case 'hptab': helpPg = +arg; renderHelp(); $('hpPage').scrollTop = 0; break;   // 玩法說明：切分頁
     case 'help': openHelp(); break;
     case 'back':
       if ($('help').classList.contains('on') && backTo === 'game') { hide('help'); if (!$('pause').classList.contains('on')) resumeGame(); break; }

@@ -60,8 +60,7 @@ function helpIconDraw(k) {
 }
 function renderHelp() {
   const P = HELP_PAGES[helpPg];
-  $('hpTitle').textContent = L(P.t);
-  $('hpDots').innerHTML = HELP_PAGES.map((_, i) => `<i class="${i === helpPg ? 'on' : ''}"></i>`).join('');
+  tabs('hpTabs', HELP_PAGES.map(p => L(p.t)), helpPg, 'hptab');   // 分頁按鈕（和商店、成就同款）
   $('hpPage').innerHTML = P.items.map(([k, n, d]) => `<div class="hp-row"><img src="${HELP_IC[k] || ''}" alt=""><div><b>${L(n)}</b><small>${L(d)}</small></div></div>`).join('');
   $('hpPage').classList.remove('turn'); void $('hpPage').offsetWidth; $('hpPage').classList.add('turn');
 }

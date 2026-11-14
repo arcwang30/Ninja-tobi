@@ -629,3 +629,9 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 #buyCf .cf-btns { display: flex; gap: .5em; width: 100%; margin-top: .8em; }
 #buyCf .cf-btns button { flex: 1; margin: 0; min-height: 2.4em; font-size: .9em; padding: .2em .4em; }
 #buyCf .cf-btns button.buy { background: linear-gradient(#ffd780, #e6a63a); color: #3a2400; text-shadow: none; box-shadow: 0 3px 0 #8a5a12; }
+/* 說明：固定高度＋分頁按鈕（和商店、成就同款），切頁時版面不再上下跳 */
+#help .panel { height: 92%; }
+#help .tabs { gap: .35em; margin-bottom: .5em; width: 100%; }
+#help .tabs button { padding: .45em .2em; font-size: .78em; line-height: 1.2; }
+#help .tabs button.sel { background: linear-gradient(#ffd27a, #e8a83a); color: var(--ink); text-shadow: none; }
+#help .hp-page { justify-content: flex-start; margin-bottom: .6em; }
