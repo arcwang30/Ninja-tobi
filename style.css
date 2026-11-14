@@ -773,3 +773,4 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 /* 漆木框：卡片本身不裁切（overflow 只會裁到外框內側，框上的金具會被切掉），改由背景圖自己裁圓角 */
 #lvsel.fc .lv-card { overflow: visible; }
 #lvsel.fc .lv-card .lv-art { border-radius: .3em; overflow: hidden; }
+.opt .og-l .og-sub { display: block; margin: .1em 0 0 1.55em; font-size: .62em; font-weight: 700; color: var(--muted); white-space: normal; }

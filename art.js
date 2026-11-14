@@ -973,11 +973,11 @@ function drawZone(camY, stage, t) {
     for (let i = 0; i < 6; i++) { const x = ((i * 91 + t * 10) % (W + 120)) - 60, yy = zy + 60 + (i * 53) % Math.max(60, H - zy) + Math.sin(t * .8 + i) * 10, r = 50 + (i % 3) * 16; c.drawImage(glowSpr('smoke', [[.06, 'rgba(60,0,0,.32)'], [1, 'rgba(60,0,0,0)']]), x - r * 1.6, yy - r * .55, r * 3.2, r * 1.1); }   // 深處流動的暗煙（柔和、沒有硬邊）
     c.globalCompositeOperation = 'lighter';
     const depth = Math.max(80, H - zy) + 60;
-    for (let i = 0; i < 14; i++) {   // 往上翻滾的火團（亮橘黃光斑）
+    for (let i = 0; i < 14 * FXK(); i++) {   // 往上翻滾的火團（亮橘黃光斑）
       const sp = 40 + (i % 4) * 18, yy = zy + depth - ((t * sp + i * 97) % depth), x = ((i * 83.7 + Math.sin(t * 1.3 + i) * 24) % (W + 40)) - 20, r = 26 + (i % 3) * 12, f = (yy - zy) / depth;
       const a0 = c.globalAlpha; c.globalAlpha = a0 * .4 * (1 - f * .6); c.drawImage(glowSpr('blob', [[.06, 'rgb(255,200,80)'], [1, 'rgba(255,90,20,0)']]), x - r, yy - r, r * 2, r * 2); c.globalAlpha = a0;   // 效能：預先畫好的光斑貼圖，不再每幀建立漸層
     }
-    for (let i = 0; i < 14; i++) {   // 火體裡往上竄的柔光火焰（拉長的光暈，沒有硬邊）
+    for (let i = 0; i < 14 * FXK(); i++) {   // 火體裡往上竄的柔光火焰（拉長的光暈，沒有硬邊）
       const cyc = (t * .9 + i * .37) % 1, x = (i * 47.3 + t * 12 + Math.sin(t * 2 + i) * 10) % W, yy = zy + 30 + (1 - cyc) * (depth - 40), r = 24 + (i % 3) * 10, a = .45 * Math.sin(cyc * Math.PI);
       if (a > .01) { const a0 = c.globalAlpha; c.globalAlpha = a0 * a; c.drawImage(glowSpr('flame', [[.03, 'rgb(255,240,170)'], [.45, 'rgba(255,170,60,.7)'], [1, 'rgba(255,110,30,0)']]), x - r * .42, yy - r * 1.5, r * .84, r * 3); c.globalAlpha = a0; }
     }
@@ -986,7 +986,7 @@ function drawZone(camY, stage, t) {
       const x = i * 26 + 2, h = 32 + Math.sin(t * 8 + i * 1.7) * 12 + Math.sin(t * 13 + i) * 5, sw = Math.sin(t * 6 + i) * 6;
       tongue(x, zy + 10, h, 14, sw, i % 2 ? '#ff9a2a' : '#ff6a14'); tongue(x + 1, zy + 10, h * .62, 8, sw * .6, '#ffd24a'); tongue(x + 1, zy + 10, h * .3, 4, sw * .3, '#fff3b0');
     }
-    for (let i = 0; i < 18; i++) { const cyc = (t * .9 + i * .37) % 1, x = (i * 61.7 + Math.sin(t * 2 + i) * 14) % W, y = zy - cyc * 110; c.fillStyle = `rgba(255,${190 + (i % 3) * 25},90,${1 - cyc})`; aCirc(c, x, y, 1.8 * (1 - cyc) + .6); c.fill(); }   // 飛起的火星
+    for (let i = 0; i < 18 * FXK(); i++) { const cyc = (t * .9 + i * .37) % 1, x = (i * 61.7 + Math.sin(t * 2 + i) * 14) % W, y = zy - cyc * 110; c.fillStyle = `rgba(255,${190 + (i % 3) * 25},90,${1 - cyc})`; aCirc(c, x, y, 1.8 * (1 - cyc) + .6); c.fill(); }   // 飛起的火星
   } else if (type === 'sea') {
     // 後浪
     c.fillStyle = '#1a4a90'; c.beginPath(); c.moveTo(0, H);
@@ -1018,11 +1018,11 @@ function drawZone(camY, stage, t) {
     const gr = c.createLinearGradient(0, zy, 0, zy + Math.max(160, H - zy)); gr.addColorStop(0, '#a6b4c6'); gr.addColorStop(.3, '#6e7f96'); gr.addColorStop(1, '#2c3646');
     c.fillStyle = gr; c.beginPath(); c.moveTo(0, H); for (let x = 0; x <= W + 10; x += 10) c.lineTo(x, zy + 6 + Math.sin(x * .05 + t * 4) * 4); c.lineTo(W, H); c.closePath(); c.fill();
     c.save(); c.beginPath(); c.rect(0, zy + 4, W, H - zy); c.clip();
-    for (let i = 0; i < 9; i++) {   // 流過的風帶（往右吹）
+    for (let i = 0; i < 9 * FXK(); i++) {   // 流過的風帶（往右吹）
       const L = 120 + (i % 3) * 40, sp = 160 + (i % 4) * 50, x0 = ((i * 97 + t * sp) % (W + L + 60)) - L - 30, y0 = zy + 26 + (i * 47) % Math.max(60, depth - 60);
       inkStroke(c, s => [x0 + L - s * L, y0 + Math.sin(s * Math.PI * 2 + t * 3 + i) * 7], 9 + (i % 3) * 3, 1, 'rgba(230,238,248,.26)', null, 20);
     }
-    for (let i = 0; i < 5; i++) {   // 打轉的小旋風（由外往內收細的渦）
+    for (let i = 0; i < 5 * FXK(); i++) {   // 打轉的小旋風（由外往內收細的渦）
       const cx = ((i * 131 + t * 60) % (W + 80)) - 40, cy = zy + 50 + (i * 71) % Math.max(60, depth - 70), R = 16 + (i % 3) * 6, rot = t * 4 + i;
       inkStroke(c, s => { const a = rot + s * TAU * .9, rr = R * (1 - s * .75); return [cx + Math.cos(a) * rr * 1.3, cy + Math.sin(a) * rr * .8]; }, 7, 1, 'rgba(240,245,252,.4)', null, 24);
     }

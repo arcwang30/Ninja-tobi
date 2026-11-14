@@ -7,6 +7,7 @@
 let W = 360, W_LOCK = false;
 let H = 640;                    // 依螢幕比例在 640~900 之間調整（長螢幕手機不留黑邊）
 const WK = () => W / 360;       // 世界比手機寬幾倍，生成地板和敵人時用來補密度
+const FXK = () => (save && save.opt && save.opt.eco ? .5 : 1);   // 省電模式：天候粒子、追兵火焰等裝飾特效數量減半
 const GRAV = 1500, JUMP = 740, SPRING = 1060, FLY_V = 820;
 const STAGE_PX = 6000;          // 每個舞台的高度（px），10px = 1m。約 1～1.5 分鐘一個舞台，一關 10 個舞台
 const SENS = 1.25;              // 手指滑動靈敏度
@@ -347,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v128';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v129';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -400,7 +401,7 @@ function resize() {
   app.style.transform = gap ? 'translateX(-50%)' : 'translate(-50%, -50%)';
   app.style.setProperty('--u', (w / W) + 'px');
   // 解析度：最高 2 倍（3 倍螢幕的手機也只畫 2 倍，肉眼差不多、像素少一半）；整張畫布不超過 PX_MAX 像素（平板大螢幕）；再乘上自動畫質 RQ
-  let dpr = Math.min(window.devicePixelRatio || 1, 2) * RQ;
+  let dpr = Math.min(window.devicePixelRatio || 1, save && save.opt && save.opt.eco ? 1.5 : 2) * RQ;   // 省電模式：最高 1.5 倍
   if (w * h * dpr * dpr > PX_MAX) dpr = Math.sqrt(PX_MAX / (w * h));
   // 尺寸沒變就不重設 canvas（重設會清空畫面、造成閃一下）
   const cw = Math.round(w * dpr), ch = Math.round(h * dpr);
@@ -2882,7 +2883,7 @@ function render() {
   drawWalls(camY, g.th);
   drawTOD();   // 舞台時段的色調（levels.js）
   ctx.save();
-  if (g.shake > 0) ctx.translate(rnd(-g.shake, g.shake) * .5, rnd(-g.shake, g.shake) * .5);
+  if (g.shake > 0) { const sk = g.shake * (save.opt.eco ? .25 : .5); ctx.translate(rnd(-sk, sk), rnd(-sk, sk)); }   // 省電模式：畫面震動減小
   ctx.translate(0, -camY);
   for (const pl of g.plats) if (pl.y - camY > -20 && pl.y - camY < H + 20) drawPlat(pl);
   if (state !== 'zintro') for (const it of g.items) drawItem(it);   // 開場演出（倒數結束前）不顯示道具、金幣與卷軸
@@ -2964,8 +2965,8 @@ let lastT = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
   // 最高 60fps：120Hz 的 iPhone／iPad 不會跑到 120 幀（畫面一樣順，運算與耗電少一半、比較不會發燙）
-  if (now - lastT < 1000 / 60 - 3) return;
-  const dt = Math.min(.033, (now - lastT) / 1000); lastT = now;
+  if (now - lastT < (save.opt.eco ? 1000 / 30 : 1000 / 60) - 3) return;   // 省電模式：最高 30fps
+  const dt = Math.min(save.opt.eco ? .05 : .033, (now - lastT) / 1000); lastT = now;
   // 暫停中（暫停選單、說明蓋在遊戲上）：畫面是靜止的，每秒只重畫約 4 次，省電
   if (paused && g && state !== 'menu') { if ((PF.pz = (PF.pz || 0) + 1) % 15) return; } else PF.pz = 0;
   update(dt); render();
@@ -2978,7 +2979,7 @@ function perfWatch(dt) {
   PF.n++; PF.sum += dt; PF.t += dt;
   if (PF.t < 4) return;
   const fps = PF.n / PF.sum; PF.n = PF.sum = PF.t = 0;
-  if (fps < 45 && RQ > .6) { RQ = Math.max(.6, +(RQ - .15).toFixed(2)); try { localStorage.setItem('tobi_rq', RQ); } catch (e) { } resize(); }
+  if (fps < (save.opt.eco ? 24 : 45) && RQ > .6) { RQ = Math.max(.6, +(RQ - .15).toFixed(2)); try { localStorage.setItem('tobi_rq', RQ); } catch (e) { } resize(); }
 }
 requestAnimationFrame(frame);
 
@@ -3147,6 +3148,7 @@ function renderOpt() {
   for (const [k, id] of [['mus', 'segMus'], ['sfx', 'segSfx']])
     $(id).innerHTML = [1, 2, 3, 4, 5].map(i => `<button class="${save.opt[k] >= i ? 'on' : ''}" data-act="vol" data-arg="${k}=${i}" aria-label="${i}"></button>`).join('');
   $('bVib').classList.toggle('on', !!save.opt.vib);
+  $('bEco').classList.toggle('on', !!save.opt.eco);
   $('langPills').innerHTML = LANGS.map((l, i) => `<button class="${i === LI ? 'on' : ''}" data-act="setlang" data-arg="${i}">${['中', '日', 'EN'][i] || l.name}</button>`).join('');
   const bf = $('bFull'); bf.style.display = TEST_FREE ? '' : 'none'; bf.textContent = t('full_test', hasFull() ? t('full_own') : t('full_none'));   // 測試模式才顯示
   const r = $('bReset'); delete r.dataset.armed; $('bResetT').textContent = t('reset_btn'); r.classList.remove('armed');
@@ -3250,6 +3252,7 @@ document.addEventListener('click', e => {
       break;
     }
     case 'vib': save.opt.vib ^= 1; persist(); renderOpt(); vib(60); break;
+    case 'eco': save.opt.eco = save.opt.eco ? 0 : 1; persist(); renderOpt(); resize(); toast(t(save.opt.eco ? 'eco_on' : 'eco_off')); break;   // 省電模式
     case 'setlang': LI = +arg; save.opt.lang = LANGS[LI].id; persist(); applyLang(); renderOpt(); buildDockIcons(); break;
     case 'reset': // 按兩次才重置（不用 confirm()，部分嵌入環境不會顯示對話框）
       if (b.dataset.armed) { const lang = save.opt.lang; save = defSave(); save.opt.lang = lang; persist(); renderOpt(); toast(t('reset_done')); }

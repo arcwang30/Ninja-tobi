@@ -168,7 +168,7 @@ function drawWeather() {
   if (w.k === 'rain') {
     c.fillStyle = `rgba(20,30,60,${.18 * a})`; c.fillRect(0, 0, W, H);
     c.strokeStyle = `rgba(190,215,255,${.35 + .25 * a})`; c.lineWidth = 1.3;
-    const n = Math.round(70 * a * WK()), sl = 6 + w.gust * .15;
+    const n = Math.round(70 * a * WK() * FXK()), sl = 6 + w.gust * .15;
     c.beginPath();
     for (let i = 0; i < n; i++) { const x = ((i * 47.3 + tt * 60) % (W + 40)) - 20, y = ((i * 91.7 + tt * 900 - camY * .5) % (H + 40) + H + 40) % (H + 40) - 20; c.moveTo(x, y); c.lineTo(x - sl, y + 20); }
     c.stroke();
@@ -182,12 +182,12 @@ function drawWeather() {
     c.fillStyle = gr; c.fillRect(0, 0, W, H);
   } else if (w.k === 'snow') {
     c.fillStyle = `rgba(220,235,255,${.12 * a})`; c.fillRect(0, 0, W, H);
-    const n = Math.round(80 * a * WK());
+    const n = Math.round(80 * a * WK() * FXK());
     for (let i = 0; i < n; i++) { const s = 1 + (i % 3), x = ((i * 61.1 + Math.sin(tt * 1.3 + i) * 18 + tt * 25) % (W + 20) + W + 20) % (W + 20) - 10, y = ((i * 83.3 + tt * (50 + s * 22) - camY * .4) % (H + 20) + H + 20) % (H + 20) - 10; c.fillStyle = 'rgba(255,255,255,.9)'; aCirc(c, x, y, s); c.fill(); }
   } else if (w.k === 'dark') {
     // 火山灰
     c.fillStyle = 'rgba(120,110,100,.6)';
-    for (let i = 0; i < 30 * a; i++) { const x = ((i * 71 + tt * 12) % W), y = ((i * 113 + tt * 30 - camY * .3) % H + H) % H; c.fillRect(x, y, 1.6, 1.6); }
+    for (let i = 0; i < 30 * a * FXK(); i++) { const x = ((i * 71 + tt * 12) % W), y = ((i * 113 + tt * 30 - camY * .3) % H + H) % H; c.fillRect(x, y, 1.6, 1.6); }
     // 只有主角周圍一圈亮，其他地方一片黑；打雷的瞬間看到全景
     const p = g.p, px = p.x, py = p.y - 20 - camY, r0 = 70 - 15 * a, r1 = 150 - 30 * a;
     const dark = (.62 + .3 * a) * (1 - w.flash);
@@ -203,7 +203,7 @@ function drawWeather() {
     const gust = .65 + .35 * Math.sin(tt * 1.6);
     c.strokeStyle = `rgba(255,255,255,${.22 * a * gust})`; c.lineWidth = 1.5; c.lineCap = 'round';
     for (let i = 0; i < 9; i++) { const x = ((i * 131 + tt * 520) % (W + 260)) - 130, y = ((i * 97.1 - camY * .2) % H + H) % H, l = 60 + (i % 3) * 30; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + l * .5, y - 6, x + l, y + 4); c.stroke(); }
-    const LC = ['#6fbf5a', '#3f8f3a', '#9ad06a', '#d8502a', '#e8a030'], n = Math.round(60 * a * WK());
+    const LC = ['#6fbf5a', '#3f8f3a', '#9ad06a', '#d8502a', '#e8a030'], n = Math.round(60 * a * WK() * FXK());
     for (let i = 0; i < n; i++) {
       const sp = (150 + (i % 5) * 35) * gust, x = ((i * 57.7 + tt * sp) % (W + 60) + W + 60) % (W + 60) - 30;
       const y = ((i * 97.3 + tt * (40 + (i % 4) * 15) + Math.sin(tt * 2 + i) * 22 - camY * .3) % (H + 40) + H + 40) % (H + 40) - 20;
@@ -217,7 +217,7 @@ function drawWeather() {
     // 火雨：上方泛橘紅熱浪＋飄落的火星與灰燼；預告落點與墜落的火球
     const hg = c.createLinearGradient(0, 0, 0, H); hg.addColorStop(0, `rgba(255,110,30,${.22 * a})`); hg.addColorStop(.6, `rgba(200,40,10,${.08 * a})`); hg.addColorStop(1, 'rgba(0,0,0,0)');
     c.fillStyle = hg; c.fillRect(0, 0, W, H);
-    for (let i = 0; i < 40 * a * WK(); i++) {
+    for (let i = 0; i < 40 * a * WK() * FXK(); i++) {
       const x = ((i * 71.3 + Math.sin(tt + i) * 14 + tt * 10) % W + W) % W, y = ((i * 113.7 + tt * (40 + (i % 4) * 18) - camY * .3) % H + H) % H;
       if (i % 3) { c.fillStyle = 'rgba(110,100,95,.55)'; c.fillRect(x, y, 1.8, 1.8); }
       else { c.fillStyle = `rgba(255,${150 + (i % 5) * 20},60,${.55 + .4 * Math.sin(tt * 6 + i)})`; aCirc(c, x, y, 1.6); c.fill(); }
