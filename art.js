@@ -2323,12 +2323,13 @@ const DOCK_STYLES_LIST = [
 const DOCK_STYLES = { b1: DOCK_STYLES_LIST[0][2], b2: DOCK_STYLES_LIST[1][2], b3: DOCK_STYLES_LIST[2][2] };
 
 // ===== 主畫面左上角的商店圖示（三案；網址 ?shop=a|b|c 可預覽） =====
-let SHOP_STYLE = new URLSearchParams(location.search).get('shop') || 'c';   // 遊戲使用 C 千兩箱
+let SHOP_STYLE = new URLSearchParams(location.search).get('shop') || 'c2';   // 遊戲使用 c2 精緻木箱鐵鋲（舊的 C 千兩箱仍可用 ?shop=c 預覽）
 function shopIcon(style = SHOP_STYLE, size = 200, open = true) {
   const cnv = document.createElement('canvas'); cnv.width = cnv.height = size;
   const c = cnv.getContext('2d'); c.scale(size / 100, size / 100);
   const label = L(DOCK_LABEL.shop);
   const fitText = (s, max, fs0) => { let fs = fs0; c.font = `900 ${fs}px ${FONT}`; while (c.measureText(s).width > max && fs > 8) { fs -= .5; c.font = `900 ${fs}px ${FONT}`; } };
+  if (/^c[123]$/.test(style)) { chestFine(c, style, open, label, fitText); return cnv; }   // 精緻版寶箱三案（?shop=c1|c2|c3 預覽）
   if (style === 'b') {   // 暖簾：木桿上掛著深藍布簾，中間白色圓紋寫「商店」
     c.fillStyle = 'rgba(0,0,0,.3)'; aEll(c, 50, 94, 36, 4); c.fill();
     for (let i = 0; i < 3; i++) {
@@ -2382,6 +2383,103 @@ function shopIcon(style = SHOP_STYLE, size = 200, open = true) {
     dkRibbon(c, 'shop', 82);
   }
   return cnv;
+}
+
+// ===== 精緻版寶箱（底部選單「寶藏」）：c1 黑漆蒔繪／c2 木箱鐵鋲／c3 朱漆金具；和原本千兩箱同樣的外框位置（箱 14～86、緞帶 81～97） =====
+const CHEST_P = {
+  c1: { body: ['#4a4048', '#1e1a20', '#0e0c10'], lid: ['#5a5058', '#26202a', '#141016'], band: ['#fff4c0', '#e8b84a', '#9a6a1a', '#5a3c0c'], pat: 'makie', lock: 'shield', tassel: '#d0262d', lining: '#a81c20' },
+  c2: { body: ['#c4823e', '#93582a', '#5e3416'], lid: ['#d4914a', '#a0622e', '#6a3c1a'], band: ['#b8c0cc', '#6a707c', '#3a3e48', '#1e2026'], pat: 'wood', lock: 'shield', lining: '#8a1418' },
+  c3: { body: ['#ec5a3a', '#c0261c', '#6a100a'], lid: ['#f47a4a', '#d0321e', '#7a140c'], band: ['#fff4c0', '#e8b84a', '#9a6a1a', '#5a3c0c'], pat: 'diamond', lock: 'crest', tassel: '#f2c14e', lining: '#3a1a10' },
+};
+function chestFine(c, k, open, label, fitText) {
+  const P = CHEST_P[k], gold = P.band[0] === '#fff4c0';
+  const vg = (y0, y1, cols) => { const g = c.createLinearGradient(0, y0, 0, y1); cols.forEach((cc, i) => g.addColorStop(i / (cols.length - 1), cc)); return g; };
+  const hgr = (x0, x1, cols) => { const g = c.createLinearGradient(x0, 0, x1, 0); cols.forEach((cc, i) => g.addColorStop(i / (cols.length - 1), cc)); return g; };
+  const rivet = (x, y, r = 1.3) => { aCirc(c, x, y, r); c.fillStyle = gold ? '#fff0b0' : '#d8dee8'; c.fill(); c.strokeStyle = 'rgba(30,20,10,.8)'; c.lineWidth = .6; c.stroke(); };
+  const BODY = () => aRR(c, 14, 48, 72, 32, 4.5);
+  const LID = () => { c.beginPath(); c.moveTo(14, 50); c.lineTo(14, 38); c.quadraticCurveTo(14, 22, 50, 22); c.quadraticCurveTo(86, 22, 86, 38); c.lineTo(86, 50); c.closePath(); };
+  const pattern = (path, y0, y1) => {   // 表面紋樣
+    c.save(); path(); c.clip();
+    if (P.pat === 'wood') {   // 木紋＋板縫
+      c.strokeStyle = 'rgba(70,34,10,.35)'; c.lineWidth = .7;
+      for (let y = y0 + 3; y < y1; y += 3.2) { c.beginPath(); c.moveTo(12, y); for (let x = 12; x <= 88; x += 8) c.quadraticCurveTo(x + 4, y + Math.sin(x * .7 + y) * 1.1, x + 8, y); c.stroke(); }
+      c.strokeStyle = 'rgba(40,18,6,.55)'; c.lineWidth = 1.1; for (let y = y0 + 9; y < y1 - 2; y += 9.5) { c.beginPath(); c.moveTo(12, y); c.lineTo(88, y); c.stroke(); }
+      c.fillStyle = 'rgba(40,18,6,.45)'; for (const [x, y] of [[40, y0 + 6], [61, y1 - 6]]) { aEll(c, x, y, 2.2, 1.1); c.fill(); }   // 木節
+    } else if (P.pat === 'makie') {   // 蒔繪：金色青海波＋梨子地金粉
+      c.strokeStyle = 'rgba(232,184,74,.55)'; c.lineWidth = .7;
+      for (let y = y1 - 2, row = 0; y > y1 - 14; y -= 3.4, row++) for (let x = 10 + (row % 2) * 4; x <= 90; x += 8) for (const r of [4, 2.6]) { c.beginPath(); c.arc(x, y, r, Math.PI, 0); c.stroke(); }
+      c.fillStyle = 'rgba(255,220,130,.55)'; for (let i = 0; i < 46; i++) { const x = 14 + (i * 37.7) % 72, y = y0 + (i * 13.3) % (y1 - y0 - 12); aCirc(c, x, y, .35 + (i % 3) * .18); c.fill(); }
+    } else {   // 朱漆：細菱格的暗紋
+      c.strokeStyle = 'rgba(255,200,140,.16)'; c.lineWidth = .7;
+      for (let x = -20; x < 110; x += 7) { c.beginPath(); c.moveTo(x, y0); c.lineTo(x + (y1 - y0), y1); c.moveTo(x, y1); c.lineTo(x + (y1 - y0), y0); c.stroke(); }
+    }
+    c.restore();
+  };
+  const straps = (y0, y1, lidTop) => {   // 兩條直帶（金屬）＋鉚釘
+    for (const x of [24, 69]) {
+      c.save(); if (lidTop) { LID(); c.clip(); }
+      c.beginPath(); c.rect(x, y0, 7, y1 - y0); c.fillStyle = hgr(x, x + 7, P.band); c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(x + 1.2, y0 + 1, 1.2, y1 - y0 - 2);
+      c.restore();
+      for (let y = y0 + 4; y < y1 - 2; y += 7) rivet(x + 3.5, y);
+    }
+  };
+  const corners = () => {   // 四角的包角金具（L 形＋鉚釘）
+    for (const [x, y, sx, sy] of [[14, 48, 1, 1], [86, 48, -1, 1], [14, 80, 1, -1], [86, 80, -1, -1]]) {
+      c.beginPath(); c.moveTo(x, y); c.lineTo(x + sx * 9, y); c.lineTo(x + sx * 9, y + sy * 3.2); c.lineTo(x + sx * 3.2, y + sy * 3.2); c.lineTo(x + sx * 3.2, y + sy * 9); c.lineTo(x, y + sy * 9); c.closePath();
+      c.fillStyle = vg(y, y + sy * 9, P.band.slice(0, 3)); c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+      rivet(x + sx * 1.8, y + sy * 1.8, 1);
+    }
+  };
+  const lock = () => {
+    if (P.tassel) {   // 房（流蘇）
+      c.strokeStyle = P.tassel; c.lineWidth = 1.4; c.beginPath(); c.moveTo(48, 62); c.quadraticCurveTo(45, 70, 43, 74); c.moveTo(52, 62); c.quadraticCurveTo(55, 70, 57, 74); c.stroke();
+      for (const x of [43, 57]) { c.beginPath(); c.moveTo(x - 2.4, 74); c.lineTo(x + 2.4, 74); c.lineTo(x + 3, 81); c.lineTo(x - 3, 81); c.closePath(); c.fillStyle = P.tassel; c.fill(); c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = .7; c.stroke(); aCirc(c, x, 73.5, 1.8); c.fillStyle = '#f2c14e'; c.fill(); }
+    }
+    const LG = vg(42, 64, ['#fff4c0', '#e8b84a', '#a8761e']);
+    if (P.lock === 'crest') {   // 圓形家紋鎖（梅花）
+      aCirc(c, 50, 53, 9.5); c.fillStyle = LG; c.fill(); aInk(c, 1.8); aCirc(c, 50, 53, 7.4); c.strokeStyle = 'rgba(122,74,16,.8)'; c.lineWidth = .8; c.stroke();
+      c.fillStyle = '#c0261c'; for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * TAU / 5; aCirc(c, 50 + Math.cos(a) * 3.6, 53 + Math.sin(a) * 3.6, 2.3); c.fill(); }
+      aCirc(c, 50, 53, 1.6); c.fillStyle = '#ffe9a0'; c.fill();
+    } else {   // 盾形錠前＋鑰匙孔
+      c.beginPath(); c.moveTo(42, 44.5); c.lineTo(58, 44.5); c.lineTo(58, 55); c.quadraticCurveTo(58, 61.5, 50, 64); c.quadraticCurveTo(42, 61.5, 42, 55); c.closePath(); c.fillStyle = LG; c.fill(); aInk(c, 1.8);
+      c.beginPath(); c.moveTo(44.2, 46.6); c.lineTo(55.8, 46.6); c.lineTo(55.8, 54.8); c.quadraticCurveTo(55.8, 59.6, 50, 61.6); c.quadraticCurveTo(44.2, 59.6, 44.2, 54.8); c.closePath(); c.strokeStyle = 'rgba(122,74,16,.75)'; c.lineWidth = .8; c.stroke();
+      aCirc(c, 50, 52, 2.2); c.fillStyle = INK; c.fill(); c.beginPath(); c.moveTo(49, 53); c.lineTo(51, 53); c.lineTo(51.6, 58); c.lineTo(48.4, 58); c.closePath(); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.55)'; aEll(c, 45.5, 48, 1.4, .8); c.fill();
+    }
+  };
+  // 影子與光
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  c.fillStyle = 'rgba(0,0,0,.32)'; aEll(c, 50, 92, 38, 4.5); c.fill();
+  bossGlow(c, 50, open ? 38 : 47, open ? 46 : 34, open ? 'rgba(255,220,120,.6)' : 'rgba(255,220,120,.3)');
+  if (open) {   // 打開：蓋子往後倒（看得到內襯），箱裡堆滿小判
+    c.beginPath(); c.moveTo(16, 47); c.lineTo(84, 47); c.lineTo(88, 20); c.quadraticCurveTo(50, 12, 12, 20); c.closePath(); c.fillStyle = vg(14, 47, P.lid); c.fill(); aInk(c, 2.2);
+    c.beginPath(); c.moveTo(21, 45); c.lineTo(79, 45); c.lineTo(82, 24); c.quadraticCurveTo(50, 18, 18, 24); c.closePath(); c.fillStyle = P.lining; c.fill(); c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = 1; c.stroke();
+    c.fillStyle = 'rgba(255,255,255,.12)'; c.fillRect(22, 26, 56, 2);
+    bossGlow(c, 50, 42, 30, 'rgba(255,230,140,.75)');
+    for (const [x, y, r] of [[30, 44, .95], [70, 44, .95], [38, 40, 1], [62, 40, 1], [50, 37, 1.1], [44, 45, .9], [56, 45, .9], [50, 44, 1]]) drawKoban(c, x, y, 6.6 * r, 9 * r, 1, x);
+  } else {
+    LID(); c.fillStyle = vg(22, 50, P.lid); c.fill(); pattern(LID, 22, 50); LID(); aInk(c, 2.4);
+    c.fillStyle = 'rgba(255,255,255,.2)'; aEll(c, 37, 29, 15, 3, -.08); c.fill();
+    straps(22, 50, true);
+  }
+  // 箱身
+  BODY(); c.fillStyle = vg(48, 80, P.body); c.fill(); pattern(BODY, 48, 80); BODY(); aInk(c, 2.4);
+  c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(16, 74, 68, 4.5);   // 底部陰影
+  straps(48, 80, false);
+  // 蓋緣的金屬口緣＋（關著時）縫隙透出的金光
+  aRR(c, 12.5, 45.5, 75, 5, 1.6); c.fillStyle = vg(45.5, 50.5, P.band); c.fill(); aInk(c, 1.4);
+  if (!open) { c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = 'rgba(255,225,140,.65)'; c.fillRect(15, 50.4, 70, 1.1); c.restore(); }
+  corners(); lock();
+  const spark = (x, y, r) => { bossGlow(c, x, y, r * 2.2, 'rgba(255,240,170,.7)'); c.beginPath(); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, rr = i % 2 ? r * .28 : r; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.closePath(); c.fillStyle = '#fffbe6'; c.fill(); };   // 四芒閃光
+  if (open) for (const [x, y, r] of [[22, 16, 5], [80, 19, 4.2], [66, 8, 3.2], [34, 9, 2.8]]) spark(x, y, r);
+  else for (const [x, y, r] of [[79, 27, 3.6], [23, 31, 2.6]]) spark(x, y, r);
+  // 緞帶：兩端折進去的燕尾＋金色內框，白字描深紅邊
+  for (const sd of [-1, 1]) { const x0 = 50 + sd * 36; c.beginPath(); c.moveTo(x0 - sd * 2, 84); c.lineTo(x0 + sd * 8, 84); c.lineTo(x0 + sd * 4, 90.5); c.lineTo(x0 + sd * 8, 97); c.lineTo(x0 - sd * 2, 97); c.closePath(); c.fillStyle = '#8a1418'; c.fill(); aInk(c, 1.8); }
+  aRR(c, 14, 81.5, 72, 14.5, 2); c.fillStyle = vg(81.5, 96, ['#ec4a44', '#c0262d', '#9a1a1e']); c.fill(); aInk(c, 2);
+  c.strokeStyle = '#f2c14e'; c.lineWidth = .9; aRR(c, 16.6, 84, 66.8, 9.5, 1.2); c.stroke();
+  c.fillStyle = 'rgba(255,255,255,.22)'; c.fillRect(17, 83, 66, 1.4);
+  fitText(label, 52, 11); c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 2.6; c.strokeStyle = '#5a0a0c'; c.strokeText(label, 50, 89.2); c.fillStyle = '#fff'; c.fillText(label, 50, 89.2);
 }
 
 // ===== 「開始修行」按鈕的底圖（三案；網址 ?start=a|b|c 預覽；文字仍是網頁文字，會跟著換語言） =====

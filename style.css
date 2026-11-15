@@ -844,3 +844,15 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
   .lvsel .lv-list { margin: .3em 0 .6em; grid-template-columns: repeat(2, minmax(0, min(50%, calc((92cqh - 21.6em) / 2.5)))); }
   .lvsel .lv-go { margin-bottom: .5em; }
 }
+/* v137 寶藏寶箱：底部「寶藏」緞帶和其他圖示的底邊對齊；每隔幾秒輕輕搖一下（以箱底為支點） */
+.dock button i.scroll-ic.ic-chest { transform-origin: 50% 85%; transform: scale(1.32) translateY(var(--chy, -10.5%)); }
+#title.on .dock button i.scroll-ic.ic-chest { animation: chestWob 3.2s 2.2s ease-in-out infinite; }
+@keyframes chestWob {
+  0%, 68%, 100% { transform: scale(1.32) translateY(var(--chy, -10.5%)) rotate(0); }
+  73% { transform: scale(1.32) translateY(var(--chy, -10.5%)) rotate(-5deg); }
+  79% { transform: scale(1.32) translateY(var(--chy, -10.5%)) rotate(4deg); }
+  85% { transform: scale(1.32) translateY(var(--chy, -10.5%)) rotate(-2.5deg); }
+  91% { transform: scale(1.32) translateY(var(--chy, -10.5%)) rotate(1.2deg); }
+}
+.dock button:active i.scroll-ic.ic-chest { animation: none; transform: scale(1.24) translateY(var(--chy, -10.5%)); }
+@media (prefers-reduced-motion: reduce) { #title.on .dock button i.scroll-ic.ic-chest { animation: none; } }

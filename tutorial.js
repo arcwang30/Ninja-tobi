@@ -91,7 +91,23 @@ function drawTutorial() {
   const finger = (x, y2, press) => { c.globalAlpha = .95; aCirc(c, x, y2, press ? 7 : 8); c.fillStyle = press ? '#ffd27a' : '#fff'; c.fill(); c.globalAlpha = 1; };
   const arrow = (x1, y1, x2, y2) => { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); const a = Math.atan2(y2 - y1, x2 - x1); c.beginPath(); c.moveTo(x2, y2); c.lineTo(x2 - Math.cos(a - .5) * 7, y2 - Math.sin(a - .5) * 7); c.moveTo(x2, y2); c.lineTo(x2 - Math.cos(a + .5) * 7, y2 - Math.sin(a + .5) * 7); c.stroke(); };
   if (S.k === 'move') { arrow(gx - 4, gy, gx - 22, gy); arrow(gx + 4, gy, gx + 22, gy); finger(gx + Math.sin(g.t * 4) * 16, gy + 12, true); }
-  else if (S.k === 'climb' || S.k === 'scroll') { arrow(gx, gy + 18, gx, gy - 20); }
+  else if (S.k === 'scroll') {   // 豪天翔：畫一顆縮小版的卷軸按鈕（和畫面下方中間那顆一樣），手指點一下
+    const r = 19, pu = .5 + .5 * Math.sin(g.t * 5), j = curJutsu();
+    c.save();
+    const gl = c.createRadialGradient(gx, gy, r * .6, gx, gy, r * 1.5); gl.addColorStop(0, `rgba(255,210,90,${.3 + .25 * pu})`); gl.addColorStop(1, 'rgba(255,210,90,0)'); c.fillStyle = gl; aCirc(c, gx, gy, r * 1.5); c.fill();
+    aCirc(c, gx, gy, r + 2.5); c.fillStyle = INK; c.fill();
+    const bg = c.createRadialGradient(gx - 6, gy - 7, 3, gx, gy, r); bg.addColorStop(0, '#3a4a7a'); bg.addColorStop(1, '#141a36'); aCirc(c, gx, gy, r); c.fillStyle = bg; c.fill();
+    c.lineWidth = 2.4; c.strokeStyle = '#e8b84a'; aCirc(c, gx, gy, r - 1.5); c.stroke();
+    c.translate(gx, gy - 1); c.rotate(-.35); c.scale(.72, .72);
+    c.beginPath(); if (c.roundRect) c.roundRect(-16, -7, 32, 14, 3); else c.rect(-16, -7, 32, 14); c.fillStyle = '#fff3d0'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.6; c.stroke();
+    c.fillStyle = jutsuBand(j); c.fillRect(-3, -7, 6, 14);
+    for (const sx of [-1, 1]) { c.beginPath(); if (c.roundRect) c.roundRect(sx * 16 - 3, -9, 6, 18, 2); else c.rect(sx * 16 - 3, -9, 6, 18); c.fillStyle = '#6a3a1e'; c.fill(); c.stroke(); }
+    c.restore();
+    const tap = k < .25;   // 每一拍的開頭按下去
+    finger(gx + 10, gy + 12 - (tap ? 0 : 3), tap);
+    if (tap) { c.strokeStyle = `rgba(255,255,255,${1 - k * 4})`; c.lineWidth = 2; aCirc(c, gx, gy, r + 3 + k * 24); c.stroke(); }   // 點擊漣漪
+  }
+  else if (S.k === 'climb') { arrow(gx, gy + 18, gx, gy - 20); }
   else if (S.k === 'touch') { drawStar4(c, gx, gy, 10 + Math.sin(g.t * 6) * 3, g.t * 3, '#ffd27a'); }
   else if (S.k === 'flick') { const D = [[0, -1], [-.72, -.7], [.72, -.7]], di = Math.floor(g.t * 1.2) % 3; for (const [dx, dy] of D) arrow(gx - dx * 12, gy - dy * 12 + 6, gx + dx * 22, gy + dy * 22 + 6); const [fx, fy] = D[di]; finger(gx + fx * (-12 + k * 34), gy + 6 + fy * (-12 + k * 34), true); }   // 往上、左上、右上三個方向，手指輪流示範
   else if (S.k === 'dive') { arrow(gx, gy - 18, gx, gy + 20); finger(gx, gy - 18 + k * 38, true); }
