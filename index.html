@@ -99,7 +99,8 @@ html, body { margin: 0; background: #070915; }
       <div class="lv-vol" id="lvVol"></div>   <!-- 卷（關卡包）翻頁：卷之一 風林火山篇（免費）／卷之二 百鬼夜行篇（製作中） -->
       <div class="lv-list" id="lvList"></div>
       <div class="lv-jutsu" id="lvJutsu"></div>   <!-- 帶進關卡的忍法（打倒各關第 10 舞台魔王取得卷軸後解鎖） -->
-      <button class="big red lv-go" data-act="lvstart" id="lvGo"></button>   <!-- 先點關卡圖選擇，再按這顆「出陣！」才開始 -->
+      <div class="lv-tier" id="lvTier"></div>   <!-- 難易度（版型 a／b／c 會由 levels.js 搬到不同位置） -->
+      <div class="lv-gorow" id="lvGoRow"><button class="big red lv-go" data-act="lvstart" id="lvGo"></button></div>   <!-- 先點關卡圖選擇，再按「出陣！」才開始（c 版：左邊是難易度切換） -->
       <button class="lv-tutic" data-act="tutorial" aria-label="tutorial"><img id="lvTutIc" alt=""><span data-i18n="tut_short"></span></button>   <!-- 新手教學：右上角的小方形按鈕 -->
       <button data-act="back" data-i18n="back"></button>
     </div>

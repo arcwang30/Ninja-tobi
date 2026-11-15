@@ -87,7 +87,36 @@ function volOwned(v) { if (!save.vols) save.vols = { 0: 1 }; return PACKS[v].fre
 // ===== v143 難易度：下忍（原本的難度）／中忍／上忍 =====
 const TIERS = [
   { n: ['下忍', '下忍', 'Genin'], c: '#7ad08a' }, { n: ['中忍', '中忍', 'Chūnin'], c: '#6ab4ff' }, { n: ['上忍', '上忍', 'Jōnin'], c: '#ff6a5a' },
+  { n: ['修羅', '修羅', 'Shura'], c: '#c87aff' },   // v147：上忍破台後開放；可以自選「禁制」加難度
 ];
+// ===== v147 修羅的禁制：每開一個加幾點修羅值；修羅值越高，分數倍率與修行之印越多 =====
+const BANS = [
+  { id: 'meta', p: 3, n: ['修行減半', '修行半減', 'Half Training'], d: ['永久修行的效果只剩一半', '修行の効果が半分', 'Training bonuses halved'] },
+  { id: 'nojutsu', p: 3, n: ['封印忍法', '忍法封印', 'No Ninjutsu'], d: ['無法使用卷軸忍法', '巻物の忍法が使えない', 'Scroll ninjutsu disabled'] },
+  { id: 'dmg2', p: 3, n: ['受傷加倍', '被ダメ倍増', 'Double Damage'], d: ['受到的傷害 ×2', '受けるダメージ ×2', 'Damage taken ×2'] },
+  { id: 'zone', p: 2, n: ['追兵加速', '追手加速', 'Fast Chaser'], d: ['下方追兵快 30%', '下の追手が 30% 速い', 'Chaser 30% faster'] },
+  { id: 'horde', p: 2, n: ['群敵', '大群', 'Horde'], d: ['敵人數量 +50%', '敵の数 +50%', 'Enemies +50%'] },
+  { id: 'noheal', p: 2, n: ['不癒', '回復不可', 'No Healing'], d: ['無法回復 HP', 'HPが回復しない', 'Cannot heal'] },
+];
+const shuraVal = b => b ? BANS.reduce((n, x) => n + (b[x.id] ? x.p : 0), 0) : 0;
+// 修羅破台：最高修羅值紀錄＋修行之印（5＋修羅值；用更高的修羅值破台時補發差額）
+function shuraClear(s) {
+  const i = g.lvl, v = shuraVal(g.ban), aw = 5 + v;
+  s.shura = s.shura || [0, 0, 0, 0]; s.shuraAw = s.shuraAw || [0, 0, 0, 0];
+  if (v > s.shura[i]) s.shura[i] = v;
+  if (aw > s.shuraAw[i]) { addSeal(aw - s.shuraAw[i]); s.shuraAw[i] = aw; }
+  persist();
+}
+// 禁制設定視窗（選關畫面，選到修羅時點中間）
+function banOpen() {
+  const s = lvSave(); s.ban = s.ban || {}; const v = shuraVal(s.ban), best = (s.shura || [])[s.sel] || 0;
+  let d = $('banCf'); if (!d) { d = document.createElement('div'); d.id = 'banCf'; d.addEventListener('click', e => { if (e.target === d) banClose(); }); $('lvsel').appendChild(d); }
+  d.innerHTML = `<div class="cf-box"><div class="cf-h">${t('ban_t')}</div><div class="bn-sub">${t('ban_sub')}</div>` +
+    `<div class="bn-list">${BANS.map(B => `<button class="bn ${s.ban[B.id] ? 'on' : ''}" data-act="bantog" data-arg="${B.id}"><i class="bn-ck">${s.ban[B.id] ? '✓' : ''}</i><span><b>${L(B.n)}</b><small>${L(B.d)}</small></span><em>+${B.p}</em></button>`).join('')}</div>` +
+    `<div class="bn-sum"><span>${t('ban_val')}</span><b>${v}</b><small>${t('ban_rw', 10 * v, 5 + v)}${best ? '　' + t('ban_best', best) : ''}</small></div>` +
+    `<div class="cf-btns"><button class="big" data-act="banclose">${t('ban_ok')}</button></div></div>`;
+}
+function banClose() { const d = $('banCf'); if (d) d.remove(); }
 const tierOpen = (i, k) => TEST_FREE || k === 0 || lvSave().tc[i] >= k;   // 中忍：下忍破台後開；上忍：中忍破台後開
 // 出發點：0 第 1 舞台、1 第 6 舞台（到過第 6 舞台才開）、2 魔王再戰（破台後才開）
 const startOpen = (i, k) => TEST_FREE || k === 0 || (k === 1 ? lvSave().best[i] >= 6 : !!lvSave().clear[i]);
@@ -379,24 +408,29 @@ function soonCard(P) {
 }
 // 每關卡片上的三顆難易度印記（破台過的難易度會亮起）
 function tierMarks(i) { const tc = lvSave().tc[i] || 0; return `<span class="lv-tm">${TIERS.map((T0, k) => `<i class="${tc > k ? 'on' : ''}" style="--tc:${T0.c}" title="${L(T0.n)}"></i>`).join('')}</span>`; }
-// 「出陣！」→ 出陣準備：選難易度與出發點
-function lvPrep(i) {
-  prepClose(); renderPrep();
+// v146 難易度直接在選關畫面選（拿掉出陣準備視窗與出發點，一律從第 1 舞台開始）
+// 版型（?tierui=a|b|c 預覽）：a＝關卡卡片下方一列三顆按鈕／b＝標題下方的分頁列／c＝「出陣！」左邊的左右切換
+const TIER_UI = new URLSearchParams(location.search).get('tierui') || 'c';   // 定案：C（出陣左邊的左右切換）
+function renderTierPick(pop) {
+  const s = lvSave(), i = s.sel, el = $('lvTier'); if (!el) return;
+  if (!tierOpen(i, s.tier)) s.tier = 0;
+  const k = s.tier, tc = s.tc[i] || 0, td = t('prep_tier_d');
+  const sel = $('lvsel'); ['ta', 'tb', 'tc'].forEach(c => sel.classList.toggle(c, c === 't' + TIER_UI));
+  // 依版型把這一列搬到對的位置
+  if (TIER_UI === 'b') sel.querySelector('.lvsel > h2').after(el);
+  else if (TIER_UI === 'c') $('lvGoRow').prepend(el);
+  else $('lvJutsu').before(el);
+  if (TIER_UI === 'c') {
+    const sv = shuraVal(s.ban), mid = k === 3   // 修羅：中間變成「禁制」按鈕，顯示目前的修羅值
+      ? `<button class="tc-mid ban" style="--tc:${TIERS[k].c}" data-act="banopen"><small>${t('ban_btn')}</small><b>${L(TIERS[k].n)}<i class="sv">${sv}</i></b><i class="tc-dots">${TIERS.map((T0, n) => `<em class="${n === k ? 'on' : ''} ${tc > n ? 'done' : ''} ${tierOpen(i, n) ? '' : 'lk'}" style="--tc:${T0.c}"></em>`).join('')}</i></button>`
+      : `<span class="tc-mid" style="--tc:${TIERS[k].c}"><small>${t('prep_tier')}</small><b>${L(TIERS[k].n)}</b><i class="tc-dots">${TIERS.map((T0, n) => `<em class="${n === k ? 'on' : ''} ${tc > n ? 'done' : ''} ${tierOpen(i, n) ? '' : 'lk'}" style="--tc:${T0.c}"></em>`).join('')}</i></span>`;
+    el.innerHTML = `<button class="tc-arr" data-act="tiercyc" data-arg="-1" aria-label="prev">◀</button>${mid}<button class="tc-arr" data-act="tiercyc" data-arg="1" aria-label="next">▶</button>`;
+  } else {
+    el.innerHTML = (TIER_UI === 'a' ? `<div class="tp-h">${t('prep_tier')}<small>${td[k]}</small></div>` : '') +
+      `<div class="tp-row">${TIERS.map((T0, n) => { const op = tierOpen(i, n); return `<button class="tp-b ${n === k ? 'on' : ''} ${op ? '' : 'lk'}" style="--tc:${T0.c}" data-act="tierpick" data-arg="${n}">${op ? '' : '🔒'}<b>${L(T0.n)}</b>${tc > n ? '<i class="tp-ok">✓</i>' : ''}</button>`; }).join('')}</div>`;
+  }
+  if (pop) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
 }
-function renderPrep() {
-  const s = lvSave(), i = s.sel, L0 = LEVELS[i];
-  if (!tierOpen(i, s.tier)) s.tier = 0; if (!startOpen(i, s.start)) s.start = 0;
-  const st = t('prep_st'), td = t('prep_tier_d'), k = s.tier, ck = START_ST[s.start];
-  let d = $('prepCf'); const fresh = !d;
-  if (fresh) { d = document.createElement('div'); d.id = 'prepCf'; d.addEventListener('click', e => { if (e.target === d) prepClose(); }); $('lvsel').appendChild(d); }
-  d.innerHTML = `<div class="cf-box" style="--ec:${LV_EC[L0.th] || '#e8b84a'}"><div class="cf-h"><i class="lg-seal">${lvName(i)}</i>${t('prep_t')}</div>` +
-    `<div class="pp-l">${t('prep_tier')}</div><div class="pp-row">${TIERS.map((T0, n) => { const op = tierOpen(i, n); return `<button class="pp-b ${n === k ? 'on' : ''} ${op ? '' : 'lk'}" style="--tc:${T0.c}" data-act="preptier" data-arg="${n}"><b>${op ? '' : '🔒 '}${L(T0.n)}</b>${(s.tc[i] || 0) > n ? '<i class="pp-done">✓</i>' : ''}</button>`; }).join('')}</div>` +
-    `<div class="pp-d">${td[k]}</div>` +
-    `<div class="pp-l">${t('prep_start')}</div><div class="pp-row">${st.map((n, m) => { const op = startOpen(i, m); return `<button class="pp-b st ${m === s.start ? 'on' : ''} ${op ? '' : 'lk'}" data-act="prepst" data-arg="${m}"><b>${op ? '' : '🔒 '}${n}</b></button>`; }).join('')}</div>` +
-    `<div class="pp-d">${ck ? t('prep_ck', ck >= 9 ? 6 : 4) : ''}${(s.tc[i] || 0) <= k ? (ck ? '<br>' : '') + t('prep_rw', [5, 7, 10][k]) : ''}</div>` +
-    `<div class="cf-btns"><button data-act="prepno">${t('back')}</button><button class="big red lv-go" data-act="prepgo" style="--ec:${LV_EC[L0.th] || '#e8b84a'}"><span>${t('lv_go')}</span></button></div></div>`;
-}
-function prepClose() { const d = $('prepCf'); if (d) d.remove(); }
 function openLvSel() {
   sealMigrate();
   const s = lvSave(), V = PACKS[volPg];
@@ -416,7 +450,7 @@ function openLvSel() {
       <span class="lv-k">${lvName(i)}</span><span class="lv-motto">${L(L0.motto)}</span>${info}${open ? tierMarks(i) : ""}</button>`;
   }).join('');
   $('lvList').innerHTML = h;
-  lvGoBtn();
+  lvGoBtn(); renderTierPick();
   renderJutsuPick();
   show('lvsel', state === 'menu');
 }
@@ -432,7 +466,7 @@ function renderJutsuPick() {
 function lvPick(i) {
   const s = lvSave(); s.sel = i; persist(); SFX.click && SFX.click();
   document.querySelectorAll('#lvList .lv-card').forEach((c, k) => c.classList.toggle('sel', k === i));
-  lvGoBtn(true);
+  lvGoBtn(true); renderTierPick();   // 換關卡時，難易度的開放狀態也跟著換
 }
 function lvGoBtn(pop) {
   const s = lvSave(), b = $('lvGo'); if (!b) return;

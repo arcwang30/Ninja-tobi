@@ -190,7 +190,7 @@ const META = [
   { id: 'reroll', n: ['天眼', '天眼', 'Third Eye'], d: ['三選一時可重抽 +1 次', '三択の引き直し +1回', '+1 reroll on level-up choices'], max: 3, cost: l => 250 * (l + 1), ic: '👁️' },
   { id: 'banish', n: ['封印', '封印', 'Seal'], d: ['三選一時可封印 +1 次（被封印的選項本局不再出現）', '三択で封印 +1回（その選択肢はもう出ない）', '+1 Seal: remove a choice for the rest of the run'], max: 3, cost: l => 300 * (l + 1), ic: '🈲' },
 ];
-const mt = id => (save.meta && save.meta[id]) || 0;   // 修行等級
+const mt = id => { const v = (save.meta && save.meta[id]) || 0; return g && g.metaK != null && state !== 'menu' && state !== 'over' ? v * g.metaK : v; };   // 修行等級（v147：遊戲中依難易度打折——上忍起 80%、修羅禁制「修行減半」再 ×0.5；商店與結算顯示原本等級）
 // 修行分三階段開放：一開始 6 項／開放第 2 關後再 6 項／任一關破台後最後 4 項
 const META_TIER = { armor: 1, power: 1, ki: 1, kireg: 1, xp: 1, luck: 1, revive: 2, cd: 2, reroll: 2, banish: 2 };
 const metaOpen = m => { if (TEST_FREE) return true; const tr = META_TIER[m.id] || 0, s = save.lv || {}; return tr === 0 || (tr === 1 && (s.open || 1) >= 2) || (tr === 2 && (s.clear || []).some(x => x)); };
@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v145';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v146';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -609,7 +609,9 @@ function startRun(lvl, opt) {   // opt＝{ tier 難易度, st 出發舞台 }；�
     // 成就用的單局紀錄
     scrollN: 0, feverN: 0, walls: 0, stHit: false, bossT0: 0,
   };
-  g.maxHp = g.hp = HP_BASE + HP_STEP * save.meta.hp;
+  g.ban = (g.tier === 3 && opt.ban) ? Object.assign({}, opt.ban) : {};   // 修羅的禁制
+  g.metaK = (g.tier >= 2 ? .8 : 1) * (BAN('meta') ? .5 : 1);
+  g.maxHp = g.hp = Math.round(HP_BASE + HP_STEP * save.meta.hp * g.metaK);
   g.scrolls = save.meta.scroll;
   g.plats.push({ x: W / 2, y: 40, w: W * 1.4, type: 'ground' });
   while (g.genY > g.camY - 150) genRow();
@@ -627,8 +629,10 @@ function startRun(lvl, opt) {   // opt＝{ tier 難易度, st 出發舞台 }；�
 const loopN = () => Math.floor(g.stage / 5);   // 第幾輪（0 = 第 1～5 舞台、1 = 第 6～10 舞台）
 const TIER = () => (g && g.tier) || 0;   // 難易度：0 下忍、1 中忍、2 上忍
 const hardN = () => loopN() * 1.6 + g.lvl * .6 + TIER() * 1.2;   // 難度：第二輪（v143 由 1 加重到 1.6）、後面的關卡、難易度越高越難
-const dmgMul = () => 1 + .2 * loopN() + .25 * TIER();   // 受到的傷害：第二輪 +20%、每升一段難易度 +25%
-const foeHpMul = () => 1 + .25 * loopN() + .4 * TIER();   // 魔王／中魔王 HP：第二輪 +25%、每段難易度 +40%
+const BAN = k => !!(g && g.ban && g.ban[k]);   // 修羅的禁制有沒有開
+const powK = () => 1 + Math.max(0, (g.lv || 1) - 6) * (TIER() >= 2 ? .04 : TIER() === 1 ? .02 : 0);   // v147：中忍以上，玩家等級越高（技能越強），敵人越硬（中忍每級 2%、上忍以上每級 4%，Lv6 起算）
+const dmgMul = () => (1 + .2 * loopN() + .25 * TIER()) * powK() * (BAN('dmg2') ? 2 : 1);   // 受到的傷害：第二輪 +20%、每升一段難易度 +25%、隨玩家等級成長、修羅禁制「受傷加倍」
+const foeHpMul = () => (1 + .25 * loopN() + .4 * TIER()) * (1 + (powK() - 1) * 1.5);   // 魔王／中魔王 HP：第二輪 +25%、每段難易度 +40%
 
 function diff() { return Math.min(1, (g.top + (g.topOff || 0)) / 16000); }   // 地形難度：爬到 1600m 達到最高
 
@@ -684,7 +688,7 @@ function genRow() {
   else if (Math.random() < .022 * lucky) g.items.push({ t: 'chest', x: rnd(30, W - 30), y: y - gap / 2, ph: 0 });
   }
   // 敵忍者
-  const pE = g.top < 250 || g.tut ? 0 : (.08 + .14 * d) * (m === 'horde' ? 2.6 : 1) * (1 + .06 * g.stage + .3 * hardN()) * (g.th === 2 ? 1.2 : 1);   /* 火關敵人多 20% */   // 越後面的幕敵人越多
+  const pE = g.top < 250 || g.tut ? 0 : (.08 + .14 * d) * (m === 'horde' ? 2.6 : 1) * (1 + .06 * g.stage + .3 * hardN()) * (g.th === 2 ? 1.2 : 1) * (BAN('horde') ? 1.5 : 1);   /* 火關敵人多 20% */   // 越後面的幕敵人越多
   // 倖存者節奏：敵人密度比之前高（技能需要靶子，魂也從這裡來）
   // 世界加寬時敵人也按比例增加（例如 1.5 倍寬 → 平均 1.5 倍敵人）
   for (let k = WK(); k > 0; k--) if (Math.random() < pE * 1.4 * Math.min(1, k)) g.enemies.push(mkEnemy(enemyType(d), rnd(30, W - 30), (y + prevY) / 2, rnd(10, 50)));
@@ -978,7 +982,7 @@ function updatePlay(dt) {
   // 死亡區域
   let zs = Math.min(110, 24 + (g.top + (g.topOff || 0)) / 180);
   if (g.mod && g.mod.id === 'rise') zs *= 1.5;
-  zs *= Math.pow(.85, pk('slowzone')) * (1 + .15 * hardN());
+  zs *= Math.pow(.85, pk('slowzone')) * (1 + .15 * hardN()) * (BAN('zone') ? 1.3 : 1);
   if (g.boss) zs *= .6;
   if (g.th === 0 && g.stage < 2) zs *= .8;   // 林關前兩個舞台：追兵慢 20%
   if (g.th === 2) zs *= 1.12;   // 火關（最後一關）：追兵快 12%
@@ -1262,6 +1266,7 @@ function hurt(src) {
 
 // 回復 HP（不超過上限）
 function heal(n, x = g.p.x, y = g.p.y - 60) {
+  if (BAN('noheal')) return;   // 修羅禁制：無法回復
   const v = Math.min(n, g.maxHp - g.hp); if (v <= 0) return;
   g.hp += v; floatText(x, y, 'HP +' + v, '#7aff9a', 16);
 }
@@ -1339,7 +1344,7 @@ function addCoins(n) {
   g.coins += n * mul;
 }
 function addBonus(n) { g.bonus += n * (1 + .2 * pk('score')); }
-function score() { return Math.floor(g.top / 4 + g.bonus); }
+function score() { return Math.floor((g.top / 4 + g.bonus) * (1 + .1 * shuraVal(g.ban))); }   // 修羅：每 1 點修羅值分數 +10%
 
 // ===== 斬擊 =====
 const kiCost = () => g.fever > 0 ? .5 : 1;   // 狂熱中衝刺／急降斬只花半格氣
@@ -1529,7 +1534,7 @@ const hasMaki = th => !!(save.maki && save.maki[th]);
 const jutsuOK = j => j.th < 0 || hasMaki(j.th);
 const curJutsu = () => { const j = JUTSU.find(x => x.id === save.jutsu); return j && jutsuOK(j) ? j : JUTSU[0]; };
 function castScroll() {
-  if (!g || state !== 'play' || paused || g.scrolls <= 0 || g.fly > 0) return;
+  if (!g || state !== 'play' || paused || g.scrolls <= 0 || g.fly > 0 || BAN('nojutsu')) return;   // 修羅禁制：封印忍法
   g.scrolls--; state = 'cast'; g.castT = CAST_T; g.castJ = curJutsu(); SFX.scroll(); vib(60);
   g.p.dash = 0; g.p.dive = false;
   if (!g.usedScroll) { g.usedScroll = true; unlock('scroll1'); }
@@ -2037,7 +2042,7 @@ function finishBoss(killed) {
   if (g.stage >= ST_N) {
     g.stage = ST_N - 1; g.cleared = true;
     const s = lvSave(); s.clear[g.lvl] = 1; s.best[g.lvl] = ST_N; persist();
-    { const k = TIER(); if (s.tc[g.lvl] < k + 1) { s.tc[g.lvl] = k + 1; persist(); addSeal([5, 7, 10][k]); if (k < 2) floatText(W / 2, g.camY + H * .22, t('tier_open', lvName(g.lvl), L(TIERS[k + 1].n)), '#ffd27a', 18); } }   // v143：這個難易度第一次破台：修行之印＋開放下一個難易度
+    { const k = TIER(); if (k === 3) shuraClear(s); if (s.tc[g.lvl] < k + 1) { s.tc[g.lvl] = k + 1; persist(); addSeal([5, 7, 10, 0][k]); if (k < 3) floatText(W / 2, g.camY + H * .22, t('tier_open', lvName(g.lvl), L(TIERS[k + 1].n)), '#ffd27a', 18); } }   // v143：這個難易度第一次破台：修行之印＋開放下一個難易度
     unlock('lv' + g.lvl + 'c');
     if (s.clear.every(x => x)) unlock('clear');
     if (!g.scrollN) unlock('noscroll');
@@ -2306,7 +2311,7 @@ function drawNinja(x, y, o) { drawHeroNinja(x, y, o); }
 // 右下角的豪天翔按鈕：大圓鈕、裡面是卷軸，有卷軸時發光並顯示張數（拇指最好按的位置）
 function scrollBtnPos() { return { x: W / 2, y: H * 5 / 6, r: 32 }; }   // 畫面中間偏下（下方六分之一處）
 function drawScrollBtn() {
-  const { x, y, r } = scrollBtnPos(), c = ctx, has = g.scrolls > 0 && g.fly <= 0, pu = has ? .5 + .5 * Math.sin(g.t * 5) : 0;
+  const { x, y, r } = scrollBtnPos(), c = ctx, has = g.scrolls > 0 && g.fly <= 0 && !BAN('nojutsu'), pu = has ? .5 + .5 * Math.sin(g.t * 5) : 0;
   if (!has) return;   // 有卷軸、可以發動時才出現
   c.save();
   if (has) {   // 可以發動：金色光暈＋往外擴散的波紋＋旋轉的符文環＋沿著外框跑的光＋往上飄的金色閃光
@@ -3352,12 +3357,13 @@ document.addEventListener('click', e => {
     case 'tutskip': if (g && g.tut) endTutorial(false); break;
     case 'retry': startRun(); break;
     case 'lvgo': lvPick(+arg); break;   // 點關卡圖：只選擇（卡片亮起、下方按鈕顯示關卡名）
-    case 'lvstart': { const i = lvSave().sel; if (lvPaid(i)) openFull('lv'); else lvPrep(i); break; }   // 「出陣！」：先選難易度與出發點（levels.js）
-    case 'prepgo': { const s = lvSave(); prepClose(); startRun(s.sel, { tier: tierOpen(s.sel, s.tier) ? s.tier : 0, st: START_ST[startOpen(s.sel, s.start) ? s.start : 0] }); break; }
-    case 'preptier': { const s = lvSave(), k = +arg; if (tierOpen(s.sel, k)) { s.tier = k; persist(); renderPrep(); } else toast(t('tier_lock', L(TIERS[k - 1].n))); break; }
-    case 'prepst': { const s = lvSave(), k = +arg; if (startOpen(s.sel, k)) { s.start = k; persist(); renderPrep(); } else toast(t(k === 1 ? 'st6_lock' : 'stb_lock')); break; }
-    case 'prepno': prepClose(); break;
+    case 'lvstart': { const s = lvSave(), i = s.sel; if (lvPaid(i)) openFull('lv'); else startRun(i, { tier: tierOpen(i, s.tier) ? s.tier : 0, st: 0, ban: s.ban }); break; }   // 「出陣！」：用選關畫面上選好的難易度，一律從第 1 舞台開始（v146 拿掉出發點與出陣準備視窗）
+    case 'tierpick': { const s = lvSave(), k = +arg; if (tierOpen(s.sel, k)) { s.tier = k; persist(); SFX.click && SFX.click(); renderTierPick(true); } else toast(t('tier_lock', L(TIERS[k - 1].n))); break; }   // 選關畫面直接選難易度
+    case 'tiercyc': { const s = lvSave(); let k = s.tier; for (let n = 0; n < TIERS.length; n++) { k = (k + (+arg) + TIERS.length) % TIERS.length; if (tierOpen(s.sel, k)) break; } s.tier = k; persist(); SFX.click && SFX.click(); renderTierPick(true); break; }   // C 版：左右切換難易度
     case 'volpg': volPage(+arg); break;
+    case 'banopen': banOpen(); break;   // 修羅：禁制設定（levels.js）
+    case 'bantog': { const s = lvSave(); s.ban = s.ban || {}; s.ban[arg] = !s.ban[arg]; persist(); SFX.click && SFX.click(); banOpen(); renderTierPick(); break; }
+    case 'banclose': banClose(); break;
     case 'volsoon': toast(t('vol_soon')); break;   // 「出陣！」：正式開始
     case 'fullinfo': openFull('lv'); break;   // 完整版（levels.js）
     case 'jutsu': save.jutsu = arg; persist(); renderJutsuPick(); break;   // 選關畫面：選擇帶進關卡的忍法
