@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v137';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v138';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -2252,7 +2252,23 @@ function drawScrollBtn() {
   const { x, y, r } = scrollBtnPos(), c = ctx, has = g.scrolls > 0 && g.fly <= 0, pu = has ? .5 + .5 * Math.sin(g.t * 5) : 0;
   if (!has) return;   // 有卷軸、可以發動時才出現
   c.save();
-  if (has) { const gl = c.createRadialGradient(x, y, r * .6, x, y, r * 1.6); gl.addColorStop(0, `rgba(255,210,90,${.35 + .25 * pu})`); gl.addColorStop(1, 'rgba(255,210,90,0)'); c.fillStyle = gl; aCirc(c, x, y, r * 1.6); c.fill(); }
+  if (has) {   // 可以發動：金色光暈＋往外擴散的波紋＋旋轉的符文環＋沿著外框跑的光＋往上飄的金色閃光
+    const T = g.t, gl = c.createRadialGradient(x, y, r * .6, x, y, r * 1.7); gl.addColorStop(0, `rgba(255,210,90,${.3 + .22 * pu})`); gl.addColorStop(1, 'rgba(255,210,90,0)'); c.fillStyle = gl; aCirc(c, x, y, r * 1.7); c.fill();
+    c.save(); c.lineCap = 'round';
+    const two = (col, w, a0) => { c.strokeStyle = `rgba(60,30,0,${.45 * a0})`; c.lineWidth = w + 2.4; c.stroke(); c.strokeStyle = col; c.lineWidth = w; c.stroke(); };   // 深色底線＋金線：亮背景（霧、雪）上也看得清楚
+    for (let i = 0; i < 2; i++) { const ph = (T * .75 + i * .5) % 1, al = (1 - ph) * (1 - ph); aCirc(c, x, y, r + 5 + ph * 30); two(`rgba(255,206,90,${.85 * al})`, 2.6 * (1 - ph) + .6, al); }   // 擴散波紋
+    for (let i = 0; i < 8; i++) { const a = T * .9 + i * Math.PI / 4; c.beginPath(); c.arc(x, y, r + 9, a, a + .48); two('rgba(255,214,110,.95)', 2.2, 1); }   // 旋轉的虛線環（8 段）
+    for (let i = 0; i < 24; i++) { const a = -T * .6 + i * TAU / 24, l = i % 3 ? 2.5 : 5; c.beginPath(); c.moveTo(x + Math.cos(a) * (r + 14), y + Math.sin(a) * (r + 14)); c.lineTo(x + Math.cos(a) * (r + 14 + l), y + Math.sin(a) * (r + 14 + l)); two('rgba(255,226,150,.85)', 1.3, .6); }   // 反向轉的刻度環
+    c.globalCompositeOperation = 'lighter';
+    const sa = T * 3.2; c.shadowColor = '#fff2b0'; c.shadowBlur = 10;   // 沿著金框跑的光（頭亮尾淡）
+    for (let k = 0; k < 6; k++) { c.strokeStyle = `rgba(255,248,215,${.9 - k * .15})`; c.lineWidth = 3.6 - k * .45; c.beginPath(); c.arc(x, y, r + 1.5, sa - (k + 1) * .14, sa - k * .14); c.stroke(); }
+    c.shadowBlur = 0;
+    const NP = Math.round(9 * FXK());   // 往上飄的閃光
+    for (let i = 0; i < NP; i++) { const ph = (T * .55 + i * .618) % 1, a = i * 2.4, px = x + Math.cos(a) * (r * .7 + (i % 3) * 7) + Math.sin(T * 2 + i) * 3, py = y + r * .5 - ph * (r * 2.4), s = (1.6 + (i % 3) * .9) * Math.sin(ph * Math.PI);
+      c.globalCompositeOperation = 'source-over'; c.beginPath(); for (let j = 0; j < 8; j++) { const aa = j * Math.PI / 4, rr2 = j % 2 ? s * .32 : s * 1.7; c.lineTo(px + Math.cos(aa) * rr2, py + Math.sin(aa) * rr2); } c.closePath();
+      c.strokeStyle = `rgba(90,50,0,${.5 * Math.sin(ph * Math.PI)})`; c.lineWidth = 1.2; c.stroke(); c.fillStyle = `rgba(255,236,150,${.95 * Math.sin(ph * Math.PI)})`; c.fill(); }
+    c.restore();
+  }
   c.globalAlpha = has ? .85 : .4;   // 在畫面中間，半透明一點才不會擋住視線
   aCirc(c, x, y, r + 3); c.fillStyle = INK; c.fill();
   const bg = c.createRadialGradient(x - 8, y - 10, 4, x, y, r); bg.addColorStop(0, has ? '#3a4a7a' : '#3a3a44'); bg.addColorStop(1, has ? '#141a36' : '#1a1a20'); aCirc(c, x, y, r); c.fillStyle = bg; c.fill();
