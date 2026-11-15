@@ -66,11 +66,55 @@ function lvSave() {
   }
   // 遇過哪幾關的魔王（選關圖卡顯示彩圖或剪影）。舊存檔：到過第 6 舞台或破台就算遇過
   if (!Array.isArray(s.boss)) { s.boss = s.best.map((b, i) => b >= 6 || s.clear[i] ? 1 : 0); persist(); }
+  // v143 難易度：tb[難易度][關卡]＝該難易度到過的最高舞台、tc[關卡]＝已破台的最高難易度＋1（0＝都還沒破）
+  if (!Array.isArray(s.tb)) { s.tb = [s.best.slice(), [0, 0, 0, 0], [0, 0, 0, 0]]; s.tc = s.clear.map(c => c ? 1 : 0); s.mid = [0, 0, 0, 0]; persist(); }
+  if (s.tier == null) s.tier = 0;      // 選關畫面上次選的難易度
+  if (s.start == null) s.start = 0;    // 上次選的出發點：0 第 1 舞台、1 第 6 舞台、2 魔王再戰
   return s;
+}
+
+// ===== v143 卷（關卡包）：卷之一「風林火山篇」免費；之後的卷是付費擴充 =====
+const PACKS = [
+  { n: ['卷之一', '巻之一', 'Volume I'], sub: ['風林火山篇', '風林火山篇', 'Fūrinkazan'], lv: [0, 1, 2, 3], free: true },
+  /* 卷之二（先不放進遊戲；使用者 2026-11-15 決定之後再做）：
+  { n: ['卷之二', '巻之二', 'Volume II'], sub: ['百鬼夜行篇', '百鬼夜行篇', 'Night Parade'], lv: [], soon: true,   // 製作中：選關可以翻到，顯示預告
+    pre: [{ k: '夜', m: ['京都百鬼夜行', '京の百鬼夜行', 'Night Parade of Kyoto'], c: '#7a5ad8' }, { k: '獄', m: ['地獄', '地獄', 'The Underworld'], c: '#d8402a' },
+      { k: '海', m: ['龍宮城', '竜宮城', 'Dragon Palace'], c: '#2a9ad8' }, { k: '天', m: ['高天原', '高天原', 'Takamagahara'], c: '#e8c04a' }] },
+*/
+];
+function volOwned(v) { if (!save.vols) save.vols = { 0: 1 }; return PACKS[v].free || !!save.vols[v]; }
+
+// ===== v143 難易度：下忍（原本的難度）／中忍／上忍 =====
+const TIERS = [
+  { n: ['下忍', '下忍', 'Genin'], c: '#7ad08a' }, { n: ['中忍', '中忍', 'Chūnin'], c: '#6ab4ff' }, { n: ['上忍', '上忍', 'Jōnin'], c: '#ff6a5a' },
+];
+const tierOpen = (i, k) => TEST_FREE || k === 0 || lvSave().tc[i] >= k;   // 中忍：下忍破台後開；上忍：中忍破台後開
+// 出發點：0 第 1 舞台、1 第 6 舞台（到過第 6 舞台才開）、2 魔王再戰（破台後才開）
+const startOpen = (i, k) => TEST_FREE || k === 0 || (k === 1 ? lvSave().best[i] >= 6 : !!lvSave().clear[i]);
+const START_ST = [0, 5, 9];
+
+// ===== v143 修行之印：修行改用這個購買（小判留給角色、換裝） =====
+// 取得：每個難易度第一次到達第 2～10 舞台 +1、第一次擊倒中魔王 +2、初戰擊退魔王 +3、破台 +5（中忍 +7、上忍 +10）、達成成就 +1
+function addSeal(n, why) {
+  if (!n || (g && g.tut)) return;
+  save.seals = (save.seals || 0) + n; persist();
+  if (g && state !== 'menu') floatText(W / 2, g.camY + H * .3, t('seal_plus', n), '#ffe28a', 20);
+}
+// 修行每一級要幾個印（依修行的階段：基礎 1 起、進階 2 起、高階 3 起，等級越高越貴）
+const sealCost = (m, l) => TEST_FREE ? 0 : (META_TIER[m.id] || 0) + 1 + Math.floor(l * .6);
+function sealSpent() { let n = 0; for (const m of META) for (let l = 0; l < mt(m.id); l++) n += (META_TIER[m.id] || 0) + 1 + Math.floor(l * .6); return n; }
+// 舊存檔轉換（只做一次）：依目前的進度補發修行之印，扣掉已經用小判買過的修行等級換算的印（不會倒扣、已買的修行全部保留）
+function sealMigrate() {
+  if (save.sealV) return; save.sealV = 1;
+  const s = lvSave(); let earned = 0;
+  for (let i = 0; i < 4; i++) { earned += Math.max(0, (s.best[i] || 0) - 1); if (s.boss[i]) earned += 3; if (s.clear[i]) earned += 5; }
+  earned += Object.keys(save.ach || {}).length;
+  save.seals = Math.max(0, earned - sealSpent()); persist();
 }
 // 到達新舞台時呼叫：記錄最佳、檢查是否開放下一關
 function lvReach() {
-  const s = lvSave(), i = g.lvl, st = g.stage + 1;
+  const s = lvSave(), i = g.lvl, st = g.stage + 1, k = TIER();
+  if (st > (s.tb[k][i] || 0)) { s.tb[k][i] = st; if (st >= 2) addSeal(1); }   // 這個難易度第一次到達這個舞台：修行之印 +1
   if (st > s.best[i]) s.best[i] = st;
   if (g.stage >= ST_UNLOCK && i + 1 < LEVELS.length && s.open < i + 2 && !TEST_FREE) {
     s.open = i + 2;
@@ -262,10 +306,10 @@ function drawWeather() {
 
 
 // ===== 完整版：林關免費；風、山、火三關要購買完整版（價格上架前再定，目前用測試按鈕） =====
-const FULL_LV = 1;   // LEVELS 索引 >= 1 的關卡屬於完整版
+const FULL_LV = 99;   // v143：卷之一的四關全部免費（原本風、火、山屬於完整版）；完整版畫面保留給之後的付費卷
 // 測試模式：沒有特別設定時視為已擁有（設定頁有「完整版（測試）」開關可以切換）
 function hasFull() { return save.full === true || (TEST_FREE && save.full !== false); }
-const lvPaid = i => i >= FULL_LV && !hasFull();
+const lvPaid = i => false;   // v143：卷之一四關都免費
 function openFull(why) {
   if (g && state === 'play') { paused = true; inp.dx = 0; }
   if (why === 'boss') { save.fullSeen = 1; persist(); }
@@ -319,8 +363,46 @@ function lvThumb(i) {
 const LV_EC = ['#4fbf5a', '#6cc8f0', '#ff6a3a', '#b8d4f0'];   // 選關卡片的屬性色：林、風、火、山
 const LV_FRAME = new URLSearchParams(location.search).get('lvframe') || 'c1b';   // 卡片外框：預設 C1-B（朱漆金具＋菱形透雕金具）；?lvframe=a|b|c|c1|c2|c3|c1a|c1c 可預覽其他版
 if (LV_FRAME) for (let k = 1; k <= LV_FRAME.length; k++) document.getElementById('lvsel').classList.add('f' + LV_FRAME.slice(0, k));   // c1a → fc、fc1、fc1a：細部版沿用上一層的基礎
+let volPg = 0;   // 選關畫面目前翻到第幾卷
+function volPage(d) { volPg = clamp(volPg + d, 0, PACKS.length - 1); SFX.click && SFX.click(); openLvSel(); }
+// 卷的標題列：◀ 卷之一・風林火山篇 ▶（右邊標「免費」或「製作中」）
+function volBar() {
+  const V = PACKS[volPg];
+  return `<button class="vb-arr" data-act="volpg" data-arg="-1" ${volPg ? '' : 'disabled'} aria-label="prev">◀</button>` +
+    `<span class="vb-t"><b>${L(V.n)}</b><em>${L(V.sub)}</em><i class="${V.soon ? 'soon' : 'free'}">${V.soon ? t('vol_soon') : V.free ? t('vol_free') : ''}</i></span>` +
+    `<button class="vb-arr" data-act="volpg" data-arg="1" ${volPg < PACKS.length - 1 ? '' : 'disabled'} aria-label="next">▶</button>`;
+}
+// 製作中的卷：預告卡（大字＋主題色，暗色剪影感）
+function soonCard(P) {
+  return `<button class="lv-card soon" style="--ec:${P.c}" data-act="volsoon"><span class="lv-art sn" style="--ec:${P.c}"><b>${P.k}</b></span><i class="lv-fr"><b></b><b></b><b></b><b></b></i>` +
+    `<span class="lv-k">${P.k}</span><span class="lv-motto">${L(P.m)}</span><span class="lv-cond">🔒 ${t('vol_wip')}</span></button>`;
+}
+// 每關卡片上的三顆難易度印記（破台過的難易度會亮起）
+function tierMarks(i) { const tc = lvSave().tc[i] || 0; return `<span class="lv-tm">${TIERS.map((T0, k) => `<i class="${tc > k ? 'on' : ''}" style="--tc:${T0.c}" title="${L(T0.n)}"></i>`).join('')}</span>`; }
+// 「出陣！」→ 出陣準備：選難易度與出發點
+function lvPrep(i) {
+  prepClose(); renderPrep();
+}
+function renderPrep() {
+  const s = lvSave(), i = s.sel, L0 = LEVELS[i];
+  if (!tierOpen(i, s.tier)) s.tier = 0; if (!startOpen(i, s.start)) s.start = 0;
+  const st = t('prep_st'), td = t('prep_tier_d'), k = s.tier, ck = START_ST[s.start];
+  let d = $('prepCf'); const fresh = !d;
+  if (fresh) { d = document.createElement('div'); d.id = 'prepCf'; d.addEventListener('click', e => { if (e.target === d) prepClose(); }); $('lvsel').appendChild(d); }
+  d.innerHTML = `<div class="cf-box" style="--ec:${LV_EC[L0.th] || '#e8b84a'}"><div class="cf-h"><i class="lg-seal">${lvName(i)}</i>${t('prep_t')}</div>` +
+    `<div class="pp-l">${t('prep_tier')}</div><div class="pp-row">${TIERS.map((T0, n) => { const op = tierOpen(i, n); return `<button class="pp-b ${n === k ? 'on' : ''} ${op ? '' : 'lk'}" style="--tc:${T0.c}" data-act="preptier" data-arg="${n}"><b>${op ? '' : '🔒 '}${L(T0.n)}</b>${(s.tc[i] || 0) > n ? '<i class="pp-done">✓</i>' : ''}</button>`; }).join('')}</div>` +
+    `<div class="pp-d">${td[k]}</div>` +
+    `<div class="pp-l">${t('prep_start')}</div><div class="pp-row">${st.map((n, m) => { const op = startOpen(i, m); return `<button class="pp-b st ${m === s.start ? 'on' : ''} ${op ? '' : 'lk'}" data-act="prepst" data-arg="${m}"><b>${op ? '' : '🔒 '}${n}</b></button>`; }).join('')}</div>` +
+    `<div class="pp-d">${ck ? t('prep_ck', ck >= 9 ? 6 : 4) : ''}${(s.tc[i] || 0) <= k ? (ck ? '<br>' : '') + t('prep_rw', [5, 7, 10][k]) : ''}</div>` +
+    `<div class="cf-btns"><button data-act="prepno">${t('back')}</button><button class="big red lv-go" data-act="prepgo" style="--ec:${LV_EC[L0.th] || '#e8b84a'}"><span>${t('lv_go')}</span></button></div></div>`;
+}
+function prepClose() { const d = $('prepCf'); if (d) d.remove(); }
 function openLvSel() {
-  const s = lvSave();
+  sealMigrate();
+  const s = lvSave(), V = PACKS[volPg];
+  $('lvVol').innerHTML = volBar(); $('lvsel').classList.toggle('vsoon', !!V.soon); $('lvsel').classList.toggle('onevol', PACKS.length < 2);   // 只有一卷時不顯示翻頁列
+  if (V.soon) { $('lvList').innerHTML = V.pre.map(soonCard).join(''); $('lvGo').disabled = true; $('lvGo').innerHTML = `<span>${t('vol_soon')}</span>`; renderJutsuPick(); show('lvsel', state === 'menu'); return; }
+  $('lvGo').disabled = false;
   const h = LEVELS.map((L0, i) => {
     const paid = lvPaid(i), open = !paid && i < (TEST_FREE ? LEVELS.length : s.open),   // 測試模式：四關全開；完整版的關卡沒買就顯示「完整版」
       best = s.best[i], clr = s.clear[i];
@@ -331,7 +413,7 @@ function openLvSel() {
       : `<span class="lv-cond">🔒 ${t('lv_cond', lvName(i - 1), ST_UNLOCK + 1)}</span>`;
     return `<button class="lv-card ${open ? '' : paid ? 'paid' : 'locked'} ${s.sel === i && open ? 'sel' : ''}" style="--ec:${LV_EC[L0.th] || '#e8b84a'}" ${open ? `data-act="lvgo" data-arg="${i}"` : paid ? 'data-act="fullinfo"' : 'data-act="lvlock"'}>
       <span class="lv-art" style="background-image:url(${lvThumb(i)})"></span><i class="lv-fr"><b></b><b></b><b></b><b></b></i>
-      <span class="lv-k">${lvName(i)}</span><span class="lv-motto">${L(L0.motto)}</span>${info}</button>`;
+      <span class="lv-k">${lvName(i)}</span><span class="lv-motto">${L(L0.motto)}</span>${info}${open ? tierMarks(i) : ""}</button>`;
   }).join('');
   $('lvList').innerHTML = h;
   lvGoBtn();

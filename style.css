@@ -880,3 +880,53 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 .panel.credit .cr-fb::after { content: "↗"; position: absolute; right: .8em; top: 50%; transform: translateY(-52%); font-size: .95em; opacity: .9; text-shadow: none; }
 .panel.credit .cr-fb:active { transform: translateY(calc(var(--u)*3)); box-shadow: inset 0 calc(var(--u)*3) 0 rgba(255,255,255,.2), 0 calc(var(--u)*1) 0 #000; }
 .panel.credit .cr-fb { background: linear-gradient(#6cb0ff, #3d8cf8 46%, #1a6fe8 50%, #1158c4); }   /* 上半部亮面＝光澤 */
+
+/* ===== v143 選關：卷翻頁、難易度印記、製作中的卷、出陣準備視窗；商店：修行之印 ===== */
+.lvsel > h2 { margin-bottom: .35em; }
+.lvsel .lv-vol { display: flex; align-items: center; gap: .4em; margin: 0 0 .5em; }
+.lvsel .lv-vol .vb-arr { width: 2.2em; min-height: 1.9em; margin: 0; padding: 0; font-size: .8em; flex: none; }
+.lvsel .lv-vol .vb-arr:disabled { opacity: .3; }
+.lvsel .lv-vol .vb-t { flex: 1; display: flex; align-items: baseline; justify-content: center; gap: .45em; font-size: .82em; }
+.lvsel .lv-vol .vb-t b { color: var(--gold); letter-spacing: .1em; }
+.lvsel .lv-vol .vb-t em { font-style: normal; color: #fff; }
+.lvsel .lv-vol .vb-t i { font-style: normal; font-size: .72em; padding: .1em .55em; border-radius: 1em; background: #2f8a4a; color: #fff; }
+.lvsel .lv-vol .vb-t i.soon { background: #6a5aa8; }
+.lvsel .lv-vol .vb-t i:empty { display: none; }
+.lvsel .lv-list { grid-template-columns: repeat(2, minmax(0, min(50%, calc((92cqh - 25em) / 2.5)))); }
+@container (max-height: 720px) { .lvsel .lv-list { grid-template-columns: repeat(2, minmax(0, min(50%, calc((92cqh - 23.8em) / 2.5)))); } }
+.lvsel .lv-tm { position: absolute; top: .45em; left: 50%; transform: translateX(-50%); display: flex; gap: .3em; z-index: 3; }
+.lvsel .lv-tm i { width: .62em; height: .62em; transform: rotate(45deg); background: rgba(0,0,0,.45); border: 1.5px solid rgba(255,255,255,.55); }
+.lvsel .lv-tm i.on { background: var(--tc); border-color: #fff; box-shadow: 0 0 6px var(--tc); }
+.lvsel .lv-card.soon .lv-art.sn { display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--ec) 45%, #120a1a), #07040c 75%) !important; }
+.lvsel .lv-card.soon .lv-art.sn b { font-size: 4.2em; color: color-mix(in srgb, var(--ec) 60%, #000); text-shadow: 0 0 .3em var(--ec); opacity: .55; }
+.lvsel .lv-card.soon { filter: saturate(.7); }
+.lvsel.vsoon .lv-go { filter: grayscale(.8); }
+#prepCf { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; background: rgba(6,8,14,.72); animation: cfIn .15s ease-out; }
+#prepCf .cf-box { width: min(88%, 21em); display: flex; flex-direction: column; padding: .9em 1em 1em; border-radius: 1em; background: linear-gradient(#2c3340, #1d222b); border: 2px solid #ffd27a; box-shadow: 0 8px 30px rgba(0,0,0,.6); animation: cfPop .18s ease-out; }
+#prepCf .cf-h { display: flex; align-items: center; justify-content: center; gap: .5em; font-weight: 900; color: #ffd27a; font-size: 1.1em; letter-spacing: .1em; margin-bottom: .3em; }
+#prepCf .cf-h .lg-seal { font-style: normal; display: grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: .3em; background: var(--ec); color: #fff; text-shadow: 0 1px 0 #000; border: 2px solid #1a1a1a; letter-spacing: 0; }
+#prepCf .pp-l { font-size: .72em; color: var(--gold); letter-spacing: .12em; margin: .6em 0 .3em; }
+#prepCf .pp-row { display: flex; gap: .4em; }
+#prepCf .pp-b { position: relative; flex: 1; margin: 0; padding: .45em .2em; min-height: 2.3em; font-size: .85em; overflow: visible; }
+#prepCf .pp-b.on { background: linear-gradient(color-mix(in srgb, var(--tc, #ffd27a) 80%, #fff), var(--tc, #e8b84a)); color: #1a1208; text-shadow: none; }
+#prepCf .pp-b.st.on { --tc: #ffd27a; }
+#prepCf .pp-b.lk { opacity: .55; }
+#prepCf .pp-done { position: absolute; top: -.55em; right: -.3em; font-style: normal; width: 1.35em; height: 1.35em; border-radius: 50%; background: #2f8a4a; color: #fff; font-size: .75em; display: grid; place-items: center; border: 2px solid #fff; }
+#prepCf .pp-d { min-height: 1.2em; font-size: .72em; color: #cfd6e0; text-align: center; margin-top: .35em; line-height: 1.45; }
+#prepCf .cf-btns { display: flex; gap: .5em; margin-top: .9em; }
+#prepCf .cf-btns button { flex: 1; margin: 0; min-height: 2.6em; }
+#prepCf .cf-btns .lv-go { flex: 1.6; }
+.seal-bar { display: flex; align-items: center; gap: .5em; flex-wrap: wrap; padding: .5em .7em; margin-bottom: .5em; border-radius: .7em; background: linear-gradient(90deg, rgba(192,38,45,.35), rgba(0,0,0,.25)); border: 1px solid rgba(255,210,122,.35); }
+.seal-bar .seal-ic { display: grid; place-items: center; width: 1.7em; height: 1.7em; border-radius: .3em; background: #c0262d; color: #fff; font-weight: 900; border: 2px solid #ffd27a; box-shadow: 0 2px 0 #000; transform: rotate(-6deg); }
+.seal-bar b { color: #ffd27a; }
+.seal-bar em { font-style: normal; font-weight: 900; font-size: 1.3em; color: #fff; margin-left: auto; }
+.seal-bar small { flex-basis: 100%; font-size: .68em; color: #c8ccd6; }
+#lvsel .lv-card > .lv-tm { position: relative !important; top: auto; left: auto; transform: none; gap: .4em; margin-top: .25em; justify-content: center; }
+#lvsel .lv-card .lv-tm i { width: .5em; height: .5em; }
+.lvsel > h2 { margin-bottom: .7em; }
+.lvsel .lv-vol { padding-right: 0; }
+/* 只有一卷（卷之二先不放）：不顯示卷翻頁列，卡片大小照原本的算法 */
+#lvsel.onevol .lv-vol { display: none; }
+#lvsel.onevol .lvsel > h2 { margin-bottom: 1.05em; }
+#lvsel.onevol .lvsel .lv-list { grid-template-columns: repeat(2, minmax(0, min(50%, calc((92cqh - 22.8em) / 2.5)))); }
+@container (max-height: 720px) { #lvsel.onevol .lvsel .lv-list { grid-template-columns: repeat(2, minmax(0, min(50%, calc((92cqh - 21.6em) / 2.5)))); } #lvsel.onevol .lvsel > h2 { margin-bottom: .9em; } }

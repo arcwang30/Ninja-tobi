@@ -162,7 +162,7 @@ const EVO = {
 const HP_BASE = 100, HP_STEP = 20;
 const DMG = { shot: 15, kunai: 15, arrow: 20, spike: 20, onibi: 25, zone: 30, ember: 8, fire: 12, boss: 20, mist: 12, qte: 10, qte5: 6 };   // ember＝火關提燈妖怪的火星、fire＝火車留下的火焰
 const SOUL_V = [1, 2, 3, 2, 3, 2, 8, 1, 1, 2, 2, 2, 2, 25];   // 各種敵人掉落的魂量
-const xpNeed = l => Math.round(5 + 3.5 * (l - 1) + .4 * (l - 1) ** 2);
+const xpNeed = l => l <= 2 ? [5, 9][l - 1] : Math.round(1.7 * (5 + 3.5 * (l - 1) + .4 * (l - 1) ** 2));   // v143：Lv3 起升級門檻約 1.7 倍（升級次數約減半，不再一直打斷節奏）；前兩級維持快，讓新手先學會三選一
 const MODS = [
   { id: 'wind', n: ['暴風', '暴風', 'Gale'], d: ['強風會把你吹向左右', '強風が左右に吹きつける', 'Strong winds push you sideways'] },
   { id: 'rise', n: ['怒潮', '怒涛', 'Surge'], d: ['死亡區域上升速度 +50%', '死の領域の上昇 +50%', 'Death zone rises 50% faster'] },
@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v142';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v143';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -586,7 +586,8 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && g &
 const pk = id => (g && g.perks[id]) || 0;
 const sk = id => (g && g.skills[id]) || 0;   // 自動技能等級（0 = 沒有）
 
-function startRun(lvl) {
+function startRun(lvl, opt) {   // opt＝{ tier 難易度, st 出發舞台 }；沒給時：「再次挑戰」沿用上一局，其他情況用預設（下忍、第 1 舞台）
+  if (!opt) opt = g && g.tier != null && lvl == null && !g.tut ? { tier: g.tier, st: g.st0 || 0 } : { tier: 0, st: 0 };   // 只有「再次挑戰」（沒指定關卡）沿用上一局的難易度與出發點
   if (lvl == null) lvl = (g && g.lvl != null) ? g.lvl : lvSave().sel;   // 「再次挑戰」：同一關
   lvSave().sel = lvl;
   hideAll();
@@ -604,7 +605,7 @@ function startRun(lvl) {
     perks: {}, mod: null, wind: 0, windT: 0, spikeUsed: false, shurT: 2,
     banner: null, slash: null, qte: null, killT: 0, castT: 0, dieT: 0,
     rerolls: mt('reroll'), banishes: mt('banish'), banned: {}, revives: mt('revive'), usedScroll: false, cleared: false,
-    lvl, th: LEVELS[lvl].th, wx: null, todF: null, midDone: false,
+    lvl, th: LEVELS[lvl].th, wx: null, todF: null, midDone: false, tier: opt.tier || 0, st0: opt.st || 0, topOff: 0,
     // 成就用的單局紀錄
     scrollN: 0, feverN: 0, walls: 0, stHit: false, bossT0: 0,
   };
@@ -615,14 +616,21 @@ function startRun(lvl) {
   paused = false;
   inp.mode = null;
   g.skills[SKINS[save.skin].sk] = 1;   // 每個角色的起始技能不同
+  if (g.st0 > 0) {   // 從第 6 舞台／魔王戰出發：直接從那個舞台開始；地形與追兵難度照那個舞台算，並先給幾次升級（出發前整備）
+    g.stage = g.st0; g.topOff = g.st0 * STAGE_PX; g.ckpt = true; g.lvQueue = g.st0 >= 9 ? 6 : 4;
+    wxForStage(); if (g.wx) g.wx.cur = g.wx.lv;   // 第二輪的天候直接套用
+  }
   stageBanner(); startZIntro();   // 第一幕的開場演出（stagefx.js）
   // 操作改版後（牆壁）再顯示一次說明
   if (save.seen < 2) { save.seen = 2; persist(); openHelp(); paused = true; }
 }
 const loopN = () => Math.floor(g.stage / 5);   // 第幾輪（0 = 第 1～5 舞台、1 = 第 6～10 舞台）
-const hardN = () => loopN() + g.lvl * .6;       // 難度：第二輪與後面的關卡更難
+const TIER = () => (g && g.tier) || 0;   // 難易度：0 下忍、1 中忍、2 上忍
+const hardN = () => loopN() * 1.6 + g.lvl * .6 + TIER() * 1.2;   // 難度：第二輪（v143 由 1 加重到 1.6）、後面的關卡、難易度越高越難
+const dmgMul = () => 1 + .2 * loopN() + .25 * TIER();   // 受到的傷害：第二輪 +20%、每升一段難易度 +25%
+const foeHpMul = () => 1 + .25 * loopN() + .4 * TIER();   // 魔王／中魔王 HP：第二輪 +25%、每段難易度 +40%
 
-function diff() { return Math.min(1, g.top / 16000); }   // 地形難度：爬到 1600m 達到最高
+function diff() { return Math.min(1, (g.top + (g.topOff || 0)) / 16000); }   // 地形難度：爬到 1600m 達到最高
 
 function genRow() {
   const d = diff(), m = g.mod && g.mod.id;
@@ -759,7 +767,7 @@ function enemyAI(e, ed, dt) {
 // 依關卡換文字：有 key_1／key_2／key_3（風／火／山）就用那個，沒有就用林的
 const tl = (k, ...a) => g && g.th && STR[k + '_' + g.th] ? t(k + '_' + g.th, ...a) : t(k, ...a);
 function spawnMid() {
-  const hp = 8 + 2 * g.stage + 4 * g.lvl;
+  const hp = Math.round((8 + 2 * g.stage + 4 * g.lvl) * foeHpMul());
   const e = mkEnemy(13, W / 2, g.camY - 60, 0);
   e.hp = e.max = hp; e.life = 25; e.thr = 2;
   g.enemies.push(e); g.mid = e; g.midDone = true;
@@ -784,6 +792,7 @@ function midAI(e, ed, dt) {
 // 中 BOSS 被擊倒：大量魂與小判，並開寶箱（可能進化）
 function midDown(e) {
   g.mid = null;
+  { const s = lvSave(), k = TIER(); if (!(s.mid[g.lvl] & (1 << k))) { s.mid[g.lvl] |= 1 << k; addSeal(2); } }   // v143：每個難易度第一次擊倒這關的中魔王：修行之印 +2
   for (let i = 0; i < 10; i++) g.drops.push({ k: i < 6 ? 'soul' : 'coin', x: e.x + rnd(-30, 30), y: e.y, vx: rnd(-100, 100), vy: -rnd(140, 280), v: i < 6 ? 3 : 2, ph: rnd(0, 6), ap: .45 + i * .03 });   // v142：魂 6×3＝18（約升 1 級）＋小判 4×2。ap：噴出後自動飛向玩家（v141：中魔王死的位置常在畫面外，魂撿不到）
   burst(e.x, e.y, '#c0262d', 36); g.shake = 12; SFX.kill(); vib([60, 40, 120]);
   floatText(W / 2, g.camY + H * .4, tl('mid_down'), '#ffd27a', 24);
@@ -967,7 +976,7 @@ function updatePlay(dt) {
   g.enemies = g.enemies.filter(o => o.y < cut && !o.dead);
 
   // 死亡區域
-  let zs = Math.min(110, 24 + g.top / 180);
+  let zs = Math.min(110, 24 + (g.top + (g.topOff || 0)) / 180);
   if (g.mod && g.mod.id === 'rise') zs *= 1.5;
   zs *= Math.pow(.85, pk('slowzone')) * (1 + .15 * hardN());
   if (g.boss) zs *= .6;
@@ -1243,7 +1252,7 @@ function hurt(src) {
     floatText(p.x, p.y - 50, t('blocked'), '#9ad8ff', 18); SFX.clank(); vib(40);
     return false;
   }
-  const dmg = Math.round((DMG[src] ?? 15) * (1 - .06 * mt('armor'))); g.stHit = true;
+  const dmg = Math.round((DMG[src] ?? 15) * dmgMul() * (1 - .06 * mt('armor'))); g.stHit = true;
   g.hp = Math.max(0, g.hp - dmg); g.shake = 12; SFX.hit(); vib(120);
   floatText(p.x, p.y - 50, '-' + dmg, '#ff4040', 20);
   if (g.hp <= 0) { die(); return true; }
@@ -1308,7 +1317,7 @@ function collect(it) {
 }
 
 function addCoins(n) {
-  const mul = (1 + .5 * pk('gold')) * (1 + .1 * save.meta.gold) * (g.mod && g.mod.id === 'rich' ? 2 : 1);
+  const mul = (1 + .5 * pk('gold')) * (1 + .1 * save.meta.gold) * (g.mod && g.mod.id === 'rich' ? 2 : 1) * (g.ckpt ? .5 : 1) * (1 + .25 * TIER());   // 從中途出發小判減半；中忍 +25%、上忍 +50%
   g.coins += n * mul;
 }
 function addBonus(n) { g.bonus += n * (1 + .2 * pk('score')); }
@@ -1542,7 +1551,7 @@ function spawnBoss() {
   const fin = g.stage >= 5, kind = BOSS_OF[g.th], lv = g.lvl;
   // 選關畫面：遇過這一關的魔王之後，圖卡上才顯示它的彩圖（之前是剪影）
   if (!g.tut && !fin) { const ls = lvSave(); if (!ls.boss[g.lvl]) { ls.boss[g.lvl] = 1; persist(); } }
-  const hp = fin ? 16 + 5 * lv : 8 + 3 * lv;
+  const hp = Math.round((fin ? 16 + 5 * lv : 8 + 3 * lv) * foeHpMul());
   g.bossT0 = g.t; wxBoss(kind);   // 魔王登場時換成魔王的天候（levels.js）
   g.boss = {
     n: lv * 2 + fin, lv, fin, kind, hp, max: hp, x: W / 2, y: g.camY - 60, t: 0, ai: 0, cool: 0, skillT: 9, crT: 2.6,
@@ -1979,6 +1988,7 @@ function finishBoss(killed) {
     addBonus(pts); addCoins(15 + 5 * b.lv);
     floatText(W / 2, g.camY + H * .4, t('boss_repelled', Math.round(pts * (1 + .2 * pk('score')))), '#ffd27a', 24);
     for (let i = 0; i < 8; i++) g.drops.push({ k: i < 5 ? 'soul' : 'coin', x: W / 2 + rnd(-40, 40), y: g.camY + H * .3, vx: rnd(-90, 90), vy: -rnd(120, 260), v: i < 5 ? 3 : 2, ph: rnd(0, 6) });
+    { const s = lvSave(); s.rp = s.rp || [0, 0, 0, 0]; const k = TIER(); if (!(s.rp[g.lvl] & (1 << k))) { s.rp[g.lvl] |= 1 << k; addSeal(3); } }   // v143：每個難易度第一次擊退這關魔王：修行之印 +3
     save.stats.bosses++; unlock('boss1');   // 擊退也算進累計（「討伐・〇〇」只在決戰擊破時才算）
     if (save.stats.bosses >= 10) unlock('boss10');
     if (save.stats.bosses >= 30) unlock('boss30');
@@ -2004,11 +2014,12 @@ function finishBoss(killed) {
   g.mod = pick(MODS); g.wind = 0; g.windT = 0;
   g.pendingPerk = killed;
   if (killed) stageCoins();
-  if (killed && g.lvl === 0 && !hasFull() && !save.fullSeen) g.promoPending = true;   // 第一次在林關擊倒魔王：下一個舞台開始時介紹完整版
+  // v143：四關免費，不再在林關魔王後介紹完整版
   // 第 10 舞台的魔王倒下：破台
   if (g.stage >= ST_N) {
     g.stage = ST_N - 1; g.cleared = true;
     const s = lvSave(); s.clear[g.lvl] = 1; s.best[g.lvl] = ST_N; persist();
+    { const k = TIER(); if (s.tc[g.lvl] < k + 1) { s.tc[g.lvl] = k + 1; persist(); addSeal([5, 7, 10][k]); if (k < 2) floatText(W / 2, g.camY + H * .22, t('tier_open', lvName(g.lvl), L(TIERS[k + 1].n)), '#ffd27a', 18); } }   // v143：這個難易度第一次破台：修行之印＋開放下一個難易度
     unlock('lv' + g.lvl + 'c');
     if (s.clear.every(x => x)) unlock('clear');
     if (!g.scrollN) unlock('noscroll');
@@ -2171,7 +2182,7 @@ function updateFx(dt) {
 // ===== 成就 =====
 function unlock(id) {
   if (save.ach[id]) return;
-  save.ach[id] = Date.now(); persist();
+  save.ach[id] = Date.now(); persist(); if (typeof addSeal === 'function') addSeal(1);   // v143：達成成就＝修行之印 +1
   const a = ACH.find(a => a.id === id);
   toast(t('ach_toast', L(a.n)));
 }
@@ -3142,7 +3153,7 @@ function showOver() {
   const shopB = document.querySelector('#over [data-act=shop]'), oldTip = $('ovTip'); if (oldTip) oldTip.remove(); if (shopB) shopB.classList.remove('guide');
   if (!g.tut && !save.hintShop && save.stats.runs <= 1 && shopB) {
     save.hintShop = 1; persist(); shopGuide = 1; shopB.classList.add('guide');
-    shopB.parentNode.insertAdjacentHTML('beforebegin', `<div id="ovTip" class="ov-tip">${t('guide_over', save.coins)}</div>`);
+    shopB.parentNode.insertAdjacentHTML('beforebegin', `<div id="ovTip" class="ov-tip">${t('guide_over', save.seals || 0)}</div>`);
   }
   show('over');
 }
@@ -3168,7 +3179,7 @@ const SHOP_TORD = [2, 0, 1];
 // key：修行 m:id:等級（升一級後、又買得起時會再出現）、忍者 s:編號、換裝 o:角色:顏色
 function shopNewKeys(tab) {
   const k = [], c = save.coins;
-  if (tab == null || tab === 2) META.forEach(m => { const l = mt(m.id); if (metaOpen(m) && l < m.max && c >= metaCost(m, l)) k.push(`m:${m.id}:${l}`); });
+  if (tab == null || tab === 2) META.forEach(m => { const l = mt(m.id); if (metaOpen(m) && l < m.max && (save.seals || 0) >= sealCost(m, l)) k.push(`m:${m.id}:${l}`); });   // 修行看修行之印
   if (tab == null || tab === 0) SKINS.forEach((s, i) => { const own = TEST_FREE || save.skins.includes(i), avail = own || !s.req || save.ach[s.req]; if (!own && avail && c >= s.cost) k.push('s:' + i); });
   if (tab == null || tab === 1) { const ci = save.skin; OUTFITS.forEach((o, i) => { if (!outOwned(i, ci) && c >= o.cost) k.push(`o:${ci}:${i}`); }); }
   return k;
@@ -3188,6 +3199,7 @@ function tabs(id, names, sel, act) {
   $(id).innerHTML = names.map((n, i) => `<button class="${i === sel ? 'sel' : ''}" data-act="${act}" data-arg="${i}">${n}</button>`).join('');
 }
 function renderShop() {
+  sealMigrate();   // v143：舊存檔第一次打開商店時補發修行之印
   $('sCoins').textContent = save.coins;
   const tn = [t('tab_ninja'), t('tab_outfit'), t('tab_train')], tnew = [0, 1, 2].map(i => shopNewKeys(i).some(isNew));
   $('shopTabs').innerHTML = SHOP_TORD.map(i => `<button class="${i === shopTab ? 'sel' : ''}" data-act="stab" data-arg="${i}">${tn[i]}${tnew[i] ? '<em class="tnw">NEW!</em>' : ''}</button>`).join('');
@@ -3227,13 +3239,13 @@ function renderShop() {
       return `<button class="of ${sel ? 'sel' : ''} ${own ? '' : 'nown'}" data-act="${own ? 'outfit' : 'buyout'}" data-arg="${i}" ${!own && save.coins < o.cost ? 'disabled' : ''}><img src="${outThumb(ci, i)}" alt=""><i class="sw" style="--suit:${o.suit};--dark:${o.dark}">${sel ? '✓' : own ? '' : '🔒'}</i>${def ? `<em class="of-def">${t('outfit_def')}</em>` : ''}<span class="of-tx"><b style="color:${o.suit}">${L(o.n)}</b><small>${sel ? t('equipped') : own ? t('equip') : t('price', o.cost)}</small></span></button>`;
     }).join('') + '</div>';
   } else {
-    const tot = META.reduce((s, m) => s + m.max, 0), now = META.reduce((s, m) => s + mt(m.id), 0), spent = metaSpent();
-    h = (shopGuide === 2 ? `<div class="guide-box"><button class="gx" data-act="guidex" aria-label="close">✕</button><b>${t('guide_t')}</b><small>${t('guide_d', save.coins)}</small></div>` : '') +
-      `<div class="meta-head">${t('meta_total', now, tot)}</div>` + META.map(m => {
-      const l = mt(m.id), max = l >= m.max, c = metaCost(m, l), op = metaOpen(m);
+    const tot = META.reduce((s, m) => s + m.max, 0), now = META.reduce((s, m) => s + mt(m.id), 0), spent = sealSpent();
+    h = (shopGuide === 2 ? `<div class="guide-box"><button class="gx" data-act="guidex" aria-label="close">✕</button><b>${t('guide_t')}</b><small>${t('guide_d', save.seals || 0)}</small></div>` : '') +
+      `<div class="seal-bar"><span class="seal-ic">印</span><b>${t('seal_n')}</b><em>${save.seals || 0}</em><small>${t('seal_how')}</small></div><div class="meta-head">${t('meta_total', now, tot)}</div>` + META.map(m => {
+      const l = mt(m.id), max = l >= m.max, c = sealCost(m, l), op = metaOpen(m);
       if (!op) return `<div class="item locked"><span class="ic" style="background:#ccc">🔒</span><span class="nm"><b>${L(m.n)}</b><small>${t(META_TIER[m.id] === 1 ? 'meta_t1' : 'meta_t2')}</small></span><button disabled>${t('train')}</button></div>`;
-      return `<div class="item"><span class="ic" style="background:#fff3d0">${m.ic}</span><span class="nm"><b>${L(m.n)}　Lv ${l}/${m.max}${nb(`m:${m.id}:${l}`)}</b><small>${L(m.d)}${max ? '' : '・' + t('price', c)}</small></span><button data-act="buymeta" data-arg="${m.id}" ${max || save.coins < c ? 'disabled' : ''}>${max ? 'MAX' : t('train')}</button></div>`;
-    }).join('') + ((spent || (TEST_FREE && now)) ? `<button class="meta-refund" data-act="refund">${t('meta_refund', spent)}</button>` : '');
+      return `<div class="item"><span class="ic" style="background:#fff3d0">${m.ic}</span><span class="nm"><b>${L(m.n)}　Lv ${l}/${m.max}${nb(`m:${m.id}:${l}`)}</b><small>${L(m.d)}${max ? '' : '・' + t('seal_price', c)}</small></span><button data-act="buymeta" data-arg="${m.id}" ${max || (save.seals || 0) < c ? 'disabled' : ''}>${max ? 'MAX' : t('train')}</button></div>`;
+    }).join('') + ((spent || (TEST_FREE && now)) ? `<button class="meta-refund" data-act="refund">${t('seal_refund', spent)}</button>` : '');
   }
   $('shopBody').innerHTML = h;
 }
@@ -3262,7 +3274,7 @@ function renderOpt() {
   $('bVib').classList.toggle('on', !!save.opt.vib);
   $('bEco').classList.toggle('on', !!save.opt.eco);
   $('langPills').innerHTML = LANGS.map((l, i) => `<button class="${i === LI ? 'on' : ''}" data-act="setlang" data-arg="${i}">${['中', '日', 'EN'][i] || l.name}</button>`).join('');
-  const bf = $('bFull'); bf.style.display = TEST_FREE ? '' : 'none'; bf.textContent = t('full_test', hasFull() ? t('full_own') : t('full_none'));   // 測試模式才顯示
+  const bf = $('bFull'); bf.style.display = 'none';   /* v143：四關免費，完整版測試開關先隱藏 */ bf.textContent = t('full_test', hasFull() ? t('full_own') : t('full_none'));   // 測試模式才顯示
   const r = $('bReset'); delete r.dataset.armed; $('bResetT').textContent = t('reset_btn'); r.classList.remove('armed');
 }
 
@@ -3301,7 +3313,13 @@ document.addEventListener('click', e => {
     case 'tutskip': if (g && g.tut) endTutorial(false); break;
     case 'retry': startRun(); break;
     case 'lvgo': lvPick(+arg); break;   // 點關卡圖：只選擇（卡片亮起、下方按鈕顯示關卡名）
-    case 'lvstart': { const i = lvSave().sel; if (lvPaid(i)) openFull('lv'); else startRun(i); break; }   // 「出陣！」：正式開始
+    case 'lvstart': { const i = lvSave().sel; if (lvPaid(i)) openFull('lv'); else lvPrep(i); break; }   // 「出陣！」：先選難易度與出發點（levels.js）
+    case 'prepgo': { const s = lvSave(); prepClose(); startRun(s.sel, { tier: tierOpen(s.sel, s.tier) ? s.tier : 0, st: START_ST[startOpen(s.sel, s.start) ? s.start : 0] }); break; }
+    case 'preptier': { const s = lvSave(), k = +arg; if (tierOpen(s.sel, k)) { s.tier = k; persist(); renderPrep(); } else toast(t('tier_lock', L(TIERS[k - 1].n))); break; }
+    case 'prepst': { const s = lvSave(), k = +arg; if (startOpen(s.sel, k)) { s.start = k; persist(); renderPrep(); } else toast(t(k === 1 ? 'st6_lock' : 'stb_lock')); break; }
+    case 'prepno': prepClose(); break;
+    case 'volpg': volPage(+arg); break;
+    case 'volsoon': toast(t('vol_soon')); break;   // 「出陣！」：正式開始
     case 'fullinfo': openFull('lv'); break;   // 完整版（levels.js）
     case 'jutsu': save.jutsu = arg; persist(); renderJutsuPick(); break;   // 選關畫面：選擇帶進關卡的忍法
     case 'jutsulock': toast(t('ju_locked', lvName(LEVELS.findIndex(l => l.th === +arg)))); break;
@@ -3363,9 +3381,9 @@ document.addEventListener('click', e => {
     case 'buyno': buyClose(); break;
     case 'buyok': { buyClose(); const o = OUTFITS[+arg]; if (save.coins >= o.cost && !outOwned(+arg)) { save.coins -= o.cost; save.outfits.push(+arg); if (!save.charOut) save.charOut = {}; save.charOut[save.skin] = +arg; persist(); SFX.item(); refreshHero(); collAch(); } renderShop(); break; }
     case 'buyskin': { const s = SKINS[+arg]; if (s.req && !save.ach[s.req]) break; if (save.coins >= s.cost) { save.coins -= s.cost; save.skins.push(+arg); save.skin = +arg; persist(); SFX.item(); collAch(); } renderShop(); updateHeroArt(); resetHelpIcons(); break; }
-    case 'buymeta': { const m = META.find(x => x.id === arg), c = metaCost(m, mt(arg)); if (save.coins >= c && mt(arg) < m.max) { save.coins -= c; save.meta[arg] = mt(arg) + 1; persist(); SFX.item(); collAch(); } renderShop(); break; }
-    case 'refund':   // 修行全部歸零、退還小判（按兩次確認）
-      if (b.dataset.armed) { save.coins += metaSpent(); for (const m of META) save.meta[m.id] = 0; persist(); SFX.coin(); renderShop(); }
+    case 'buymeta': { const m = META.find(x => x.id === arg), c = sealCost(m, mt(arg)); if ((save.seals || 0) >= c && mt(arg) < m.max) { save.seals -= c; save.meta[arg] = mt(arg) + 1;   /* v143：修行改用修行之印 */ persist(); SFX.item(); collAch(); } renderShop(); break; }
+    case 'refund':   // 修行全部歸零、退還修行之印（按兩次確認）
+      if (b.dataset.armed) { save.seals = (save.seals || 0) + sealSpent(); for (const m of META) save.meta[m.id] = 0; persist(); SFX.coin(); renderShop(); }
       else { b.dataset.armed = '1'; b.textContent = t('meta_refund_ok'); }
       break;
     case 'banish': g.banishMode = !g.banishMode; $('perkCards').classList.toggle('banishing', g.banishMode); break;
