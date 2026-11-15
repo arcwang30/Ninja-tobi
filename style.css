@@ -1001,3 +1001,12 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 #buyCf .cf-ic { display: grid; place-items: center; width: 2.6em; height: 2.6em; margin: .4em 0 .2em; border-radius: 50%; background: #fff3d0; font-size: 1.6em; box-shadow: 0 0 0 3px #1a1a1a, 0 0 12px rgba(255,210,122,.4); }
 .seal-mini { display: inline-grid; place-items: center; width: 1.15em; height: 1.15em; margin-right: .2em; border-radius: .2em; background: #c0262d; color: #fff; font-style: normal; font-size: .82em; font-weight: 900; border: 1.5px solid #ffd27a; vertical-align: -.1em; }
 #buyCf .cf-coin .kbi { width: .8em; height: 1em; }
+
+/* v151 藏寶箱：價格直接做成按鈕（印／小判圖示＋數字），點下去跳購買確認 */
+#shopBody .item .pbtn { display: inline-flex; align-items: center; justify-content: center; gap: .15em; min-width: 4.2em; padding: .45em .55em; font-size: .95em; letter-spacing: 0; white-space: nowrap; }
+#shopBody .item .pbtn.seal, #shopBody .item .pbtn.coin { background: linear-gradient(#ffd780, #e6a63a); color: #3a2400; text-shadow: none; box-shadow: inset 0 calc(var(--u)*3) 0 rgba(255,255,255,.35), 0 calc(var(--u)*4) 0 #000; }
+#shopBody .item .pbtn.poor { background: linear-gradient(#4a4f5a, #343842); color: #ff8a7a; box-shadow: inset 0 calc(var(--u)*3) 0 rgba(255,255,255,.1), 0 calc(var(--u)*4) 0 #000; }
+#shopBody .item .pbtn.max { background: linear-gradient(#3a4a3a, #263226); color: #9aff9a; opacity: 1; }
+#shopBody .item .pbtn.lk { opacity: .55; }
+#shopBody .item .pbtn .kbi { width: .85em; height: 1.08em; }
+#shopBody .item .pbtn .seal-mini { font-size: .8em; }

@@ -349,7 +349,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v149';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v150';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -800,7 +800,7 @@ function midAI(e, ed, dt) {
 // 中 BOSS 被擊倒：大量魂與小判，並開寶箱（可能進化）
 function midDown(e) {
   g.mid = null;
-  { const s = lvSave(), k = TIER(); if (!(s.mid[g.lvl] & (1 << k))) { s.mid[g.lvl] |= 1 << k; addSeal(1); } }   // v143：每個難易度第一次擊倒這關的中魔王：修行之印 +2
+  { const s = lvSave(), k = TIER(); if (!(s.mid[g.lvl] & (1 << k))) { s.mid[g.lvl] |= 1 << k; addSeal(10); } }   // v143：每個難易度第一次擊倒這關的中魔王：修行之印 +2
   for (let i = 0; i < 10; i++) g.drops.push({ k: i < 6 ? 'soul' : 'coin', x: e.x + rnd(-30, 30), y: e.y, vx: rnd(-100, 100), vy: -rnd(140, 280), v: i < 6 ? 3 : 2, ph: rnd(0, 6), ap: .45 + i * .03 });   // v142：魂 6×3＝18（約升 1 級）＋小判 4×2。ap：噴出後自動飛向玩家（v141：中魔王死的位置常在畫面外，魂撿不到）
   burst(e.x, e.y, '#c0262d', 36); g.shake = 12; SFX.kill(); vib([60, 40, 120]);
   floatText(W / 2, g.camY + H * .4, tl('mid_down'), '#ffd27a', 24);
@@ -1085,6 +1085,13 @@ function updatePlay(dt) {
 
 // ===== 自動技能 =====
 // 技能命中：菁英要打兩次（有短暫冷卻），其他直接斬殺
+// v150 範圍攻擊（急降斬衝擊波、爆炸、復活震波）：一般敵人直接斬殺；菁英只打掉一層；中魔王扣 dmg 血（有短暫無敵，不會被秒殺）。回傳是否斬殺
+function blastHit(e, dmg, auto) {
+  if (e.dead) return false;
+  if (e.type === 13) { if (e.cool > 0) return false; e.hp -= dmg; e.cool = .6; e.flash = .3; e.tough = 1; floatText(e.x, e.y - 30, 'HP ' + Math.max(0, e.hp), '#e0b0ff', 14); if (e.hp <= 0) { e.hp = 1; slay(e, auto); return true; } return false; }
+  if (e.hp > 1) { if (e.cool > 0) return false; e.hp--; e.cool = .4; e.flash = .3; e.tough = 1; return false; }
+  slay(e, auto); return true;
+}
 function autoHit(e) {
   if (e.dead || e.cool > 0) return;
   if (e.hidden) return;
@@ -1225,7 +1232,7 @@ function land(pl) {
     p.dive = false;
     const r = 90 * (1 + .5 * pk('quake'));
     g.booms.push({ x: p.x, y: pl.y, r, t: 0, c: '#ffffff' });
-    for (const e of g.enemies) if (!e.dead && Math.hypot(e.x - p.x, e.y - pl.y) < r) slay(e);
+    for (const e of [...g.enemies]) if (!e.dead && Math.hypot(e.x - p.x, e.y - pl.y) < r) blastHit(e, 2);   // v150：中魔王與菁英不會被衝擊波秒殺
     if (pl.type === 'spike') { pl.type = 'normal'; floatText(p.x, p.y - 50, '破!', '#fff', 22); }
     g.shake = 9; SFX.impact(); vib(50);
     v = Math.max(v * 1.3, pl.type === 'spring' ? SPRING * 1.1 : 0);
@@ -1279,7 +1286,7 @@ function heal(n, x = g.p.x, y = g.p.y - 60) {
 function reviveNow(label, full) {
   g.hp = full ? g.maxHp : Math.round(g.maxHp / 2); const p = g.p; p.inv = 2.5; p.vy = -JUMP * 1.2; p.hurt = 0; p.dash = 0; p.dive = false;
   p.y = Math.min(p.y, g.camY + H * .5); g.zoneY = Math.max(g.zoneY, g.camY + H + 260);
-  g.booms.push({ x: p.x, y: p.y - 20, r: 120, t: 0, c: '#ffb04a' }); for (const e of g.enemies) if (!e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 120) slay(e, true);
+  g.booms.push({ x: p.x, y: p.y - 20, r: 120, t: 0, c: '#ffb04a' }); for (const e of [...g.enemies]) if (!e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 120) blastHit(e, 3, true);
   floatText(p.x, p.y - 60, label, '#ffb04a', 24); SFX.fever(); vib([60, 40, 60]);
 }
 // 倒數圓盤（看廣告復活、每一幕開場共用）：金色倒數環＋每秒彈出的大數字
@@ -1446,7 +1453,7 @@ function explode(x, y) {
   if (g.th === 3) g.mists.push({ x, y, r: 85, t: 0 });   // 山關雪崩球：留下冰霧
   burst(x, y, '#ff8a3a', 24); SFX.boom(); g.shake = 12; vib(80);
   let n = 0;
-  for (const e of g.enemies) if (!e.dead && Math.hypot(e.x - x, e.y - y) < r) { slay(e); n++; }
+  for (const e of [...g.enemies]) if (!e.dead && Math.hypot(e.x - x, e.y - y) < r) { if (blastHit(e, 2)) n++; }
   for (const pl of g.plats) if (!pl.broken && pl.type !== 'ground' && Math.hypot(pl.x - x, pl.y - y) < r * .8) { pl.broken = true; pl.vy = -100; }
   if (n >= 3) unlock('chain3');
   if (n >= 5) unlock('chain5');
@@ -2015,7 +2022,7 @@ function finishBoss(killed) {
     addBonus(pts); addCoins(15 + 5 * b.lv);
     floatText(W / 2, g.camY + H * .4, t('boss_repelled', Math.round(pts * (1 + .2 * pk('score')))), '#ffd27a', 24);
     for (let i = 0; i < 8; i++) g.drops.push({ k: i < 5 ? 'soul' : 'coin', x: W / 2 + rnd(-40, 40), y: g.camY + H * .3, vx: rnd(-90, 90), vy: -rnd(120, 260), v: i < 5 ? 3 : 2, ph: rnd(0, 6) });
-    { const s = lvSave(); s.rp = s.rp || [0, 0, 0, 0]; const k = TIER(); if (!(s.rp[g.lvl] & (1 << k))) { s.rp[g.lvl] |= 1 << k; addSeal(2); } }   // v143：每個難易度第一次擊退這關魔王：修行之印 +3
+    { const s = lvSave(); s.rp = s.rp || [0, 0, 0, 0]; const k = TIER(); if (!(s.rp[g.lvl] & (1 << k))) { s.rp[g.lvl] |= 1 << k; addSeal(20); } }   // v143：每個難易度第一次擊退這關魔王：修行之印 +3
     save.stats.bosses++; unlock('boss1');   // 擊退也算進累計（「討伐・〇〇」只在決戰擊破時才算）
     if (save.stats.bosses >= 10) unlock('boss10');
     if (save.stats.bosses >= 30) unlock('boss30');
@@ -2046,7 +2053,7 @@ function finishBoss(killed) {
   if (g.stage >= ST_N) {
     g.stage = ST_N - 1; g.cleared = true;
     const s = lvSave(); s.clear[g.lvl] = 1; s.best[g.lvl] = ST_N; persist();
-    { const k = TIER(); if (k === 3) shuraClear(s); if (s.tc[g.lvl] < k + 1) { s.tc[g.lvl] = k + 1; persist(); addSeal([3, 4, 5, 0][k]); if (k < 3) floatText(W / 2, g.camY + H * .22, t('tier_open', lvName(g.lvl), L(TIERS[k + 1].n)), '#ffd27a', 18); } }   // v143：這個難易度第一次破台：修行之印＋開放下一個難易度
+    { const k = TIER(); if (k === 3) shuraClear(s); if (s.tc[g.lvl] < k + 1) { s.tc[g.lvl] = k + 1; persist(); addSeal([30, 40, 50, 0][k]); if (k < 3) floatText(W / 2, g.camY + H * .22, t('tier_open', lvName(g.lvl), L(TIERS[k + 1].n)), '#ffd27a', 18); } }   // v143：這個難易度第一次破台：修行之印＋開放下一個難易度
     unlock('lv' + g.lvl + 'c');
     if (s.clear.every(x => x)) unlock('clear');
     if (!g.scrollN) unlock('noscroll');
@@ -3258,8 +3265,8 @@ function renderShop() {
     h = SKINS.map((s, i) => {
       const own = SHOP_FREE || save.skins.includes(i), sel = save.skin === i, avail = own || !s.req || save.ach[s.req], sd = SKILLS.find(x => x.id === s.sk);
       const req = s.req && !avail ? `<small class="req">🔒 ${t('char_req', L(ACH.find(a => a.id === s.req).d))}</small>` : '';
-      return `<div class="item ${avail ? '' : 'locked'}"><span class="ic char-ic">${avail && heroThumb(i) ? `<img src="${heroThumb(i)}" alt="">` : '？'}</span><span class="nm"><b>${avail ? L(s.n) : '？？？'}${nb('s:' + i)}</b><small>${t('start_skill', sd.ic + ' ' + L(sd.n))}${avail ? '・' + (own ? t('owned') : t('price', s.cost)) : ''}</small>${req}</span>` +
-        (sel ? `<button disabled>${t('equipped')}</button>` : own ? `<button data-act="skin" data-arg="${i}">${t('equip')}</button>` : `<button data-act="askskin" data-arg="${i}" ${!avail || save.coins < s.cost ? 'disabled' : ''}>${t('buy')}</button>`) + '</div>';
+      return `<div class="item ${avail ? '' : 'locked'}"><span class="ic char-ic">${avail && heroThumb(i) ? `<img src="${heroThumb(i)}" alt="">` : '？'}</span><span class="nm"><b>${avail ? L(s.n) : '？？？'}${nb('s:' + i)}</b><small>${t('start_skill', sd.ic + ' ' + L(sd.n))}${avail && own ? '・' + t('owned') : ''}</small>${req}</span>` +
+        (sel ? `<button disabled>${t('equipped')}</button>` : own ? `<button data-act="skin" data-arg="${i}">${t('equip')}</button>` : !avail ? `<button class="pbtn lk" disabled>🔒</button>` : `<button class="pbtn coin ${save.coins < s.cost ? 'poor' : ''}" data-act="askskin" data-arg="${i}"><i class="kbi"></i>${s.cost}</button>`) + '</div>';   // v151：價格直接做成按鈕（金幣＋數字），點下去跳確認
     }).join('');
   } else if (shopTab === 1) {   // 換裝：目前角色穿上各種顏色的預覽
     const ci = save.skin, cur = outOf(ci);
@@ -3291,8 +3298,8 @@ function renderShop() {
     h = (shopGuide === 2 ? `<div class="guide-box"><button class="gx" data-act="guidex" aria-label="close">✕</button><b>${t('guide_t')}</b><small>${t('guide_d', save.seals || 0)}</small></div>` : '') +
       `<div class="seal-bar"><span class="seal-ic">印</span><b>${t('seal_n')}</b><em>${save.seals || 0}</em><small>${t('seal_how')}</small></div><div class="meta-head">${t('meta_total', now, tot)}</div>` + META.map(m => {
       const l = mt(m.id), max = l >= m.max, c = sealCost(m, l), op = metaOpen(m);
-      if (!op) return `<div class="item locked"><span class="ic" style="background:#ccc">🔒</span><span class="nm"><b>${L(m.n)}</b><small>${t(META_TIER[m.id] === 1 ? 'meta_t1' : 'meta_t2')}</small></span><button disabled>${t('train')}</button></div>`;
-      return `<div class="item"><span class="ic" style="background:#fff3d0">${m.ic}</span><span class="nm"><b>${L(m.n)}　Lv ${l}/${m.max}${nb(`m:${m.id}:${l}`)}</b><small>${L(m.d)}${max ? '' : '・' + t('seal_price', c)}</small></span><button data-act="askmeta" data-arg="${m.id}" ${max || (save.seals || 0) < c ? 'disabled' : ''}>${max ? 'MAX' : t('train')}</button></div>`;
+      if (!op) return `<div class="item locked"><span class="ic" style="background:#ccc">🔒</span><span class="nm"><b>${L(m.n)}</b><small>${t(META_TIER[m.id] === 1 ? 'meta_t1' : 'meta_t2')}</small></span><button class="pbtn lk" disabled>🔒</button></div>`;
+      return `<div class="item"><span class="ic" style="background:#fff3d0">${m.ic}</span><span class="nm"><b>${L(m.n)}　Lv ${l}/${m.max}${nb(`m:${m.id}:${l}`)}</b><small>${L(m.d)}</small></span>${max ? '<button class="pbtn max" disabled>MAX</button>' : `<button class="pbtn seal ${(save.seals || 0) < c ? 'poor' : ''}" data-act="askmeta" data-arg="${m.id}"><i class="seal-mini">印</i>${c}</button>`}</div>`;   // v151：價格直接做成按鈕（印＋數字）
     }).join('') + ((spent || (SHOP_FREE && now)) ? `<button class="meta-refund" data-act="refund">${t('seal_refund', spent)}</button>` : '');
   }
   $('shopBody').innerHTML = h;
@@ -3362,7 +3369,7 @@ function buyAskX(kind, arg) {
     cost = s.cost; have = save.coins; unit = '<i class="kbi"></i>'; act = 'buyskin';
     pic = heroThumb(+arg) ? `<img src="${heroThumb(+arg)}" alt="">` : ''; name = L(s.n); q = t('cf_qs', L(s.n));
   }
-  if (have < cost) return;
+  if (have < cost) { toast(t(kind === 'meta' ? 'poor_seal' : 'poor_coin', cost - have)); SFX.no && SFX.no(); return; }   // 不夠：提示還差多少
   buyClose();
   const d = document.createElement('div'); d.id = 'buyCf';
   d.innerHTML = `<div class="cf-box"><div class="cf-h">${t('cf_title')}</div>${pic}<b style="color:${col}">${name}</b>` +

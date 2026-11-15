@@ -101,7 +101,7 @@ const BANS = [
 const shuraVal = b => b ? BANS.reduce((n, x) => n + (b[x.id] ? x.p : 0), 0) : 0;
 // 修羅破台：最高修羅值紀錄＋修行之印（5＋修羅值；用更高的修羅值破台時補發差額）
 function shuraClear(s) {
-  const i = g.lvl, v = shuraVal(g.ban), aw = 3 + Math.ceil(v / 2);   // v149：修羅破台的印＝3＋修羅值的一半
+  const i = g.lvl, v = shuraVal(g.ban), aw = 30 + 5 * v;   // v150：修羅破台的印＝30＋修羅值×5
   s.shura = s.shura || [0, 0, 0, 0]; s.shuraAw = s.shuraAw || [0, 0, 0, 0];
   if (v > s.shura[i]) s.shura[i] = v;
   if (aw > s.shuraAw[i]) { addSeal(aw - s.shuraAw[i]); s.shuraAw[i] = aw; }
@@ -113,7 +113,7 @@ function banOpen() {
   let d = $('banCf'); if (!d) { d = document.createElement('div'); d.id = 'banCf'; d.addEventListener('click', e => { if (e.target === d) banClose(); }); $('lvsel').appendChild(d); }
   d.innerHTML = `<div class="cf-box"><div class="cf-h">${t('ban_t')}</div><div class="bn-sub">${t('ban_sub')}</div>` +
     `<div class="bn-list">${BANS.map(B => `<button class="bn ${s.ban[B.id] ? 'on' : ''}" data-act="bantog" data-arg="${B.id}"><i class="bn-ck">${s.ban[B.id] ? '✓' : ''}</i><span><b>${L(B.n)}</b><small>${L(B.d)}</small></span><em>+${B.p}</em></button>`).join('')}</div>` +
-    `<div class="bn-sum"><span>${t('ban_val')}</span><b>${v}</b><small>${t('ban_rw', 10 * v, 3 + Math.ceil(v / 2))}${best ? '　' + t('ban_best', best) : ''}</small></div>` +
+    `<div class="bn-sum"><span>${t('ban_val')}</span><b>${v}</b><small>${t('ban_rw', 10 * v, 30 + 5 * v)}${best ? '　' + t('ban_best', best) : ''}</small></div>` +
     `<div class="cf-btns"><button class="big" data-act="banclose">${t('ban_ok')}</button></div></div>`;
 }
 function banClose() { const d = $('banCf'); if (d) d.remove(); }
@@ -126,19 +126,30 @@ const START_ST = [0, 5, 9];
 // 取得：每個難易度第一次到達第 2～10 舞台 +1、第一次擊倒中魔王 +2、初戰擊退魔王 +3、破台 +5（中忍 +7、上忍 +10）、達成成就 +1
 function addSeal(n, why) {
   if (!n || (g && g.tut)) return;
+  sealMigrate();   // 先把舊存檔換成新幣值，再加這次的獎勵（避免新拿到的印也被 ×10）
   save.seals = (save.seals || 0) + n; persist();
   if (g && state !== 'menu') floatText(W / 2, g.camY + H * .3, t('seal_plus', n), '#ffe28a', 20);
 }
-// 修行每一級要幾個印（依修行的階段：基礎 1 起、進階 2 起、高階 3 起，等級越高越貴）
-const sealCost = (m, l) => SHOP_FREE ? 0 : (META_TIER[m.id] || 0) + 1 + Math.floor(l * .6);
-function sealSpent() { let n = 0; for (const m of META) for (let l = 0; l < mt(m.id); l++) n += (META_TIER[m.id] || 0) + 1 + Math.floor(l * .6); return n; }
-// 舊存檔轉換（只做一次）：依目前的進度補發修行之印，扣掉已經用小判買過的修行等級換算的印（不會倒扣、已買的修行全部保留）
+// v150 修行之印改成幣值：依各修行的強度訂起價，每升一級約貴 50%（以 5 為單位）；全部修滿約 1,470 印
+const SEAL_BASE = { hp: 12, armor: 16, revive: 120, reach: 14, power: 14, cd: 18, speed: 10, ki: 30, kireg: 12, magnet: 6, xp: 10, gold: 8, luck: 12, scroll: 35, reroll: 18, banish: 18 };
+const sealPrice = (id, l) => Math.max(5, Math.round((SEAL_BASE[id] || 15) * (1 + .5 * l) / 5) * 5);
+const sealCost = (m, l) => SHOP_FREE ? 0 : sealPrice(m.id, l);
+function sealSpent() { let n = 0; for (const m of META) for (let l = 0; l < ((save.meta && save.meta[m.id]) || 0); l++) n += sealPrice(m.id, l); return n; }
+// 舊存檔轉換（各只做一次）
+// ・從沒用過修行之印的存檔：依進度補發（新幣值），扣掉已經用小判買過的修行換算的印（不會倒扣、已買的修行全部保留）
+// ・v143～v149 的存檔：手上的印 ×10 換成新幣值（修羅已領的獎勵紀錄也 ×10）
 function sealMigrate() {
-  if (save.sealV) return; save.sealV = 1;
-  const s = lvSave(); let earned = 0;
-  for (let i = 0; i < 4; i++) { earned += Math.max(0, (s.best[i] || 0) - 1); if (s.boss[i]) earned += 3; if (s.clear[i]) earned += 5; }
-  earned += Object.keys(save.ach || {}).length;
-  save.seals = Math.max(0, earned - sealSpent()); persist();
+  if (!save.sealV) {
+    save.sealV = 1; save.sealV2 = 1;
+    const s = lvSave(); let earned = 0;
+    for (let i = 0; i < 4; i++) { if ((s.best[i] || 0) >= 3) earned += 10; if (s.boss[i]) earned += 20; if (s.clear[i]) earned += 30; }
+    save.seals = Math.max(0, earned - sealSpent()); persist(); return;
+  }
+  if (!save.sealV2) {
+    save.sealV2 = 1; save.seals = (save.seals || 0) * 10;
+    const s = lvSave(); if (s.shuraAw) s.shuraAw = s.shuraAw.map(v => v * 10);
+    persist();
+  }
 }
 // 到達新舞台時呼叫：記錄最佳、檢查是否開放下一關
 function lvReach() {

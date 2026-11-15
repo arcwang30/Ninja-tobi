@@ -140,7 +140,9 @@ const STR = {
   // v143：修行之印、難易度、出發點、卷
   seal_n: ['修行之印', '修行の印', 'Training Seals'],
   seal_plus: ['修行之印 +{0}', '修行の印 +{0}', 'Training Seal +{0}'],
-  seal_price: ['{0} 印', '印 {0}', '{0} Seals'],
+  seal_price: ['<i class="seal-mini">印</i>{0}', '<i class="seal-mini">印</i>{0}', '<i class="seal-mini">印</i>{0}'],
+  poor_seal: ['修行之印不足（還差 {0}）', '修行の印が足りない（あと {0}）', 'Not enough seals ({0} short)'],
+  poor_coin: ['小判不足（還差 {0}）', '小判が足りない（あと {0}）', 'Not enough koban ({0} short)'],
   seal_how: ['每個難易度第一次擊倒中魔王、擊退魔王、破台可獲得', '各難易度で初めて中ボス撃破・ボス撃退・クリアで入手', 'Earned the first time you beat a mid-boss, repel a boss or clear, on each difficulty'],
   seal_refund: ['全部歸零（退還 {0} 印）', 'すべて戻す（印 {0} を返却）', 'Reset all (refund {0} seals)'],
   tier_open: ['{0}・{1} 開放！', '{0}・{1} 解放！', '{0}: {1} unlocked!'],
