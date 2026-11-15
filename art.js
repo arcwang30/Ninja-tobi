@@ -1907,7 +1907,7 @@ function bossSleepy(c, b, t, warn) {
   c.beginPath(); c.moveTo(22, 1.6); c.lineTo(26, 1.6); c.lineTo(27, 5.5); c.lineTo(32, 5.5); c.lineTo(31, -1.8); c.lineTo(22, -1.8); c.closePath(); aFI(c, '#e8b84a', 1.2);   // 雁首（菸斗）
   c.beginPath(); c.rect(-21, -1.6, 7, 3.2); aFI(c, '#e8b84a', 1);   // 吸嘴
   c.restore();
-  bossFist(c, px0, py0, 8, P, PD, { cuff: '#7a4a26', cuffLine: '#4a2a12', rot: pa + Math.PI });
+  bossFist(c, px0, py0, 8, P, PD, { cuff: '#7a4a26', cuffLine: '#4a2a12', rot: pa + Math.PI, flip: 1 });   // 畫面左邊的是牠的右手：拇指要在內側（朝身體、壓在菸管上方）
   // 酒碟：平放在攤開的手掌上，拇指壓著碟緣
   c.save(); c.translate(16, 15 + fb); c.rotate(-.12);
   heroSilhouette(c, [
