@@ -1010,3 +1010,10 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 #shopBody .item .pbtn.lk { opacity: .55; }
 #shopBody .item .pbtn .kbi { width: .85em; height: 1.08em; }
 #shopBody .item .pbtn .seal-mini { font-size: .8em; }
+/* v151 只有下忍可選：切換器只顯示中間（不放箭頭） */
+#lvsel.tc .lv-tier.one .tc-mid { min-width: 5.2em; padding: 0 .5em; }
+/* v151 未開放的關卡：只顯示漢字，黑底，不顯示魔王與背景 */
+#lvsel .lv-card.locked .lv-art { background: #000 !important; filter: none !important; }
+#lvsel .lv-card.locked .lv-k { color: #6a6a72; text-shadow: 0 0 .15em #000; }
+#lvsel .lv-card.locked::after { display: none; }
+#lvsel .lv-card.locked { justify-content: center !important; } #lvsel .lv-card.locked .lv-k { margin: 0; font-size: 2.6em; }

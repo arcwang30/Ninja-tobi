@@ -36,16 +36,18 @@ const THEMES = [
 // out = 預設換裝顏色（OUTFITS 的索引，免費）；req = 要先達成的成就才會在商店上架（參考吸血鬼倖存者）
 const SKINS = [
   { id: 'tobi', n: ['鳶', '鳶', 'Tobi'], cost: 0, sk: 'shuriken', out: 0 },
-  { id: 'ao', n: ['蒼', '蒼', 'Ao'], cost: 300, sk: 'kunai', out: 1, req: 'run1' },
-  { id: 'sakura', n: ['桜', '桜', 'Sakura'], cost: 600, sk: 'wind', out: 4, req: 'lv0r5' },
-  { id: 'kage', n: ['影', '影', 'Kage'], cost: 1000, sk: 'thunder', out: 3, req: 'boss1' },
-  { id: 'homura', n: ['焰', '焔', 'Homura'], cost: 1200, sk: 'tags', out: 0, req: 'chain3' },
-  { id: 'kon', n: ['狐', '狐', 'Kon'], cost: 1500, sk: 'clone', out: 4, req: 'combo30' },
-  { id: 'shizuku', n: ['雫', '雫', 'Shizuku'], cost: 1500, sk: 'water', out: 9, req: 'wx_rain' },
-  { id: 'kasumi', n: ['霞', '霞', 'Kasumi'], cost: 1500, sk: 'mist', out: 6, req: 'wx_fog' },
-  { id: 'gan', n: ['岩', '岩', 'Gan'], cost: 2500, sk: 'rock', out: 5, req: 'lv3c' },
-  { id: 'kasa', n: ['笠', '笠', 'Kasa'], cost: 2500, sk: 'sickle', out: 7, req: 'boss10' },
+  { id: 'ao', n: ['蒼', '蒼', 'Ao'], cost: 500, sk: 'kunai', out: 1, req: 'boss1' },
+  { id: 'sakura', n: ['桜', '桜', 'Sakura'], cost: 1500, sk: 'wind', out: 4, req: 'lv1c' },
+  { id: 'kage', n: ['影', '影', 'Kage'], cost: 4000, sk: 'thunder', out: 3, req: 'lv3c' },
+  { id: 'homura', n: ['焰', '焔', 'Homura'], cost: 2500, sk: 'tags', out: 0, req: 'lv2c' },
+  { id: 'kon', n: ['狐', '狐', 'Kon'], cost: 6000, sk: 'clone', out: 4, req: 'clear' },
+  { id: 'shizuku', n: ['雫', '雫', 'Shizuku'], cost: 2000, sk: 'water', out: 9, req: 'wx_rain' },
+  { id: 'kasumi', n: ['霞', '霞', 'Kasumi'], cost: 800, sk: 'mist', out: 6, req: 'lv0c' },
+  { id: 'gan', n: ['岩', '岩', 'Gan'], cost: 1000, sk: 'rock', out: 5, req: 'mid5' },
+  { id: 'kasa', n: ['笠', '笠', 'Kasa'], cost: 3000, sk: 'sickle', out: 7, req: 'boss10' },
 ];
+// v151：藏寶箱「忍者」分頁的排列（依起始技能由弱到強、入手由易到難）；內部編號不變，已買的忍者不受影響
+const SKIN_ORDER = [0, 1, 7, 8, 2, 6, 4, 9, 3, 5];
 // 換裝：10 種顏色（所有角色共用）。髮色、面具、斗笠、虎斑等招牌特徵不會變色
 const OUTFITS = [
   { n: ['赤', '赤', 'Red'], suit: '#c0262d', dark: '#7a1218', band: '#ffffff', cost: 0 },
@@ -205,7 +207,7 @@ const ACH = [];
   add('run1', 0, ['初陣', '初陣', 'First Battle'], ['完成第一次挑戰', '初めての挑戦を終える', 'Finish your first run']);
   LV.forEach((k, i) => {
     add('lv' + i + 'r5', 0, [k[0] + '之卷・中', k[1] + 'の巻・中', k[2] + ' Midway'], ['在「' + k[0] + '」到達第 5 舞台', '「' + k[1] + '」で第5舞台に到達', 'Reach Stage 5 in ' + k[2]]);
-    add('lv' + i + 'c', 0, [k[0] + '之卷・破', k[1] + 'の巻・破', k[2] + ' Cleared'], ['「' + k[0] + '」破台（突破第 10 舞台）', '「' + k[1] + '」をクリア（第10舞台突破）', 'Clear all 10 stages of ' + k[2]]);
+    add('lv' + i + 'c', 0, [k[0] + '之卷・破', k[1] + 'の巻・破', k[2] + ' Cleared'], ['「' + k[0] + '」破台（突破第 15 舞台）', '「' + k[1] + '」をクリア（第15舞台突破）', 'Clear all 15 stages of ' + k[2]]);
   });
   add('clear', 0, ['風林火山', '風林火山', 'Wind Forest Fire Mountain'], ['四關全部破台', '四つのステージをすべてクリア', 'Clear all four stages']);
   add('loop2', 0, ['第二輪', '二周目', 'Second Round'], ['在任一關到達第 6 舞台', 'どこかで第6舞台に到達', 'Reach Stage 6 anywhere']);
@@ -219,7 +221,7 @@ const ACH = [];
   add('chain5', 1, ['大爆破', '大爆破', 'Big Bang'], ['一次爆炸炸死 5 名以上敵人', '一度の爆発で5体以上倒す', 'Kill 5+ enemies with one explosion']);
   add('bank1', 1, ['反射斬', '反射斬り', 'Bank Shot'], ['衝刺斬撞牆反彈後斬殺敵人', '突進斬りで壁に跳ね返ってから敵を斬る', 'Dash-slash off a wall, then cut an enemy']);
   add('mid1', 1, ['天狗退治', '天狗退治', 'Tengu Hunter'], ['擊敗中 BOSS 大天狗', '中ボス大天狗を倒す', 'Defeat the Great Tengu']);
-  add('mid5', 1, ['天狗殺', '天狗殺し', 'Tengu Slayer'], ['累計擊敗 5 隻大天狗', '大天狗を累計5体倒す', 'Defeat 5 Great Tengu in total']);
+  add('mid5', 1, ['天狗殺', '天狗殺し', 'Tengu Slayer'], ['累計擊敗 5 隻中魔王', '中ボスを累計5体倒す', 'Defeat 5 mid-bosses in total']);
   add('boss1', 1, ['鬼退治', '鬼退治', 'Oni Slayer'], ['擊敗第一隻魔王', '初めて魔王を倒す', 'Defeat your first boss']);
   BOSS_KINDS.forEach((b, i) => add('bk' + i, 1, ['討伐・' + b.n[0], '討伐・' + b.n[1], 'Beat ' + b.n[2]], ['擊敗' + b.n[0], b.n[1] + 'を倒す', 'Defeat the ' + b.n[2]]));
   add('boss10', 1, ['鬼殺', '鬼殺し', 'Oni Bane'], ['累計擊敗 10 隻魔王', '魔王を累計10体倒す', 'Defeat 10 bosses in total']);
@@ -349,7 +351,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v150';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v151';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -3262,7 +3264,7 @@ function renderShop() {
   const nb = k => nk.has(k) ? '<em class="nw">NEW!</em>' : '';
   let h = '';
   if (shopTab === 0) {   // 角色：達成條件才上架，再用小判購買
-    h = SKINS.map((s, i) => {
+    h = SKIN_ORDER.map(i => { const s = SKINS[i];   // 依強弱、入手難易度由上到下排列
       const own = SHOP_FREE || save.skins.includes(i), sel = save.skin === i, avail = own || !s.req || save.ach[s.req], sd = SKILLS.find(x => x.id === s.sk);
       const req = s.req && !avail ? `<small class="req">🔒 ${t('char_req', L(ACH.find(a => a.id === s.req).d))}</small>` : '';
       return `<div class="item ${avail ? '' : 'locked'}"><span class="ic char-ic">${avail && heroThumb(i) ? `<img src="${heroThumb(i)}" alt="">` : '？'}</span><span class="nm"><b>${avail ? L(s.n) : '？？？'}${nb('s:' + i)}</b><small>${t('start_skill', sd.ic + ' ' + L(sd.n))}${avail && own ? '・' + t('owned') : ''}</small>${req}</span>` +
@@ -3408,7 +3410,7 @@ document.addEventListener('click', e => {
     case 'adcoins': adCoinsWatch(); break;
     case 'privacy': window.open('https://arcconceptgames.github.io/ninjatobi/privacy/?lang=' + ['zh', 'ja', 'en'][LI], '_blank', 'noopener'); break;   // 隱私權政策（官網，原始檔在 site/ninjatobi，用 tools/deploy-site.sh 發佈）
     case 'fulltest': save.full = !hasFull(); persist(); renderOpt(); break;   // 測試模式：切換是否擁有完整版
-    case 'lvlock': toast(t('lv_locked')); break;
+    case 'lvlock': toast(+arg > 0 ? '🔒 ' + t('lv_cond', lvName(+arg - 1), ST_UNLOCK + 1) : t('lv_locked')); break;   // 點未開放的關卡：提示開放條件
     case 'shop':
       if (b.querySelector('.ic-chest')) {   // 主畫面「寶藏」：寶箱先打開蓋子，0.35 秒後才進商店
         const im = b.querySelector('.ic-chest img'); if (b.classList.contains('opening')) break;

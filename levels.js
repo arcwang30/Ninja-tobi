@@ -70,6 +70,8 @@ function lvSave() {
   if (!Array.isArray(s.tb)) { s.tb = [s.best.slice(), [0, 0, 0, 0], [0, 0, 0, 0]]; s.tc = s.clear.map(c => c ? 1 : 0); s.mid = [0, 0, 0, 0]; persist(); }
   if (s.tier == null) s.tier = 0;      // 選關畫面上次選的難易度
   if (s.start == null) s.start = 0;    // 上次選的出發點：0 第 1 舞台、1 第 6 舞台、2 魔王再戰
+  // v151：關卡開放改成測試模式也照規則（測試模式以前不會記錄開放進度）：依各關到過的最高舞台補算一次
+  if (!s.v4) { s.v4 = 1; let o = 1; while (o < LEVELS.length && ((s.best[o - 1] || 0) >= ST_UNLOCK + 1 || s.clear[o - 1])) o++; s.open = Math.max(s.open || 1, o); persist(); }
   return s;
 }
 
@@ -156,7 +158,7 @@ function lvReach() {
   const s = lvSave(), i = g.lvl, st = g.stage + 1, k = TIER();
   if (st > (s.tb[k][i] || 0)) s.tb[k][i] = st;   // v149：到達新舞台不再給修行之印（只記錄）   // 這個難易度第一次到達這個舞台：修行之印 +1
   if (st > s.best[i]) s.best[i] = st;
-  if (g.stage >= ST_UNLOCK && i + 1 < LEVELS.length && s.open < i + 2 && !TEST_FREE) {
+  if (g.stage >= ST_UNLOCK && i + 1 < LEVELS.length && s.open < i + 2) {
     s.open = i + 2;
     floatText(W / 2, 30, t('lv_open', lvName(i + 1)), '#ffd27a', 20, true); SFX.fever();
   }
@@ -435,7 +437,9 @@ function renderTierPick(pop) {
     const sv = shuraVal(s.ban), mid = k === 3   // 修羅：中間變成「禁制」按鈕，顯示目前的修羅值
       ? `<button class="tc-mid ban" style="--tc:${TIERS[k].c}" data-act="banopen"><small>${t('ban_btn')}</small><b>${L(TIERS[k].n)}<i class="sv">${sv}</i></b><i class="tc-dots">${TIERS.map((T0, n) => `<em class="${n === k ? 'on' : ''} ${tc > n ? 'done' : ''} ${tierOpen(i, n) ? '' : 'lk'}" style="--tc:${T0.c}"></em>`).join('')}</i></button>`
       : `<span class="tc-mid" style="--tc:${TIERS[k].c}"><small>${t('prep_tier')}</small><b>${L(TIERS[k].n)}</b><i class="tc-dots">${TIERS.map((T0, n) => `<em class="${n === k ? 'on' : ''} ${tc > n ? 'done' : ''} ${tierOpen(i, n) ? '' : 'lk'}" style="--tc:${T0.c}"></em>`).join('')}</i></span>`;
-    el.innerHTML = `<button class="tc-arr" data-act="tiercyc" data-arg="-1" aria-label="prev">◀</button>${mid}<button class="tc-arr" data-act="tiercyc" data-arg="1" aria-label="next">▶</button>`;
+    const many = TIERS.some((T0, n) => n > 0 && tierOpen(i, n));   // 只有下忍可選時不顯示左右箭頭
+    el.classList.toggle("one", !many);
+    el.innerHTML = many ? `<button class="tc-arr" data-act="tiercyc" data-arg="-1" aria-label="prev">◀</button>${mid}<button class="tc-arr" data-act="tiercyc" data-arg="1" aria-label="next">▶</button>` : mid;
   } else {
     el.innerHTML = (TIER_UI === 'a' ? `<div class="tp-h">${t('prep_tier')}<small>${td[k]}</small></div>` : '') +
       `<div class="tp-row">${TIERS.map((T0, n) => { const op = tierOpen(i, n); return `<button class="tp-b ${n === k ? 'on' : ''} ${op ? '' : 'lk'}" style="--tc:${T0.c}" data-act="tierpick" data-arg="${n}">${op ? '' : '🔒'}<b>${L(T0.n)}</b>${tc > n ? '<i class="tp-ok">✓</i>' : ''}</button>`; }).join('')}</div>`;
@@ -449,16 +453,16 @@ function openLvSel() {
   if (V.soon) { $('lvList').innerHTML = V.pre.map(soonCard).join(''); $('lvGo').disabled = true; $('lvGo').innerHTML = `<span>${t('vol_soon')}</span>`; renderJutsuPick(); show('lvsel', state === 'menu'); return; }
   $('lvGo').disabled = false;
   const h = LEVELS.map((L0, i) => {
-    const paid = lvPaid(i), open = !paid && i < (TEST_FREE ? LEVELS.length : s.open),   // 測試模式：四關全開；完整版的關卡沒買就顯示「完整版」
+    const paid = lvPaid(i), open = !paid && i < s.open,   // v151：測試模式也照規則開放（前一關到達第 10 舞台才開下一關）
       best = s.best[i], clr = s.clear[i];
     const wx = WX[L0.wx];
     const info = open
       ? `<span class="lv-best">${clr ? '✓ ' + t('lv_cleared') : best ? t('lv_best', best) : t('lv_new')}</span><span class="lv-wx">${wx.ic} ${L(wx.n)}</span>`
       : paid ? `<span class="lv-full">${t('full_tag')}</span>${i < s.open || TEST_FREE ? '' : `<span class="lv-cond">🔒 ${t('lv_cond', lvName(i - 1), ST_UNLOCK + 1)}</span>`}`
-      : `<span class="lv-cond">🔒 ${t('lv_cond', lvName(i - 1), ST_UNLOCK + 1)}</span>`;
-    return `<button class="lv-card ${open ? '' : paid ? 'paid' : 'locked'} ${s.sel === i && open ? 'sel' : ''}" style="--ec:${LV_EC[L0.th] || '#e8b84a'}" ${open ? `data-act="lvgo" data-arg="${i}"` : paid ? 'data-act="fullinfo"' : 'data-act="lvlock"'}>
-      <span class="lv-art" style="background-image:url(${lvThumb(i)})"></span><i class="lv-fr"><b></b><b></b><b></b><b></b></i>
-      <span class="lv-k">${lvName(i)}</span><span class="lv-motto">${L(L0.motto)}</span>${info}${open ? tierMarks(i) : ""}</button>`;
+      : '';   // v151：未開放的關卡只顯示漢字（點了會提示開放條件）
+    return `<button class="lv-card ${open ? '' : paid ? 'paid' : 'locked'} ${s.sel === i && open ? 'sel' : ''}" style="--ec:${LV_EC[L0.th] || '#e8b84a'}" ${open ? `data-act="lvgo" data-arg="${i}"` : paid ? 'data-act="fullinfo"' : 'data-act="lvlock" data-arg="${i}"'}>
+      <span class="lv-art" ${open || paid ? `style="background-image:url(${lvThumb(i)})"` : ''}></span><i class="lv-fr"><b></b><b></b><b></b><b></b></i>
+      <span class="lv-k">${lvName(i)}</span>${open || paid ? `<span class="lv-motto">${L(L0.motto)}</span>` : ''}${info}${open ? tierMarks(i) : ""}</button>`;
   }).join('');
   $('lvList').innerHTML = h;
   lvGoBtn(); renderTierPick();
@@ -481,7 +485,7 @@ function lvPick(i) {
 }
 function lvGoBtn(pop) {
   const s = lvSave(), b = $('lvGo'); if (!b) return;
-  const okSel = LEVELS[s.sel] && (TEST_FREE || s.sel < s.open);
+  const okSel = LEVELS[s.sel] && s.sel < s.open;
   if (!okSel) s.sel = 0;
   const L0 = LEVELS[s.sel];
   b.style.setProperty('--ec', LV_EC[L0.th] || '#e8b84a');
