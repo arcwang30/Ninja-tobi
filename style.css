@@ -844,15 +844,30 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
   .lvsel .lv-list { margin: .3em 0 .6em; grid-template-columns: repeat(2, minmax(0, min(50%, calc((92cqh - 21.6em) / 2.5)))); }
   .lvsel .lv-go { margin-bottom: .5em; }
 }
-/* v137 寶藏寶箱：底部「寶藏」緞帶和其他圖示的底邊對齊；每隔幾秒輕輕搖一下（以箱底為支點） */
-.dock button i.scroll-ic.ic-chest { transform-origin: 50% 85%; transform: scale(1.32) translateY(var(--chy, -10.5%)); }
+/* v137 寶藏寶箱（v140 改成以寶箱中心對齊其他圖示的中心）；每隔幾秒輕輕搖一下（以箱底為支點） */
+.dock button i.scroll-ic.ic-chest { transform-origin: 50% 85%; transform: scale(1.32) translateY(var(--chy, 3.2%)); }
 #title.on .dock button i.scroll-ic.ic-chest { animation: chestWob 3.2s 2.2s ease-in-out infinite; }
 @keyframes chestWob {
-  0%, 68%, 100% { transform: scale(1.32) translateY(var(--chy, -10.5%)) rotate(0); }
-  73% { transform: scale(1.32) translateY(var(--chy, -10.5%)) rotate(-5deg); }
-  79% { transform: scale(1.32) translateY(var(--chy, -10.5%)) rotate(4deg); }
-  85% { transform: scale(1.32) translateY(var(--chy, -10.5%)) rotate(-2.5deg); }
-  91% { transform: scale(1.32) translateY(var(--chy, -10.5%)) rotate(1.2deg); }
+  0%, 68%, 100% { transform: scale(1.32) translateY(var(--chy, 3.2%)) rotate(0); }
+  73% { transform: scale(1.32) translateY(var(--chy, 3.2%)) rotate(-5deg); }
+  79% { transform: scale(1.32) translateY(var(--chy, 3.2%)) rotate(4deg); }
+  85% { transform: scale(1.32) translateY(var(--chy, 3.2%)) rotate(-2.5deg); }
+  91% { transform: scale(1.32) translateY(var(--chy, 3.2%)) rotate(1.2deg); }
 }
-.dock button:active i.scroll-ic.ic-chest { animation: none; transform: scale(1.24) translateY(var(--chy, -10.5%)); }
+.dock button:active i.scroll-ic.ic-chest { animation: none; transform: scale(1.24) translateY(var(--chy, 3.2%)); }
 @media (prefers-reduced-motion: reduce) { #title.on .dock button i.scroll-ic.ic-chest { animation: none; } }
+/* v139 暫停畫面：說明＋設定並排、放棄並結算的確認視窗；遊戲中打開設定時不顯示「重置存檔」 */
+#pause .pz-row { display: flex; gap: .5em; width: 100%; }
+#pause .pz-row button { flex: 1; margin: 0; }
+#pause .pz-quit { margin-top: .5em; }
+#quitCf { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; background: rgba(6,8,14,.72); animation: cfIn .15s ease-out; }
+#quitCf .cf-box { width: min(84%, 20em); display: flex; flex-direction: column; align-items: center; padding: .9em 1em 1em; border-radius: 1em; background: linear-gradient(#2c3340, #1d222b); border: 2px solid #ffd27a; box-shadow: 0 8px 30px rgba(0,0,0,.6); animation: cfPop .18s ease-out; }
+#quitCf .cf-h { font-weight: 900; color: #ffd27a; font-size: 1.05em; letter-spacing: .06em; text-align: center; }
+#quitCf .cf-stat { display: flex; gap: .8em; margin: .6em 0 .1em; font-weight: 900; color: #fff; font-size: .9em; background: rgba(0,0,0,.3); border-radius: 1em; padding: .25em 1em; }
+#quitCf .cf-q { font-size: .8em; color: #dfe4ec; margin: .5em 0 .2em; text-align: center; line-height: 1.5; }
+#quitCf .cf-btns { display: flex; gap: .5em; width: 100%; margin-top: .8em; }
+#quitCf .cf-btns button { flex: 1; margin: 0; min-height: 2.4em; font-size: .9em; padding: .2em .4em; }
+#opt.ingame #bReset, #opt.ingame .og-it:has(#bReset) { display: none; }
+/* v140 設定：只留版本號，放在面板右下角 */
+#opt .panel { position: relative; }
+#opt .diag { position: absolute; right: 1.2em; bottom: .45em; margin: 0; font-size: .6em; opacity: .6; text-align: right; }

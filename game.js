@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v138';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v139';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -415,7 +415,7 @@ function resize() {
   app.style.setProperty('--sat', top + 'px');
   app.style.setProperty('--blur', (BLUR_T > 0 ? 30 : 0) + 'px');   // iOS App 模式瀏海下方的模糊帶（CSS px），面板要往下讓開
   DIAG = `${APP_VER} · ${innerWidth}×${innerHeight} · screen ${screen.width}×${screen.height} · ${appMode ? 'App' : 'Web'} · env ${Math.round(env)} · gap ${Math.round(gap)} · top ${Math.round(top)} · blur ${Math.round(BLUR_T)}`;
-  const dg = $('diag'); if (dg) dg.textContent = DIAG;
+  const dg = $('diag'); if (dg) { dg.textContent = APP_VER; dg.title = DIAG; }   // 設定畫面只顯示版本號（右下角）；完整診斷資訊放在 title
 }
 let SAFE_T = 0, BLUR_T = 0;
 const HUD_R1 = 38, HUD_R2 = 32;   // HUD 兩列的高度（遊戲座標）：第一列分數／高度／舞台、第二列 HP／小判
@@ -491,6 +491,7 @@ const inp = { down: false, id: null, lx: 0, ly: 0, dx: 0, keys: {}, sw: 0 };
 function toL(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
 cv.addEventListener('pointerdown', e => {
   A();
+  if (g && g.revCd > 0) return;   // 復活倒數中：點擊不算
   if (state === 'menu' && INTRO.tap()) return;   // 開場：點一下開始／跳過
   if (state === 'zintro') { skipZIntro(); return; }   // 每一幕的開場演出：點一下跳過
   if (state === 'ascend') { skipAscend(); return; }
@@ -671,7 +672,7 @@ function genRow() {
     const n = Math.random() < .3 ? 3 : 1;
     for (let i = 0; i < n; i++) g.items.push({ t: 'coin', x: clamp(x + (i - (n - 1) / 2) * 22, WALL + 10, W - WALL - 10), y: y - 30 - (n > 1 && i === 1 ? 10 : 0), ph: rnd(0, 6) });
   }
-  if (Math.random() < .012 * lucky) g.items.push({ t: 'scroll', x: rnd(30, W - 30), y: y - gap / 2, ph: 0 });
+  if (Math.random() < .005 * lucky) g.items.push({ t: 'scroll', x: rnd(30, W - 30), y: y - gap / 2, ph: 0 });
   else if (Math.random() < .022 * lucky) g.items.push({ t: 'chest', x: rnd(30, W - 30), y: y - gap / 2, ph: 0 });
   }
   // 敵忍者
@@ -845,6 +846,12 @@ function update(dt) {
   musicFor();
   if (state === 'menu') { INTRO.update(dt); return; }
   if (!g || paused) return;
+  if (g.revCd > 0) {   // 看廣告復活後的 3 秒倒數：世界停住，倒數結束才繼續
+    if (g.revTick === 4) { g.revTick = 3; tone(880, .09, 'square', .04); }
+    const k0 = Math.ceil(g.revCd); g.revCd -= dt; const k1 = Math.ceil(Math.max(0, g.revCd));
+    if (k1 !== k0) { if (k1 > 0) tone(880, .09, 'square', .04); else { tone(1320, .2, 'triangle', .06); vib(40); } }
+    return;
+  }
   switch (state) {
     case 'play':
       if (g.hitstop > 0) g.hitstop -= dt;   // HIT STOP：世界短暫停格
@@ -1250,12 +1257,33 @@ function heal(n, x = g.p.x, y = g.p.y - 60) {
   g.hp += v; floatText(x, y, 'HP +' + v, '#7aff9a', 16);
 }
 
-// 復活（修行「再起」或看廣告）：一半 HP、短暫無敵、震飛身邊的敵人
-function reviveNow(label) {
-  g.hp = Math.round(g.maxHp / 2); const p = g.p; p.inv = 2.5; p.vy = -JUMP * 1.2; p.hurt = 0; p.dash = 0; p.dive = false;
+// 復活（修行「再起」＝一半 HP；看廣告＝HP 全滿）：短暫無敵、震飛身邊的敵人
+function reviveNow(label, full) {
+  g.hp = full ? g.maxHp : Math.round(g.maxHp / 2); const p = g.p; p.inv = 2.5; p.vy = -JUMP * 1.2; p.hurt = 0; p.dash = 0; p.dive = false;
   p.y = Math.min(p.y, g.camY + H * .5); g.zoneY = Math.max(g.zoneY, g.camY + H + 260);
   g.booms.push({ x: p.x, y: p.y - 20, r: 120, t: 0, c: '#ffb04a' }); for (const e of g.enemies) if (!e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 120) slay(e, true);
   floatText(p.x, p.y - 60, label, '#ffb04a', 24); SFX.fever(); vib([60, 40, 60]);
+}
+// 倒數圓盤（看廣告復活、每一幕開場共用）：金色倒數環＋每秒彈出的大數字
+// s＝顯示的字（3、2、1 或「走！」）、f＝這一拍的進度 0→1、prog＝倒數環剩下的比例、alpha＝整體透明度
+function drawCdDial(cx, cy, s, f, prog, alpha = 1) {
+  const c = ctx, R = 54, go = !/^\d$/.test(s);
+  c.save(); c.globalAlpha = alpha;
+  const gl = c.createRadialGradient(cx, cy, R * .4, cx, cy, R * 1.8); gl.addColorStop(0, `rgba(255,210,90,${go ? .45 : .25})`); gl.addColorStop(1, 'rgba(255,210,90,0)'); c.fillStyle = gl; aCirc(c, cx, cy, R * 1.8); c.fill();
+  aCirc(c, cx, cy, R); c.fillStyle = 'rgba(10,12,26,.75)'; c.fill();
+  c.lineWidth = 9; c.strokeStyle = 'rgba(255,255,255,.14)'; aCirc(c, cx, cy, R); c.stroke();
+  c.lineCap = 'round'; c.strokeStyle = go ? '#fff2b0' : '#ffd27a'; c.shadowColor = '#ffb43a'; c.shadowBlur = go ? 20 : 12;
+  c.beginPath(); c.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + TAU * clamp(prog, 0, 1)); c.stroke(); c.shadowBlur = 0;
+  const sc = 1 + (1 - easeO(Math.min(1, f * 4))) * .8;
+  c.translate(cx, cy); c.scale(sc, sc); c.globalAlpha = alpha * Math.min(1, f * 6);
+  txt(s, 0, go ? 2 : 6, go ? (LI === 2 ? 34 : 46) : 72, '#fff', 'center', '#c0262d', 9);
+  c.restore();
+}
+// 看廣告復活後的倒數：畫面稍暗，圓盤放在畫面上方（不擋住復活後的忍者）
+function drawRevCd() {
+  const n = Math.ceil(g.revCd), f = 1 - (g.revCd - (n - 1));
+  ctx.fillStyle = 'rgba(8,10,22,.38)'; ctx.fillRect(0, 0, W, H);
+  drawCdDial(W / 2, H * .27, String(n), f, Math.max(0, g.revCd) / 3);
 }
 function die() {
   if (g.revives > 0) { g.revives--; reviveNow(t('revive')); return; }   // 修行「再起」：以一半 HP 復活
@@ -1271,8 +1299,8 @@ function collect(it) {
   else if (it.t === 'chest') {
     SFX.item(); sparkle(it.x, it.y, '#fff');
     const r = Math.random();
-    if (r < .35) { const n = 5 + (Math.random() * 10 | 0); addCoins(n); floatText(it.x, it.y, t('koban_plus', n), '#ffd27a', 16); }
-    else if (r < .55) { g.scrolls = Math.min(9, g.scrolls + 1); floatText(it.x, it.y, t('scroll_plus'), '#fff', 16); }
+    if (r < .42) { const n = 5 + (Math.random() * 10 | 0); addCoins(n); floatText(it.x, it.y, t('koban_plus', n), '#ffd27a', 16); }
+    else if (r < .5) { g.scrolls = Math.min(9, g.scrolls + 1); floatText(it.x, it.y, t('scroll_plus'), '#fff', 16); }   // 卷軸 8%（v139 由 20% 調降）
     else if (r < .75) { addBonus(800); floatText(it.x, it.y, '+800', '#fff', 18); }
     else if (r < .9 && g.hp < g.maxHp) heal(25, it.x, it.y);
     else { g.fly = 1; p.inv = 1.6; floatText(it.x, it.y, t('tailwind'), '#9ae0ff', 18); }
@@ -3006,6 +3034,7 @@ function render() {
   sideHudTick();
   if (state === 'play') drawBanner();
   if (g.tut && state !== 'slash' && state !== 'cast') drawTutorial();
+  if (g.revCd > 0) drawRevCd();   // 復活倒數蓋在最上層
 }
 
 // ===== 主迴圈 =====
@@ -3066,7 +3095,19 @@ function renderPauseSkills(el = $('pauseSk')) {
   el.innerHTML = `<div class="ps-head">${t('ps_skills', Object.keys(g.skills).length, SK_SLOTS)}<small>Lv ${g.lv}</small></div>` + (sks || `<div class="ps-none">—</div>`) +
     `<div class="ps-head">${t('ps_perks')}</div>` + (pks ? `<div class="ps-perks">${pks}</div>` : `<div class="ps-none">—</div>`);
 }
-function resumeGame() { paused = false; hide('pause'); hide('help'); inp.dx = 0; lastT = performance.now(); }
+// 暫停→放棄並結算：先跳確認視窗（顯示目前高度、分數），按「放棄並結算」才進結算畫面
+function quitAsk() {
+  quitClose(); if (!g) return;
+  const d = document.createElement('div'); d.id = 'quitCf';
+  d.innerHTML = `<div class="cf-box"><div class="cf-h">${t('quit_t')}</div>` +
+    (g.tut ? '' : `<div class="cf-stat"><span>⛰ ${Math.floor(g.top / 10)}m</span><span>★ ${score()}</span><span><span class="kb"></span>${Math.floor(g.coins)}</span></div>`) +
+    `<div class="cf-q">${t('quit_d')}</div>` +
+    `<div class="cf-btns"><button data-act="quitno">${t('quit_no')}</button><button class="red" data-act="quit">${t('giveup')}</button></div></div>`;
+  d.addEventListener('click', e => { if (e.target === d) quitClose(); });   // 點外面＝取消
+  $('pause').appendChild(d);
+}
+function quitClose() { const d = $('quitCf'); if (d) d.remove(); }
+function resumeGame() { quitClose(); paused = false; hide('pause'); hide('help'); inp.dx = 0; lastT = performance.now(); }
 
 function showOver() {
   state = 'over';
@@ -3297,13 +3338,17 @@ document.addEventListener('click', e => {
     case 'hpzoom': helpZoom(); break;   // 畫面說明：放大截圖
     case 'help': openHelp(); break;
     case 'back':
+      if (menuFrom === 'pause' && $('opt').classList.contains('on')) { hide('opt'); $('opt').classList.remove('ingame'); menuFrom = 'title'; break; }   // 從暫停打開的設定：回到暫停畫面
       if ($('help').classList.contains('on') && backTo === 'game') { hide('help'); if (!$('pause').classList.contains('on')) resumeGame(); break; }
       if (menuFrom === 'over' && g) { show('over'); menuFrom = 'title'; break; }
       if (state === 'menu' && $('title').classList.contains('on')) { SCRS.forEach(s => { if (s !== 'title') hide(s); }); break; }   // 回到還開著的主畫面：直接關掉子畫面
       goTitle(); break;
     case 'title': goTitle(); break;
     case 'resume': resumeGame(); break;
-    case 'quit': if (g && g.tut) { endTutorial(false); break; } if (g) { paused = false; hideAll(); showOver(); } else goTitle(); break;
+    case 'pauseopt': menuFrom = 'pause'; renderOpt(); show('opt', true); $('opt').classList.add('ingame'); break;   // 暫停中打開設定（蓋在暫停畫面上，返回回到暫停）
+    case 'quitask': quitAsk(); break;
+    case 'quitno': quitClose(); break;
+    case 'quit': quitClose(); if (g && g.tut) { endTutorial(false); break; } if (g) { paused = false; hideAll(); showOver(); } else goTitle(); break;
 
     case 'finish': hide('clear'); showOver(); break;
     case 'perk': choosePerk(+arg); break;

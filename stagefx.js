@@ -106,9 +106,8 @@ function drawZIntro() {
   // 倒數 3、2、1、走！
   if (k > 1.6) {
     const n = Math.floor((k - 1.6) / .6), f = ((k - 1.6) % .6) / .6, s = n < 3 ? String(3 - n) : t('zi_go');
-    const sc = n < 3 ? 1.6 - zez(f / .3) * .6 : 1 + zez(f / .3) * .2;
-    c.save(); c.translate(W / 2, H * .62); c.scale(sc, sc); c.globalAlpha = n < 3 ? 1 - Math.max(0, f - .7) / .3 : 1;
-    txt(s, 0, 0, n < 3 ? 64 : 44, '#ffffff', 'center', '#c0262d', 8); c.restore();
+    drawCdDial(W / 2, H * .62, s, f, n < 3 ? (3 - n - f) / 3 : 1, n < 3 ? 1 : 1 - Math.max(0, f - .6) / .4);   // 和看廣告復活同一款倒數圓盤
+
   }
   txt(t('zi_skip'), W - 12, H - 16, 11, 'rgba(255,255,255,.6)', 'right', '#000', 3);
 }
@@ -195,9 +194,8 @@ function drawZI2() {
   if (k >= ZI2_CD) {
     const u = k - ZI2_CD, n = Math.floor(u / .7), f = (u % .7) / .7, s = n < 3 ? String(3 - n) : t('zi_go');
     if (n <= 3) {
-      const sc = n < 3 ? 1.6 - zez(f / .3) * .6 : 1 + zez(f / .3) * .2;
-      c.save(); c.translate(W / 2, H * .2); c.scale(sc, sc); c.globalAlpha = n < 3 ? 1 - Math.max(0, f - .7) / .3 : 1 - Math.max(0, (u - 2.1) - .1) / .2;
-      txt(s, 0, 0, n < 3 ? 64 : 44, '#ffffff', 'center', '#c0262d', 8); c.restore();
+      drawCdDial(W / 2, H * .235, s, f, n < 3 ? (3 - n - f) / 3 : 1, n < 3 ? 1 : 1 - Math.max(0, (u - 2.1) - .1) / .2);   // 和看廣告復活同一款倒數圓盤（比原本低一點）
+
     }
   }
   if (k < ZI2_LAND) txt(t('zi_skip'), W - 12, H - 16, 11, 'rgba(255,255,255,.6)', 'right', '#000', 3);

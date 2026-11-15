@@ -117,7 +117,7 @@ function offerContinue() {
 function contResult(ok) {
   clearInterval(contIv); contIv = null; hide('cont');
   if (!g || state !== 'cont') return;
-  if (ok) { state = g.contPrev === 'qte' ? 'qte' : 'play'; reviveNow(t('ad_revive')); lastT = performance.now(); }
+  if (ok) { state = g.contPrev === 'qte' ? 'qte' : 'play'; reviveNow(t('ad_revive'), true); g.revCd = 3; g.revTick = 4; lastT = performance.now(); }   // 看廣告：HP 全滿，倒數 3 秒再開始
   else { state = 'dying'; g.dieT = 1.1; g.p.vy = -500; }
 }
 function contWatch() {
