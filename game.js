@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v141';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v142';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -784,7 +784,7 @@ function midAI(e, ed, dt) {
 // 中 BOSS 被擊倒：大量魂與小判，並開寶箱（可能進化）
 function midDown(e) {
   g.mid = null;
-  for (let i = 0; i < 14; i++) g.drops.push({ k: i < 10 ? 'soul' : 'coin', x: e.x + rnd(-30, 30), y: e.y, vx: rnd(-100, 100), vy: -rnd(140, 280), v: i < 10 ? 3 : 2, ph: rnd(0, 6), ap: .45 + i * .03 });   // ap：噴出後自動飛向玩家（v141：中魔王死的位置常在畫面外，魂撿不到）
+  for (let i = 0; i < 10; i++) g.drops.push({ k: i < 6 ? 'soul' : 'coin', x: e.x + rnd(-30, 30), y: e.y, vx: rnd(-100, 100), vy: -rnd(140, 280), v: i < 6 ? 3 : 2, ph: rnd(0, 6), ap: .45 + i * .03 });   // v142：魂 6×3＝18（約升 1 級）＋小判 4×2。ap：噴出後自動飛向玩家（v141：中魔王死的位置常在畫面外，魂撿不到）
   burst(e.x, e.y, '#c0262d', 36); g.shake = 12; SFX.kill(); vib([60, 40, 120]);
   floatText(W / 2, g.camY + H * .4, tl('mid_down'), '#ffd27a', 24);
   unlock('mid1'); if (++save.stats.mids >= 5) unlock('mid5');
@@ -1160,7 +1160,7 @@ function updateSkills(dt) {
 // ===== 掉落物：魂（經驗）與小判 =====
 function dropLoot(x, y, type) {
   if (g.tut) return;   // 新手教學：斬敵不掉魂（還沒教到升級，免得中途跳出三選一）也不掉小判
-  g.drops.push({ k: 'soul', x, y, vx: rnd(-50, 50), vy: -rnd(140, 240), v: SOUL_V[type] ?? 1, ph: rnd(0, 6) });
+  if (type !== 13) g.drops.push({ k: 'soul', x, y, vx: rnd(-50, 50), vy: -rnd(140, 240), v: SOUL_V[type] ?? 1, ph: rnd(0, 6) });   // 中魔王的魂只由 midDown 爆出（避免重複給）
   const cn = type === 6 ? 5 : Math.random() < .25 ? 1 : 0;
   for (let i = 0; i < cn; i++) g.drops.push({ k: 'coin', x, y, vx: rnd(-80, 80), vy: -rnd(160, 260), v: 1, ph: rnd(0, 6) });
 }

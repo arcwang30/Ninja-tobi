@@ -88,11 +88,11 @@ function wxSet(k, lv, announce) {
 // 依目前舞台決定天候：第 1 舞台晴朗、2～4 輕微、6～9 加強；魔王舞台在魔王登場時才換
 function wxForStage() {
   const s = g.stage % 5, loop = g.stage >= 5;
-  if (s === 0 && !loop) { wxSet(null); return; }
+  if (!loop) { wxSet(null); return; }   // 第一輪（舞台 1～5，含第一次魔王戰）不放天候，第二輪起才有
   if (s === 4) { if (g.wx) g.wx.lv = .3; return; }   // 魔王舞台：魔王出場前先轉小
   wxSet(LEVELS[g.lvl].wx, loop ? 1 : .5, true);
 }
-function wxBoss(kind) { wxSet(BOSS_WX[kind], g.stage >= 5 ? 1 : .75, true); }
+function wxBoss(kind) { if (g.stage < 5) { wxSet(null); return; } wxSet(BOSS_WX[kind], 1, true); }   // 第一次魔王戰不放天候
 // 每幀更新：強度慢慢變化、閃電、陣風
 function updateWx(dt) {
   const w = g.wx; if (!w) return;
