@@ -130,7 +130,7 @@ function addSeal(n, why) {
   if (g && state !== 'menu') floatText(W / 2, g.camY + H * .3, t('seal_plus', n), '#ffe28a', 20);
 }
 // 修行每一級要幾個印（依修行的階段：基礎 1 起、進階 2 起、高階 3 起，等級越高越貴）
-const sealCost = (m, l) => TEST_FREE ? 0 : (META_TIER[m.id] || 0) + 1 + Math.floor(l * .6);
+const sealCost = (m, l) => SHOP_FREE ? 0 : (META_TIER[m.id] || 0) + 1 + Math.floor(l * .6);
 function sealSpent() { let n = 0; for (const m of META) for (let l = 0; l < mt(m.id); l++) n += (META_TIER[m.id] || 0) + 1 + Math.floor(l * .6); return n; }
 // 舊存檔轉換（只做一次）：依目前的進度補發修行之印，扣掉已經用小判買過的修行等級換算的印（不會倒扣、已買的修行全部保留）
 function sealMigrate() {

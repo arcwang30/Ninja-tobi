@@ -64,7 +64,8 @@ const outOf = i => { const v = save.charOut && save.charOut[i]; return v != null
 const heroPal = i => OUTFITS[outOf(i || 0)] || OUTFITS[0];
 // 測試模式：商店全部開放、免費（正式上線前改回 false）
 const TEST_FREE = !/[?&]notfree/.test(location.search);   // ?notfree：測試付費流程
-const outOwned = (o, ci = save.skin) => TEST_FREE || o === SKINS[ci].out || (save.outfits || []).includes(o);   // 預設色永遠可穿
+const SHOP_FREE = false;   // v147：藏寶箱不再是測試免費（修行、忍者、換裝都要實際付費）；其他測試功能（關卡全開等）仍跟著 TEST_FREE
+const outOwned = (o, ci = save.skin) => SHOP_FREE || o === SKINS[ci].out || (save.outfits || []).includes(o);   // 預設色永遠可穿
 const ENEMY = [
   { n: '敵', w: 34, h: 42, dur: .45, pts: 100, col: '#15151c' },  // 0 瘦
   { n: '敵', w: 42, h: 46, dur: .8, pts: 200, col: '#15151c' },   // 1 中
@@ -193,9 +194,9 @@ const META = [
 const mt = id => { const v = (save.meta && save.meta[id]) || 0; return g && g.metaK != null && state !== 'menu' && state !== 'over' ? v * g.metaK : v; };   // 修行等級（v147：遊戲中依難易度打折——上忍起 80%、修羅禁制「修行減半」再 ×0.5；商店與結算顯示原本等級）
 // 修行分三階段開放：一開始 6 項／開放第 2 關後再 6 項／任一關破台後最後 4 項
 const META_TIER = { armor: 1, power: 1, ki: 1, kireg: 1, xp: 1, luck: 1, revive: 2, cd: 2, reroll: 2, banish: 2 };
-const metaOpen = m => { if (TEST_FREE) return true; const tr = META_TIER[m.id] || 0, s = save.lv || {}; return tr === 0 || (tr === 1 && (s.open || 1) >= 2) || (tr === 2 && (s.clear || []).some(x => x)); };
+const metaOpen = m => { if (SHOP_FREE) return true; const tr = META_TIER[m.id] || 0, s = save.lv || {}; return tr === 0 || (tr === 1 && ((s.open || 1) >= 2 || ((s.best || [])[0] || 0) >= 5)) || (tr === 2 && (s.clear || []).some(x => x)); };
 const metaSpent = () => META.reduce((s, m) => { let n = 0; for (let l = 0; l < mt(m.id); l++) n += metaCost(m, l); return s + n; }, 0);
-const metaCost = (m, l) => TEST_FREE ? 0 : m.cost(l);
+const metaCost = (m, l) => SHOP_FREE ? 0 : m.cost(l);
 // 成就：cat 0 關卡／1 戰鬥／2 成長／3 累計／4 挑戰與天候／5 收集（共 76 個）
 const ACH = [];
 {
@@ -348,7 +349,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v146';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v147';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -3224,7 +3225,7 @@ const SHOP_TORD = [2, 0, 1];
 function shopNewKeys(tab) {
   const k = [], c = save.coins;
   if (tab == null || tab === 2) META.forEach(m => { const l = mt(m.id); if (metaOpen(m) && l < m.max && (save.seals || 0) >= sealCost(m, l)) k.push(`m:${m.id}:${l}`); });   // 修行看修行之印
-  if (tab == null || tab === 0) SKINS.forEach((s, i) => { const own = TEST_FREE || save.skins.includes(i), avail = own || !s.req || save.ach[s.req]; if (!own && avail && c >= s.cost) k.push('s:' + i); });
+  if (tab == null || tab === 0) SKINS.forEach((s, i) => { const own = SHOP_FREE || save.skins.includes(i), avail = own || !s.req || save.ach[s.req]; if (!own && avail && c >= s.cost) k.push('s:' + i); });
   if (tab == null || tab === 1) { const ci = save.skin; OUTFITS.forEach((o, i) => { if (!outOwned(i, ci) && c >= o.cost) k.push(`o:${ci}:${i}`); }); }
   return k;
 }
@@ -3252,7 +3253,7 @@ function renderShop() {
   let h = '';
   if (shopTab === 0) {   // 角色：達成條件才上架，再用小判購買
     h = SKINS.map((s, i) => {
-      const own = TEST_FREE || save.skins.includes(i), sel = save.skin === i, avail = own || !s.req || save.ach[s.req], sd = SKILLS.find(x => x.id === s.sk);
+      const own = SHOP_FREE || save.skins.includes(i), sel = save.skin === i, avail = own || !s.req || save.ach[s.req], sd = SKILLS.find(x => x.id === s.sk);
       const req = s.req && !avail ? `<small class="req">🔒 ${t('char_req', L(ACH.find(a => a.id === s.req).d))}</small>` : '';
       return `<div class="item ${avail ? '' : 'locked'}"><span class="ic char-ic">${avail && heroThumb(i) ? `<img src="${heroThumb(i)}" alt="">` : '？'}</span><span class="nm"><b>${avail ? L(s.n) : '？？？'}${nb('s:' + i)}</b><small>${t('start_skill', sd.ic + ' ' + L(sd.n))}${avail ? '・' + (own ? t('owned') : t('price', s.cost)) : ''}</small>${req}</span>` +
         (sel ? `<button disabled>${t('equipped')}</button>` : own ? `<button data-act="skin" data-arg="${i}">${t('equip')}</button>` : `<button data-act="buyskin" data-arg="${i}" ${!avail || save.coins < s.cost ? 'disabled' : ''}>${t('buy')}</button>`) + '</div>';
@@ -3289,7 +3290,7 @@ function renderShop() {
       const l = mt(m.id), max = l >= m.max, c = sealCost(m, l), op = metaOpen(m);
       if (!op) return `<div class="item locked"><span class="ic" style="background:#ccc">🔒</span><span class="nm"><b>${L(m.n)}</b><small>${t(META_TIER[m.id] === 1 ? 'meta_t1' : 'meta_t2')}</small></span><button disabled>${t('train')}</button></div>`;
       return `<div class="item"><span class="ic" style="background:#fff3d0">${m.ic}</span><span class="nm"><b>${L(m.n)}　Lv ${l}/${m.max}${nb(`m:${m.id}:${l}`)}</b><small>${L(m.d)}${max ? '' : '・' + t('seal_price', c)}</small></span><button data-act="buymeta" data-arg="${m.id}" ${max || (save.seals || 0) < c ? 'disabled' : ''}>${max ? 'MAX' : t('train')}</button></div>`;
-    }).join('') + ((spent || (TEST_FREE && now)) ? `<button class="meta-refund" data-act="refund">${t('seal_refund', spent)}</button>` : '');
+    }).join('') + ((spent || (SHOP_FREE && now)) ? `<button class="meta-refund" data-act="refund">${t('seal_refund', spent)}</button>` : '');
   }
   $('shopBody').innerHTML = h;
 }
