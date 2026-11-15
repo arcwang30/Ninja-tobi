@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v143';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v144';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -867,14 +867,14 @@ function update(dt) {
       else updatePlay(dt);
       break;
     case 'slash': updateSlash(dt); break;
-    case 'cast': { const e0 = CAST_T - g.castT; g.castT -= dt; castCue(e0, CAST_T - g.castT); } if (g.castT <= 0) jutsuGo(g.castJ || JUTSU[0]); break;
+    case 'cast': { const e0 = CAST_T - g.castT; g.castT -= dt; castCue(e0, CAST_T - g.castT); } if (g.castT <= 0) { if (g.castJ && g.castJ.rev) reviveGo(); else jutsuGo(g.castJ || JUTSU[0]); } break;
     case 'qte': updateQte(dt); break;
     case 'zintro': updateZIntro(dt); break;
     case 'ascend': updateAscend(dt); break;
     case 'kill': g.killT -= dt; if (g.killT <= 0) startFin(); break;   // 連續斬擊特寫（不出字）→ 居合一閃＋封印演出
     case 'flee': updateFlee(dt); break;   // 初戰擊退：魔王逃走演出
     case 'fin': updateFin(dt); break;   // 決戰擊倒演出
-    case 'dying': g.dieT -= dt; g.p.vy += GRAV * dt; g.p.y += g.p.vy * dt; if (g.dieT <= 0) showOver(); break;
+    case 'dying': g.dieT -= dt; g.p.vy += GRAV * dt; g.p.y += g.p.vy * dt; if (g.dieT <= 0) { if (g.adOffer) { g.adOffer = false; offerContinue(); } else showOver(); } break;   // 倒下演完：可以看廣告就先問，否則結算
   }
   if (g && state !== 'perk') updateFx(dt);
 }
@@ -1294,9 +1294,27 @@ function drawRevCd() {
   ctx.fillStyle = 'rgba(8,10,22,.38)'; ctx.fillRect(0, 0, W, H);
   drawCdDial(W / 2, H * .27, String(n), f, Math.max(0, g.revCd) / 3);
 }
+// ===== v144 看廣告復活的忍法演出：和忍法卷軸一樣攤開卷軸、揮毫寫名字、蓋「忍」印、燒卷軸；上方畫這個忍法的毛筆墨標誌 =====
+// 三案（?revfx=a|b|c 預覽）：a 不死鳥（鳳凰、朱金）／b 再生術（蓮花、桃紅）／c 黄泉返（魂火、青白）
+const REV_FX = {
+  a: { id: 'rev_a', n: '不死鳥', col: '#ff7a2a', ink: '#ff9a3a', rev: 1 },
+  b: { id: 'rev_b', n: '再生術', col: '#ff6aa8', ink: '#ff8ab8', rev: 1 },
+  c: { id: 'rev_c', n: '黄泉返', col: '#6ad8ff', ink: '#8ae4ff', rev: 1 },
+};
+const REV_STYLE = new URLSearchParams(location.search).get('revfx') || 'c';   // 定案：C 黄泉返（魂火・青白）
+function startRevCast() {
+  state = 'cast'; g.castJ = REV_FX[REV_STYLE] || REV_FX.a; g.castT = CAST_T; g.jfx = null;
+  hide('cont'); SFX.scroll && SFX.scroll();
+}
+function reviveGo() {   // 卷軸燒完：HP 全滿復活，回到原本的狀態，再倒數 3 秒
+  const J = g.castJ; g.castJ = null;
+  state = g.contPrev === 'qte' ? 'qte' : 'play';
+  reviveNow(t('ad_revive'), true); g.revCd = 3; g.revTick = 4;
+  g.jfx = { t: .6, col: J ? J.col : '#ffd27a' };   // 復活的閃光（忍法的代表色）
+}
 function die() {
   if (g.revives > 0) { g.revives--; reviveNow(t('revive')); return; }   // 修行「再起」：以一半 HP 復活
-  if (!g.adRevUsed && !g.tut && typeof ADS !== 'undefined' && ADS.ready()) { g.contPrev = state; offerContinue(); return; }   // 看廣告復活（ads.js，每局一次）
+  if (!g.adRevUsed && !g.tut && typeof ADS !== 'undefined' && ADS.ready()) { g.contPrev = state === 'qte' ? 'qte' : 'play'; g.adOffer = true; }   // 看廣告復活（ads.js，每局一次）：v144 先演完倒下，再問要不要看廣告
   state = 'dying'; g.dieT = 1.1; g.p.vy = -500; SFX.die(); vib([80, 60, 200]);
 }
 
@@ -2630,6 +2648,27 @@ const EMBLEM = {
     [bzF(-24, 0, -8, -5, 8, -5, 24, 0), 20],
     [bzF(-15, -22, -6, -26, 6, -26, 15, -22), 10], [bzF(-15, 22, -6, 26, 6, 26, 15, 22), 10],
   ],
+  // ↓ v144 看廣告復活的忍法（三案）
+  rev_a: [   // 鳳凰（不死鳥）：往上展開的火焰雙翼、昂起的頸與冠羽、三道長尾羽
+    ...mir(20, -6, -10, -30, -44, -64, -36, -86, -72),
+    ...mir(13, -8, 2, -34, -14, -60, -4, -80, -22),
+    [bzF(0, 22, 4, -6, -8, -34, 0, -58), 18],
+    [bzF(0, -58, 10, -72, 22, -70, 30, -84), 10],
+    ...mir(11, -4, 24, -20, 44, -8, 62, -30, 84),
+    [bzF(0, 26, 6, 48, -6, 66, 2, 88), 12],
+  ],
+  rev_b: [   // 蓮花（再生）：中央一瓣＋左右兩層花瓣＋底下的水波
+    [bzF(0, 40, -18, 8, -12, -40, 0, -70), 17],
+    ...mir(16, -4, 42, -40, 22, -50, -18, -28, -52),
+    ...mir(13, -8, 46, -70, 32, -84, 2, -74, -20),
+    [bzF(-66, 58, -24, 70, 24, 70, 66, 58), 13],
+  ],
+  rev_c: [   // 魂火（黃泉返）：往上燃起的人魂火焰＋裡面的小火＋拖著的魂尾
+    [bzF(4, -84, -40, -34, -54, 22, -2, 50), 20],
+    [bzF(4, -84, 30, -40, 52, 14, -2, 50), 17],
+    [bzF(0, -26, -14, -2, -12, 22, 0, 28), 11],
+    [bzF(-2, 50, 26, 66, 52, 54, 64, 76), 10],
+  ],
 };
 const ENSO = [arcF(0, 0, 94, -2.1, -2.1 + TAU * .88), 28];
 // 一筆毛筆筆畫：起筆重壓、收筆拉細；p＝已畫出的比例（一筆一筆揮出來）
@@ -2694,7 +2733,7 @@ function drawCast() {
   ctx.fillStyle = `rgba(22,6,8,${Math.min(.95, e * 9)})`; ctx.fillRect(0, 0, W, H);
   speedLines(e * 8, `rgba(255,200,120,${.3 * (1 - burn) + .15})`);
   const JC = (g.castJ || JUTSU[0]).col, rgb = hexRgb(JC);
-  drawBeast((g.castJ || JUTSU[0]).id, cx, (SAFE_T + H * .44 - 105) / 2 + 6, e, burn, (g.castJ || JUTSU[0]).th < 0 ? '#e8b84a' : jutsuBand(g.castJ || JUTSU[0]), T);   // 忍法的神獸（毛筆墨標誌，風林火山卷軸的配色）
+  drawBeast((g.castJ || JUTSU[0]).id, cx, (SAFE_T + H * .44 - 105) / 2 + 6, e, burn, (g.castJ || JUTSU[0]).ink || ((g.castJ || JUTSU[0]).th < 0 ? '#e8b84a' : jutsuBand(g.castJ || JUTSU[0])), T);   // 忍法的神獸（毛筆墨標誌，風林火山卷軸的配色）
   // 光柱（燒起來之後，忍法的代表色）
   if (burn > 0) {
     const pw = 60 + burn * 90, gr = ctx.createLinearGradient(cx - pw / 2, 0, cx + pw / 2, 0);

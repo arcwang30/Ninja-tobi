@@ -109,7 +109,7 @@ let contT = 0, contIv = null;
 function offerContinue() {
   state = 'cont'; g.adRevUsed = true; contT = 5;
   const draw = () => { $('contTime').textContent = contT; };
-  draw(); show('cont', true); SFX.die(); vib([80, 60, 120]);
+  draw(); show('cont', true); vib(40);   // 倒下的音效已在死亡演出播過
   clearInterval(contIv);
   contIv = setInterval(() => { if (paused) return; contT--; draw(); if (contT <= 0) contResult(false); }, 1000);
 }
@@ -117,8 +117,8 @@ function offerContinue() {
 function contResult(ok) {
   clearInterval(contIv); contIv = null; hide('cont');
   if (!g || state !== 'cont') return;
-  if (ok) { state = g.contPrev === 'qte' ? 'qte' : 'play'; reviveNow(t('ad_revive'), true); g.revCd = 3; g.revTick = 4; lastT = performance.now(); }   // 看廣告：HP 全滿，倒數 3 秒再開始
-  else { state = 'dying'; g.dieT = 1.1; g.p.vy = -500; }
+  if (ok) { startRevCast(); lastT = performance.now(); }   // 看廣告：先播復活忍法的卷軸演出，再 HP 全滿復活＋倒數 3 秒（game.js）
+  else showOver();   // 倒下已經演過了：直接結算
 }
 function contWatch() {
   clearInterval(contIv);   // 看廣告的時候倒數先停
