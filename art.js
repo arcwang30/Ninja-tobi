@@ -2104,7 +2104,7 @@ function drawBoss2(b, x, y, s, c = ctx) {
 }
 
 // ===== 主畫面底部選單的圖示：「護額」風格（布帶綁著金屬板，板上刻著圖案和文字） =====
-const DOCK_LABEL = { shop: ['寶藏', '宝物', 'TREASURE'], rank: ['成就', '実績', 'AWARDS'], hist: ['歷史', '歴史', 'HISTORY'], help: ['說明', '遊び方', 'HELP'], opt: ['設定', '設定', 'SETTING'], credit: ['製作', '制作', 'CREDIT'] };
+const DOCK_LABEL = { shop: ['藏寶箱', '宝箱', 'TREASURE'], rank: ['成就', '実績', 'AWARDS'], hist: ['歷史', '歴史', 'HISTORY'], help: ['說明', '遊び方', 'HELP'], opt: ['設定', '設定', 'SETTING'], credit: ['製作', '制作', 'CREDIT'] };
 // 單色線條圖案（中心 (0,0)，約 ±16）
 function dockGlyph(c, k, col, lw = 3.6) {
   c.save(); c.strokeStyle = col; c.fillStyle = col; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round';

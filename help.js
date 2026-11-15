@@ -9,7 +9,7 @@ const HELP_PAGES = [
     ['3', ['關卡與舞台', 'ステージと舞台', 'Stage'], ['目前的關卡和第幾舞台；小黃條是舞台進度，第 5、10 舞台出現魔王（數字變紅）。', '今のステージと舞台。黄色いバーは進み具合、第5・10舞台は魔王（数字が赤）。', 'Current stage and part; the bar shows progress. Bosses appear on parts 5 and 10 (red number).']],
     ['4', ['暫停', 'ポーズ', 'Pause'], ['暫停遊戲，可以查看技能、說明或離開。', '一時停止。技やヘルプの確認、終了ができる。', 'Pause to check skills, read help or quit.']],
     ['5', ['HP（命）', 'HP（命）', 'HP'], ['剩下的血量；低於 30% 會閃爍，畫面四周出現紅色心跳警示。', '残りの体力。30%未満で点滅し、画面の四隅が赤く脈打つ。', 'Your health. Below 30% it flashes and the screen edges pulse red.']],
-    ['6', ['小判', '小判', 'Koban'], ['這一局撿到的小判數，帶回整備商店使用。', 'この回で拾った小判。ショップで使える。', 'Koban collected this run, spent in the shop.']],
+    ['6', ['小判', '小判', 'Koban'], ['這一局撿到的小判數，帶回藏寶箱使用。', 'この回で拾った小判。宝箱で使える。', 'Koban collected this run, spent in the Treasure Chest.']],
     ['7', ['氣', '気', 'Ki'], ['衝刺斬、急降斬要消耗的次數，落地後慢慢回復。', '突進斬り・急降斬で使う回数。着地すると少しずつ回復。', 'Charges for Dash and Dive Slash; they refill after landing.']],
     ['8', ['技能', '技', 'Skills'], ['目前擁有的自動技能，小數字是等級。', '持っている自動の技。小さい数字はレベル。', 'Your automatic skills; the small number is the level.']],
     ['9', ['等級與經驗條', 'レベルと経験値', 'Level & XP'], ['經驗條集滿就升級，從三個強化選一個。', '経験値がたまるとレベルアップ、3つから強化を1つ選ぶ。', 'Fill the bar to level up and pick 1 of 3 upgrades.']],
@@ -35,7 +35,7 @@ const HELP_PAGES = [
   ] },
   { t: ['成長', '成長', 'Growth'], items: [
     ['soul', ['魂與升級', '魂とレベルアップ', 'Souls & Level Up'], ['吸收藍色的魂，集滿經驗條就升級，從三個強化選一個。', '青い魂を集めてレベルアップ、3つから1つ強化を選ぶ。', 'Collect blue souls to level up and pick 1 of 3 upgrades.']],
-    ['koban', ['小判', '小判', 'Koban'], ['金色小判帶回整備商店，買新忍者和強化。', '金の小判はショップで忍者や強化に使う。', 'Spend gold koban in the shop on ninjas and upgrades.']],
+    ['koban', ['小判', '小判', 'Koban'], ['金色小判帶回藏寶箱，買新忍者和換裝。', '金の小判は宝箱で忍者や着せ替えに使う。', 'Spend gold koban in the Treasure Chest on ninjas and outfits.']],
     ['evo', ['技能進化', '技の進化', 'Evolution'], ['技能練到 Lv5 並持有對應被動，寶箱就會出現進化。', '技をLv5にして対応する強化を持つと、宝箱で進化が出る。', 'Max a skill (Lv5) with its paired perk to evolve it from a chest.']],
   ] },
 ];
