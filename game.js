@@ -349,7 +349,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v147';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v148';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -3256,7 +3256,7 @@ function renderShop() {
       const own = SHOP_FREE || save.skins.includes(i), sel = save.skin === i, avail = own || !s.req || save.ach[s.req], sd = SKILLS.find(x => x.id === s.sk);
       const req = s.req && !avail ? `<small class="req">🔒 ${t('char_req', L(ACH.find(a => a.id === s.req).d))}</small>` : '';
       return `<div class="item ${avail ? '' : 'locked'}"><span class="ic char-ic">${avail && heroThumb(i) ? `<img src="${heroThumb(i)}" alt="">` : '？'}</span><span class="nm"><b>${avail ? L(s.n) : '？？？'}${nb('s:' + i)}</b><small>${t('start_skill', sd.ic + ' ' + L(sd.n))}${avail ? '・' + (own ? t('owned') : t('price', s.cost)) : ''}</small>${req}</span>` +
-        (sel ? `<button disabled>${t('equipped')}</button>` : own ? `<button data-act="skin" data-arg="${i}">${t('equip')}</button>` : `<button data-act="buyskin" data-arg="${i}" ${!avail || save.coins < s.cost ? 'disabled' : ''}>${t('buy')}</button>`) + '</div>';
+        (sel ? `<button disabled>${t('equipped')}</button>` : own ? `<button data-act="skin" data-arg="${i}">${t('equip')}</button>` : `<button data-act="askskin" data-arg="${i}" ${!avail || save.coins < s.cost ? 'disabled' : ''}>${t('buy')}</button>`) + '</div>';
     }).join('');
   } else if (shopTab === 1) {   // 換裝：目前角色穿上各種顏色的預覽
     const ci = save.skin, cur = outOf(ci);
@@ -3289,7 +3289,7 @@ function renderShop() {
       `<div class="seal-bar"><span class="seal-ic">印</span><b>${t('seal_n')}</b><em>${save.seals || 0}</em><small>${t('seal_how')}</small></div><div class="meta-head">${t('meta_total', now, tot)}</div>` + META.map(m => {
       const l = mt(m.id), max = l >= m.max, c = sealCost(m, l), op = metaOpen(m);
       if (!op) return `<div class="item locked"><span class="ic" style="background:#ccc">🔒</span><span class="nm"><b>${L(m.n)}</b><small>${t(META_TIER[m.id] === 1 ? 'meta_t1' : 'meta_t2')}</small></span><button disabled>${t('train')}</button></div>`;
-      return `<div class="item"><span class="ic" style="background:#fff3d0">${m.ic}</span><span class="nm"><b>${L(m.n)}　Lv ${l}/${m.max}${nb(`m:${m.id}:${l}`)}</b><small>${L(m.d)}${max ? '' : '・' + t('seal_price', c)}</small></span><button data-act="buymeta" data-arg="${m.id}" ${max || (save.seals || 0) < c ? 'disabled' : ''}>${max ? 'MAX' : t('train')}</button></div>`;
+      return `<div class="item"><span class="ic" style="background:#fff3d0">${m.ic}</span><span class="nm"><b>${L(m.n)}　Lv ${l}/${m.max}${nb(`m:${m.id}:${l}`)}</b><small>${L(m.d)}${max ? '' : '・' + t('seal_price', c)}</small></span><button data-act="askmeta" data-arg="${m.id}" ${max || (save.seals || 0) < c ? 'disabled' : ''}>${max ? 'MAX' : t('train')}</button></div>`;
     }).join('') + ((spent || (SHOP_FREE && now)) ? `<button class="meta-refund" data-act="refund">${t('seal_refund', spent)}</button>` : '');
   }
   $('shopBody').innerHTML = h;
@@ -3347,6 +3347,28 @@ function buyAsk(i) {
   $('shop').appendChild(d);
 }
 function buyClose() { const d = $('buyCf'); if (d) d.remove(); }
+// v148 修行、忍者的購買確認（和換裝同一款視窗）：顯示要買的東西、價格、買後剩下多少；按「購買」才真的扣
+function buyAskX(kind, arg) {
+  let pic, name, col = '#ffd27a', q, cost, have, unit, act;
+  if (kind === 'meta') {
+    const m = META.find(x => x.id === arg), l = mt(arg); if (!m || l >= m.max) return;
+    cost = sealCost(m, l); have = save.seals || 0; unit = '<i class="seal-mini">印</i>'; act = 'buymeta';
+    pic = `<span class="cf-ic">${m.ic}</span>`; name = `${L(m.n)}　Lv ${l} → ${l + 1}`; q = t('cf_qm', L(m.n), L(m.d));
+  } else {
+    const s = SKINS[+arg]; if (!s || save.skins.includes(+arg) || (s.req && !save.ach[s.req])) return;
+    cost = s.cost; have = save.coins; unit = '<i class="kbi"></i>'; act = 'buyskin';
+    pic = heroThumb(+arg) ? `<img src="${heroThumb(+arg)}" alt="">` : ''; name = L(s.n); q = t('cf_qs', L(s.n));
+  }
+  if (have < cost) return;
+  buyClose();
+  const d = document.createElement('div'); d.id = 'buyCf';
+  d.innerHTML = `<div class="cf-box"><div class="cf-h">${t('cf_title')}</div>${pic}<b style="color:${col}">${name}</b>` +
+    `<div class="cf-q">${q}</div>` +
+    `<div class="cf-coin"><span>${unit}${have}</span><i>→</i><span>${unit}${have - cost}</span></div>` +
+    `<div class="cf-btns"><button data-act="buyno">${t('cf_no')}</button><button class="buy" data-act="${act}" data-arg="${arg}">${t('buy')}　${unit}${cost}</button></div></div>`;
+  d.addEventListener('click', e => { if (e.target === d) buyClose(); });
+  $('shop').appendChild(d);
+}
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
   if (!tapOk && b.closest('#title')) return;   // 開場時按下、主畫面才放開的點擊：不打開主畫面的功能
@@ -3426,8 +3448,10 @@ document.addEventListener('click', e => {
     case 'buyout': buyAsk(+arg); break;   // 先跳出確認視窗
     case 'buyno': buyClose(); break;
     case 'buyok': { buyClose(); const o = OUTFITS[+arg]; if (save.coins >= o.cost && !outOwned(+arg)) { save.coins -= o.cost; save.outfits.push(+arg); if (!save.charOut) save.charOut = {}; save.charOut[save.skin] = +arg; persist(); SFX.item(); refreshHero(); collAch(); } renderShop(); break; }
-    case 'buyskin': { const s = SKINS[+arg]; if (s.req && !save.ach[s.req]) break; if (save.coins >= s.cost) { save.coins -= s.cost; save.skins.push(+arg); save.skin = +arg; persist(); SFX.item(); collAch(); } renderShop(); updateHeroArt(); resetHelpIcons(); break; }
-    case 'buymeta': { const m = META.find(x => x.id === arg), c = sealCost(m, mt(arg)); if ((save.seals || 0) >= c && mt(arg) < m.max) { save.seals -= c; save.meta[arg] = mt(arg) + 1;   /* v143：修行改用修行之印 */ persist(); SFX.item(); collAch(); } renderShop(); break; }
+    case 'askskin': buyAskX('skin', arg); break;   // v148：忍者與修行也先確認
+    case 'askmeta': buyAskX('meta', arg); break;
+    case 'buyskin': { buyClose(); const s = SKINS[+arg]; if (s.req && !save.ach[s.req]) break; if (save.coins >= s.cost) { save.coins -= s.cost; save.skins.push(+arg); save.skin = +arg; persist(); SFX.item(); collAch(); } renderShop(); updateHeroArt(); resetHelpIcons(); break; }
+    case 'buymeta': { buyClose(); const m = META.find(x => x.id === arg), c = sealCost(m, mt(arg)); if ((save.seals || 0) >= c && mt(arg) < m.max) { save.seals -= c; save.meta[arg] = mt(arg) + 1;   /* v143：修行改用修行之印 */ persist(); SFX.item(); collAch(); } renderShop(); break; }
     case 'refund':   // 修行全部歸零、退還修行之印（按兩次確認）
       if (b.dataset.armed) { save.seals = (save.seals || 0) + sealSpent(); for (const m of META) save.meta[m.id] = 0; persist(); SFX.coin(); renderShop(); }
       else { b.dataset.armed = '1'; b.textContent = t('meta_refund_ok'); }
@@ -3483,3 +3507,6 @@ document.addEventListener('click', e => {
   if (!['shop', 'rank', 'opt', 'help', 'credit', 'hist', 'lvsel'].includes(s.id)) return;
   const b = s.querySelector('.panel > [data-act=back]'); if (b) b.click();
 });
+
+// v148：小判圖示（用遊戲裡的 drawKoban 畫一枚直立的金色小判，做成 CSS 變數 --kbimg 給 .kbi 使用）
+(() => { try { const cv = document.createElement('canvas'); cv.width = 64; cv.height = 80; const c = cv.getContext('2d'); c.lineJoin = 'round'; drawKoban(c, 32, 40, 26, 34, 1, 99); document.documentElement.style.setProperty('--kbimg', `url(${cv.toDataURL()})`); } catch (e) { } })();

@@ -994,3 +994,10 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 #banCf .bn-sum small { flex-basis: 100%; font-size: .7em; color: #d0c8e0; }
 #banCf .cf-btns { display: flex; margin-top: .8em; }
 #banCf .cf-btns button { flex: 1; margin: 0; }
+
+/* v148 小判圖示（金色橢圓小判，圖由 game.js 用 drawKoban 畫好放進 --kbimg） */
+.kbi { display: inline-block; width: .82em; height: 1.05em; margin: 0 .22em 0 .05em; vertical-align: -.16em; background: var(--kbimg, radial-gradient(ellipse, #ffe58a, #e8b020 60%, #b07a10)) center / contain no-repeat; border-radius: 45%; filter: drop-shadow(0 1px 0 rgba(0,0,0,.5)); font-style: normal; }
+.coinbar .kbi { width: 1em; height: 1.28em; }
+#buyCf .cf-ic { display: grid; place-items: center; width: 2.6em; height: 2.6em; margin: .4em 0 .2em; border-radius: 50%; background: #fff3d0; font-size: 1.6em; box-shadow: 0 0 0 3px #1a1a1a, 0 0 12px rgba(255,210,122,.4); }
+.seal-mini { display: inline-grid; place-items: center; width: 1.15em; height: 1.15em; margin-right: .2em; border-radius: .2em; background: #c0262d; color: #fff; font-style: normal; font-size: .82em; font-weight: 900; border: 1.5px solid #ffd27a; vertical-align: -.1em; }
+#buyCf .cf-coin .kbi { width: .8em; height: 1em; }
