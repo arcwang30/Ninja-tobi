@@ -334,6 +334,7 @@ function openLvSel() {
       <span class="lv-k">${lvName(i)}</span><span class="lv-motto">${L(L0.motto)}</span>${info}</button>`;
   }).join('');
   $('lvList').innerHTML = h;
+  lvGoBtn();
   renderJutsuPick();
   show('lvsel', state === 'menu');
 }
@@ -344,4 +345,64 @@ function renderJutsuPick() {
     JUTSU.map(j => jutsuOK(j)
       ? `<button class="lj ${j.id === cur ? 'on' : ''}" data-act="jutsu" data-arg="${j.id}"><img class="lj-ic" src="${emblemIcon(j)}" alt=""><span>${t('ju_' + j.id)}</span></button>`
       : `<button class="lj lock" data-act="jutsulock" data-arg="${j.th}"><img class="lj-ic" src="${emblemIcon(j, true)}" alt=""><span>🔒</span></button>`).join('') + `</div>`;   // 每顆按鈕上方是該忍法的毛筆墨標誌
+}
+// 選關：點關卡圖只是選擇（卡片框亮起），「出陣！」按鈕顯示選到的關卡，按下才開始
+function lvPick(i) {
+  const s = lvSave(); s.sel = i; persist(); SFX.click && SFX.click();
+  document.querySelectorAll('#lvList .lv-card').forEach((c, k) => c.classList.toggle('sel', k === i));
+  lvGoBtn(true);
+}
+function lvGoBtn(pop) {
+  const s = lvSave(), b = $('lvGo'); if (!b) return;
+  const okSel = LEVELS[s.sel] && (TEST_FREE || s.sel < s.open);
+  if (!okSel) s.sel = 0;
+  const L0 = LEVELS[s.sel];
+  b.style.setProperty('--ec', LV_EC[L0.th] || '#e8b84a');
+  b.innerHTML = `<i class="lg-seal">${lvName(s.sel)}</i><span>${t('lv_go')}</span>`;
+  if (pop) { b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+  const ti = $('lvTutIc'); if (ti && !ti.src) { ti.src = tutIcon(); if (document.fonts) Promise.all(['38px "Yuji Boku"', '33px "Dela Gothic One"'].map(f => document.fonts.load(f, '忍鳶'))).then(() => { ti.src = tutIcon(); }).catch(() => {}); }   // 新手教學小按鈕的圖示（字型載好後重畫）
+}
+// 新手教學小按鈕的圖示：正式版用 c 練習靶（?tutic=a1|a2|a3|b 可預覽提案時的備選）
+const TUT_IC = new URLSearchParams(location.search).get('tutic') || 'c';
+function tutIcon(k = TUT_IC, S = 120) {
+  const cv0 = document.createElement('canvas'); cv0.width = cv0.height = S; const c = cv0.getContext('2d'); c.scale(S / 100, S / 100);
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  const ink = '#1a1010', gold = '#ffd27a';
+  if (k[0] === 'a') {   // A 忍之卷：攤開的巻物，紙上一個黑色「忍」字（a1/a2/a3 三種字樣），兩端金色軸頭
+    c.save(); c.translate(50, 50); c.rotate(-.12);
+    c.fillStyle = '#f4ead2'; c.strokeStyle = ink; c.lineWidth = 3; c.beginPath(); c.rect(-30, -22, 60, 44); c.fill(); c.stroke();
+    c.fillStyle = 'rgba(160,120,60,.25)'; c.fillRect(-30, -22, 60, 6); c.fillRect(-30, 16, 60, 6);
+    for (const x of [-34, 34]) { c.fillStyle = '#8a2a1a'; c.beginPath(); c.rect(x - 4, -27, 8, 54); c.fill(); c.stroke(); c.fillStyle = '#e8b84a'; for (const y of [-31, 27]) { c.beginPath(); c.arc(x, y, 4.5, 0, 7); c.fill(); c.stroke(); } }
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    const v = k.length > 1 ? k[1] : '1';
+    if (v === '1') {   // A1 墨書：筆字「忍」，墨色微暈
+      c.font = '38px "Yuji Boku", serif'; c.fillStyle = 'rgba(26,16,16,.18)'; c.fillText('忍', .8, 2.6); c.fillStyle = '#141010'; c.fillText('忍', 0, 1.5);
+    } else if (v === '2') {   // A2 粗黑體＋右下紅色落款小印
+      c.font = '33px "Dela Gothic One", "Noto Sans TC", sans-serif'; c.fillStyle = '#141010'; c.fillText('忍', -3, 0);
+      c.fillStyle = '#c0262d'; c.beginPath(); c.rect(13, 7, 11, 11); c.fill(); c.fillStyle = '#f4ead2'; c.font = '8px "Yuji Boku", serif'; c.fillText('鳶', 18.5, 12.8);
+    } else {   // A3 大筆飛白：超出紙面的大字，乾筆擦痕＋墨點
+      const g = document.createElement('canvas'); g.width = g.height = S; const q = g.getContext('2d'); q.scale(S / 100, S / 100); q.translate(50, 50);
+      q.textAlign = 'center'; q.textBaseline = 'middle'; q.font = '50px "Yuji Boku", serif'; q.fillStyle = '#141010'; q.fillText('忍', 0, 3);
+      q.globalCompositeOperation = 'destination-out'; q.strokeStyle = 'rgba(0,0,0,.7)'; q.lineCap = 'round';
+      for (let i = 0; i < 11; i++) { const y = -20 + i * 4 + (i % 3) * .8; q.lineWidth = .5 + (i % 3) * .35; q.beginPath(); q.moveTo(-6 + (i * 7) % 13, y + 1); q.lineTo(26 - (i * 5) % 9, y - 2.5); q.stroke(); }
+      c.save(); c.beginPath(); c.rect(-30, -22, 60, 44); c.clip(); c.setTransform(1, 0, 0, 1, 0, 0); c.translate(S / 2, S / 2); c.rotate(-.12); c.translate(-S / 2, -S / 2); c.drawImage(g, 0, 0); c.restore();
+      c.fillStyle = '#141010'; for (const [x, y, r] of [[22, -16, 1.6], [25, -12, .9], [-23, 17, 1.3]]) { c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); }
+    }
+    c.restore();
+  } else if (k === 'b') {   // B 巻藁（練習用的稻草靶樁）：木樁上綁著稻草，中間一道斬痕
+    c.fillStyle = '#6a4a22'; c.strokeStyle = ink; c.lineWidth = 3; c.beginPath(); c.rect(46, 60, 8, 30); c.fill(); c.stroke();
+    c.fillStyle = '#5a3a18'; c.beginPath(); c.ellipse(50, 90, 18, 5, 0, 0, 7); c.fill(); c.stroke();
+    const g0 = c.createLinearGradient(30, 0, 70, 0); g0.addColorStop(0, '#c8a24a'); g0.addColorStop(.5, '#f0d27a'); g0.addColorStop(1, '#b08a36'); c.fillStyle = g0;
+    c.beginPath(); c.moveTo(34, 18); c.quadraticCurveTo(50, 10, 66, 18); c.lineTo(64, 64); c.quadraticCurveTo(50, 70, 36, 64); c.closePath(); c.fill(); c.stroke();
+    c.strokeStyle = 'rgba(120,80,20,.6)'; c.lineWidth = 1.4; for (let x = 39; x <= 61; x += 4.4) { c.beginPath(); c.moveTo(x, 17); c.lineTo(x + (x - 50) * .05, 64); c.stroke(); }
+    c.strokeStyle = '#c0262d'; c.lineWidth = 4; for (const y of [26, 54]) { c.beginPath(); c.moveTo(34.5, y); c.quadraticCurveTo(50, y + 3, 65.5, y); c.stroke(); }
+    c.strokeStyle = '#fff'; c.lineWidth = 3.4; c.beginPath(); c.moveTo(26, 48); c.lineTo(74, 30); c.stroke(); c.strokeStyle = gold; c.lineWidth = 1.4; c.beginPath(); c.moveTo(26, 48); c.lineTo(74, 30); c.stroke();
+  } else {   // C 練習靶：紅白同心圓靶，正中插著一枚手裡劍
+    for (const [r, col] of [[34, '#f4ead2'], [26, '#c0262d'], [18, '#f4ead2'], [10, '#c0262d']]) { c.fillStyle = col; c.strokeStyle = ink; c.lineWidth = r === 34 ? 3 : 1.6; c.beginPath(); c.arc(50, 52, r, 0, 7); c.fill(); c.stroke(); }
+    c.save(); c.translate(56, 46); c.rotate(.5); c.fillStyle = '#eef2f7'; c.strokeStyle = ink; c.lineWidth = 2.6;
+    c.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, rr = i % 2 ? 5 : 20; c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } c.closePath(); c.fill(); c.stroke();
+    c.fillStyle = ink; c.beginPath(); c.arc(0, 0, 2.6, 0, 7); c.fill(); c.restore();
+    c.strokeStyle = 'rgba(255,255,255,.8)'; c.lineWidth = 2; for (const [x1, y1, x2, y2] of [[76, 22, 84, 14], [82, 30, 92, 28], [70, 16, 72, 6]]) { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+  }
+  return cv0.toDataURL();
 }

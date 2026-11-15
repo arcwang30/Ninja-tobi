@@ -35,8 +35,6 @@ html, body { margin: 0; background: #070915; }
 
   <!-- 標題 -->
   <div class="scr" id="title">
-    <!-- 商店：獨立放在畫面左上角 -->
-    <button class="shop-corner" data-act="shop" aria-label="shop"><span class="sc-glow"></span><img id="shopIc" alt=""><i class="sc-spk" style="--x:6%;--y:18%;--d:0s"></i><i class="sc-spk" style="--x:86%;--y:10%;--d:.8s"></i><i class="sc-spk" style="--x:92%;--y:62%;--d:1.6s"></i><i class="sc-spk" style="--x:2%;--y:66%;--d:2.3s"></i></button>
     <!-- 出場動畫：① LOGO 出現、忍者從左邊在 LOGO 上連跳三下往右出畫面 → ② LOGO 上移 → ③ 忍術陣中忍者現身放大 -->
     <div class="logo" id="intro">
       <div class="logo-box">
@@ -60,7 +58,7 @@ html, body { margin: 0; background: #070915; }
     <nav class="dock">
       <button data-act="rank"><i class="scroll-ic" data-ic="rank"></i><span data-i18n="rank"></span></button>
       <button data-act="help"><i class="scroll-ic" data-ic="help"></i><span data-i18n="help"></span></button>
-      <button data-act="hist"><i class="scroll-ic" data-ic="hist"></i><span data-i18n="hist"></span></button>
+      <button data-act="shop"><i class="scroll-ic" data-ic="shop"></i><span data-i18n="treasure"></span></button>   <!-- 寶藏（整備商店）：放在原本「歷史」的位置；歷史先停用（history.js 資料保留） -->
       <button data-act="opt"><i class="scroll-ic" data-ic="opt"></i><span data-i18n="opt"></span></button>
       <button data-act="credit"><i class="scroll-ic" data-ic="credit"></i><span data-i18n="credit"></span></button>
     </nav>
@@ -100,7 +98,8 @@ html, body { margin: 0; background: #070915; }
       <h2 data-i18n="lv_title"></h2>
       <div class="lv-list" id="lvList"></div>
       <div class="lv-jutsu" id="lvJutsu"></div>   <!-- 帶進關卡的忍法（打倒各關第 10 舞台魔王取得卷軸後解鎖） -->
-      <button class="lv-tut" data-act="tutorial" data-i18n="tutorial"></button>
+      <button class="big red lv-go" data-act="lvstart" id="lvGo"></button>   <!-- 先點關卡圖選擇，再按這顆「出陣！」才開始 -->
+      <button class="lv-tutic" data-act="tutorial" aria-label="tutorial"><img id="lvTutIc" alt=""><span data-i18n="tut_short"></span></button>   <!-- 新手教學：右上角的小方形按鈕 -->
       <button data-act="back" data-i18n="back"></button>
     </div>
   </div>
@@ -233,6 +232,7 @@ html, body { margin: 0; background: #070915; }
       <div class="cr-line cr-game" style="--d:7">忍者鳶 NINJA TOBI</div>
       <div class="cr-line cr-note" style="--d:7.5" data-i18n="cr_v2"></div>
       <div class="cr-line cr-copy" style="--d:8">© 2026 Arc Concept Games</div>
+      <a class="cr-line hs-fb cr-fb" style="--d:8.5" href="https://www.facebook.com/profile.php?id=61594197187795" target="_blank" rel="noopener noreferrer" data-i18n="hist_fb"></a>   <!-- Facebook 粉絲團（原本在「了解歷史」的關於 Arc 遊戲庫頁） -->
       <button data-act="back" data-i18n="back"></button>
     </div>
   </div>

@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v129';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v133';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -2194,7 +2194,11 @@ function buildDockIcons() {
   if (stb && START_STYLE && !stb.classList.contains('st')) { stb.classList.add('st', 'st-' + START_STYLE); try { stb.style.setProperty('--stbg', 'url(' + startBg(START_STYLE).toDataURL() + ')'); } catch (e) { } }
   for (const el of document.querySelectorAll('.scroll-ic')) {
     // 每次都換一張新的圖片元素（iPhone 有時只改 src 不會重畫），文字依目前語言重畫
-    const im = new Image(); im.alt = ''; try { im.src = dockPlate(el.dataset.ic, 220).toDataURL(); } catch (e) { }
+    const im = new Image(); im.alt = '';
+    try {
+      if (el.dataset.ic === 'shop') { im.src = shopIcon(SHOP_STYLE, 240, false).toDataURL(); im.dataset.shut = im.src; im.dataset.open = shopIcon(SHOP_STYLE, 240, true).toDataURL(); el.classList.add('ic-chest'); }   // 寶藏：沿用原本商店的寶箱圖（關著／打開兩張）
+      else im.src = dockPlate(el.dataset.ic, 220).toDataURL();
+    } catch (e) { }
     el.replaceChildren(im);
     el.parentNode.setAttribute('aria-label', L(DOCK_LABEL[el.dataset.ic]));
   }
@@ -3188,7 +3192,8 @@ document.addEventListener('click', e => {
     case 'tutorial': startTutorial(); break;
     case 'tutskip': if (g && g.tut) endTutorial(false); break;
     case 'retry': startRun(); break;
-    case 'lvgo': if (lvPaid(+arg)) openFull('lv'); else startRun(+arg); break;
+    case 'lvgo': lvPick(+arg); break;   // 點關卡圖：只選擇（卡片亮起、下方按鈕顯示關卡名）
+    case 'lvstart': { const i = lvSave().sel; if (lvPaid(i)) openFull('lv'); else startRun(i); break; }   // 「出陣！」：正式開始
     case 'fullinfo': openFull('lv'); break;   // 完整版（levels.js）
     case 'jutsu': save.jutsu = arg; persist(); renderJutsuPick(); break;   // 選關畫面：選擇帶進關卡的忍法
     case 'jutsulock': toast(t('ju_locked', lvName(LEVELS.findIndex(l => l.th === +arg)))); break;
@@ -3201,6 +3206,13 @@ document.addEventListener('click', e => {
     case 'fulltest': save.full = !hasFull(); persist(); renderOpt(); break;   // 測試模式：切換是否擁有完整版
     case 'lvlock': toast(t('lv_locked')); break;
     case 'shop':
+      if (b.querySelector('.ic-chest')) {   // 主畫面「寶藏」：寶箱先打開蓋子，0.35 秒後才進商店
+        const im = b.querySelector('.ic-chest img'); if (b.classList.contains('opening')) break;
+        if (im && im.dataset.open) im.src = im.dataset.open;
+        b.classList.add('opening'); SFX.coin && SFX.coin(); vib(20);
+        setTimeout(() => { openSub('shop'); setTimeout(() => { b.classList.remove('opening'); if (im && im.dataset.shut) im.src = im.dataset.shut; }, 500); }, 350);
+        break;
+      }
       if (b.classList.contains('shop-corner')) {   // 主畫面寶箱：打開蓋子、噴出金光，0.4 秒後才進商店
         if (b.classList.contains('opening')) break;
         const im = $('shopIc'); if (im && im.dataset.open) im.src = im.dataset.open;
@@ -3288,4 +3300,10 @@ $('shScroll').addEventListener('pointerdown', e => {
   if (state !== 'play' || paused || !g) return;
   if (g.scrolls > 0 && g.fly <= 0) castScroll();
   else floatText(W / 2, g.camY + H * .6, t('no_scroll'), '#ccc', 13);
+});
+// 子畫面（商店、成就、說明、設定、製作名單、了解歷史、選關）：點面板外面的暗處＝按「返回」關閉
+document.addEventListener('click', e => {
+  const s = e.target; if (!s.classList || !s.classList.contains('scr') || !s.classList.contains('on')) return;
+  if (!['shop', 'rank', 'opt', 'help', 'credit', 'hist', 'lvsel'].includes(s.id)) return;
+  const b = s.querySelector('.panel > [data-act=back]'); if (b) b.click();
 });

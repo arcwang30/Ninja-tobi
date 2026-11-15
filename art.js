@@ -2070,11 +2070,14 @@ function drawBoss2(b, x, y, s, c = ctx) {
 }
 
 // ===== 主畫面底部選單的圖示：「護額」風格（布帶綁著金屬板，板上刻著圖案和文字） =====
-const DOCK_LABEL = { shop: ['商店', 'ショップ', 'SHOP'], rank: ['成就', '実績', 'AWARDS'], hist: ['歷史', '歴史', 'HISTORY'], help: ['說明', '遊び方', 'HELP'], opt: ['設定', '設定', 'SETTING'], credit: ['製作', '制作', 'CREDIT'] };
+const DOCK_LABEL = { shop: ['寶藏', '宝物', 'TREASURE'], rank: ['成就', '実績', 'AWARDS'], hist: ['歷史', '歴史', 'HISTORY'], help: ['說明', '遊び方', 'HELP'], opt: ['設定', '設定', 'SETTING'], credit: ['製作', '制作', 'CREDIT'] };
 // 單色線條圖案（中心 (0,0)，約 ±16）
 function dockGlyph(c, k, col, lw = 3.6) {
   c.save(); c.strokeStyle = col; c.fillStyle = col; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round';
-  if (k === 'shop') { aEll(c, 0, 0, 10, 14); c.stroke(); for (const y of [-6, 0, 6]) { c.beginPath(); c.moveTo(-5, y); c.lineTo(5, y); c.stroke(); } }
+  if (k === 'shop') {   // 寶藏：寶箱（拱形箱蓋、箱身、中間的鎖扣）
+    c.beginPath(); c.moveTo(-14, -2); c.lineTo(-14, -5); c.quadraticCurveTo(-14, -13, 0, -13); c.quadraticCurveTo(14, -13, 14, -5); c.lineTo(14, -2); c.closePath(); c.stroke();
+    aRR(c, -14, -2, 28, 15, 2); c.stroke(); c.beginPath(); c.moveTo(-7, -12); c.lineTo(-7, 13); c.moveTo(7, -12); c.lineTo(7, 13); c.stroke();
+    aRR(c, -3.5, -5, 7, 8, 1.5); c.fill(); }
   else if (k === 'rank') { c.beginPath(); c.moveTo(-11, -12); c.lineTo(11, -12); c.quadraticCurveTo(11, 4, 0, 5); c.quadraticCurveTo(-11, 4, -11, -12); c.stroke(); c.beginPath(); c.moveTo(0, 5); c.lineTo(0, 11); c.moveTo(-7, 13); c.lineTo(7, 13); c.stroke(); c.beginPath(); c.arc(-12, -6, 4.5, Math.PI * .5, Math.PI * 1.5); c.stroke(); c.beginPath(); c.arc(12, -6, 4.5, -Math.PI * .5, Math.PI * .5); c.stroke(); }
   else if (k === 'help') { aRR(c, -12, -12, 24, 24, 4); c.stroke(); c.font = '900 20px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 0, 1); }
   else if (k === 'opt') { c.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; c.moveTo(Math.cos(a) * 8, Math.sin(a) * 8); c.lineTo(Math.cos(a) * 14, Math.sin(a) * 14); } c.stroke(); aCirc(c, 0, 0, 8.5); c.stroke(); aCirc(c, 0, 0, 3); c.fill(); }
