@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v133';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v134';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -496,9 +496,9 @@ cv.addEventListener('pointerdown', e => {
   if (state === 'ascend') { skipAscend(); return; }
   if (state === 'cast') { g.castT = Math.min(g.castT, CAST_T - .85); return; }   // 豪天翔：點一下直接跳到燒卷軸、衝天
   if (state === 'fin') {   // 決戰擊倒演出：點一下跳到卷軸展開、再點一下看完整卷軸；演出完成後停在卷軸畫面，點一下才進結算（預覽則重播）
-    if (g.finT < .4) return;
+    if (g.finT < 2.1) return;   // 前段（含四字詞）不吃點擊，避免決戰連點時把字跳掉
     if (g.finT >= FIN_T) { if ((g.finHoldT || 0) < .4) return; if (g.preview) { g.finT = 0; g.finHoldT = 0; if (ac && musV()) BGM.jingle(ac, 'finish'); } else finishBoss(true); }
-    else g.finT = g.finT < 3 ? 3 : FIN_T;
+    else g.finT = g.finT < 3 + FIN_FD ? 3 + FIN_FD : FIN_T;
     return;
   }
   const p = toL(e);
@@ -1722,7 +1722,7 @@ function endQte() {
 // ===== 決戰擊倒：居合一閃（A）＋封印之卷（C） =====
 // 0～0.7 夕陽剪影對峙 → 0.7 白閃一刀 → 0.9 收刀「喀」、魔王斜斷 → 1.5 符咒封印陣、墨氣被吸入 → 2.4 化為卷軸落入手中
 // → 3.0 卷軸展開：卷軸名、「任務達成」、獲得的忍法 → 4.4 結算。點一下可跳到卷軸展開
-const FIN_T = 4.4, MAKI_COIN = 100;
+const FIN_FD = .9, FIN_T = 4.4 + FIN_FD, MAKI_COIN = 100;   // FIN_FD：居合四字詞多停留的時間（v134 起「收刀・斷」由 0.6 秒延長為 1.5 秒，之後各段整體往後順延）
 const MAKI_COL = { 3: ['#3a3d46', '#d9a441'], 1: ['#5a2a8a', '#d8dce8'], 2: ['#5aa8d8', '#ffffff'], 0: ['#b01e18', '#1a1010'] };   // 卷軸顏色（依魔王）：[軸身, 邊]
 function startFin() {
   state = 'fin'; g.qte = null; g.finT = 0; g.finHoldT = 0;
@@ -1734,8 +1734,9 @@ function updateFin(dt) {
   if (g.boss) g.boss.t += dt;
   if (at(.7)) { vib(80); g.shake = 0; }
   if (at(.95)) SFX.clank();
-  if (at(2.4)) vib([30, 30, 60]);
-  if (at(3.9)) { SFX.impact(); vib(40); }
+  for (let i = 1; i < 4; i++) if (at(.95 + i * .16)) tone(170, .09, 'triangle', .05, -50);   // 四字詞每蓋上一字的輕「咚」
+  if (at(2.4 + FIN_FD)) vib([30, 30, 60]);
+  if (at(3.9 + FIN_FD)) { SFX.impact(); vib(40); }
   if (g.finT >= FIN_T) { g.finT = FIN_T; g.finHoldT = (g.finHoldT || 0) + dt; }   // 演出完成：停在卷軸畫面，等玩家點一下（見 pointerdown）
 }
 // 封印陣：外圈雙環＋九字環（臨兵闘者皆陣烈在前）＋反向旋轉的刻度環＋五芒星＋內圈「封」，依進度 L 依序浮現；k＝整段進度（最後放光）
@@ -1807,7 +1808,7 @@ function drawSeal(x, y, R, L, k, T) {
   ctx.restore();
 }
 function drawFin() {
-  const e = g.finT, b = g.boss, fi = g.finInfo || {}, cx = W / 2, T = performance.now() / 1000;
+  const E = g.finT, e = E >= 1.5 + FIN_FD ? E - FIN_FD : E, b = g.boss, fi = g.finInfo || {}, cx = W / 2, T = performance.now() / 1000;   // E＝實際時間；e＝扣掉四字詞延長後的時間（封印之後的段落沿用原本時間表）
   const bossSil = (x, y, s, col) => drawSil(x, y, 150 * s, 150 * s, 75 * s, 80 * s, col, c2 => drawBoss(b, 0, 0, s, c2));
   const njSil = (x, y, s, col, o = {}) => drawSil(x, y, 100 * s, 110 * s, 50 * s, 95 * s, col, c2 => { c2.scale(s, s); drawHeroNinja(0, 0, Object.assign({ face: -1, t: 1, vy: 0, skin: save.skin }, o), c2); });
   const sunset = () => {
@@ -1823,7 +1824,7 @@ function drawFin() {
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = '#0e1414'; ctx.fillRect(0, H * .55 - 4, W, 8);
     bossSil(W * .5, H * .66 - 52, 1.45, '#0a0608'); njSil(W * .86, H * .66, 1.5, '#0a0608', { face: -1, pose: 'dash' });
-  } else if (e < 1.5) {   // ③ 收刀・斷
+  } else if (E < 1.5 + FIN_FD) {   // ③ 收刀・斷（含四字詞停留）
     sunset();
     const d = easeO(clamp((e - .9) / .6, 0, 1)) * 22, bx = W * .5, by = H * .66 - 52;
     for (const sd of [-1, 1]) {   // 沿斜線切成兩半，往兩邊滑開
@@ -1839,9 +1840,10 @@ function drawFin() {
     if (g.killWord) {
       const cs = Math.min(58, H * .085); ctx.font = `${cs}px ${BRUSH}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       [...g.killWord].forEach((ch, i) => {
-        const p = clamp((e - .92 - i * .06) / .08, 0, 1); if (p <= 0) return;
+        const p = clamp((E - .95 - i * .16) / .1, 0, 1); if (p <= 0) return;   // 每 0.16 秒蓋上一字，約 1.5 秒全部到齊，再停留約 0.9 秒
+        const out = clamp((1.5 + FIN_FD - E) / .2, 0, 1);   // 轉場前 0.2 秒淡出
         const s = 1 + (1 - easeO(p)) * .8, x = W * .16, y = H * .14 + i * cs * 1.08;
-        ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.globalAlpha = p;
+        ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.globalAlpha = p * out;
         ctx.lineWidth = 6; ctx.strokeStyle = '#7a120c'; ctx.strokeText(ch, 0, 0); ctx.fillStyle = '#fff6e0'; ctx.fillText(ch, 0, 0); ctx.restore();
       });
     }
@@ -1912,7 +1914,7 @@ function drawFin() {
       ctx.restore();
       drawNinja(cx, H * .9, { face: 1, t: T, vy: 0, skin: save.skin });
       // 演出完成：停在這裡，提示點一下繼續（一閃一閃）
-      if (e >= FIN_T && (g.finHoldT || 0) > .3) { ctx.globalAlpha = .55 + .45 * Math.sin(T * 5); txt(t('tap_next'), cx, H * .42 + 150, 16, '#fff', 'center', '#000', 4); ctx.globalAlpha = 1; }
+      if (E >= FIN_T && (g.finHoldT || 0) > .3) { ctx.globalAlpha = .55 + .45 * Math.sin(T * 5); txt(t('tap_next'), cx, H * .42 + 150, 16, '#fff', 'center', '#000', 4); ctx.globalAlpha = 1; }
     }
   }
 }
