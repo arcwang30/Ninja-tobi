@@ -11,7 +11,7 @@ const LEVELS = [
   { th: 3, wx: 'snow', motto: ['不動如山', '動かざること山の如し', 'Steady as the Mountain'] },
   { th: 2, wx: 'dark', motto: ['侵掠如火', '侵掠すること火の如く', 'Fierce as Fire'] },   // 火關：難度最高、最後解鎖
 ];
-const ST_N = 10, ST_UNLOCK = 4;   // 一關 10 個舞台；到達第 5 舞台（索引 4）開下一關
+const ST_N = 15, ST_UNLOCK = 9;   // v149：一關 15 個舞台（三輪，每 5 舞台一隻魔王）；到達第 10 舞台（索引 9）開下一關
 // 時段：白天、黃昏、夜晚、凌晨、魔王。mul = 乘色（整個背景的色調）、glow = 天空上方的光
 const TOD = [
   { n: ['白天', '昼', 'Day'], mul: null, sky: null },
@@ -101,7 +101,7 @@ const BANS = [
 const shuraVal = b => b ? BANS.reduce((n, x) => n + (b[x.id] ? x.p : 0), 0) : 0;
 // 修羅破台：最高修羅值紀錄＋修行之印（5＋修羅值；用更高的修羅值破台時補發差額）
 function shuraClear(s) {
-  const i = g.lvl, v = shuraVal(g.ban), aw = 5 + v;
+  const i = g.lvl, v = shuraVal(g.ban), aw = 3 + Math.ceil(v / 2);   // v149：修羅破台的印＝3＋修羅值的一半
   s.shura = s.shura || [0, 0, 0, 0]; s.shuraAw = s.shuraAw || [0, 0, 0, 0];
   if (v > s.shura[i]) s.shura[i] = v;
   if (aw > s.shuraAw[i]) { addSeal(aw - s.shuraAw[i]); s.shuraAw[i] = aw; }
@@ -113,11 +113,11 @@ function banOpen() {
   let d = $('banCf'); if (!d) { d = document.createElement('div'); d.id = 'banCf'; d.addEventListener('click', e => { if (e.target === d) banClose(); }); $('lvsel').appendChild(d); }
   d.innerHTML = `<div class="cf-box"><div class="cf-h">${t('ban_t')}</div><div class="bn-sub">${t('ban_sub')}</div>` +
     `<div class="bn-list">${BANS.map(B => `<button class="bn ${s.ban[B.id] ? 'on' : ''}" data-act="bantog" data-arg="${B.id}"><i class="bn-ck">${s.ban[B.id] ? '✓' : ''}</i><span><b>${L(B.n)}</b><small>${L(B.d)}</small></span><em>+${B.p}</em></button>`).join('')}</div>` +
-    `<div class="bn-sum"><span>${t('ban_val')}</span><b>${v}</b><small>${t('ban_rw', 10 * v, 5 + v)}${best ? '　' + t('ban_best', best) : ''}</small></div>` +
+    `<div class="bn-sum"><span>${t('ban_val')}</span><b>${v}</b><small>${t('ban_rw', 10 * v, 3 + Math.ceil(v / 2))}${best ? '　' + t('ban_best', best) : ''}</small></div>` +
     `<div class="cf-btns"><button class="big" data-act="banclose">${t('ban_ok')}</button></div></div>`;
 }
 function banClose() { const d = $('banCf'); if (d) d.remove(); }
-const tierOpen = (i, k) => TEST_FREE || k === 0 || lvSave().tc[i] >= k;   // 中忍：下忍破台後開；上忍：中忍破台後開
+const tierOpen = (i, k) => k === 0 || (lvSave().tc[i] || 0) >= k;   // v149：每一關各自開放——中忍＝該關下忍破台、上忍＝該關中忍破台、修羅＝該關上忍破台（測試模式也照規則）
 // 出發點：0 第 1 舞台、1 第 6 舞台（到過第 6 舞台才開）、2 魔王再戰（破台後才開）
 const startOpen = (i, k) => TEST_FREE || k === 0 || (k === 1 ? lvSave().best[i] >= 6 : !!lvSave().clear[i]);
 const START_ST = [0, 5, 9];
@@ -143,7 +143,7 @@ function sealMigrate() {
 // 到達新舞台時呼叫：記錄最佳、檢查是否開放下一關
 function lvReach() {
   const s = lvSave(), i = g.lvl, st = g.stage + 1, k = TIER();
-  if (st > (s.tb[k][i] || 0)) { s.tb[k][i] = st; if (st >= 2) addSeal(1); }   // 這個難易度第一次到達這個舞台：修行之印 +1
+  if (st > (s.tb[k][i] || 0)) s.tb[k][i] = st;   // v149：到達新舞台不再給修行之印（只記錄）   // 這個難易度第一次到達這個舞台：修行之印 +1
   if (st > s.best[i]) s.best[i] = st;
   if (g.stage >= ST_UNLOCK && i + 1 < LEVELS.length && s.open < i + 2 && !TEST_FREE) {
     s.open = i + 2;
@@ -163,9 +163,9 @@ function wxForStage() {
   const s = g.stage % 5, loop = g.stage >= 5;
   if (!loop) { wxSet(null); return; }   // 第一輪（舞台 1～5，含第一次魔王戰）不放天候，第二輪起才有
   if (s === 4) { if (g.wx) g.wx.lv = .3; return; }   // 魔王舞台：魔王出場前先轉小
-  wxSet(LEVELS[g.lvl].wx, loop ? 1 : .5, true);
+  wxSet(LEVELS[g.lvl].wx, g.stage >= 10 ? 1.3 : 1, true);   // 第二輪 1、第三輪加強到 1.3
 }
-function wxBoss(kind) { if (g.stage < 5) { wxSet(null); return; } wxSet(BOSS_WX[kind], 1, true); }   // 第一次魔王戰不放天候
+function wxBoss(kind) { if (g.stage < 5) { wxSet(null); return; } wxSet(BOSS_WX[kind], g.stage >= 10 ? 1.3 : 1, true); }   // 第一次魔王戰不放天候
 // 每幀更新：強度慢慢變化、閃電、陣風
 function updateWx(dt) {
   const w = g.wx; if (!w) return;

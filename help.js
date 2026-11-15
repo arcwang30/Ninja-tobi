@@ -6,7 +6,7 @@ const HELP_PAGES = [
   { t: ['畫面說明', '画面の見かた', 'Screen Guide'], shot: 'assets/help_screen.webp', items: [   // 第一頁：一張標好編號的遊戲畫面＋逐項說明（圖片是遊戲畫面加上編號，存成 assets/help_screen.webp）
     ['1', ['分數', 'スコア', 'Score'], ['斬殺敵人、往上爬、連斬都會加分。', '敵を斬る・上へ登る・連斬でスコアが増える。', 'Earn points by cutting foes, climbing and chaining combos.']],
     ['2', ['高度', '高さ', 'Height'], ['這一局爬了幾公尺。', 'この回で登った高さ。', 'How high you have climbed this run.']],
-    ['3', ['關卡與舞台', 'ステージと舞台', 'Stage'], ['目前的關卡和第幾舞台；小黃條是舞台進度，第 5、10 舞台出現魔王（數字變紅）。', '今のステージと舞台。黄色いバーは進み具合、第5・10舞台は魔王（数字が赤）。', 'Current stage and part; the bar shows progress. Bosses appear on parts 5 and 10 (red number).']],
+    ['3', ['關卡與舞台', 'ステージと舞台', 'Stage'], ['目前的關卡和第幾舞台；小黃條是舞台進度，第 5、10、15 舞台出現魔王（數字變紅）。', '今のステージと舞台。黄色いバーは進み具合、第5・10・15舞台は魔王（数字が赤）。', 'Current stage and part; the bar shows progress. Bosses appear on parts 5, 10 and 15 (red number).']],
     ['4', ['暫停', 'ポーズ', 'Pause'], ['暫停遊戲，可以查看技能、說明或離開。', '一時停止。技やヘルプの確認、終了ができる。', 'Pause to check skills, read help or quit.']],
     ['5', ['HP（命）', 'HP（命）', 'HP'], ['剩下的血量；低於 30% 會閃爍，畫面四周出現紅色心跳警示。', '残りの体力。30%未満で点滅し、画面の四隅が赤く脈打つ。', 'Your health. Below 30% it flashes and the screen edges pulse red.']],
     ['6', ['小判', '小判', 'Koban'], ['這一局撿到的小判數，帶回藏寶箱使用。', 'この回で拾った小判。宝箱で使える。', 'Koban collected this run, spent in the Treasure Chest.']],

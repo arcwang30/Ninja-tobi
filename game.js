@@ -349,7 +349,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v148';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v149';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -717,6 +717,9 @@ function mkEnemy(type, x, y, amp) {
     e.affix = pick(['fast', 'split', 'tough']);
     if (e.affix === 'fast') e.amp = rnd(70, 110);
     if (e.affix === 'tough') e.hp = 3;
+  } else if (g && !g.tut && type <= 2 && loopN() >= 2 && Math.random() < .25) {   // v149 第三輪：一般忍者有 25% 帶詞綴（迅捷或鐵壁）
+    e.affix = pick(['fast', 'tough']);
+    if (e.affix === 'fast') e.amp = rnd(60, 90); else e.hp = 2;
   }
   return e;
 }
@@ -797,7 +800,7 @@ function midAI(e, ed, dt) {
 // 中 BOSS 被擊倒：大量魂與小判，並開寶箱（可能進化）
 function midDown(e) {
   g.mid = null;
-  { const s = lvSave(), k = TIER(); if (!(s.mid[g.lvl] & (1 << k))) { s.mid[g.lvl] |= 1 << k; addSeal(2); } }   // v143：每個難易度第一次擊倒這關的中魔王：修行之印 +2
+  { const s = lvSave(), k = TIER(); if (!(s.mid[g.lvl] & (1 << k))) { s.mid[g.lvl] |= 1 << k; addSeal(1); } }   // v143：每個難易度第一次擊倒這關的中魔王：修行之印 +2
   for (let i = 0; i < 10; i++) g.drops.push({ k: i < 6 ? 'soul' : 'coin', x: e.x + rnd(-30, 30), y: e.y, vx: rnd(-100, 100), vy: -rnd(140, 280), v: i < 6 ? 3 : 2, ph: rnd(0, 6), ap: .45 + i * .03 });   // v142：魂 6×3＝18（約升 1 級）＋小判 4×2。ap：噴出後自動飛向玩家（v141：中魔王死的位置常在畫面外，魂撿不到）
   burst(e.x, e.y, '#c0262d', 36); g.shake = 12; SFX.kill(); vib([60, 40, 120]);
   floatText(W / 2, g.camY + H * .4, tl('mid_down'), '#ffd27a', 24);
@@ -1572,20 +1575,20 @@ const BOSS_ATK = [['club', 'club', 'fan'], ['mist', 'mist', 'fan'], ['snow', 'sn
 // 第 5 舞台是「初戰」（弱化版、招式較少，打完魔王會逃走），第 10 舞台是「決戰」（完整招式，打倒才破關）
 const BOSS_OF = [0, 1, 3, 2];
 function spawnBoss() {
-  const fin = g.stage >= 5, kind = BOSS_OF[g.th], lv = g.lvl;
+  const fin = g.stage >= ST_N - 1, re = !fin && g.stage >= 5, kind = BOSS_OF[g.th], lv = g.lvl;   // v149：第 15 舞台才是決戰；第 10 舞台是「魔王再臨」（擊退，但比初戰強）
   // 選關畫面：遇過這一關的魔王之後，圖卡上才顯示它的彩圖（之前是剪影）
   if (!g.tut && !fin) { const ls = lvSave(); if (!ls.boss[g.lvl]) { ls.boss[g.lvl] = 1; persist(); } }
-  const hp = Math.round((fin ? 16 + 5 * lv : 8 + 3 * lv) * foeHpMul());
+  const hp = Math.round((fin ? 16 + 5 * lv : (8 + 3 * lv) * (re ? 1.5 : 1)) * foeHpMul());
   g.bossT0 = g.t; wxBoss(kind);   // 魔王登場時換成魔王的天候（levels.js）
   g.boss = {
     n: lv * 2 + fin, lv, fin, kind, hp, max: hp, x: W / 2, y: g.camY - 60, t: 0, ai: 0, cool: 0, skillT: 9, crT: 2.6,
     shield: false, shT: 1.5, r: 30, warn: 0, flash: 0,
     st: 0, stN: fin && lv >= 2 ? 4 : 3, stun: 0,   // 破綻：打滿 stN 下就暈眩
     atk: null, atkT: 3, rest: 0, blockN: 0,
-    warnT: fin ? Math.max(.6, .9 - .08 * lv) : 1, gapT: fin ? Math.max(1.6, 3 - .3 * lv) : 3.4,   // 預兆時間、出招間隔
+    warnT: fin ? Math.max(.6, .9 - .08 * lv) : re ? .85 : 1, gapT: fin ? Math.max(1.6, 3 - .3 * lv) : re ? 2.6 : 3.4,   // 預兆時間、出招間隔（魔王再臨介於初戰與決戰之間）
   };
   const K = BOSS_KINDS[kind];
-  g.banner = { t: 2.2, a: t(fin ? 'boss_in_fin' : 'boss_in_first'), b: t('boss_appear', L(K.n)), c: t('boss_desc', L(fin ? K.skill2 : K.skill)) };
+  g.banner = { t: 2.2, a: t(fin ? 'boss_in_fin' : re ? 'boss_in_re' : 'boss_in_first'), b: t('boss_appear', L(K.n)), c: t('boss_desc', L(fin ? K.skill2 : K.skill)) };
   SFX.boss(); vib(200);
 }
 function updateBoss(dt) {
@@ -2002,7 +2005,7 @@ function drawFlee() {
   const b = g.boss, k = g.fleeT;
   const s = Math.min(1, k * 4);
   txt(t('flee_big'), W / 2, H * .3, 54 * (1.5 - .5 * s) * (LI === 2 ? .7 : 1), '#fff', 'center', '#c0262d', 8);
-  if (k > .8) { ctx.globalAlpha = Math.min(1, (k - .8) * 3); txt(t('boss_fled', L(BOSS_KINDS[b.kind].n)), W / 2, H * .3 + 46, 15, '#ffd27a', 'center', '#000', 4); ctx.globalAlpha = 1; }
+  if (k > .8) { ctx.globalAlpha = Math.min(1, (k - .8) * 3); txt(t('boss_fled', L(BOSS_KINDS[b.kind].n), g.stage >= 5 ? ST_N : 10), W / 2, H * .3 + 46, 15, '#ffd27a', 'center', '#000', 4); ctx.globalAlpha = 1; }
 }
 function finishBoss(killed) {
   const b = g.boss;
@@ -2012,7 +2015,7 @@ function finishBoss(killed) {
     addBonus(pts); addCoins(15 + 5 * b.lv);
     floatText(W / 2, g.camY + H * .4, t('boss_repelled', Math.round(pts * (1 + .2 * pk('score')))), '#ffd27a', 24);
     for (let i = 0; i < 8; i++) g.drops.push({ k: i < 5 ? 'soul' : 'coin', x: W / 2 + rnd(-40, 40), y: g.camY + H * .3, vx: rnd(-90, 90), vy: -rnd(120, 260), v: i < 5 ? 3 : 2, ph: rnd(0, 6) });
-    { const s = lvSave(); s.rp = s.rp || [0, 0, 0, 0]; const k = TIER(); if (!(s.rp[g.lvl] & (1 << k))) { s.rp[g.lvl] |= 1 << k; addSeal(3); } }   // v143：每個難易度第一次擊退這關魔王：修行之印 +3
+    { const s = lvSave(); s.rp = s.rp || [0, 0, 0, 0]; const k = TIER(); if (!(s.rp[g.lvl] & (1 << k))) { s.rp[g.lvl] |= 1 << k; addSeal(2); } }   // v143：每個難易度第一次擊退這關魔王：修行之印 +3
     save.stats.bosses++; unlock('boss1');   // 擊退也算進累計（「討伐・〇〇」只在決戰擊破時才算）
     if (save.stats.bosses >= 10) unlock('boss10');
     if (save.stats.bosses >= 30) unlock('boss30');
@@ -2043,7 +2046,7 @@ function finishBoss(killed) {
   if (g.stage >= ST_N) {
     g.stage = ST_N - 1; g.cleared = true;
     const s = lvSave(); s.clear[g.lvl] = 1; s.best[g.lvl] = ST_N; persist();
-    { const k = TIER(); if (k === 3) shuraClear(s); if (s.tc[g.lvl] < k + 1) { s.tc[g.lvl] = k + 1; persist(); addSeal([5, 7, 10, 0][k]); if (k < 3) floatText(W / 2, g.camY + H * .22, t('tier_open', lvName(g.lvl), L(TIERS[k + 1].n)), '#ffd27a', 18); } }   // v143：這個難易度第一次破台：修行之印＋開放下一個難易度
+    { const k = TIER(); if (k === 3) shuraClear(s); if (s.tc[g.lvl] < k + 1) { s.tc[g.lvl] = k + 1; persist(); addSeal([3, 4, 5, 0][k]); if (k < 3) floatText(W / 2, g.camY + H * .22, t('tier_open', lvName(g.lvl), L(TIERS[k + 1].n)), '#ffd27a', 18); } }   // v143：這個難易度第一次破台：修行之印＋開放下一個難易度
     unlock('lv' + g.lvl + 'c');
     if (s.clear.every(x => x)) unlock('clear');
     if (!g.scrollN) unlock('noscroll');
@@ -2206,7 +2209,7 @@ function updateFx(dt) {
 // ===== 成就 =====
 function unlock(id) {
   if (save.ach[id]) return;
-  save.ach[id] = Date.now(); persist(); if (typeof addSeal === 'function') addSeal(1);   // v143：達成成就＝修行之印 +1
+  save.ach[id] = Date.now(); persist(); /* v149：成就不再給修行之印 */
   const a = ACH.find(a => a.id === id);
   toast(t('ach_toast', L(a.n)));
 }
