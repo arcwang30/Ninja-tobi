@@ -871,3 +871,12 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 /* v140 設定：只留版本號，放在面板右下角 */
 #opt .panel { position: relative; }
 #opt .diag { position: absolute; right: 1.2em; bottom: .45em; margin: 0; font-size: .6em; opacity: .6; text-align: right; }
+/* v140 CREDIT 粉絲團按鈕：做成和遊戲按鈕同款的立體按鈕（Facebook 藍＋光澤帶＋下緣厚度），左邊 f 標誌、右邊外連箭頭 */
+.panel.credit .cr-fb { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: .55em; box-sizing: border-box; width: 100%; margin: .2em 0 .75em; padding: .62em 2.6em; font-size: 1em; letter-spacing: .04em; color: #fff; text-shadow: 0 calc(var(--u)*2) 0 #0b3a8c;
+  border: calc(var(--u)*3) solid var(--ink); border-radius: calc(var(--u)*12);
+  background: linear-gradient(#4a9bff, #1a6fe8 55%, #1158c4);
+  box-shadow: inset 0 calc(var(--u)*3) 0 rgba(255,255,255,.28), 0 calc(var(--u)*4) 0 #000, 0 0 calc(var(--u)*16) rgba(24,119,242,.45); }
+.panel.credit .cr-fb::before { content: "f"; position: absolute; left: .55em; top: 50%; transform: translateY(-50%); width: 1.55em; height: 1.55em; border-radius: 50%; background: #fff; color: #1877f2; font: 900 1.05em/1.62em Arial, Helvetica, sans-serif; text-align: center; text-shadow: none; box-shadow: 0 calc(var(--u)*2) 0 rgba(0,0,0,.35); }
+.panel.credit .cr-fb::after { content: "↗"; position: absolute; right: .8em; top: 50%; transform: translateY(-52%); font-size: .95em; opacity: .9; text-shadow: none; }
+.panel.credit .cr-fb:active { transform: translateY(calc(var(--u)*3)); box-shadow: inset 0 calc(var(--u)*3) 0 rgba(255,255,255,.2), 0 calc(var(--u)*1) 0 #000; }
+.panel.credit .cr-fb { background: linear-gradient(#6cb0ff, #3d8cf8 46%, #1a6fe8 50%, #1158c4); }   /* 上半部亮面＝光澤 */
