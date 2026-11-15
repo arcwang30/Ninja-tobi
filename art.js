@@ -40,7 +40,19 @@ const aBlink = (t, seed) => ((t * .8 + seed * 1.7) % 3.6) < .13;
 
 // 敵忍者也用主角的「大福」比例：大頭、小豆子身體、浮在旁邊的手套和鞋子（沒有手臂和腿）。
 // 原點在身體中心、面向右（+x，再依 look 翻面）；寬高約 ±22 個單位，依 ENEMY[type].h 縮放。
+// 受擊表情的眼睛：用力閉緊的「＞＜」；sd＝這隻眼在臉的哪一側（-1 左、1 右），尖端朝向臉中央
+function hurtEye(c, x, y, r, sd, col = INK, lw) {
+  const tip = x - sd * r * .5, bk = x + sd * r * .75;
+  c.beginPath(); c.moveTo(bk, y - r * .72); c.lineTo(tip, y); c.lineTo(bk, y + r * .72);
+  c.strokeStyle = col; c.lineWidth = lw || Math.max(1.6, r * .42); c.lineCap = 'round'; c.lineJoin = 'round'; c.stroke();
+}
+// 受擊時從頭上飛出的汗滴
+function painDrop(c, x, y, r, a = 0) {
+  c.save(); c.translate(x, y); c.rotate(a); c.beginPath(); c.moveTo(0, -r * 1.5); c.quadraticCurveTo(r * 1.05, -r * .1, 0, r); c.quadraticCurveTo(-r * 1.05, -r * .1, 0, -r * 1.5); c.closePath();
+  c.fillStyle = '#bfe8ff'; c.fill(); c.strokeStyle = INK; c.lineWidth = Math.max(1, r * .28); c.stroke(); c.fillStyle = 'rgba(255,255,255,.9)'; aEll(c, -r * .3, -r * .1, r * .22, r * .36); c.fill(); c.restore();
+}
 function foeEye(c, x, y, rx, ry, P, warn, blink, glow) {
+  if (blink === 'hurt') { hurtEye(c, x, y, Math.max(rx, ry), x < 0 ? -1 : 1); return; }   // 中魔王被斬：＞＜
   if (blink) { c.beginPath(); c.moveTo(x - rx, y + ry * .2); c.quadraticCurveTo(x, y + ry * .5, x + rx, y + ry * .2); c.strokeStyle = INK; c.lineWidth = 1.5; c.stroke(); return; }
   aEll(c, x, y, rx, ry); c.fillStyle = '#fff'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.1; c.stroke();
   c.save(); aEll(c, x, y, rx, ry); c.clip();
@@ -1801,13 +1813,24 @@ function bossOni(c, b, t) {
   for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) { aCirc(c, sd * (14 + i * 4.2), 15.5 + i * 1.6, 2.8); aFI(c, '#7a4a26', 1.1); }
   c.fillStyle = 'rgba(255,255,255,.28)'; aEll(c, -9, -25, 7, 3.2, -.3); c.fill();
   // 臉：金色細瞳大眼、粗眉、獠牙嘴（獠牙小一點）
-  bossEye(c, -10, -7, 7.2, 7.8, '#ff8a10', '#ffe85a', { slit: 1 }); bossEye(c, 10, -7, 7.2, 7.8, '#ff8a10', '#ffe85a', { slit: 1 });
+  if (b.hurt) for (const sd of [-1, 1]) hurtEye(c, sd * 10, -6, 7.6, sd, INK, 3.2);   // 受擊：＞＜
+  else { bossEye(c, -10, -7, 7.2, 7.8, '#ff8a10', '#ffe85a', { slit: 1 }); bossEye(c, 10, -7, 7.2, 7.8, '#ff8a10', '#ffe85a', { slit: 1 }); }
   c.fillStyle = INK;
   for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 2.5, -12); c.lineTo(sd * 19, -21); c.lineTo(sd * 21, -15.5); c.lineTo(sd * 4, -8.5); c.closePath(); c.fill(); }
   aEll(c, 0, 2, 4.4, 2.8); c.fillStyle = RD; c.fill(); c.fillStyle = INK; aCirc(c, -1.8, 2.6, .9); c.fill(); aCirc(c, 1.8, 2.6, .9); c.fill();
+  if (b.hurt) {   // 受擊：咬緊牙關的痛苦嘴（嘴角往下拉、上下排牙咬合，獠牙從下排往上頂）
+    const mp = () => { c.beginPath(); c.moveTo(-13, 14); c.quadraticCurveTo(-7, 5.5, 0, 6.5); c.quadraticCurveTo(7, 5.5, 13, 14); c.quadraticCurveTo(7, 14.5, 0, 16); c.quadraticCurveTo(-7, 14.5, -13, 14); c.closePath(); };
+    mp(); c.fillStyle = '#fff'; c.fill();
+    c.save(); mp(); c.clip(); c.strokeStyle = 'rgba(60,14,14,.8)'; c.lineWidth = 1.1;
+    c.beginPath(); c.moveTo(-13, 11.6); c.quadraticCurveTo(0, 9.4, 13, 11.6); for (const x of [-8, -4, 0, 4, 8]) { c.moveTo(x, 5); c.lineTo(x, 17); } c.stroke(); c.restore();   // 上下排牙的咬合線與齒縫
+    mp(); c.strokeStyle = INK; c.lineWidth = 2; c.lineJoin = 'round'; c.stroke();
+    for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 9.6, 13.4); c.lineTo(sd * 8.8, 8.8); c.lineTo(sd * 7.2, 13.6); c.closePath(); aFI(c, '#fff', 1); }   // 獠牙往上頂
+    c.strokeStyle = RD; c.lineWidth = 1.2; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 13.5, 12); c.quadraticCurveTo(sd * 15.5, 15, sd * 14, 17.5); c.stroke(); }   // 嘴角用力的皺紋
+  } else {
   c.beginPath(); c.moveTo(-11, 7); c.quadraticCurveTo(0, 10, 11, 7); c.quadraticCurveTo(9, 15, 0, 15.5); c.quadraticCurveTo(-9, 15, -11, 7); c.closePath(); aFI(c, '#4a0a10', 1.7);
   c.save(); c.clip(); c.fillStyle = '#fff'; c.fillRect(-12, 6, 24, 2.6); c.fillStyle = '#e8566a'; aEll(c, 0, 15.5, 5, 3); c.fill(); c.restore();
   for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 7.4, 13.6); c.lineTo(sd * 6.4, 9.6); c.lineTo(sd * 5, 13.8); c.closePath(); aFI(c, '#fff', 1); }
+  }
   if (slam) { c.fillStyle = 'rgba(255,255,255,.7)'; for (const sd of [-1, 1]) { aCirc(c, sd * 7, 3 + sk * 4, 2 + sk * 2); c.fill(); } }   // 鼻孔噴氣
   // 拳頭：白爪＋帶尖刺的金腕環
   bossFist(c, -37, 13 + fb, 10, R, RD, { claw: 1, cuff: '#e8b84a', cuffLine: '#9a6a1a', spike: '#fff6e0', rot: -Math.PI / 2 + .2, flip: 1 });
@@ -1853,7 +1876,10 @@ function bossSleepy(c, b, t, warn) {
   c.beginPath(); c.moveTo(-20, -22); for (let i = 0; i <= 8; i++) { const x2 = -20 + i * 5, y2 = i % 2 ? -14 - (i % 4 === 1 ? 2 : 0) : -24; c.lineTo(x2, y2); } c.quadraticCurveTo(0, -36, -20, -22); c.closePath(); aFI(c, '#2a1840', 1.6);
   // 臉：醉醺醺的紅臉頰、大酒鼻、下垂的粗眉
   c.fillStyle = 'rgba(255,80,120,.45)'; aEll(c, -15, 3, 6, 3.4); c.fill(); aEll(c, 15, 3, 6, 3.4); c.fill();
-  if (warn) {
+  if (b.hurt) {   // 受擊：＞＜、眉毛痛得往上皺
+    for (const sd of [-1, 1]) hurtEye(c, sd * 10, -5, 7.4, sd, INK, 3);
+    c.fillStyle = INK; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 4, -17); c.lineTo(sd * 18, -12); c.lineTo(sd * 18, -9.5); c.lineTo(sd * 4, -14); c.closePath(); c.fill(); }
+  } else if (warn) {
     for (const sd of [-1, 1]) bossEye(c, sd * 10, -6, 7.4, 7.8, '#c01aff', '#ffd2ff', { slit: 1, glow: 'rgba(200,120,255,.7)' });
     c.fillStyle = INK; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 3, -14); c.lineTo(sd * 18, -20); c.lineTo(sd * 19, -16); c.lineTo(sd * 4, -11); c.closePath(); c.fill(); }
   } else {
@@ -1862,7 +1888,7 @@ function bossSleepy(c, b, t, warn) {
     c.strokeStyle = PD; c.lineWidth = 1.3; for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * 10, -4, 7.5, .4, Math.PI - .4); c.stroke(); }
   }
   aCirc(c, 0, 2.5, 5.2); c.fillStyle = bossBall(c, 0, 2.5, 5.2, '#ffb0d0', '#e0508a', '#a02a5a'); c.fill(); aInk(c, 1.5);   // 大酒鼻
-  if (warn) { aEll(c, 1, 13, 8, 5.5 + Math.sin(t * 10) * 1.2); aFI(c, '#3a0a20', 1.6); }
+  if (warn || b.hurt) { aEll(c, 1, 13, 8, 5.5 + Math.sin(t * 10) * 1.2); aFI(c, '#3a0a20', 1.6); }
   else { c.beginPath(); c.moveTo(-8, 11); c.quadraticCurveTo(0, 15, 9, 10); c.strokeStyle = INK; c.lineWidth = 1.8; c.stroke(); }
   c.beginPath(); c.moveTo(6.5, warn ? 9.6 : 12); c.lineTo(8, warn ? 4.6 : 7.2); c.lineTo(9.6, warn ? 9.8 : 11.4); c.closePath(); aFI(c, '#fff', 1.1);   // 一顆露出來的獠牙
   c.restore();
@@ -1952,14 +1978,18 @@ function bossYuki(c, b, t, warn) {
   for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 6, -26); c.lineTo(sd * 8, -23); c.lineTo(sd * 6, -20.5); c.lineTo(sd * 4, -23); c.closePath(); aFI(c, '#bfefff', 1); }
   // 臉：長睫毛的冰藍眼睛、小獠牙微笑
   for (const sd of [-1, 1]) {
-    bossEye(c, sd * 9, -1, 6.2, 6.8, '#1d5aa8', '#8ae0ff', warn ? { glow: 'rgba(140,220,255,.75)' } : { lid: .22, lidCol: SK });
+    if (b.hurt) hurtEye(c, sd * 9, -1, 6.4, sd, INK, 2.6);   // 受擊：＞＜
+    else bossEye(c, sd * 9, -1, 6.2, 6.8, '#1d5aa8', '#8ae0ff', warn ? { glow: 'rgba(140,220,255,.75)' } : { lid: .22, lidCol: SK });
     c.strokeStyle = INK; c.lineWidth = 2.6; c.lineCap = 'round';
     const ly = warn ? -7.6 : -5;
     c.beginPath(); c.moveTo(sd * 3, ly + .5); c.quadraticCurveTo(sd * 9, ly - 2.2, sd * 15.5, ly + 1); c.lineTo(sd * 18, ly - 2.5); c.stroke();
   }
   c.fillStyle = 'rgba(255,150,195,.4)'; aEll(c, -14, 6.5, 3.6, 2); c.fill(); aEll(c, 14, 6.5, 3.6, 2); c.fill();
-  c.beginPath(); c.moveTo(-3.5, 9); c.quadraticCurveTo(0, 11.5, 3.5, 9); c.strokeStyle = '#5a6ad0'; c.lineWidth = 1.7; c.stroke();
-  c.beginPath(); c.moveTo(1.4, 9.8); c.lineTo(2.4, 12); c.lineTo(3, 9.4); c.closePath(); c.fillStyle = '#fff'; c.fill();
+  if (b.hurt) { aEll(c, 0, 10.5, 4.2, 3.4); aFI(c, '#3a1030', 1.4); }   // 受擊：張嘴驚叫
+  else {
+    c.beginPath(); c.moveTo(-3.5, 9); c.quadraticCurveTo(0, 11.5, 3.5, 9); c.strokeStyle = '#5a6ad0'; c.lineWidth = 1.7; c.stroke();
+    c.beginPath(); c.moveTo(1.4, 9.8); c.lineTo(2.4, 12); c.lineTo(3, 9.4); c.closePath(); c.fillStyle = '#fff'; c.fill();
+  }
   // 左手（從袖口伸出）
   bossHand(c, -31, 43 + fb, 4.4, SK, .25);
   // 冰扇（右手）：扇骨在拳頭裡收成扇柄，扇釘從拳頭內側露出、垂著流蘇；蓄力時舉高發光
@@ -2014,6 +2044,7 @@ function bossArmor(c, b, t, warn) {
   // 兇狠的眼睛：往內下斜的細長發光眼＋直立瞳孔（盾開啟或蓄力時更亮）
   const hot = sh || warn;
   for (const sd of [-1, 1]) {
+    if (b.hurt) { bossGlow(c, sd * 9, -1.5, 13, 'rgba(255,110,30,.8)'); hurtEye(c, sd * 9, -1.2, 5.6, sd, '#ffb43a', 2.6); continue; }   // 受擊：面甲裡的光眼擠成＞＜
     c.beginPath(); c.moveTo(sd * 2.5, -.5); c.quadraticCurveTo(sd * 9, -6.5, sd * 15, -5.5); c.quadraticCurveTo(sd * 13, 2.5, sd * 4, 2); c.closePath();
     const eg = c.createLinearGradient(0, -6, 0, 3); eg.addColorStop(0, '#fff2a0'); eg.addColorStop(1, hot ? '#ff3a10' : '#ff7a1a'); c.fillStyle = eg; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.3; c.stroke();
     aEll(c, sd * 9.5, -1.6, 1.1, 3); c.fillStyle = INK; c.fill();
@@ -2059,6 +2090,7 @@ function drawBoss2(b, x, y, s, c = ctx) {
   c.fillStyle = au; aCirc(c, 0, 0, 64); c.fill();
   const br = Math.sin(t * 3) * .022; c.scale(1 + br, 1 - br);
   if (k === 0) bossOni(c, b, t); else if (k === 1) bossSleepy(c, b, t, warn); else if (k === 2) bossYuki(c, b, t, warn); else bossArmor(c, b, t, warn);
+  if (b.hurt) { const hp = performance.now() / 1000 * 3 % 1; painDrop(c, 30, -30 - hp * 4, 4.2, .5); painDrop(c, -31, -24 - ((hp + .5) % 1) * 4, 3.2, -.5); }   // 受擊：頭兩側飛出汗滴
   if (b.shield) { // 護盾：六角形紋路的泡泡
     c.strokeStyle = 'rgba(200,225,255,.95)'; c.lineWidth = 3; aCirc(c, 0, 0, 54); c.stroke();
     c.fillStyle = 'rgba(200,225,255,.16)'; c.fill();
@@ -2176,7 +2208,8 @@ function tgMask(c, eye, rim) {
   for (const sd of [-1, 1]) {
     const ex = TG_MX + sd * 9.5, ey = TG_MY - 3;
     c.save(); c.translate(ex, ey); c.rotate(sd * .3);   // 外側往上吊
-    if (eye === 'gold') {
+    if (eye === 'hurt') { c.rotate(-sd * .3); hurtEye(c, 0, 0, 6.6, sd, INK, 2.8); }   // 受擊：＞＜
+    else if (eye === 'gold') {
       c.beginPath(); c.moveTo(-6.5, 1.5); c.quadraticCurveTo(0, -4, 6.5, -1.5); c.quadraticCurveTo(0, 3, -6.5, 1.5); c.closePath();
       c.fillStyle = '#ffd23a'; c.fill(); c.save(); c.clip(); aEll(c, -1, 0, 1.1, 3.4); c.fillStyle = INK; c.fill(); c.restore(); c.strokeStyle = INK; c.lineWidth = 1.8; c.stroke();
       bossGlow(c, 0, 0, 9, 'rgba(255,200,60,.35)');
@@ -2228,14 +2261,15 @@ function tgTokin(c, crest) {
 }
 // 遊戲中的山伏天狗：臉朝向玩家（預設朝左）；蓄力時把羽團扇舉高；被斬中時閃白
 function drawYamaTengu(t, e, look) {
-  const c = ctx, fl = e && e.flash > 0, warn = e && e.warn;
+  const c = ctx, fl = e && e.flash > 0, warn = e && e.warn, hurt = e && e.hurt;
   c.save(); c.scale(-look, 1);   // 設計稿朝左，玩家在右邊時翻過來
   const draw = c => {
     const fw = Math.sin(t * 4);
     c.save(); c.translate(0, -6); tgWing(c, -1, 56, 46, 7, '#16171e', '#3a3e56', fw * .4); tgWing(c, 1, 56, 46, 7, '#16171e', '#3a3e56', fw * .4); c.restore();
     tgStaff(c, 38, 36, 40, -36);
     tgBody(c, t, { vest: '#2a3a6a', hakama: '#3a2a5a' });
-    tgHead(c); tgMask(c, 'gold', '#ffd25a'); tgMouth(c, warn ? 1 : 0); tgTokin(c, '#ffd25a'); tgNose(c);
+    tgHead(c); tgMask(c, hurt ? 'hurt' : 'gold', '#ffd25a'); tgMouth(c, warn || hurt ? 1 : 0); tgTokin(c, '#ffd25a'); tgNose(c);
+    if (hurt) { painDrop(c, TG_MX + 24, TG_MY - 24, 4.4, .5); painDrop(c, TG_MX - 25, TG_MY - 16, 3.4, -.5); }   // 受擊：汗滴
     const fy = warn ? -16 : 6, fr = warn ? -.75 + Math.sin(t * 18) * .12 : -.35 + Math.sin(t * 2) * .08;
     tgFan(c, -38, fy, .85, fr, '#ffffff', '#e8eef4');
     bossFist(c, -37, fy + 7, 9, TG_SKIN, '#c89a78', { rot: -Math.PI / 2 + .2, flip: 1, cuff: '#2a3a6a', cuffLine: '#ffd25a' });

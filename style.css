@@ -822,3 +822,25 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 .lvsel > h2 { margin-bottom: 1.05em; }
 .lvsel .lv-tutic { top: .6em; right: 1.35em; width: 3em; height: 3em; }
 .lvsel .lv-tutic img { left: 8%; top: 4%; width: 84%; }
+
+/* ===== v135 NEW! 提示（商店裡買得起／可升級、還沒看過的東西） ===== */
+@keyframes nwPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+.nw, .tnw { display: inline-block; margin-left: .45em; padding: .08em .42em .02em; border-radius: .7em; background: linear-gradient(#ff5a3c, #d0221a); color: #fff; font: 400 .62em/1.25 var(--en); letter-spacing: .03em; vertical-align: .18em; box-shadow: 0 0 0 1.5px #fff, 0 2px 4px rgba(0,0,0,.35); animation: nwPulse 1.1s ease-in-out infinite; white-space: nowrap; font-style: normal; }
+#shopTabs button { position: relative; overflow: visible; }
+.tnw { position: absolute; top: -.75em; right: -.35em; margin: 0; font-size: .58em; z-index: 2; }
+.outfits .of { position: relative; overflow: visible; }
+.outfits .of > .nw { position: absolute; top: -.5em; right: -.4em; margin: 0; z-index: 3; }
+#title [data-act=shop], #over [data-act=shop] { position: relative; overflow: visible; }
+#title [data-act=shop].has-new::after, #over [data-act=shop].has-new::after { content: 'NEW!'; position: absolute; top: -.45em; right: -.25em; z-index: 4; padding: .1em .45em .04em; border-radius: .7em; background: linear-gradient(#ff5a3c, #d0221a); color: #fff; font: 400 .7em/1.25 var(--en); letter-spacing: .03em; box-shadow: 0 0 0 1.5px #fff, 0 2px 4px rgba(0,0,0,.4); animation: nwPulse 1.1s ease-in-out infinite; pointer-events: none; }
+/* 設定：語言按鈕放大（原本 .8em 太小不好點） */
+.opt .pills { gap: calc(var(--u)*3); padding: calc(var(--u)*2.5); }
+.opt .pills button { font-size: 1.02em; padding: .38em .75em; min-width: 2.5em; min-height: 2.1em; }
+/* 選關：加了「出陣！」按鈕後，卡片可用高度要再扣掉這一列（原本 19.5em 不夠，返回鈕會被擠出面板） */
+.lvsel .lv-list { grid-template-columns: repeat(2, minmax(0, min(50%, calc((92cqh - 22.8em) / 2.5)))); }
+@container (max-height: 720px) {
+  .lvsel > h2 { margin-bottom: .9em; }
+  .lvsel .lj-ic { width: 3.1em; height: 3.1em; }
+  .lvsel .lv-jutsu { margin-bottom: .45em; padding: .3em .5em .35em; }
+  .lvsel .lv-list { margin: .3em 0 .6em; grid-template-columns: repeat(2, minmax(0, min(50%, calc((92cqh - 21.6em) / 2.5)))); }
+  .lvsel .lv-go { margin-bottom: .5em; }
+}

@@ -902,7 +902,7 @@ const FOE2_HUMAN = { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 9: 1, 11: 1 };   
 function drawFoe2(th, type, t, e, look, near) {
   const set = FOE2[th], S = set && set[type]; if (!S) return false;
   const c = ctx, ed = ENEMY[type], fl = e && e.flash > 0, seed = e ? e.bx || 0 : 0;
-  const o = { t, e, fl, seed, near, warn: e && e.warn, atk: e && e.atk > 0, hurt: e && e.hurt, blink: (e && e.hurt) || aBlink(t, seed), S };
+  const o = { t, e, fl, seed, near, warn: e && e.warn, atk: e && e.atk > 0, hurt: e && e.hurt, blink: e && e.hurt ? (type === 13 ? 'hurt' : true) : aBlink(t, seed), S };   // 中魔王被斬時閉成＞＜
   if (type === 4) o.below = e && g && g.p && g.p.y - 20 > e.y && Math.abs(g.p.x - e.x) < 40;
   if (type === 9) o.bowA = e && g && g.p ? clamp(Math.atan2((g.p.y - 20) - e.y, Math.abs(g.p.x - e.x)), -1.1, 1.1) : 0;
   c.save();
@@ -912,6 +912,7 @@ function drawFoe2(th, type, t, e, look, near) {
     c.scale(u * look, u); c.translate(0, bob);
   } else if (type === 8 || type === 10 || type === 13) c.scale(look, 1);
   if (S.custom) S.custom(c, o); else f2Chibi(c, o, S);
+  if (type === 13 && o.hurt && !o.fl) { painDrop(c, 26, -30, 4.4, .5); painDrop(c, -27, -22, 3.4, -.5); }   // 中魔王被斬：汗滴
   c.restore();
   return true;
 }

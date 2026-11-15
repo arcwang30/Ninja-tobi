@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v134';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v135';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -2721,7 +2721,7 @@ function drawQte() {
   // 魔王受擊：往刀的方向被打退、閃白
   const last = q.hits[q.hits.length - 1], lt = last ? last.t : 1, d = (q.n || 0) % 2 ? 1 : -1;
   const kb = last ? (1 - Math.min(1, lt / .16)) * 22 : 0, bx = W / 2 + d * kb + rnd(-sh, sh), by = H * .42 - kb * .3 + rnd(-sh, sh);
-  drawBoss(b, bx, by, 3.2);
+  b.hurt = last ? 1 : 0; drawBoss(b, bx, by, 3.2); b.hurt = 0;   // 被斬中的這一瞬間：受擊表情（＞＜、汗滴）
   if (last && lt < .06) drawSil(bx, by, 420, 420, 210, 210, 'rgba(255,255,255,.85)', c2 => drawBoss(b, 0, 0, 3.2, c2));
   // 主角背影：在畫面左下方左右交替揮刀（和一般斬擊特寫相同）
   const u = Math.min(1, lt / .07), eu = 1 - (1 - u) * (1 - u), A0 = d > 0 ? -2.7 : -.35, A1 = d > 0 ? .05 : -3.05;
@@ -2745,6 +2745,32 @@ function drawQte() {
       ctx.lineWidth = 4 + 2 * close; ctx.strokeStyle = perfect ? '#fffbe8' : '#fff'; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT, 0, 7); ctx.stroke(); ctx.restore();
       ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.arc(r.x, r.y, q.RT - 3, 0, 7); ctx.fill();
       txt(t('qte_mark'), r.x, r.y + 9, 26 + 4 * close, '#fff', 'center', '#c0262d', 4);
+      // 聚氣：金色光絲從四周往圓心吸進來（越接近時機越密、越亮）
+      const u = clamp((q.t - r.t0) / q.dur, 0, 1), kq = clamp(u / (1 - q.RT / q.R0), 0, 1);   // kq：0 → 1＝外圈剛好縮到白圈（完美時機）
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+      for (let i = 0; i < 22; i++) {
+        const ph = (q.t * 1.6 + i * .618) % 1, a = i * 2.39996 + Math.floor(q.t * 1.6 + i * .618) * 1.3, d0 = q.RT + 14 + (1 - ph * ph) * (80 + 30 * (i % 3)), L2 = 8 + 26 * (1 - ph);
+        const al = (.35 + .6 * kq) * Math.sin(ph * Math.PI);
+        ctx.strokeStyle = `rgba(255,${190 + 50 * kq | 0},${90 + 90 * kq | 0},${al})`; ctx.lineWidth = 2 + (i % 3) * .9;
+        ctx.beginPath(); ctx.moveTo(r.x + Math.cos(a) * (d0 + L2), r.y + Math.sin(a) * (d0 + L2)); ctx.lineTo(r.x + Math.cos(a) * d0, r.y + Math.sin(a) * d0); ctx.stroke();
+      }
+      for (let i = 0; i < 12; i++) {   // 光粒
+        const ph = (q.t * 1.2 + i * .371) % 1, a = i * 1.7 + Math.floor(q.t * 1.2 + i * .371) * 2.1, d0 = q.RT + 8 + (1 - ph * ph) * 120;
+        ctx.fillStyle = `rgba(255,236,170,${(.4 + .6 * kq) * ph})`; aCirc(ctx, r.x + Math.cos(a) * d0, r.y + Math.sin(a) * d0, 1.6 + ph * 2.2); ctx.fill();
+      }
+      if (kq > .55) { const gl = ctx.createRadialGradient(r.x, r.y, q.RT * .6, r.x, r.y, q.RT * 1.9); gl.addColorStop(0, `rgba(255,220,120,${(kq - .55) * .7})`); gl.addColorStop(1, 'rgba(255,220,120,0)'); ctx.fillStyle = gl; ctx.fillRect(r.x - q.RT * 2, r.y - q.RT * 2, q.RT * 4, q.RT * 4); }   // 快到時機：圓心聚光
+      ctx.restore();
+      // 準心：目標圈外的十字刻線＋四個往內收的箭頭括弧（和外圈同步收攏，剛好扣上白圈＝完美時機；完美瞬間變紅色鎖定）
+      {
+        const lock = perfect, col = lock ? '#ff5a3a' : `rgb(255,${236 - 40 * kq | 0},${170 - 110 * kq | 0})`;
+        ctx.save(); ctx.translate(r.x, r.y); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        const two = (w) => { ctx.strokeStyle = 'rgba(20,6,6,.75)'; ctx.lineWidth = w + 3; ctx.stroke(); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.save(); ctx.shadowColor = lock ? '#ff5a3a' : '#ffd25a'; ctx.shadowBlur = 6 + 10 * kq; ctx.stroke(); ctx.restore(); };
+        const t0 = q.RT + 7, t1 = q.RT + 17;
+        for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; ctx.beginPath(); ctx.moveTo(Math.cos(a) * t0, Math.sin(a) * t0); ctx.lineTo(Math.cos(a) * t1, Math.sin(a) * t1); two(2.4); }
+        const rb = q.RT + 16 + 54 * (1 - kq), arm = 8 + 4 * kq; ctx.rotate(Math.PI / 4 + (1 - kq) * .9);
+        for (let i = 0; i < 4; i++) { ctx.save(); ctx.rotate(i * Math.PI / 2); ctx.beginPath(); ctx.moveTo(rb + arm * .3, -arm); ctx.lineTo(rb - arm * .7, 0); ctx.lineTo(rb + arm * .3, arm); two(3); ctx.restore(); }   // 往圓心指的箭頭
+        ctx.restore();
+      }
       // 外圈：越接近時機，從白色轉成金色、越來越粗；完美時機的瞬間整圈閃亮
       const cr = 255, cg = Math.round(255 - 45 * close), cb = Math.round(255 - 170 * close);
       ctx.save(); ctx.shadowColor = `rgb(${cr},${cg},${cb})`; ctx.shadowBlur = perfect ? 24 : 8 * close;
@@ -2856,7 +2882,7 @@ function drawKill() {
   if (t >= .1) {
     ctx.save(); ctx.translate(W / 2, H / 2); ctx.rotate(-.5);
     ctx.fillStyle = '#c0262d'; ctx.fillRect(-300, -3 - t * 2, 600, 6 + t * 4); ctx.restore();
-    ctx.save(); ctx.globalAlpha = Math.max(0, 1 - t); drawBoss(g.boss, W / 2 - t * 40, H / 2 - t * 40, 3); ctx.restore();
+    ctx.save(); ctx.globalAlpha = Math.max(0, 1 - t); g.boss.hurt = 1; drawBoss(g.boss, W / 2 - t * 40, H / 2 - t * 40, 3); g.boss.hurt = 0; ctx.restore();
     ctx.globalAlpha = 1;
     const s = Math.min(1, (t - .1) * 5);
     // 四字詞改在之後的居合一閃出現（drawFin），這裡只播斬擊特寫
@@ -2992,13 +3018,13 @@ requestAnimationFrame(frame);
 // ===== UI =====
 const SCRS = ['title', 'pause', 'perk', 'over', 'shop', 'rank', 'opt', 'help', 'clear', 'credit', 'hist', 'lvsel'];
 let backTo = 'title';
-function show(id, keep) { if (!keep) hideAll(); $(id).classList.add('on'); if (id === 'title') titleArm(); }
+function show(id, keep) { if (!keep) hideAll(); $(id).classList.add('on'); if (id === 'title') titleArm(); if (id === 'title' || id === 'over') refreshNewBadges(); }
 // 主畫面的選單、底部 5 顆按鈕、商店寶箱淡入期間（約 1.7 秒）看不到卻按得到，開場連點時容易誤觸：淡入完成再多 0.3 秒才接受點擊
 let titleArmT = null, tapOk = true;
 function titleArm(ms = 2000) { const el = $('title'); if (!el) return; el.classList.add('arming'); clearTimeout(titleArmT); titleArmT = setTimeout(() => el.classList.remove('arming'), ms); }
 // 手指是在開場（或按鈕還鎖著時）按下的，到主畫面才放開：這一下不算，不會打開功能
 addEventListener('pointerdown', () => { const el = $('title'); tapOk = !(typeof INTRO !== 'undefined' && INTRO.ph !== 'title') && !(el && el.classList.contains('arming')); }, true);
-function hide(id) { $(id).classList.remove('on'); }
+function hide(id) { const el = $(id); if (id === 'shop' && el.classList.contains('on')) shopNewDone(); el.classList.remove('on'); }
 function hideAll() { SCRS.forEach(hide); }
 function goTitle() {
   state = 'menu'; g = null; paused = false;
@@ -3079,20 +3105,43 @@ function applyLang() {
 }
 
 // 商店
-let shopTab = 0, outPrev = null;   // outPrev：換裝分頁正在試穿（預覽）的顏色
+let shopTab = 2, outPrev = null;   // outPrev：換裝分頁正在試穿（預覽）的顏色；shopTab：0 忍者、1 換裝、2 修行（畫面上由左而右排成 修行＞忍者＞換裝）
+const SHOP_TORD = [2, 0, 1];
+// NEW! 提示：商店裡「現在買得起／可升級，但玩家還沒在商店看過」的東西
+// key：修行 m:id:等級（升一級後、又買得起時會再出現）、忍者 s:編號、換裝 o:角色:顏色
+function shopNewKeys(tab) {
+  const k = [], c = save.coins;
+  if (tab == null || tab === 2) META.forEach(m => { const l = mt(m.id); if (metaOpen(m) && l < m.max && c >= metaCost(m, l)) k.push(`m:${m.id}:${l}`); });
+  if (tab == null || tab === 0) SKINS.forEach((s, i) => { const own = TEST_FREE || save.skins.includes(i), avail = own || !s.req || save.ach[s.req]; if (!own && avail && c >= s.cost) k.push('s:' + i); });
+  if (tab == null || tab === 1) { const ci = save.skin; OUTFITS.forEach((o, i) => { if (!outOwned(i, ci) && c >= o.cost) k.push(`o:${ci}:${i}`); }); }
+  return k;
+}
+const isNew = k => !(save.seenNew || {})[k];
+var shopSeenNow = new Set();   // 這次打開商店時顯示過的 NEW!：關掉商店後才記成「看過」（同一次逛商店時標籤不會一買就跳掉）
+function shopNewDone() {
+  if (!shopSeenNow.size) return; save.seenNew = save.seenNew || {};
+  for (const k of shopSeenNow) save.seenNew[k] = 1; shopSeenNow.clear(); persist(); refreshNewBadges();
+}
+function refreshNewBadges() {   // 主畫面「寶藏」、結算畫面「商店」按鈕上的 NEW!
+  const n = !!save && shopNewKeys().some(isNew);
+  document.querySelectorAll('#title [data-act=shop], #over [data-act=shop]').forEach(b => b.classList.toggle('has-new', n));
+}
 let shopGuide = 0;   // 初學引導：1＝結算畫面正在指向商店，2＝這次打開商店時在「修行」分頁顯示說明
 function tabs(id, names, sel, act) {
   $(id).innerHTML = names.map((n, i) => `<button class="${i === sel ? 'sel' : ''}" data-act="${act}" data-arg="${i}">${n}</button>`).join('');
 }
 function renderShop() {
   $('sCoins').textContent = save.coins;
-  tabs('shopTabs', [t('tab_ninja'), t('tab_outfit'), t('tab_train')], shopTab, 'stab');
+  const tn = [t('tab_ninja'), t('tab_outfit'), t('tab_train')], tnew = [0, 1, 2].map(i => shopNewKeys(i).some(isNew));
+  $('shopTabs').innerHTML = SHOP_TORD.map(i => `<button class="${i === shopTab ? 'sel' : ''}" data-act="stab" data-arg="${i}">${tn[i]}${tnew[i] ? '<em class="tnw">NEW!</em>' : ''}</button>`).join('');
+  const nk = new Set(shopNewKeys(shopTab).filter(isNew)); nk.forEach(k => shopSeenNow.add(k));
+  const nb = k => nk.has(k) ? '<em class="nw">NEW!</em>' : '';
   let h = '';
   if (shopTab === 0) {   // 角色：達成條件才上架，再用小判購買
     h = SKINS.map((s, i) => {
       const own = TEST_FREE || save.skins.includes(i), sel = save.skin === i, avail = own || !s.req || save.ach[s.req], sd = SKILLS.find(x => x.id === s.sk);
       const req = s.req && !avail ? `<small class="req">🔒 ${t('char_req', L(ACH.find(a => a.id === s.req).d))}</small>` : '';
-      return `<div class="item ${avail ? '' : 'locked'}"><span class="ic char-ic">${avail && heroThumb(i) ? `<img src="${heroThumb(i)}" alt="">` : '？'}</span><span class="nm"><b>${avail ? L(s.n) : '？？？'}</b><small>${t('start_skill', sd.ic + ' ' + L(sd.n))}${avail ? '・' + (own ? t('owned') : t('price', s.cost)) : ''}</small>${req}</span>` +
+      return `<div class="item ${avail ? '' : 'locked'}"><span class="ic char-ic">${avail && heroThumb(i) ? `<img src="${heroThumb(i)}" alt="">` : '？'}</span><span class="nm"><b>${avail ? L(s.n) : '？？？'}${nb('s:' + i)}</b><small>${t('start_skill', sd.ic + ' ' + L(sd.n))}${avail ? '・' + (own ? t('owned') : t('price', s.cost)) : ''}</small>${req}</span>` +
         (sel ? `<button disabled>${t('equipped')}</button>` : own ? `<button data-act="skin" data-arg="${i}">${t('equip')}</button>` : `<button data-act="buyskin" data-arg="${i}" ${!avail || save.coins < s.cost ? 'disabled' : ''}>${t('buy')}</button>`) + '</div>';
     }).join('');
   } else if (shopTab === 1) {   // 換裝：目前角色穿上各種顏色的預覽
@@ -3110,7 +3159,7 @@ function renderShop() {
         `<div class="of-big ${pown ? '' : 'try'}">${pown ? '' : `<em class="of-try">${t('of_try')}</em>`}<img src="${outThumb(ci, pi)}" alt=""><b style="color:${ofCol(po)}">${L(po.n)}</b>${btn}</div>` +
         [SKINS[ci].out, ...OUTFITS.map((_, k) => k).filter(k => k !== SKINS[ci].out)].map(i => {
           const o = OUTFITS[i], def = i === SKINS[ci].out, own = outOwned(i, ci), sel = cur === i, pv = pi === i;
-          return `<button class="of ${sel ? 'sel' : ''} ${pv ? 'pv' : ''} ${own ? '' : 'nown'}" data-act="ofprev" data-arg="${i}"><i class="sw" style="--suit:${o.suit};--dark:${o.dark}">${sel ? '✓' : ''}</i>${own ? '' : '<i class="lk">🔒</i>'}${def ? `<em class="of-def">${t('outfit_def')}</em>` : ''}<span class="of-tx"><b style="color:${ofCol(o)}">${L(o.n)}</b><small>${sel ? t('equipped') : own ? t('owned') : `<span class="kb"></span>${o.cost}`}</small></span></button>`;
+          return `<button class="of ${sel ? 'sel' : ''} ${pv ? 'pv' : ''} ${own ? '' : 'nown'}" data-act="ofprev" data-arg="${i}">${nb(`o:${ci}:${i}`)}<i class="sw" style="--suit:${o.suit};--dark:${o.dark}">${sel ? '✓' : ''}</i>${own ? '' : '<i class="lk">🔒</i>'}${def ? `<em class="of-def">${t('outfit_def')}</em>` : ''}<span class="of-tx"><b style="color:${ofCol(o)}">${L(o.n)}</b><small>${sel ? t('equipped') : own ? t('owned') : `<span class="kb"></span>${o.cost}`}</small></span></button>`;
         }).join('') + '</div>';
     } else
     h = `<div class="meta-head">${t('outfit_for', L(SKINS[ci].n))}</div><div class="outfits ${os ? 'o' + os : ''}">` +
@@ -3126,7 +3175,7 @@ function renderShop() {
       `<div class="meta-head">${t('meta_total', now, tot)}</div>` + META.map(m => {
       const l = mt(m.id), max = l >= m.max, c = metaCost(m, l), op = metaOpen(m);
       if (!op) return `<div class="item locked"><span class="ic" style="background:#ccc">🔒</span><span class="nm"><b>${L(m.n)}</b><small>${t(META_TIER[m.id] === 1 ? 'meta_t1' : 'meta_t2')}</small></span><button disabled>${t('train')}</button></div>`;
-      return `<div class="item"><span class="ic" style="background:#fff3d0">${m.ic}</span><span class="nm"><b>${L(m.n)}　Lv ${l}/${m.max}</b><small>${L(m.d)}${max ? '' : '・' + t('price', c)}</small></span><button data-act="buymeta" data-arg="${m.id}" ${max || save.coins < c ? 'disabled' : ''}>${max ? 'MAX' : t('train')}</button></div>`;
+      return `<div class="item"><span class="ic" style="background:#fff3d0">${m.ic}</span><span class="nm"><b>${L(m.n)}　Lv ${l}/${m.max}${nb(`m:${m.id}:${l}`)}</b><small>${L(m.d)}${max ? '' : '・' + t('price', c)}</small></span><button data-act="buymeta" data-arg="${m.id}" ${max || save.coins < c ? 'disabled' : ''}>${max ? 'MAX' : t('train')}</button></div>`;
     }).join('') + ((spent || (TEST_FREE && now)) ? `<button class="meta-refund" data-act="refund">${t('meta_refund', spent)}</button>` : '');
   }
   $('shopBody').innerHTML = h;
