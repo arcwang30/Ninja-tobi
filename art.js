@@ -979,15 +979,15 @@ function drawZone(camY, stage, t) {
     const tongue = (x, base, h, w, sw, col) => { c.fillStyle = col; c.beginPath(); c.moveTo(x - w, base); c.bezierCurveTo(x - w * .9, base - h * .45, x - w * .2 + sw * .5, base - h * .7, x + sw, base - h); c.bezierCurveTo(x + w * .25 + sw * .4, base - h * .65, x + w * .95, base - h * .4, x + w, base); c.closePath(); c.fill(); };
     const hg = c.createLinearGradient(0, zy - 90, 0, zy); hg.addColorStop(0, 'rgba(255,120,30,0)'); hg.addColorStop(1, 'rgba(255,120,30,.32)'); c.fillStyle = hg; c.fillRect(0, zy - 90, W, 90);   // 熱氣光暈
     for (let i = 0; i < Math.ceil(W / 22) + 2; i++) { const h = 46 + Math.sin(t * 3.2 + i * 1.3) * 14 + Math.sin(t * 5.1 + i * 2.7) * 8; tongue(i * 22 - 11, zy + 14, h, 16, Math.sin(t * 2.6 + i) * 7, '#a8200a'); }   // 後層：深紅、高、慢
-    const gr = c.createLinearGradient(0, zy, 0, zy + Math.max(160, H - zy)); gr.addColorStop(0, '#ffc23a'); gr.addColorStop(.08, '#ff8a1a'); gr.addColorStop(.3, '#e8400c'); gr.addColorStop(.65, '#a81806'); gr.addColorStop(1, '#4a0400');   // 表面一道亮黃，往下漸暗
-    c.fillStyle = gr; c.fillRect(0, zy + 6, W, H - zy);
-    c.save(); c.beginPath(); c.rect(0, zy + 4, W, H - zy); c.clip();
+    const gr = c.createLinearGradient(0, zy - 10, 0, zy + Math.max(160, H - zy)); gr.addColorStop(0, 'rgba(255,194,58,0)'); gr.addColorStop(.05, '#ffc23a'); gr.addColorStop(.1, '#ff8a1a'); gr.addColorStop(.3, '#e8400c'); gr.addColorStop(.65, '#a81806'); gr.addColorStop(1, '#4a0400');   // 表面一道亮黃，往下漸暗
+    c.fillStyle = gr; c.beginPath(); c.moveTo(0, H); for (let x = 0; x <= W + 8; x += 8) c.lineTo(x, zy + 2 + Math.sin(x * .045 + t * 3) * 4 + Math.sin(x * .11 - t * 4.3) * 2.5); c.lineTo(W + 8, H); c.closePath(); c.fill();   // 火體上緣：起伏的波浪（不是一條直線）＋上緣淡入
+    c.save(); c.beginPath(); c.rect(0, zy - 26, W, H - zy + 26); c.clip();   // 裁切上緣放高一點，光斑靠近火面時用透明度淡出（不再切出一條直線）
     for (let i = 0; i < 6; i++) { const x = ((i * 91 + t * 10) % (W + 120)) - 60, yy = zy + 60 + (i * 53) % Math.max(60, H - zy) + Math.sin(t * .8 + i) * 10, r = 50 + (i % 3) * 16; c.drawImage(glowSpr('smoke', [[.06, 'rgba(60,0,0,.32)'], [1, 'rgba(60,0,0,0)']]), x - r * 1.6, yy - r * .55, r * 3.2, r * 1.1); }   // 深處流動的暗煙（柔和、沒有硬邊）
     c.globalCompositeOperation = 'lighter';
     const depth = Math.max(80, H - zy) + 60;
     for (let i = 0; i < 14 * FXK(); i++) {   // 往上翻滾的火團（亮橘黃光斑）
       const sp = 40 + (i % 4) * 18, yy = zy + depth - ((t * sp + i * 97) % depth), x = ((i * 83.7 + Math.sin(t * 1.3 + i) * 24) % (W + 40)) - 20, r = 26 + (i % 3) * 12, f = (yy - zy) / depth;
-      const a0 = c.globalAlpha; c.globalAlpha = a0 * .4 * (1 - f * .6); c.drawImage(glowSpr('blob', [[.06, 'rgb(255,200,80)'], [1, 'rgba(255,90,20,0)']]), x - r, yy - r, r * 2, r * 2); c.globalAlpha = a0;   // 效能：預先畫好的光斑貼圖，不再每幀建立漸層
+      const a0 = c.globalAlpha; c.globalAlpha = a0 * .4 * (1 - f * .6) * clamp((yy - zy - 4) / 40, 0, 1); c.drawImage(glowSpr('blob', [[.06, 'rgb(255,200,80)'], [1, 'rgba(255,90,20,0)']]), x - r, yy - r, r * 2, r * 2); c.globalAlpha = a0;   // 效能：預先畫好的光斑貼圖，不再每幀建立漸層
     }
     for (let i = 0; i < 14 * FXK(); i++) {   // 火體裡往上竄的柔光火焰（拉長的光暈，沒有硬邊）
       const cyc = (t * .9 + i * .37) % 1, x = (i * 47.3 + t * 12 + Math.sin(t * 2 + i) * 10) % W, yy = zy + 30 + (1 - cyc) * (depth - 40), r = 24 + (i % 3) * 10, a = .45 * Math.sin(cyc * Math.PI);
@@ -996,8 +996,10 @@ function drawZone(camY, stage, t) {
     c.globalAlpha = 1; c.restore();
     for (let i = 0; i < Math.ceil(W / 26) + 2; i++) {   // 中層橘＋前層黃白的火舌（快、亮）
       const x = i * 26 + 2, h = 32 + Math.sin(t * 8 + i * 1.7) * 12 + Math.sin(t * 13 + i) * 5, sw = Math.sin(t * 6 + i) * 6;
-      tongue(x, zy + 10, h, 14, sw, i % 2 ? '#ff9a2a' : '#ff6a14'); tongue(x + 1, zy + 10, h * .62, 8, sw * .6, '#ffd24a'); tongue(x + 1, zy + 10, h * .3, 4, sw * .3, '#fff3b0');
+      const wv = zy + 13 + Math.sin(x * .045 + t * 3) * 4 + Math.sin(x * .11 - t * 4.3) * 2.5;   // 火舌根部跟著火面的波浪起伏
+      tongue(x, wv, h, 14, sw, i % 2 ? '#ff9a2a' : '#ff6a14'); tongue(x + 1, wv, h * .62, 8, sw * .6, '#ffd24a'); tongue(x + 1, wv, h * .3, 4, sw * .3, '#fff3b0');
     }
+    { const bl = c.createLinearGradient(0, zy + 2, 0, zy + 34); bl.addColorStop(0, 'rgba(255,150,40,0)'); bl.addColorStop(.5, 'rgba(255,140,34,.8)'); bl.addColorStop(1, 'rgba(255,128,28,0)'); c.fillStyle = bl; c.fillRect(0, zy + 2, W, 32); }   // 火舌根部和火體交界抹成柔和的漸層（不再有一條橫線）
     for (let i = 0; i < 18 * FXK(); i++) { const cyc = (t * .9 + i * .37) % 1, x = (i * 61.7 + Math.sin(t * 2 + i) * 14) % W, y = zy - cyc * 110; c.fillStyle = `rgba(255,${190 + (i % 3) * 25},90,${1 - cyc})`; aCirc(c, x, y, 1.8 * (1 - cyc) + .6); c.fill(); }   // 飛起的火星
   } else if (type === 'sea') {
     // 後浪
@@ -1053,12 +1055,12 @@ function drawZone(camY, stage, t) {
     wave(zy + 2, 14, 2.2, .05, '#e8500e');    // 中層：橘
     const gr = c.createLinearGradient(0, zy, 0, zy + Math.max(160, H - zy)); gr.addColorStop(0, '#ffd25a'); gr.addColorStop(.1, '#ff8a1a'); gr.addColorStop(.4, '#d8360a'); gr.addColorStop(1, '#5a0a02');
     c.fillStyle = gr; c.beginPath(); c.moveTo(0, H); for (let x = 0; x <= W + 8; x += 8) c.lineTo(x, zy + 6 + Math.sin(x * .06 + t * 2.8) * 4); c.lineTo(W, H); c.closePath(); c.fill();   // 前層：亮黃的表面
-    c.save(); c.beginPath(); c.rect(0, zy + 6, W, H - zy); c.clip();
+    c.save(); c.beginPath(); c.rect(0, zy - 20, W, H - zy + 20); c.clip();   // 裁切上緣放高，亮光靠近表面時淡出（避免切出一條直線）
     for (let i = 0; i < 5; i++) { const x = ((i * 113 + t * 8) % (W + 120)) - 60, yy = zy + 70 + (i * 59) % Math.max(60, depth - 60), r = 54 + (i % 2) * 18; const sg = c.createRadialGradient(x, yy, 4, x, yy, r); sg.addColorStop(0, 'rgba(60,4,0,.3)'); sg.addColorStop(1, 'rgba(60,4,0,0)'); c.fillStyle = sg; c.save(); c.translate(x, yy); c.scale(1.6, .55); c.translate(-x, -yy); aCirc(c, x, yy, r); c.fill(); c.restore(); }   // 深處冷卻的暗流
     c.globalCompositeOperation = 'lighter';
     for (let i = 0; i < 12; i++) {   // 對流翻上來的亮光
       const sp = 26 + (i % 4) * 10, yy = zy + depth - ((t * sp + i * 97) % depth), x = ((i * 83.7 + Math.sin(t * .9 + i) * 26) % (W + 40)) - 20, r = 28 + (i % 3) * 12, f = (yy - zy) / depth;
-      const rg = c.createRadialGradient(x, yy, 2, x, yy, r); rg.addColorStop(0, `rgba(255,220,110,${.42 * (1 - f * .6)})`); rg.addColorStop(1, 'rgba(255,100,20,0)'); c.fillStyle = rg; c.fillRect(x - r, yy - r, r * 2, r * 2);
+      const rg = c.createRadialGradient(x, yy, 2, x, yy, r); rg.addColorStop(0, `rgba(255,220,110,${.42 * (1 - f * .6) * clamp((yy - zy - 6) / 40, 0, 1)})`); rg.addColorStop(1, 'rgba(255,100,20,0)'); c.fillStyle = rg; c.fillRect(x - r, yy - r, r * 2, r * 2);
     }
     c.globalCompositeOperation = 'source-over';
     for (let i = 0; i < Math.ceil(W / 46) + 1; i++) {   // 浮動的岩殼（裂縫透出亮光）

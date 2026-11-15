@@ -348,7 +348,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v140';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v141';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -784,7 +784,7 @@ function midAI(e, ed, dt) {
 // 中 BOSS 被擊倒：大量魂與小判，並開寶箱（可能進化）
 function midDown(e) {
   g.mid = null;
-  for (let i = 0; i < 14; i++) g.drops.push({ k: i < 10 ? 'soul' : 'coin', x: e.x + rnd(-30, 30), y: e.y, vx: rnd(-100, 100), vy: -rnd(140, 280), v: i < 10 ? 3 : 2, ph: rnd(0, 6) });
+  for (let i = 0; i < 14; i++) g.drops.push({ k: i < 10 ? 'soul' : 'coin', x: e.x + rnd(-30, 30), y: e.y, vx: rnd(-100, 100), vy: -rnd(140, 280), v: i < 10 ? 3 : 2, ph: rnd(0, 6), ap: .45 + i * .03 });   // ap：噴出後自動飛向玩家（v141：中魔王死的位置常在畫面外，魂撿不到）
   burst(e.x, e.y, '#c0262d', 36); g.shake = 12; SFX.kill(); vib([60, 40, 120]);
   floatText(W / 2, g.camY + H * .4, tl('mid_down'), '#ffd27a', 24);
   unlock('mid1'); if (++save.stats.mids >= 5) unlock('mid5');
@@ -1167,7 +1167,7 @@ function dropLoot(x, y, type) {
 function updateDrops(dt) {
   const p = g.p, px = p.x, py = p.y - 20, R = 36 + pk('magnet') * 45 + mt('magnet') * 20;
   for (const d of g.drops) {
-    d.ph += dt * 5;
+    d.ph += dt * 5; if (d.ap != null && (d.ap -= dt) <= 0) d.pull = true;   // 魔王／中魔王掉的寶物：過一下就自動飛向玩家
     const dx = px - d.x, dy = py - d.y, dist = Math.hypot(dx, dy);
     if (d.pull || dist < R || (g.fly > 0 && dist < 90)) {
       // 被吸收：直線飛向玩家
@@ -1183,7 +1183,7 @@ function updateDrops(dt) {
       if (d.k === 'soul') gainXp(d.v); else { addCoins(d.v); SFX.coin(); }
     }
   }
-  g.drops = g.drops.filter(d => !d.dead && d.y < g.camY + H + 40);
+  g.drops = g.drops.filter(d => !d.dead && (d.pull || d.ap > 0 || d.y < g.camY + H + 40));   // 會自動飛向玩家的寶物：掉到畫面下方也不刪
 }
 // 風刃：著地時向左右（Lv4 起含斜上方）發射
 function fireBlades() {
@@ -1338,7 +1338,7 @@ function touchEnemy(e) {
   }
   // 菁英：第一刀只會打退
   if (e.hp > 1 && !thaw) {
-    e.hp--; e.cool = .35; e.flash = .3; e.tough = 1; p.swing = SWING_T;   // 要斬好幾刀的敵人（菁英、大天狗）：最後一刀播特寫
+    e.hp--; e.cool = e.type === 13 && !fast ? 1.1 : .35; e.flash = Math.min(.3, e.cool); e.tough = 1; p.swing = SWING_T;   // 要斬好幾刀的敵人（菁英、大天狗）：最後一刀播特寫；中魔王被「踩／彈跳碰到」後有 1.1 秒無敵（v141：避免一直踩就虐死，衝刺／急降斬仍是 .35 秒）
     if (!p.dive) { p.dash = 0; p.vy = -JUMP; }
     g.hitstop = .1; g.shake = 6; SFX.slash();
     g.fx.push({ x: e.x, y: e.y, a: rnd(0, 3.14), t: 0 });
@@ -1989,7 +1989,7 @@ function finishBoss(killed) {
     addBonus(pts); addCoins(30 + 15 * b.lv);
     floatText(W / 2, g.camY + H * .4, t('boss_down', Math.round(pts * (1 + .2 * pk('score')))), '#ffd27a', 24);
     burst(b.x, b.y, BOSS_KINDS[b.kind].col, 40);
-    for (let i = 0; i < 12; i++) g.drops.push({ k: i < 8 ? 'soul' : 'coin', x: b.x + rnd(-30, 30), y: b.y, vx: rnd(-90, 90), vy: -rnd(120, 260), v: i < 8 ? 3 : 2, ph: rnd(0, 6) });
+    for (let i = 0; i < 12; i++) g.drops.push({ k: i < 8 ? 'soul' : 'coin', x: b.x + rnd(-30, 30), y: b.y, vx: rnd(-90, 90), vy: -rnd(120, 260), v: i < 8 ? 3 : 2, ph: rnd(0, 6), ap: .45 + i * .03 });
     save.stats.bosses++; unlock('boss1'); unlock('bk' + b.kind);
     if (save.stats.bosses >= 10) unlock('boss10');
     if (save.stats.bosses >= 30) unlock('boss30');
@@ -3010,8 +3010,8 @@ function render() {
   for (const tx of g.texts) if (!tx.screen) { ctx.globalAlpha = clamp(1.1 - tx.t, 0, 1); txt(tx.s, tx.x, tx.y, tx.size, tx.c, 'center', '#000', 3); }
   ctx.globalAlpha = 1;
   ctx.restore();
+  drawWeather();   // 天候（levels.js）：先畫，追兵（火海等）蓋在上面——霧不會再罩住火海造成閃爍、霧化
   drawZone(camY, g.th, g.t);
-  drawWeather();   // 天候（levels.js）
   for (const tx of g.texts) if (tx.screen) { ctx.globalAlpha = clamp(1.1 - tx.t, 0, 1); txt(tx.s, W / 2, H * .22 + tx.y - tx.t * 20, tx.size, tx.c, 'center', '#000', 4); }
   ctx.globalAlpha = 1;
   if (g.fly > 0 && state === 'play') { ctx.fillStyle = 'rgba(255,220,120,.12)'; ctx.fillRect(0, 0, W, H); }
