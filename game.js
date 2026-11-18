@@ -351,7 +351,7 @@ function musicFor() {
 function vib(ms) { if (save.opt.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { } }
 
 // ===== 畫面尺寸 =====
-const APP_VER = 'v151';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
+const APP_VER = 'v152';   // 顯示在設定頁的診斷資訊，方便對照手機上跑的是哪一版
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // 手機：觸控為主、螢幕短邊小於 600（iPad 與電腦不算）
 const IS_PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -3180,10 +3180,12 @@ function resumeGame() { quitClose(); paused = false; hide('pause'); hide('help')
 function showOver() {
   state = 'over';
   const sc = score(), h = Math.floor(g.top / 10), coins = Math.floor(g.coins);
-  save.coins += coins; save.stats.coins += coins; save.stats.runs++;
+  save.coins += coins; save.stats.coins += coins;
+  const valid = !g.quit || h >= 100 || g.t >= 30;   // v152：有效的一局才算挑戰次數（倒下、破台都算；主動放棄要爬到 100m 或玩超過 30 秒），避免開局放棄刷「挑戰次數」成就
+  if (valid) save.stats.runs++;
   const nr = sc > save.best.rogue;
   if (nr) save.best.rogue = sc;
-  unlock('run1');
+  if (valid) unlock('run1');
   if (save.stats.coins >= 500) unlock('coin500');
   if (save.stats.coins >= 5000) unlock('coin5000');
   if (save.stats.coins >= 20000) unlock('coin20000');
@@ -3200,7 +3202,7 @@ function showOver() {
     `<div class="ov-grid">` +
     card('⛰️', h + 'm', 'st_h') + card('⚔️', g.kills, 'st_kill') + card('⚡', g.maxCombo, 'st_combo') +
     card('🏯', THEMES[g.th].k + ' ' + (g.stage + 1) + '/' + ST_N, 'st_reach') + card('👹', g.bossN, 'st_boss') + card('🏆', save.best.rogue.toLocaleString(), 'st_best') +
-    `</div>`;
+    `</div>` + (valid ? '' : `<div class="ov-nocount">${t('run_short')}</div>`);
   $('overCoins').innerHTML = t('over_coins', coins, save.coins);
   const jm = g.makiGot != null && JUTSU.find(j => j.th === g.makiGot);   // 這一局拿到的卷軸
   $('overReach').innerHTML = jm ? `<span class="ov-maki">📜 ${t('over_maki', t('maki_' + g.makiGot), t('ju_' + jm.id))}</span>` : t('over_reach2', THEMES[g.th].k, stageName(g.stage));
@@ -3446,7 +3448,7 @@ document.addEventListener('click', e => {
     case 'pauseopt': menuFrom = 'pause'; renderOpt(); show('opt', true); $('opt').classList.add('ingame'); break;   // 暫停中打開設定（蓋在暫停畫面上，返回回到暫停）
     case 'quitask': quitAsk(); break;
     case 'quitno': quitClose(); break;
-    case 'quit': quitClose(); if (g && g.tut) { endTutorial(false); break; } if (g) { paused = false; hideAll(); showOver(); } else goTitle(); break;
+    case 'quit': quitClose(); if (g && g.tut) { endTutorial(false); break; } if (g) { paused = false; hideAll(); g.quit = true; showOver(); } else goTitle(); break;
 
     case 'finish': hide('clear'); showOver(); break;
     case 'perk': choosePerk(+arg); break;

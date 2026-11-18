@@ -1017,3 +1017,4 @@ body.pillar.shud #shScroll.ready { background: radial-gradient(circle at 50% 38%
 #lvsel .lv-card.locked .lv-k { color: #6a6a72; text-shadow: 0 0 .15em #000; }
 #lvsel .lv-card.locked::after { display: none; }
 #lvsel .lv-card.locked { justify-content: center !important; } #lvsel .lv-card.locked .lv-k { margin: 0; font-size: 2.6em; }
+#overBody .ov-nocount { margin-top: .5em; font-size: .72em; color: #ffb08a; text-align: center; opacity: .9; }

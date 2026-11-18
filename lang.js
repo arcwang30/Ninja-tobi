@@ -185,6 +185,7 @@ const STR = {
   over_stats: ['高度 <b>{0}m</b>　斬殺 <b>{1}</b>　最大連斬 <b>{2}</b>', '高度 <b>{0}m</b>　撃破 <b>{1}</b>　最大連斬 <b>{2}</b>', 'Height <b>{0}m</b> · Kills <b>{1}</b> · Best chain <b>{2}</b>'],
   over_reach: ['到達 <b>{0}「{1}」</b>　擊破魔王 <b>{2}</b>', '到達 <b>{0}「{1}」</b>　魔王撃破 <b>{2}</b>', 'Reached <b>{0} "{1}"</b> · Bosses <b>{2}</b>'],
   over_coins: ['<i class="kbi"></i> <b>+{0}</b> <small>（持有 {1}）</small>', '<i class="kbi"></i> <b>+{0}</b> <small>（所持 {1}）</small>', '<i class="kbi"></i> <b>+{0}</b> <small>(have {1})</small>'],
+  run_short: ['這一局太短，不計入挑戰次數', '短すぎるため、挑戦回数に数えません', 'Too short — not counted as a run'],
   over_reach2: ['到達 <b>{0}「{1}」</b>', '到達 <b>{0}「{1}」</b>', 'Reached <b>{0} "{1}"</b>'],
   st_h: ['高度', '高度', 'Height'], st_kill: ['斬殺', '撃破', 'Kills'], st_combo: ['最大連斬', '最大連斬', 'Best Chain'],
   st_reach: ['到達舞台', '到達舞台', 'Stage'], st_boss: ['魔王', '魔王', 'Bosses'], st_best: ['最佳紀錄', 'ベスト', 'Best'],
